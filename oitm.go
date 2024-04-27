@@ -37,6 +37,10 @@ func main() {
 	SUMMARIES:
 	-Like link summary
 	-Submit alternative link summary
+
+	TAGS:
+	-Edit link tags
+	-Add new tag category (done automatically when editing a link's tag to include a new category)
 	
 	*/
 	
@@ -109,6 +113,47 @@ func main() {
 
 	})
 
+	// Add new tag
+	r.Post("/tags", func(w http.ResponseWriter, r *http.Request) {
+		data := &TagRequest{}
+		if err := render.Bind(r, data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+
+		link_id, categories, submitted_by, last_updated := data.Tag.Link, data.Tag.Categories, data.Tag.Submitted_By, data.Tag.Last_Updated
+
+		// Check if link exists, Abort if invalid link ID provided
+		var s sql.NullString
+		err = db.QueryRow("SELECT * FROM Links WHERE id = ?;", link_id).Scan(&s)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Insert new tag
+		res, err := db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_id, categories, submitted_by, last_updated)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var id int64
+		if id, err = res.LastInsertId(); err != nil {
+			log.Fatal(err)
+		}
+		data.Tag.ID = id
+
+		render.Status(r, http.StatusCreated)
+		render.JSON(w, r, data)
+	})
+
+	// Serve
+	// make sure this runs AFTER all routes
 	if err := http.ListenAndServe("localhost:8000", r); err != nil {
 		log.Fatal(err)
 	}
@@ -159,6 +204,33 @@ func (a *LinkRequest) Bind(r *http.Request) error {
 
 	return nil
 }
+
+type Tag struct {
+	ID int64 `json:"tag_id"`
+	Link string `json:"link_id"`
+	Categories string `json:"categories"`
+	Submitted_By string `json:"submitted_by"`
+	Last_Updated string `json:"last_updated"`
+}
+
+type TagRequest struct {
+	*Tag
+}
+
+func (a *TagRequest) Bind(r *http.Request) error {
+	if a.Tag == nil {
+		return errors.New("missing required Tag fields")
+	}
+
+	a.Last_Updated = time.Now().Format("2006-01-02 15:04:05")
+
+	return nil
+}
+
+// type TagCategory struct {
+// 	ID int64 `json:"category_id"`
+// 	Category string `json:"category"`
+// }
 
 type ErrResponse struct {
 	Err            error `json:"-"` // low-level runtime error

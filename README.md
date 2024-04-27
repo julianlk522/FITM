@@ -1,5 +1,12 @@
 # open-internet-treasure-map
 
+## Todos:
+
+-User API actions (sign up, log in, edit profile)
+-Create tag categories db (single terms available for assignment)
+-backend logic to follow link and observe HTTP status before adding to db
+-Edit link tags actions
+
 ## Why?
 
 Because there's a lot of good shit on the internet that's hard to be aware of and, to a lesser extent, hard to find even when you know about it.
@@ -42,6 +49,8 @@ Can:
 Tags are aggregated across all users in the form of weighted scores. Weights are calculated based on 1) commonness of the topic and 2) amount of information provided by each user.
 
 e.g., user A who has a scant individual tree and who contributes/edits a link related to a popular topic (News - Political) will not greatly influence the likelihood of their chosen tags appearing on links in the global tree. OTOH, user B who contributes/edits heavily and submits tags on niche topics (Programming - OpenGL - Learning Resources) will have a significant influence on the likelihood of those tags being set in the global tree.
+
+Since a tag's weight is partially dependent on time since creation, tags need to be globally re-evaluated at a regular interval (maybe every morning).
 
 ## Stack:
 
