@@ -52,6 +52,47 @@ func main() {
 		fmt.Fprint(w, "Hello World!")
 	})
 
+	// USER ACCOUNTS
+	// Sign Up
+	r.Post("/users", func(w http.ResponseWriter, r *http.Request) {
+		signup_data := &SignUpRequst{}
+
+		if err := render.Bind(r, signup_data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+
+		// Check if user already exists, Abort if so
+		var s sql.NullString
+		err = db.QueryRow("SELECT login_name FROM Users WHERE login_name = ?", signup_data.LoginName).Scan(&s)
+		if err == nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("login name taken")))
+			return
+		}
+
+		// LoginName, Password provided by user
+		res, err := db.Exec(`INSERT INTO users VALUES (?,?,?,?,?,?)`, nil, signup_data.LoginName, signup_data.Password, nil, nil, nil)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var user_id int64
+		if user_id, err = res.LastInsertId(); err != nil {
+			log.Fatal(err)
+		}
+		signup_data.ID = user_id
+
+		render.Status(r, http.StatusCreated)
+		render.JSON(w, r, signup_data)
+	})
+
 	// Get Links
 	r.Get("/links", func(w http.ResponseWriter, r *http.Request) {
 		db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -72,20 +113,21 @@ func main() {
 		links := []Link{}
 		for rows.Next() {
 			i := Link{}
-			err := rows.Scan(&i.ID, &i.URL, &i.Submitted_By, &i.Submit_Date, &i.Likes, &i.Summaries)
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Likes, &i.Summaries)
 			if err != nil {
 				log.Fatal(err)
 			}
 			links = append(links, i)
 		}
 
-		fmt.Fprint(w, links)
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, links)
 	})
 
 	// Add new link
 	r.Post("/links", func(w http.ResponseWriter, r *http.Request) {
-		data := &LinkRequest{}
-		if err := render.Bind(r, data); err != nil {
+		link_data := &LinkRequest{}
+		if err := render.Bind(r, link_data); err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
 		}
@@ -96,27 +138,36 @@ func main() {
 		}
 		defer db.Close()
 
-		url, submitted_by, submit_date, likes, summaries := data.URL, data.Submitted_By, data.Submit_Date, data.Likes, data.Summaries
-		res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?);", nil, url, submitted_by, submit_date, likes, summaries)
+		// Check if link exists, Abort if attempting duplicate
+		var s sql.NullString
+		err = db.QueryRow("SELECT url FROM Links WHERE url = ?", link_data.URL).Scan(&s)
+		if err == nil {
+			// note: use this error
+			render.Render(w, r, ErrInvalidRequest(errors.New("Link already exists")))
+			return
+		}
+
+		// URL, SubmittedBy provided by user. Others defaults
+		res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?);", nil, link_data.URL, link_data.SubmittedBy, link_data.SubmitDate, link_data.Likes, link_data.Summaries)
 		if err != nil {
-			log.Fatal(err)
+			render.Render(w, r, ErrInvalidRequest(err))
 		}
 
 		var id int64
 		if id, err = res.LastInsertId(); err != nil {
-			log.Fatal(err)
+			render.Render(w, r, ErrInvalidRequest(err))
 		}
-		data.ID = id
+		link_data.ID = id
 
 		render.Status(r, http.StatusCreated)
-		render.JSON(w, r, data)
+		render.JSON(w, r, link_data)
 
 	})
 
 	// Add new tag
 	r.Post("/tags", func(w http.ResponseWriter, r *http.Request) {
-		data := &TagRequest{}
-		if err := render.Bind(r, data); err != nil {
+		tag_data := &CreateTagRequest{}
+		if err := render.Bind(r, tag_data); err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
 		}
@@ -127,17 +178,24 @@ func main() {
 		}
 		defer db.Close()
 
-		link_id, categories, submitted_by, last_updated := data.Tag.Link, data.Tag.Categories, data.Tag.Submitted_By, data.Tag.Last_Updated
-
 		// Check if link exists, Abort if invalid link ID provided
 		var s sql.NullString
-		err = db.QueryRow("SELECT * FROM Links WHERE id = ?;", link_id).Scan(&s)
+		err = db.QueryRow("SELECT id FROM Links WHERE id = ?;", tag_data.Link).Scan(&s)
 		if err != nil {
-			log.Fatal(err)
+			render.Render(w, r, ErrInvalidRequest(errors.New("invalid link id provided")))
+			return
+		}
+
+		// Check if duplicate (same link ID, submitted by), Abort if so
+		err = db.QueryRow("SELECT id FROM Tags WHERE link_id = ? AND submitted_by = ?;", tag_data.Link, tag_data.SubmittedBy).Scan(&s)
+		if err == nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("duplicate tag")))
+			return
 		}
 
 		// Insert new tag
-		res, err := db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_id, categories, submitted_by, last_updated)
+		// Link (id), Categories, SubmittedBy provided by user. Others defaults
+		res, err := db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, tag_data.Link, tag_data.Categories, tag_data.SubmittedBy, tag_data.LastUpdated)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -146,10 +204,10 @@ func main() {
 		if id, err = res.LastInsertId(); err != nil {
 			log.Fatal(err)
 		}
-		data.Tag.ID = id
+		tag_data.ID = id
 
 		render.Status(r, http.StatusCreated)
-		render.JSON(w, r, data)
+		render.JSON(w, r, tag_data)
 	})
 
 	// Serve
@@ -179,15 +237,43 @@ func ErrRender(err error) render.Renderer {
 
 var ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not found."}
 
-// Types
+// TYPES
+
+// USER
+type User struct {
+	ID int64 `json:"user_id"`
+	LoginName string `json:"login_name"`
+	Password string `json:"password"`
+	About string `json:"about"`
+	ProfilePic string `json:"pfp"`
+	Created string `json:"created"`
+}
+type SignUpRequst struct {
+	*User
+}
+
+func (a *SignUpRequst) Bind(r *http.Request) error {
+	if a.User == nil {
+		return errors.New("signup info not provided")
+	} else if a.User.LoginName == "" {
+		return errors.New("missing login name")
+	} else if a.User.Password == "" {
+		return errors.New("missing password")
+	}
+
+	a.Created = time.Now().Format("2006-01-02 15:04:05")
+	return nil
+}
+
+// LINK
 type Link struct {
 	ID int64 `json:"link_id"`
 	URL string `json:"url"`
-	Submitted_By string `json:"submitted_by"`
-	Submit_Date string `json:"submit_date"`
+	SubmittedBy string `json:"submitted_by"`
+	SubmitDate string `json:"submit_date"`
 	Likes int `json:"likes"`
 	Summaries string `json:"summaries"`
-	}
+}
 
 type LinkRequest struct {
 	*Link
@@ -198,40 +284,37 @@ func (a *LinkRequest) Bind(r *http.Request) error {
 		return errors.New("missing required Link fields")
 	}
 
-	a.Likes = 0
-	a.Submit_Date = time.Now().Format("2006-01-02 15:04:05")
-	a.Summaries = "_"
+	a.Likes = 0 // soon to be changed when Links db implemented
+	a.SubmitDate = time.Now().Format("2006-01-02 15:04:05")
+	a.Summaries = "_" // soon to be changed when Summaries db implemented
 
 	return nil
 }
 
+// TAG
 type Tag struct {
 	ID int64 `json:"tag_id"`
 	Link string `json:"link_id"`
 	Categories string `json:"categories"`
-	Submitted_By string `json:"submitted_by"`
-	Last_Updated string `json:"last_updated"`
+	SubmittedBy string `json:"submitted_by"`
+	LastUpdated string `json:"last_updated"`
 }
 
-type TagRequest struct {
+type CreateTagRequest struct {
 	*Tag
 }
 
-func (a *TagRequest) Bind(r *http.Request) error {
+func (a *CreateTagRequest) Bind(r *http.Request) error {
 	if a.Tag == nil {
 		return errors.New("missing required Tag fields")
 	}
 
-	a.Last_Updated = time.Now().Format("2006-01-02 15:04:05")
+	a.LastUpdated = time.Now().Format("2006-01-02 15:04:05")
 
 	return nil
 }
 
-// type TagCategory struct {
-// 	ID int64 `json:"category_id"`
-// 	Category string `json:"category"`
-// }
-
+// ERROR RESPONSE
 type ErrResponse struct {
 	Err            error `json:"-"` // low-level runtime error
 	HTTPStatusCode int   `json:"-"` // http response status code
