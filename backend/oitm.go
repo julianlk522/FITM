@@ -77,7 +77,7 @@ func main() {
 		}
 
 		// LoginName, Password provided by user
-		res, err := db.Exec(`INSERT INTO users VALUES (?,?,?,?,?,?)`, nil, signup_data.LoginName, signup_data.Password, nil, nil, nil)
+		res, err := db.Exec(`INSERT INTO users VALUES (?,?,?,?,?,?)`, nil, signup_data.LoginName, signup_data.Password, nil, nil, signup_data.Created)
 
 		if err != nil {
 			log.Fatal(err)
