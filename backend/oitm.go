@@ -122,11 +122,11 @@ func main() {
 		render.JSON(w, r, return_json)
 	})
 
-	// Edit about
+	// Edit profile (about or profile pic)
 	r.Patch("/users", func(w http.ResponseWriter, r *http.Request) {
-		edit_about_data := &EditAboutRequest{}
+		edit_profile_data := &EditProfileRequest{}
 
-		if err := render.Bind(r, edit_about_data); err != nil {
+		if err := render.Bind(r, edit_profile_data); err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
 		}
@@ -137,19 +137,38 @@ func main() {
 		}
 		defer db.Close()
 
-		// TODO: check auth token
-
 		// update Users table
 		
-		// TODO replace hard-coded id with id corresponding
-		// to provided auth token
-		_, err = db.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_about_data.About, edit_about_data.AuthToken)
-		if err != nil {
-			log.Fatal(err)
+		return_json := map[string]string{"token": edit_profile_data.AuthToken}
+		
+		// TODO: check auth token
+		
+		// About
+		if edit_profile_data.EditAboutRequest != nil {
+			// TODO replace hard-coded id with id corresponding
+			// to provided auth token
+			_, err = db.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_profile_data.EditAboutRequest.About, edit_profile_data.AuthToken)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			return_json["about"] = edit_profile_data.EditAboutRequest.About
+		}
+		
+		// Profile Pic
+		if edit_profile_data.EditPfpRequest != nil {
+			// TODO replace hard-coded id with id corresponding
+			// to provided auth token
+			_, err = db.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, edit_profile_data.EditPfpRequest.PFP, edit_profile_data.AuthToken)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			return_json["pfp"] = edit_profile_data.EditPfpRequest.PFP
 		}
 
 		render.Status(r, http.StatusOK)
-		render.JSON(w, r, edit_about_data.About)
+		render.JSON(w, r, return_json)
 	})
 
 	// Get Links
@@ -346,12 +365,13 @@ func (a *LogInRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-type EditAboutRequest struct {
+type EditProfileRequest struct {
 	AuthToken string `json:"token"`
-	About string `json:"about"`
+	*EditAboutRequest
+	*EditPfpRequest
 }
 
-func (a *EditAboutRequest) Bind(r *http.Request) error {
+func (a *EditProfileRequest) Bind(r *http.Request) error {
 	if a.AuthToken == "" {
 		return errors.New("missing auth token")
 	}
@@ -359,6 +379,14 @@ func (a *EditAboutRequest) Bind(r *http.Request) error {
 	// TODO: check auth token
 
 	return nil
+}
+
+type EditAboutRequest struct {
+	About string `json:"about,omitempty"`
+}
+
+type EditPfpRequest struct {
+	PFP string `json:"pfp,omitempty"`
 }
 
 // LINK
