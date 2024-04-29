@@ -16,31 +16,29 @@ import (
 
 func main() {
 	/* API Actions
+
+	SUMMARIES:
+	-Add new summary
+	-Like summary
+	-Delete summary
 	
-	USER ACCOUNTS:
-	-Sign up
-	-Log in
-	-Update profile settings
-
-	TREASURE MAPS:
-	-Get user's own treasure map
-	-Get global treasure map chunks
-		-intersectional reports (popular, new, etc.)
-		-sectional top rankings based on likes
-
 	LINKS:
-	-Add new link
-	-Like existing link
 	-Copy extisting link to user's treasure map
 	-Remove link from user's treasure map
 
-	SUMMARIES:
-	-Like link summary
-	-Submit alternative link summary
+	LIKES:
+	-Add new like
+	-Remove like
 
 	TAGS:
 	-Edit link tags
 	-Add new tag category (done automatically when editing a link's tag to include a new category)
+
+	TREASURE MAPS:
+		-Get user's own treasure map
+		-Get global treasure map chunks
+			-intersectional reports (popular, new, etc.)
+			-sectional top rankings based on likes
 	
 	*/
 	
@@ -76,7 +74,6 @@ func main() {
 			return
 		}
 
-		// LoginName, Password provided by user
 		_, err = db.Exec(`INSERT INTO users VALUES (?,?,?,?,?,?)`, nil, signup_data.LoginName, signup_data.Password, nil, nil, signup_data.Created)
 
 		if err != nil {
@@ -91,7 +88,7 @@ func main() {
 		render.JSON(w, r, return_json)
 	})
 
-	// Login
+	// Log In
 	r.Post("/login", func(w http.ResponseWriter, r *http.Request) {
 		login_data := &LogInRequest{}
 
@@ -136,13 +133,11 @@ func main() {
 			log.Fatal(err)
 		}
 		defer db.Close()
-
-		// update Users table
 		
 		return_json := map[string]string{"token": edit_profile_data.AuthToken}
 		
 		// TODO: check auth token
-		
+
 		// About
 		if edit_profile_data.EditAboutRequest != nil {
 			// TODO replace hard-coded id with id corresponding
@@ -171,7 +166,46 @@ func main() {
 		render.JSON(w, r, return_json)
 	})
 
-	// Get Links
+	// SUMMARIES
+	// Create Summary
+	r.Post("/summaries", func(w http.ResponseWriter, r *http.Request) {
+		summary_data := &SummaryRequest{}
+
+		if err := render.Bind(r, summary_data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		defer db.Close()
+
+		log.Println(summary_data.LinkID)
+
+		// Check if link exists, Abort if not
+		var s sql.NullString
+		err = db.QueryRow("SELECT id FROM Links WHERE id = ?", summary_data.LinkID).Scan(&s)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("link not found")))
+			return
+		}
+
+		// TODO: check auth token
+
+		_, err = db.Exec(`INSERT INTO summaries VALUES (?,?,?,?)`, nil, summary_data.Text, summary_data.LinkID, summary_data.SubmittedBy)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		render.Status(r, http.StatusCreated)
+		render.JSON(w, r, summary_data)
+	})
+
+	// LINKS
+	// Get All Links
 	r.Get("/links", func(w http.ResponseWriter, r *http.Request) {
 		db, err := sql.Open("sqlite3", "./db/oitm.db")
 
@@ -191,7 +225,7 @@ func main() {
 		links := []Link{}
 		for rows.Next() {
 			i := Link{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Likes, &i.Summaries)
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -202,7 +236,7 @@ func main() {
 		render.JSON(w, r, links)
 	})
 
-	// Add new link
+	// Add New Link
 	r.Post("/links", func(w http.ResponseWriter, r *http.Request) {
 		link_data := &LinkRequest{}
 		if err := render.Bind(r, link_data); err != nil {
@@ -225,8 +259,7 @@ func main() {
 			return
 		}
 
-		// URL, SubmittedBy provided by user. Others defaults
-		res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?);", nil, link_data.URL, link_data.SubmittedBy, link_data.SubmitDate, link_data.Likes, link_data.Summaries)
+		res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?);", nil, link_data.URL, link_data.SubmittedBy, link_data.SubmitDate)
 		if err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 		}
@@ -242,7 +275,8 @@ func main() {
 
 	})
 
-	// Add new tag
+	// TAGS
+	// Add New Tag
 	r.Post("/tags", func(w http.ResponseWriter, r *http.Request) {
 		tag_data := &CreateTagRequest{}
 		if err := render.Bind(r, tag_data); err != nil {
@@ -258,14 +292,14 @@ func main() {
 
 		// Check if link exists, Abort if invalid link ID provided
 		var s sql.NullString
-		err = db.QueryRow("SELECT id FROM Links WHERE id = ?;", tag_data.Link).Scan(&s)
+		err = db.QueryRow("SELECT id FROM Links WHERE id = ?;", tag_data.LinkID).Scan(&s)
 		if err != nil {
 			render.Render(w, r, ErrInvalidRequest(errors.New("invalid link id provided")))
 			return
 		}
 
 		// Check if duplicate (same link ID, submitted by), Abort if so
-		err = db.QueryRow("SELECT id FROM Tags WHERE link_id = ? AND submitted_by = ?;", tag_data.Link, tag_data.SubmittedBy).Scan(&s)
+		err = db.QueryRow("SELECT id FROM Tags WHERE link_id = ? AND submitted_by = ?;", tag_data.LinkID, tag_data.SubmittedBy).Scan(&s)
 		if err == nil {
 			render.Render(w, r, ErrInvalidRequest(errors.New("duplicate tag")))
 			return
@@ -273,7 +307,7 @@ func main() {
 
 		// Insert new tag
 		// Link (id), Categories, SubmittedBy provided by user. Others defaults
-		res, err := db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, tag_data.Link, tag_data.Categories, tag_data.SubmittedBy, tag_data.LastUpdated)
+		res, err := db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, tag_data.LinkID, tag_data.Categories, tag_data.SubmittedBy, tag_data.LastUpdated)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -319,7 +353,6 @@ var ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not fo
 
 // USER
 type UserAuth struct {
-	ID int64
 	LoginName string `json:"login_name"`
 	Password string `json:"password"`
 	Created string
@@ -327,6 +360,7 @@ type UserAuth struct {
 
 type User struct {
 	*UserAuth
+	ID int64
 	About string
 	ProfilePic string
 }
@@ -389,14 +423,28 @@ type EditPfpRequest struct {
 	PFP string `json:"pfp,omitempty"`
 }
 
+// SUMMARY
+
+type SummaryRequest struct {
+	Text string `json:"summary"`
+	LinkID string `json:"link_id"`
+	SubmittedBy string `json:"submitted_by"`
+}
+
+func (a *SummaryRequest) Bind(r *http.Request) error {
+	if a == nil {
+		return errors.New("missing required Summary fields")
+	}
+
+	return nil
+}
+
 // LINK
 type Link struct {
 	ID int64 `json:"link_id"`
 	URL string `json:"url"`
 	SubmittedBy string `json:"submitted_by"`
 	SubmitDate string `json:"submit_date"`
-	Likes int `json:"likes"`
-	Summaries string `json:"summaries"`
 }
 
 type LinkRequest struct {
@@ -408,9 +456,7 @@ func (a *LinkRequest) Bind(r *http.Request) error {
 		return errors.New("missing required Link fields")
 	}
 
-	a.Likes = 0 // soon to be changed when Links db implemented
 	a.SubmitDate = time.Now().Format("2006-01-02 15:04:05")
-	a.Summaries = "_" // soon to be changed when Summaries db implemented
 
 	return nil
 }
@@ -418,7 +464,7 @@ func (a *LinkRequest) Bind(r *http.Request) error {
 // TAG
 type Tag struct {
 	ID int64 `json:"tag_id"`
-	Link string `json:"link_id"`
+	LinkID string `json:"link_id"`
 	Categories string `json:"categories"`
 	SubmittedBy string `json:"submitted_by"`
 	LastUpdated string `json:"last_updated"`
