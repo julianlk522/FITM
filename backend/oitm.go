@@ -122,6 +122,35 @@ func main() {
 		render.JSON(w, r, return_json)
 	})
 
+	// Edit about
+	r.Patch("/users", func(w http.ResponseWriter, r *http.Request) {
+		edit_about_data := &EditAboutRequest{}
+
+		if err := render.Bind(r, edit_about_data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+
+		// TODO: check auth token
+
+		// update Users table
+		
+		// TODO replace hard-coded id with id corresponding
+		// to provided auth token
+		_, err = db.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_about_data.About, edit_about_data.AuthToken)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, edit_about_data.About)
+	})
 
 	// Get Links
 	r.Get("/links", func(w http.ResponseWriter, r *http.Request) {
@@ -313,6 +342,21 @@ func (a *LogInRequest) Bind(r *http.Request) error {
 	} else if a.UserAuth.Password == "" {
 		return errors.New("missing password")
 	}
+
+	return nil
+}
+
+type EditAboutRequest struct {
+	AuthToken string `json:"token"`
+	About string `json:"about"`
+}
+
+func (a *EditAboutRequest) Bind(r *http.Request) error {
+	if a.AuthToken == "" {
+		return errors.New("missing auth token")
+	}
+
+	// TODO: check auth token
 
 	return nil
 }
