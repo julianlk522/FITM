@@ -55,7 +55,7 @@ func main() {
 	// USER ACCOUNTS
 	// Sign Up
 	r.Post("/users", func(w http.ResponseWriter, r *http.Request) {
-		signup_data := &SignUpRequst{}
+		signup_data := &SignUpRequest{}
 
 		if err := render.Bind(r, signup_data); err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
@@ -77,21 +77,51 @@ func main() {
 		}
 
 		// LoginName, Password provided by user
-		res, err := db.Exec(`INSERT INTO users VALUES (?,?,?,?,?,?)`, nil, signup_data.LoginName, signup_data.Password, nil, nil, signup_data.Created)
+		_, err = db.Exec(`INSERT INTO users VALUES (?,?,?,?,?,?)`, nil, signup_data.LoginName, signup_data.Password, nil, nil, signup_data.Created)
 
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		var user_id int64
-		if user_id, err = res.LastInsertId(); err != nil {
-			log.Fatal(err)
-		}
-		signup_data.ID = user_id
+		// TODO: generate and return jwt along with login name
+		var token string = "token"
+		return_json := map[string]string{"token": token, "login_name": signup_data.LoginName}
 
 		render.Status(r, http.StatusCreated)
-		render.JSON(w, r, signup_data)
+		render.JSON(w, r, return_json)
 	})
+
+	// Login
+	r.Post("/login", func(w http.ResponseWriter, r *http.Request) {
+		login_data := &LogInRequest{}
+
+		if err := render.Bind(r, login_data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+
+		// Check if user exists, Abort if not
+		var s sql.NullString
+		err = db.QueryRow("SELECT login_name FROM Users WHERE login_name = ?", login_data.LoginName).Scan(&s)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("login name taken")))
+			return
+		}
+
+		// TODO: generate and return jwt along with login name
+		var token string = "token"
+		return_json := map[string]string{"token": token, "login_name": login_data.LoginName}
+
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, return_json)
+	})
+
 
 	// Get Links
 	r.Get("/links", func(w http.ResponseWriter, r *http.Request) {
@@ -240,28 +270,50 @@ var ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not fo
 // TYPES
 
 // USER
-type User struct {
-	ID int64 `json:"user_id"`
+type UserAuth struct {
+	ID int64
 	LoginName string `json:"login_name"`
 	Password string `json:"password"`
-	About string `json:"about"`
-	ProfilePic string `json:"pfp"`
-	Created string `json:"created"`
-}
-type SignUpRequst struct {
-	*User
+	Created string
 }
 
-func (a *SignUpRequst) Bind(r *http.Request) error {
-	if a.User == nil {
+type User struct {
+	*UserAuth
+	About string
+	ProfilePic string
+}
+type SignUpRequest struct {
+	*UserAuth
+	
+}
+
+func (a *SignUpRequest) Bind(r *http.Request) error {
+	if a.UserAuth == nil {
 		return errors.New("signup info not provided")
-	} else if a.User.LoginName == "" {
+	} else if a.UserAuth.LoginName == "" {
 		return errors.New("missing login name")
-	} else if a.User.Password == "" {
+	} else if a.UserAuth.Password == "" {
 		return errors.New("missing password")
 	}
 
 	a.Created = time.Now().Format("2006-01-02 15:04:05")
+	return nil
+}
+
+type LogInRequest struct {
+	*UserAuth
+}
+
+
+func (a *LogInRequest) Bind(r *http.Request) error {
+	if a.UserAuth == nil {
+		return errors.New("login info not provided")
+	} else if a.UserAuth.LoginName == "" {
+		return errors.New("missing login name")
+	} else if a.UserAuth.Password == "" {
+		return errors.New("missing password")
+	}
+
 	return nil
 }
 
