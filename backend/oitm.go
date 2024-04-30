@@ -167,7 +167,7 @@ func main() {
 	})
 
 	// SUMMARIES
-	// Create Summary
+	// Create Summary / Like Summary
 	r.Post("/summaries", func(w http.ResponseWriter, r *http.Request) {
 		summary_data := &SummaryRequest{}
 
@@ -183,21 +183,41 @@ func main() {
 
 		defer db.Close()
 
-		log.Println(summary_data.LinkID)
+		// Create Summary
+		if summary_data.SummaryCreateRequest != nil {
 
-		// Check if link exists, Abort if not
-		var s sql.NullString
-		err = db.QueryRow("SELECT id FROM Links WHERE id = ?", summary_data.LinkID).Scan(&s)
-		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(errors.New("link not found")))
-			return
-		}
+			// Check if link exists, Abort if not
+			var s sql.NullString
+			err = db.QueryRow("SELECT id FROM Links WHERE id = ?", summary_data.LinkID).Scan(&s)
+			if err != nil {
+				render.Render(w, r, ErrInvalidRequest(errors.New("link not found")))
+				return
+			}
 
-		// TODO: check auth token
+			// TODO: check auth token
 
-		_, err = db.Exec(`INSERT INTO summaries VALUES (?,?,?,?)`, nil, summary_data.Text, summary_data.LinkID, summary_data.SubmittedBy)
-		if err != nil {
-			log.Fatal(err)
+			_, err = db.Exec(`INSERT INTO Summaries VALUES (?,?,?,?)`, nil, summary_data.SummaryCreateRequest.Text, summary_data.SummaryCreateRequest.LinkID, summary_data.SummaryCreateRequest.SubmittedBy)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+		// Like Summary
+		} else if summary_data.SummaryLikeRequest != nil {
+
+			// Check if summary exists, Abort if not
+			var s sql.NullString
+			err = db.QueryRow("SELECT id FROM Summaries WHERE id = ?", summary_data.SummaryID).Scan(&s)
+			if err != nil {
+				render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
+				return
+			}
+
+			// TODO: check auth token
+
+			_, err = db.Exec(`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, nil, summary_data.SummaryLikeRequest.UserID, summary_data.SummaryLikeRequest.SummaryID)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		render.Status(r, http.StatusCreated)
@@ -278,7 +298,7 @@ func main() {
 	// TAGS
 	// Add New Tag
 	r.Post("/tags", func(w http.ResponseWriter, r *http.Request) {
-		tag_data := &CreateTagRequest{}
+		tag_data := &TagCreateRequest{}
 		if err := render.Bind(r, tag_data); err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
@@ -426,17 +446,27 @@ type EditPfpRequest struct {
 // SUMMARY
 
 type SummaryRequest struct {
-	Text string `json:"summary"`
-	LinkID string `json:"link_id"`
-	SubmittedBy string `json:"submitted_by"`
+	*SummaryCreateRequest
+	*SummaryLikeRequest
 }
 
 func (a *SummaryRequest) Bind(r *http.Request) error {
-	if a == nil {
+	if a.SummaryCreateRequest == nil && a.SummaryLikeRequest == nil {
 		return errors.New("missing required Summary fields")
 	}
 
 	return nil
+}
+
+type SummaryCreateRequest struct {
+	SubmittedBy string `json:"submitted_by"`
+	LinkID string `json:"link_id"`
+	Text string `json:"text"`
+}
+
+type SummaryLikeRequest struct {
+	SummaryID string `json:"summary_id,omitempty"`
+	UserID string `json:"user_id,omitempty"`
 }
 
 // LINK
@@ -470,11 +500,11 @@ type Tag struct {
 	LastUpdated string `json:"last_updated"`
 }
 
-type CreateTagRequest struct {
+type TagCreateRequest struct {
 	*Tag
 }
 
-func (a *CreateTagRequest) Bind(r *http.Request) error {
+func (a *TagCreateRequest) Bind(r *http.Request) error {
 	if a.Tag == nil {
 		return errors.New("missing required Tag fields")
 	}
