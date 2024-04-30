@@ -219,6 +219,41 @@ func main() {
 		render.JSON(w, r, summary_data)
 	})
 
+	// Edit Summary
+	r.Patch("/summaries", func(w http.ResponseWriter, r *http.Request) {
+		edit_data := &SummaryRequest{}
+
+		if err := render.Bind(r, edit_data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		defer db.Close()
+
+		// TODO: check auth token
+
+		// Check if summary exists, Abort if not
+		var s sql.NullString
+		err = db.QueryRow("SELECT id FROM Summaries WHERE id = ?", edit_data.SummaryEditRequest.SummaryID).Scan(&s)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
+			return
+		}
+
+		_, err = db.Exec(`UPDATE Summaries SET text = ? WHERE id = ?`, edit_data.SummaryEditRequest.Text, edit_data.SummaryEditRequest.SummaryID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, edit_data)
+	})
+
 	// Delete Summary / Unlike Summary
 	r.Delete("/summaries", func(w http.ResponseWriter, r *http.Request) {
 		summary_data := &SummaryRequest{}
@@ -484,14 +519,23 @@ type EditPfpRequest struct {
 
 type SummaryRequest struct {
 	*SummaryCreateRequest
-	*SummaryLikeRequest
+	*SummaryEditRequest
 	*SummaryDeleteRequest
+	*SummaryLikeRequest
 	*SummaryLikeDeleteRequest
 }
 
 func (a *SummaryRequest) Bind(r *http.Request) error {
-	if a.SummaryCreateRequest == nil && a.SummaryLikeRequest == nil && a.SummaryDeleteRequest == nil && a.SummaryLikeDeleteRequest == nil {
+	if a.SummaryCreateRequest == nil && a.SummaryLikeRequest == nil && a.SummaryEditRequest == nil && a.SummaryDeleteRequest == nil && a.SummaryLikeDeleteRequest == nil {
 		return errors.New("missing required Summary fields")
+	}
+
+	if a.SummaryEditRequest != nil {
+		if a.SummaryEditRequest.Text == "" {
+			return errors.New("missing replacement summary text")
+		} else if a.SummaryEditRequest.SummaryID == "" {
+			return errors.New("missing summary ID")
+		}
 	}
 
 	return nil
@@ -501,6 +545,13 @@ type SummaryCreateRequest struct {
 	SubmittedBy string `json:"submitted_by"`
 	LinkID string `json:"link_id"`
 	Text string `json:"text"`
+}
+
+type SummaryEditRequest struct {
+	// would use json:"summary_id" here but conflicts with
+	// below SummaryLikeRequest json ... not sure how else to fix
+	SummaryID string `json:"summary_id_edit"`
+	Text string `json:"text_edit"`
 }
 
 type SummaryDeleteRequest struct {
