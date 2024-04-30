@@ -328,6 +328,33 @@ func main() {
 		render.JSON(w, r, links)
 	})
 
+	// Get most-liked links with 1+ categories on the global map
+	// (top 20 for now)
+	// using categories in URL parmams
+	// r.Get("/links/{categories}", func(w http.ResponseWriter, r *http.Request) {
+
+	// 	db ,err := sql.Open("sqlite3", "./db/oitm.db")
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+
+	// 	defer db.Close()
+
+	// 	// get categories
+	// 	categories_params := chi.URLParam(r, "categories")
+	// 	var categories []string
+	// 	// multiple categories
+	// 	if strings.Contains(categories_params, ",") {
+	// 		categories = strings.Split(categories_params, ",")
+	// 		fmt.Println(categories)
+
+	// 		get_links_sql := `SELECT * FROM Links WHERE ___`
+	// 	} else {
+	// 		categories = append(categories, categories_params)
+	// 	}
+
+	// })
+
 	// Add New Link
 	r.Post("/links", func(w http.ResponseWriter, r *http.Request) {
 		link_data := &LinkRequest{}
@@ -365,6 +392,43 @@ func main() {
 		render.Status(r, http.StatusCreated)
 		render.JSON(w, r, link_data)
 
+	})
+
+	// Get link likes
+	r.Get("/links/{id}/likes", func(w http.ResponseWriter, r *http.Request) {
+		link_id := chi.URLParam(r, "id")
+		if link_id == "" {
+			render.Render(w, r, ErrInvalidRequest(errors.New("invalid link id provided")))
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		defer db.Close()
+
+		// Check if link exists, Abort if invalid link ID provided
+		var s sql.NullString
+		err = db.QueryRow("SELECT id FROM Links WHERE id = ?;", link_id).Scan(&s)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("no link found with given ID")))
+			return
+		}
+
+		// Get like count
+		var c int64
+		err = db.QueryRow("SELECT COUNT(id) as count FROM 'Link Likes' WHERE link_id = ?;", link_id).Scan(&c)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		return_json := map[string]int64{"likes": c}
+
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, return_json)
 	})
 
 	// TAGS
