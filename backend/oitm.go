@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -21,19 +22,15 @@ func main() {
 	-Copy extisting link to user's treasure map
 	-Remove link from user's treasure map
 
-	LIKES:
-	-Add new like
-	-Remove like
-
 	TAGS:
 	-Edit link tags
 	-Add new tag category (done automatically when editing a link's tag to include a new category)
 
 	TREASURE MAPS:
-		-Get user's own treasure map
-		-Get global treasure map chunks
-			-intersectional reports (popular, new, etc.)
-			-sectional top rankings based on likes
+	-Get user's own treasure map
+	-Get global treasure map chunks
+		-intersectional reports (popular, new, etc.)
+		-sectional top rankings based on likes
 	
 	*/
 	
@@ -331,29 +328,87 @@ func main() {
 	// Get most-liked links with 1+ categories on the global map
 	// (top 20 for now)
 	// using categories in URL parmams
-	// r.Get("/links/{categories}", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/links/cat/{categories}", func(w http.ResponseWriter, r *http.Request) {
 
-	// 	db ,err := sql.Open("sqlite3", "./db/oitm.db")
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
+		db ,err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	// 	defer db.Close()
+		defer db.Close()
 
-	// 	// get categories
-	// 	categories_params := chi.URLParam(r, "categories")
-	// 	var categories []string
-	// 	// multiple categories
-	// 	if strings.Contains(categories_params, ",") {
-	// 		categories = strings.Split(categories_params, ",")
-	// 		fmt.Println(categories)
+		// get categories
+		categories_params := chi.URLParam(r, "categories")
 
-	// 		get_links_sql := `SELECT * FROM Links WHERE ___`
-	// 	} else {
-	// 		categories = append(categories, categories_params)
-	// 	}
+		var get_links_sql string
 
-	// })
+		// multiple categories
+		if strings.Contains(categories_params, ",") {
+
+			categories := strings.Split(categories_params, ",")
+
+			// get link IDs
+			get_links_sql = fmt.Sprintf(`select link_id from Tags where ',' || categories || ',' like '%%,%s,%%'`, categories[0])
+
+			for i := 1; i < len(categories); i++ {
+				get_links_sql += fmt.Sprintf(` AND ',' || categories || ',' like '%%,%s,%%'`, categories[i])
+			}
+
+			get_links_sql += ` group by link_id`
+
+			fmt.Println(get_links_sql)
+		// single category
+		} else {
+
+			// get link IDs
+			get_links_sql = fmt.Sprintf(`select link_id from Tags where ',' || categories || ',' like '%%,%s,%%' group by link_id`, categories_params)
+		}
+
+		rows, err := db.Query(get_links_sql)
+		if err != nil {
+			log.Fatal(err)
+		}
+		
+		defer rows.Close()
+		
+		var link_ids []string
+		for rows.Next() {
+			var link_id string
+			err := rows.Scan(&link_id)
+			if err != nil {
+				log.Fatal(err)
+			}
+			link_ids = append(link_ids, link_id)
+		}
+
+		// get total likes for each link_id
+		db, err = sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		defer db.Close()
+
+		rows, err = db.Query(fmt.Sprintf(`SELECT count(*) as like_count, Links.id as link_id, url, submitted_by, submit_date FROM Links INNER JOIN "Link Likes" ON Links.id = "Link Likes".link_id WHERE Links.id IN (%s) GROUP BY link_id ORDER BY like_count DESC LIMIT 20;`, strings.Join(link_ids, ",")))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		links := []LinkWithLikes{}
+		for rows.Next() {
+			i := LinkWithLikes{}
+			err := rows.Scan(&i.LikeCount, &i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate)
+			if err != nil {
+				log.Fatal(err)
+			}
+			links = append(links, i)
+			fmt.Printf("%+v\n", i)
+		}
+
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, links)
+
+	})
 
 	// Add New Link
 	r.Post("/links", func(w http.ResponseWriter, r *http.Request) {
@@ -639,6 +694,14 @@ type Link struct {
 	URL string `json:"url"`
 	SubmittedBy string `json:"submitted_by"`
 	SubmitDate string `json:"submit_date"`
+}
+
+type LinkWithLikes struct {
+	ID int64
+	URL string
+	SubmittedBy string
+	SubmitDate string
+	LikeCount int64
 }
 
 type LinkRequest struct {
