@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/exp/slices"
 )
 
 func main() {
@@ -329,12 +331,10 @@ func main() {
 	// (top 20 for now)
 	// using categories in URL parmams
 	r.Get("/links/cat/{categories}", func(w http.ResponseWriter, r *http.Request) {
-
 		db ,err := sql.Open("sqlite3", "./db/oitm.db")
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		defer db.Close()
 
 		// get categories
@@ -402,7 +402,6 @@ func main() {
 				log.Fatal(err)
 			}
 			links = append(links, i)
-			fmt.Printf("%+v\n", i)
 		}
 
 		render.Status(r, http.StatusOK)
@@ -531,6 +530,81 @@ func main() {
 
 		render.Status(r, http.StatusCreated)
 		render.JSON(w, r, tag_data)
+	})
+
+	// Get Most-Used Tag Categories
+	r.Get("/tags/popular", func(w http.ResponseWriter, r *http.Request) {
+
+		// Limit 5 for now
+		const LIMIT int = 5
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+
+		// get all categories
+		rows, err := db.Query("select categories from tags GROUP BY categories;")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var categories []string
+		for rows.Next() {
+			var cat_field string
+			err = rows.Scan(&cat_field)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if strings.Contains(cat_field, ",") {
+				split := strings.Split(cat_field, ",")
+
+				for i := 0; i < len(split); i++ {
+					if !slices.Contains(categories, split[i]) {
+						categories = append(categories, split[i])
+					}
+				}
+			} else {
+				if !slices.Contains(categories, cat_field) {
+					categories = append(categories, cat_field)
+				}
+			}
+		}
+
+		// get counts for each category
+		category_counts := make(map[string]int64)
+		for i := 0; i < len(categories); i++ {
+			get_cat_count_sql := fmt.Sprintf(`select count(*) as count_with_cat from (select link_id from Tags where ',' || categories || ',' like '%%,%s,%%' group by link_id)`, categories[i])
+
+			var c sql.NullInt64
+			err = db.QueryRow(get_cat_count_sql).Scan(&c)
+			if err != nil {
+				render.Render(w, r, ErrInvalidRequest(err))
+				return
+			}
+
+			category_counts[categories[i]] = c.Int64
+		}
+
+		// sort by count
+		sort.Slice(categories, func(i, j int) bool {
+			return category_counts[categories[i]] > category_counts[categories[j]]
+		})
+		
+		// return top {LIMIT} categories and their counts
+		if len(categories) > LIMIT {
+			categories = categories[:LIMIT]
+		}
+
+		top_categories := make(map[string]int64, len(categories))
+		for i := 0; i < len(categories); i++ {
+			top_categories[categories[i]] = category_counts[categories[i]]
+		}
+
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, top_categories)
 	})
 
 	// Serve
