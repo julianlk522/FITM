@@ -11,7 +11,7 @@
 
 Because there's a lot of good shit on the internet that's hard to be aware of and, to a lesser extent, hard to find even when you know about it.
 
-Search engines help somewhat, but they are biased in favor of results who optimize endlessly for SEO features (which are pretty irrelevant with regard to content quality, and gaming SEO buries a lot of barebones but high-quality stuff) or who pay to be promoted. These conditions funnel engagement mainly to big businesses rather than new and varied creators, and especially to businesses who specialize in farming the engagement at the expense of the internet visitor.
+Search engines help somewhat, but they are biased in favor of results who optimize endlessly for SEO features (which are pretty irrelevant with regard to content quality, and gaming SEO buries a lot of barebones but high-quality stuff) or who pay to be promoted. These conditions funnel engagement mainly to big businesses rather than new and varied creators, and especially to businesses who specialize in farming the engagement at the expense of the internet visitor. Internet users deserve a portal that provides them an unbiased, direct view into the web's useful contents. 
 
 ## What would be better than the status quo?
 

@@ -174,163 +174,56 @@ func main() {
 		render.JSON(w, r, return_json)
 	})
 
-	// SUMMARIES
-	// Create Summary / Like Summary
-	r.Post("/summaries", func(w http.ResponseWriter, r *http.Request) {
-		summary_data := &SummaryRequest{}
-
-		if err := render.Bind(r, summary_data); err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
-			return
-		}
-
-		db, err := sql.Open("sqlite3", "./db/oitm.db")
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		defer db.Close()
-
-		// Create Summary
-		if summary_data.SummaryCreateRequest != nil {
-
-			// Check if link exists, Abort if not
-			var s sql.NullString
-			err = db.QueryRow("SELECT id FROM Links WHERE id = ?", summary_data.LinkID).Scan(&s)
-			if err != nil {
-				render.Render(w, r, ErrInvalidRequest(errors.New("link not found")))
-				return
-			}
-
-			// TODO: check auth token
-
-			_, err = db.Exec(`INSERT INTO Summaries VALUES (?,?,?,?)`, nil, summary_data.SummaryCreateRequest.Text, summary_data.SummaryCreateRequest.LinkID, summary_data.SummaryCreateRequest.SubmittedBy)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-		// Like Summary
-		} else if summary_data.SummaryLikeRequest != nil {
-
-			// Check if summary exists, Abort if not
-			var s sql.NullString
-			err = db.QueryRow("SELECT id FROM Summaries WHERE id = ?", summary_data.SummaryLikeRequest.SummaryID).Scan(&s)
-			if err != nil {
-				render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
-				return
-			}
-
-			// TODO: check auth token
-
-			_, err = db.Exec(`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, nil, summary_data.SummaryLikeRequest.UserID, summary_data.SummaryLikeRequest.SummaryID)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		render.Status(r, http.StatusCreated)
-		render.JSON(w, r, summary_data)
-	})
-
-	// Edit Summary
-	r.Patch("/summaries", func(w http.ResponseWriter, r *http.Request) {
-		edit_data := &SummaryRequest{}
-
-		if err := render.Bind(r, edit_data); err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
-			return
-		}
-
-		db, err := sql.Open("sqlite3", "./db/oitm.db")
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		defer db.Close()
-
-		// TODO: check auth token
-
-		// Check if summary exists, Abort if not
-		var s sql.NullString
-		err = db.QueryRow("SELECT id FROM Summaries WHERE id = ?", edit_data.SummaryEditRequest.SummaryID).Scan(&s)
-		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
-			return
-		}
-
-		_, err = db.Exec(`UPDATE Summaries SET text = ? WHERE id = ?`, edit_data.SummaryEditRequest.Text, edit_data.SummaryEditRequest.SummaryID)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		render.Status(r, http.StatusOK)
-		render.JSON(w, r, edit_data)
-	})
-
-	// Delete Summary / Unlike Summary
-	r.Delete("/summaries", func(w http.ResponseWriter, r *http.Request) {
-		summary_data := &SummaryRequest{}
-
-		if err := render.Bind(r, summary_data); err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
-			return
-		}
-
-		db, err := sql.Open("sqlite3", "./db/oitm.db")
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		defer db.Close()
-
-		// Delete Summary
-		if summary_data.SummaryDeleteRequest != nil {
-			
-			// TODO: check auth token
-
-			_, err = db.Exec(`DELETE FROM Summaries WHERE id = ?`, summary_data.SummaryDeleteRequest.SummaryID)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-		// Unlike Summary
-		} else if summary_data.SummaryLikeDeleteRequest != nil {
-			
-			// TODO: check auth token
-
-			_, err = db.Exec(`DELETE FROM 'Summary Likes' WHERE id = ?`, summary_data.SummaryLikeDeleteRequest.SummaryLikeID)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		render.Status(r, http.StatusOK)
-		render.JSON(w, r, map[string]string{"status": "accepted"})
-
-	})
-
 	// LINKS
 	// Get All Links
-	r.Get("/links", func(w http.ResponseWriter, r *http.Request) {
-		db, err := sql.Open("sqlite3", "./db/oitm.db")
+	// r.Get("/links", func(w http.ResponseWriter, r *http.Request) {
+	// 	db, err := sql.Open("sqlite3", "./db/oitm.db")
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	defer db.Close()
 
+	// 	get_links_sql := `SELECT * FROM links`
+	// 	rows, err := db.Query(get_links_sql)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	defer rows.Close()
+		
+	// 	links := []Link{}
+	// 	for rows.Next() {
+	// 		i := Link{}
+	// 		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate)
+	// 		if err != nil {
+	// 			log.Fatal(err)
+	// 		}
+	// 		links = append(links, i)
+	// 	}
+
+	// 	render.Status(r, http.StatusOK)
+	// 	render.JSON(w, r, links)
+	// })
+
+	// Get most-liked links overall
+	// (top 20 for now)
+	r.Get("/links/top", func(w http.ResponseWriter, r *http.Request) {
+		db ,err := sql.Open("sqlite3", "./db/oitm.db")
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		defer db.Close()
 
-		get_links_sql := `SELECT * FROM links`
-		rows, err := db.Query(get_links_sql)
+		get_link_likes_sql := `SELECT link_id, url, submitted_by, submit_date, like_count FROM Links INNER JOIN (SELECT link_id, count(*) as like_count FROM 'Link Likes' GROUP BY link_id ORDER BY like_count DESC, link_id ASC LIMIT 20) ON link_id = Links.id;`
+		links := []LinkWithLikes{}
+		rows, err := db.Query(get_link_likes_sql)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer rows.Close()
-		
-		links := []Link{}
+
 		for rows.Next() {
-			i := Link{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate)
+			i := LinkWithLikes{}
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.LikeCount)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -353,12 +246,10 @@ func main() {
 
 		// get categories
 		categories_params := chi.URLParam(r, "categories")
-
 		var get_links_sql string
 
 		// multiple categories
 		if strings.Contains(categories_params, ",") {
-
 			categories := strings.Split(categories_params, ",")
 
 			// get link IDs
@@ -369,8 +260,6 @@ func main() {
 			}
 
 			get_links_sql += ` group by link_id`
-
-			fmt.Println(get_links_sql)
 		// single category
 		} else {
 
@@ -382,7 +271,6 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		
 		defer rows.Close()
 		
 		var link_ids []string
@@ -400,7 +288,6 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		defer db.Close()
 
 		rows, err = db.Query(fmt.Sprintf(`SELECT count(*) as like_count, Links.id as link_id, url, submitted_by, submit_date FROM Links INNER JOIN "Link Likes" ON Links.id = "Link Likes".link_id WHERE Links.id IN (%s) GROUP BY link_id ORDER BY like_count DESC LIMIT 20;`, strings.Join(link_ids, ",")))
@@ -619,6 +506,141 @@ func main() {
 
 		render.Status(r, http.StatusOK)
 		render.JSON(w, r, top_categories)
+	})
+
+	// SUMMARIES
+	// Create Summary / Like Summary
+	r.Post("/summaries", func(w http.ResponseWriter, r *http.Request) {
+		summary_data := &SummaryRequest{}
+
+		if err := render.Bind(r, summary_data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		defer db.Close()
+
+		// Create Summary
+		if summary_data.SummaryCreateRequest != nil {
+
+			// Check if link exists, Abort if not
+			var s sql.NullString
+			err = db.QueryRow("SELECT id FROM Links WHERE id = ?", summary_data.LinkID).Scan(&s)
+			if err != nil {
+				render.Render(w, r, ErrInvalidRequest(errors.New("link not found")))
+				return
+			}
+
+			// TODO: check auth token
+
+			_, err = db.Exec(`INSERT INTO Summaries VALUES (?,?,?,?)`, nil, summary_data.SummaryCreateRequest.Text, summary_data.SummaryCreateRequest.LinkID, summary_data.SummaryCreateRequest.SubmittedBy)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+		// Like Summary
+		} else if summary_data.SummaryLikeRequest != nil {
+
+			// Check if summary exists, Abort if not
+			var s sql.NullString
+			err = db.QueryRow("SELECT id FROM Summaries WHERE id = ?", summary_data.SummaryLikeRequest.SummaryID).Scan(&s)
+			if err != nil {
+				render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
+				return
+			}
+
+			// TODO: check auth token
+
+			_, err = db.Exec(`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, nil, summary_data.SummaryLikeRequest.UserID, summary_data.SummaryLikeRequest.SummaryID)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		render.Status(r, http.StatusCreated)
+		render.JSON(w, r, summary_data)
+	})
+
+	// Edit Summary
+	r.Patch("/summaries", func(w http.ResponseWriter, r *http.Request) {
+		edit_data := &SummaryRequest{}
+
+		if err := render.Bind(r, edit_data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		defer db.Close()
+
+		// TODO: check auth token
+
+		// Check if summary exists, Abort if not
+		var s sql.NullString
+		err = db.QueryRow("SELECT id FROM Summaries WHERE id = ?", edit_data.SummaryEditRequest.SummaryID).Scan(&s)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
+			return
+		}
+
+		_, err = db.Exec(`UPDATE Summaries SET text = ? WHERE id = ?`, edit_data.SummaryEditRequest.Text, edit_data.SummaryEditRequest.SummaryID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, edit_data)
+	})
+
+	// Delete Summary / Unlike Summary
+	r.Delete("/summaries", func(w http.ResponseWriter, r *http.Request) {
+		summary_data := &SummaryRequest{}
+
+		if err := render.Bind(r, summary_data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		defer db.Close()
+
+		// Delete Summary
+		if summary_data.SummaryDeleteRequest != nil {
+			
+			// TODO: check auth token
+
+			_, err = db.Exec(`DELETE FROM Summaries WHERE id = ?`, summary_data.SummaryDeleteRequest.SummaryID)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+		// Unlike Summary
+		} else if summary_data.SummaryLikeDeleteRequest != nil {
+			
+			// TODO: check auth token
+
+			_, err = db.Exec(`DELETE FROM 'Summary Likes' WHERE id = ?`, summary_data.SummaryLikeDeleteRequest.SummaryLikeID)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, map[string]string{"status": "accepted"})
+
 	})
 
 	// Serve
