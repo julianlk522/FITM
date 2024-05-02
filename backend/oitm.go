@@ -175,35 +175,6 @@ func main() {
 	})
 
 	// LINKS
-	// Get All Links
-	// r.Get("/links", func(w http.ResponseWriter, r *http.Request) {
-	// 	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	defer db.Close()
-
-	// 	get_links_sql := `SELECT * FROM links`
-	// 	rows, err := db.Query(get_links_sql)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	defer rows.Close()
-		
-	// 	links := []Link{}
-	// 	for rows.Next() {
-	// 		i := Link{}
-	// 		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate)
-	// 		if err != nil {
-	// 			log.Fatal(err)
-	// 		}
-	// 		links = append(links, i)
-	// 	}
-
-	// 	render.Status(r, http.StatusOK)
-	// 	render.JSON(w, r, links)
-	// })
-
 	// Get most-liked links overall
 	// (top 20 for now)
 	r.Get("/links/top", func(w http.ResponseWriter, r *http.Request) {
@@ -214,6 +185,51 @@ func main() {
 		defer db.Close()
 
 		get_link_likes_sql := `SELECT link_id, url, submitted_by, submit_date, like_count FROM Links INNER JOIN (SELECT link_id, count(*) as like_count FROM 'Link Likes' GROUP BY link_id ORDER BY like_count DESC, link_id ASC LIMIT 20) ON link_id = Links.id;`
+
+		links := []LinkWithLikes{}
+		rows, err := db.Query(get_link_likes_sql)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			i := LinkWithLikes{}
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.LikeCount)
+			if err != nil {
+				log.Fatal(err)
+			}
+			links = append(links, i)
+		}
+
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, links)
+	})
+
+	// Get most-liked links during given period
+	// (day, week, month)
+	// (top 20 for now)
+	r.Get("/links/top/{period}", func(w http.ResponseWriter, r *http.Request) {
+		db ,err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+
+		get_link_likes_sql := `SELECT link_id, url, submitted_by, submit_date, like_count FROM Links INNER JOIN (SELECT link_id, count(*) as like_count FROM 'Link Likes' GROUP BY link_id ORDER BY like_count DESC, link_id ASC LIMIT 20) ON link_id = Links.id`
+
+		switch chi.URLParam(r, "period") {
+		case "day":
+			get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2;`
+		case "week":
+			get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8;`
+		case "month":
+			get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31;`
+		default:
+			render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
+			return
+		}
+
 		links := []LinkWithLikes{}
 		rows, err := db.Query(get_link_likes_sql)
 		if err != nil {
