@@ -177,7 +177,7 @@ func main() {
 	// LINKS
 	// Get most-liked links overall
 	// (top 20 for now)
-	r.Get("/links/top", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/links", func(w http.ResponseWriter, r *http.Request) {
 		db ,err := sql.Open("sqlite3", "./db/oitm.db")
 		if err != nil {
 			log.Fatal(err)
@@ -209,7 +209,7 @@ func main() {
 	// Get most-liked links during given period
 	// (day, week, month)
 	// (top 20 for now)
-	r.Get("/links/top/{period}", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/links/{period}", func(w http.ResponseWriter, r *http.Request) {
 		db ,err := sql.Open("sqlite3", "./db/oitm.db")
 		if err != nil {
 			log.Fatal(err)
@@ -431,6 +431,9 @@ func main() {
 			render.Render(w, r, ErrInvalidRequest(errors.New("duplicate tag")))
 			return
 		}
+
+		// Convert tag categories to lowercase
+		tag_data.Categories = strings.ToLower(tag_data.Categories)
 
 		// Insert new tag
 		// Link (id), Categories, SubmittedBy provided by user. Others defaults
