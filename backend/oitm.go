@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/exp/slices"
 )
 
@@ -46,7 +47,7 @@ func main() {
 
 	// USER ACCOUNTS
 	// Sign Up
-	r.Post("/users", func(w http.ResponseWriter, r *http.Request) {
+	r.Post("/signup", func(w http.ResponseWriter, r *http.Request) {
 		signup_data := &SignUpRequest{}
 
 		if err := render.Bind(r, signup_data); err != nil {
@@ -62,21 +63,26 @@ func main() {
 
 		// Check if user already exists, Abort if so
 		var s sql.NullString
-		err = db.QueryRow("SELECT login_name FROM Users WHERE login_name = ?", signup_data.LoginName).Scan(&s)
+		err = db.QueryRow("SELECT login_name FROM Users WHERE login_name = ?", signup_data.UserAuth.LoginName).Scan(&s)
 		if err == nil {
 			render.Render(w, r, ErrInvalidRequest(errors.New("login name taken")))
 			return
 		}
 
-		_, err = db.Exec(`INSERT INTO users VALUES (?,?,?,?,?,?)`, nil, signup_data.LoginName, signup_data.Password, nil, nil, signup_data.Created)
+		// Hash password
+		pw_hash, err := bcrypt.GenerateFromPassword([]byte(signup_data.UserAuth.Password), bcrypt.DefaultCost)
+		if err != nil {
+			log.Fatal(err)
+		}
 
+		_, err = db.Exec(`INSERT INTO users VALUES (?,?,?,?,?,?)`, nil, signup_data.UserAuth.LoginName, pw_hash, nil, nil, signup_data.Created)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// TODO: generate and return jwt along with login name
 		var token string = "token"
-		return_json := map[string]string{"token": token, "login_name": signup_data.LoginName}
+		return_json := map[string]string{"token": token, "login_name": signup_data.UserAuth.LoginName}
 
 		render.Status(r, http.StatusCreated)
 		render.JSON(w, r, return_json)
@@ -97,11 +103,19 @@ func main() {
 		}
 		defer db.Close()
 
-		// Check if user exists, Abort if not
-		var s sql.NullString
-		err = db.QueryRow("SELECT login_name FROM Users WHERE login_name = ?", login_data.LoginName).Scan(&s)
+		// Attempt to collect user hashed password, 
+		// Abort if user not found
+		var p sql.NullString
+		err = db.QueryRow("SELECT password FROM Users WHERE login_name = ?", login_data.LoginName).Scan(&p)
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(errors.New("login name taken")))
+			render.Render(w, r, ErrInvalidRequest(errors.New("no user found with given login name")))
+			return
+		}
+
+		// compare password hashes
+		err = bcrypt.CompareHashAndPassword([]byte(p.String), []byte(login_data.UserAuth.Password))
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("incorrect password")))
 			return
 		}
 
@@ -640,7 +654,6 @@ var ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not fo
 type UserAuth struct {
 	LoginName string `json:"login_name"`
 	Password string `json:"password"`
-	Created string
 }
 
 type User struct {
@@ -651,7 +664,7 @@ type User struct {
 }
 type SignUpRequest struct {
 	*UserAuth
-	
+	Created string
 }
 
 func (a *SignUpRequest) Bind(r *http.Request) error {
