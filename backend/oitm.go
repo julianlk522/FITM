@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"sort"
 	"strings"
@@ -186,7 +187,7 @@ func main() {
 
 		get_link_likes_sql := `SELECT link_id, url, submitted_by, submit_date, like_count FROM Links INNER JOIN (SELECT link_id, count(*) as like_count FROM 'Link Likes' GROUP BY link_id ORDER BY like_count DESC, link_id ASC LIMIT 20) ON link_id = Links.id;`
 
-		links := []LinkWithLikes{}
+		links := []Link{}
 		rows, err := db.Query(get_link_likes_sql)
 		if err != nil {
 			log.Fatal(err)
@@ -194,7 +195,7 @@ func main() {
 		defer rows.Close()
 
 		for rows.Next() {
-			i := LinkWithLikes{}
+			i := Link{}
 			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.LikeCount)
 			if err != nil {
 				log.Fatal(err)
@@ -230,7 +231,7 @@ func main() {
 			return
 		}
 
-		links := []LinkWithLikes{}
+		links := []Link{}
 		rows, err := db.Query(get_link_likes_sql)
 		if err != nil {
 			log.Fatal(err)
@@ -238,7 +239,7 @@ func main() {
 		defer rows.Close()
 
 		for rows.Next() {
-			i := LinkWithLikes{}
+			i := Link{}
 			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.LikeCount)
 			if err != nil {
 				log.Fatal(err)
@@ -311,9 +312,9 @@ func main() {
 			log.Fatal(err)
 		}
 
-		links := []LinkWithLikes{}
+		links := []Link{}
 		for rows.Next() {
-			i := LinkWithLikes{}
+			i := Link{}
 			err := rows.Scan(&i.LikeCount, &i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate)
 			if err != nil {
 				log.Fatal(err)
@@ -328,7 +329,7 @@ func main() {
 
 	// Add New Link
 	r.Post("/links", func(w http.ResponseWriter, r *http.Request) {
-		link_data := &LinkRequest{}
+		link_data := &NewLinkRequest{}
 		if err := render.Bind(r, link_data); err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
@@ -405,7 +406,7 @@ func main() {
 	// TAGS
 	// Add New Tag
 	r.Post("/tags", func(w http.ResponseWriter, r *http.Request) {
-		tag_data := &TagCreateRequest{}
+		tag_data := &NewTagRequest{}
 		if err := render.Bind(r, tag_data); err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
@@ -438,6 +439,82 @@ func main() {
 		// Insert new tag
 		// Link (id), Categories, SubmittedBy provided by user. Others defaults
 		res, err := db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, tag_data.LinkID, tag_data.Categories, tag_data.SubmittedBy, tag_data.LastUpdated)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Recalculate global categories for affected link
+
+		// (technically should affect all links that share 1+ categories but that's too complicated.) 
+		// (Plus, many links will not be seen enough to justify being updated constantly. Makes enough sense to only update a link's global cats when a new tag is added to that link.)
+
+		category_scores := make(map[string]float32)
+
+		// Global category(ies) based on aggregated scores from all tags of the link, based on time between link creation and tag creation/last edit
+
+		// which tags have the earliest last_updated of this link's tags?
+		// (in other words, occupying the greatest % of the link's lifetime without needing revision)
+		// what are the categories of those tags? (top 20)
+		rows, err := db.Query(`select (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) as prcnt_lo, categories from Tags INNER JOIN Links on Links.id = Tags.link_id WHERE link_id = ? ORDER BY prcnt_lo DESC LIMIT 20;`, tag_data.LinkID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		earliest_tags := []EarliestTagCats{}
+		for rows.Next() {
+			var t EarliestTagCats
+			err = rows.Scan(&t.LifeSpanOverlap, &t.Categories)
+			if err != nil {
+				log.Fatal(err)
+			}
+			earliest_tags = append(earliest_tags, t)
+		}
+
+		// add to category_scores
+		var max_cat_score float32 = 0.0
+		row_score_limit := 1 / float32(len(earliest_tags))
+		for _, t := range earliest_tags {
+
+			// convert to all lowercase
+			lc := strings.ToLower(t.Categories)
+
+			// use square root of life span overlap in order to smooth out scores and allow brand-new tags to still have some influence
+			// e.g. sqrt(0.01) = 0.1
+			t.LifeSpanOverlap = float32(math.Sqrt(float64(t.LifeSpanOverlap)))
+
+			// split row effect among categories, if multiple
+			if strings.Contains(t.Categories, ",") {
+				c := strings.Split(lc, ",")
+				split := float32(len(c))
+				for _, cat := range c {
+					category_scores[cat] += t.LifeSpanOverlap * row_score_limit / split
+
+					// update max score (to be used when assigning global categories)
+					if category_scores[cat] > max_cat_score {
+						max_cat_score = category_scores[cat]
+					}
+				}
+			} else {
+				category_scores[lc] += t.LifeSpanOverlap * row_score_limit
+
+				// update max score
+				if category_scores[lc] > max_cat_score {
+					max_cat_score = category_scores[lc]
+				}
+			}
+		}
+
+		// Determine categories with scores >= 50% of max
+		var global_cats string
+		for cat, score := range category_scores {
+			if score >= 0.5*max_cat_score {
+				global_cats += cat + ","
+			}
+		}
+		global_cats = global_cats[:len(global_cats)-1]
+
+		// Assign to link
+		res, err = db.Exec("UPDATE Links SET global_cats = ? WHERE id = ?;", global_cats, tag_data.LinkID)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -545,7 +622,7 @@ func main() {
 		defer db.Close()
 
 		// Create Summary
-		if summary_data.SummaryCreateRequest != nil {
+		if summary_data.NewSummaryRequest != nil {
 
 			// Check if link exists, Abort if not
 			var s sql.NullString
@@ -557,17 +634,17 @@ func main() {
 
 			// TODO: check auth token
 
-			_, err = db.Exec(`INSERT INTO Summaries VALUES (?,?,?,?)`, nil, summary_data.SummaryCreateRequest.Text, summary_data.SummaryCreateRequest.LinkID, summary_data.SummaryCreateRequest.SubmittedBy)
+			_, err = db.Exec(`INSERT INTO Summaries VALUES (?,?,?,?)`, nil, summary_data.NewSummaryRequest.Text, summary_data.NewSummaryRequest.LinkID, summary_data.NewSummaryRequest.SubmittedBy)
 			if err != nil {
 				log.Fatal(err)
 			}
 
 		// Like Summary
-		} else if summary_data.SummaryLikeRequest != nil {
+		} else if summary_data.NewSummaryLikeRequest != nil {
 
 			// Check if summary exists, Abort if not
 			var s sql.NullString
-			err = db.QueryRow("SELECT id FROM Summaries WHERE id = ?", summary_data.SummaryLikeRequest.SummaryID).Scan(&s)
+			err = db.QueryRow("SELECT id FROM Summaries WHERE id = ?", summary_data.NewSummaryLikeRequest.SummaryID).Scan(&s)
 			if err != nil {
 				render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
 				return
@@ -575,7 +652,7 @@ func main() {
 
 			// TODO: check auth token
 
-			_, err = db.Exec(`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, nil, summary_data.SummaryLikeRequest.UserID, summary_data.SummaryLikeRequest.SummaryID)
+			_, err = db.Exec(`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, nil, summary_data.NewSummaryLikeRequest.UserID, summary_data.NewSummaryLikeRequest.SummaryID)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -605,13 +682,13 @@ func main() {
 
 		// Check if summary exists, Abort if not
 		var s sql.NullString
-		err = db.QueryRow("SELECT id FROM Summaries WHERE id = ?", edit_data.SummaryEditRequest.SummaryID).Scan(&s)
+		err = db.QueryRow("SELECT id FROM Summaries WHERE id = ?", edit_data.EditSummaryRequest.SummaryID).Scan(&s)
 		if err != nil {
 			render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
 			return
 		}
 
-		_, err = db.Exec(`UPDATE Summaries SET text = ? WHERE id = ?`, edit_data.SummaryEditRequest.Text, edit_data.SummaryEditRequest.SummaryID)
+		_, err = db.Exec(`UPDATE Summaries SET text = ? WHERE id = ?`, edit_data.EditSummaryRequest.Text, edit_data.EditSummaryRequest.SummaryID)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -637,21 +714,21 @@ func main() {
 		defer db.Close()
 
 		// Delete Summary
-		if summary_data.SummaryDeleteRequest != nil {
+		if summary_data.DeleteSummaryRequest != nil {
 			
 			// TODO: check auth token
 
-			_, err = db.Exec(`DELETE FROM Summaries WHERE id = ?`, summary_data.SummaryDeleteRequest.SummaryID)
+			_, err = db.Exec(`DELETE FROM Summaries WHERE id = ?`, summary_data.DeleteSummaryRequest.SummaryID)
 			if err != nil {
 				log.Fatal(err)
 			}
 
 		// Unlike Summary
-		} else if summary_data.SummaryLikeDeleteRequest != nil {
+		} else if summary_data.DeleteSummaryLikeRequest != nil {
 			
 			// TODO: check auth token
 
-			_, err = db.Exec(`DELETE FROM 'Summary Likes' WHERE id = ?`, summary_data.SummaryLikeDeleteRequest.SummaryLikeID)
+			_, err = db.Exec(`DELETE FROM 'Summary Likes' WHERE id = ?`, summary_data.DeleteSummaryLikeRequest.SummaryLikeID)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -762,82 +839,29 @@ type EditPfpRequest struct {
 	PFP string `json:"pfp,omitempty"`
 }
 
-// SUMMARY
-
-type SummaryRequest struct {
-	*SummaryCreateRequest
-	*SummaryEditRequest
-	*SummaryDeleteRequest
-	*SummaryLikeRequest
-	*SummaryLikeDeleteRequest
-}
-
-func (a *SummaryRequest) Bind(r *http.Request) error {
-	if a.SummaryCreateRequest == nil && a.SummaryLikeRequest == nil && a.SummaryEditRequest == nil && a.SummaryDeleteRequest == nil && a.SummaryLikeDeleteRequest == nil {
-		return errors.New("missing required Summary fields")
-	}
-
-	if a.SummaryEditRequest != nil {
-		if a.SummaryEditRequest.Text == "" {
-			return errors.New("missing replacement summary text")
-		} else if a.SummaryEditRequest.SummaryID == "" {
-			return errors.New("missing summary ID")
-		}
-	}
-
-	return nil
-}
-
-type SummaryCreateRequest struct {
-	SubmittedBy string `json:"submitted_by"`
-	LinkID string `json:"link_id"`
-	Text string `json:"text"`
-}
-
-type SummaryEditRequest struct {
-	// would use json:"summary_id" here but conflicts with
-	// below SummaryLikeRequest json ... not sure how else to fix
-	SummaryID string `json:"summary_id_edit"`
-	Text string `json:"text_edit"`
-}
-
-type SummaryDeleteRequest struct {
-	// would use json:"summary_id" here but conflicts with
-	// below SummaryLikeRequest json ... not sure how else to fix
-	SummaryID string `json:"summary_id_del"`
-}
-
-type SummaryLikeRequest struct {
-	SummaryID string `json:"summary_id"`
-	UserID string `json:"user_id"`
-}
-
-type SummaryLikeDeleteRequest struct {
-	SummaryLikeID string `json:"slike_id"`
-}
-
 // LINK
 type Link struct {
+	ID int64
+	URL string
+	SubmittedBy string
+	SubmitDate string
+	GlobalCats string
+	LikeCount int64
+}
+
+type NewLink struct {
 	ID int64 `json:"link_id"`
 	URL string `json:"url"`
 	SubmittedBy string `json:"submitted_by"`
 	SubmitDate string `json:"submit_date"`
 }
 
-type LinkWithLikes struct {
-	ID int64
-	URL string
-	SubmittedBy string
-	SubmitDate string
-	LikeCount int64
+type NewLinkRequest struct {
+	*NewLink
 }
 
-type LinkRequest struct {
-	*Link
-}
-
-func (a *LinkRequest) Bind(r *http.Request) error {
-	if a.Link == nil {
+func (a *NewLinkRequest) Bind(r *http.Request) error {
+	if a.NewLink == nil {
 		return errors.New("missing required Link fields")
 	}
 
@@ -847,26 +871,84 @@ func (a *LinkRequest) Bind(r *http.Request) error {
 }
 
 // TAG
-type Tag struct {
-	ID int64 `json:"tag_id"`
+type NewTag struct {
 	LinkID string `json:"link_id"`
 	Categories string `json:"categories"`
 	SubmittedBy string `json:"submitted_by"`
-	LastUpdated string `json:"last_updated"`
 }
 
-type TagCreateRequest struct {
-	*Tag
+type NewTagRequest struct {
+	*NewTag
+	ID int64
+	LastUpdated string
 }
 
-func (a *TagCreateRequest) Bind(r *http.Request) error {
-	if a.Tag == nil {
+func (a *NewTagRequest) Bind(r *http.Request) error {
+	if a.NewTag == nil {
 		return errors.New("missing required Tag fields")
 	}
 
 	a.LastUpdated = time.Now().Format("2006-01-02 15:04:05")
 
 	return nil
+}
+
+type EarliestTagCats struct {
+	LifeSpanOverlap float32
+	Categories string
+}
+
+// SUMMARY
+type SummaryRequest struct {
+	*NewSummaryRequest
+	*EditSummaryRequest
+	*DeleteSummaryRequest
+	*NewSummaryLikeRequest
+	*DeleteSummaryLikeRequest
+}
+
+func (a *SummaryRequest) Bind(r *http.Request) error {
+	if a.NewSummaryRequest == nil && a.NewSummaryLikeRequest == nil && a.EditSummaryRequest == nil && a.DeleteSummaryRequest == nil && a.DeleteSummaryLikeRequest == nil {
+		return errors.New("missing required Summary fields")
+	}
+
+	if a.EditSummaryRequest != nil {
+		if a.EditSummaryRequest.Text == "" {
+			return errors.New("missing replacement summary text")
+		} else if a.EditSummaryRequest.SummaryID == "" {
+			return errors.New("missing summary ID")
+		}
+	}
+
+	return nil
+}
+
+type NewSummaryRequest struct {
+	SubmittedBy string `json:"submitted_by"`
+	LinkID string `json:"link_id"`
+	Text string `json:"text"`
+}
+
+type EditSummaryRequest struct {
+	// would use json:"summary_id" here but conflicts with
+	// below SummaryLikeRequest json ... not sure how else to fix
+	SummaryID string `json:"summary_id_edit"`
+	Text string `json:"text_edit"`
+}
+
+type DeleteSummaryRequest struct {
+	// would use json:"summary_id" here but conflicts with
+	// below SummaryLikeRequest json ... not sure how else to fix
+	SummaryID string `json:"summary_id_del"`
+}
+
+type NewSummaryLikeRequest struct {
+	SummaryID string `json:"summary_id"`
+	UserID string `json:"user_id"`
+}
+
+type DeleteSummaryLikeRequest struct {
+	SummaryLikeID string `json:"slike_id"`
 }
 
 // ERROR RESPONSE
