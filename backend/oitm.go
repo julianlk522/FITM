@@ -26,10 +26,6 @@ func main() {
 	-Copy extisting link to user's treasure map
 	-Remove link from user's treasure map
 
-	TAGS:
-	-Edit link tags
-	-Add new tag category (done automatically when editing a link's tag to include a new category)
-
 	TREASURE MAPS:
 	-Get user's own treasure map
 	-Get global treasure map chunks
@@ -404,131 +400,6 @@ func main() {
 	})
 
 	// TAGS
-	// Add New Tag
-	r.Post("/tags", func(w http.ResponseWriter, r *http.Request) {
-		tag_data := &NewTagRequest{}
-		if err := render.Bind(r, tag_data); err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
-			return
-		}
-
-		db, err := sql.Open("sqlite3", "./db/oitm.db")
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer db.Close()
-
-		// Check if link exists, Abort if invalid link ID provided
-		var s sql.NullString
-		err = db.QueryRow("SELECT id FROM Links WHERE id = ?;", tag_data.LinkID).Scan(&s)
-		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(errors.New("invalid link id provided")))
-			return
-		}
-
-		// Check if duplicate (same link ID, submitted by), Abort if so
-		err = db.QueryRow("SELECT id FROM Tags WHERE link_id = ? AND submitted_by = ?;", tag_data.LinkID, tag_data.SubmittedBy).Scan(&s)
-		if err == nil {
-			render.Render(w, r, ErrInvalidRequest(errors.New("duplicate tag")))
-			return
-		}
-
-		// Convert tag categories to lowercase
-		tag_data.Categories = strings.ToLower(tag_data.Categories)
-
-		// Insert new tag
-		// Link (id), Categories, SubmittedBy provided by user. Others defaults
-		res, err := db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, tag_data.LinkID, tag_data.Categories, tag_data.SubmittedBy, tag_data.LastUpdated)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Recalculate global categories for affected link
-
-		// (technically should affect all links that share 1+ categories but that's too complicated.) 
-		// (Plus, many links will not be seen enough to justify being updated constantly. Makes enough sense to only update a link's global cats when a new tag is added to that link.)
-
-		category_scores := make(map[string]float32)
-
-		// Global category(ies) based on aggregated scores from all tags of the link, based on time between link creation and tag creation/last edit
-
-		// which tags have the earliest last_updated of this link's tags?
-		// (in other words, occupying the greatest % of the link's lifetime without needing revision)
-		// what are the categories of those tags? (top 20)
-		rows, err := db.Query(`select (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) as prcnt_lo, categories from Tags INNER JOIN Links on Links.id = Tags.link_id WHERE link_id = ? ORDER BY prcnt_lo DESC LIMIT 20;`, tag_data.LinkID)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		earliest_tags := []EarliestTagCats{}
-		for rows.Next() {
-			var t EarliestTagCats
-			err = rows.Scan(&t.LifeSpanOverlap, &t.Categories)
-			if err != nil {
-				log.Fatal(err)
-			}
-			earliest_tags = append(earliest_tags, t)
-		}
-
-		// add to category_scores
-		var max_cat_score float32 = 0.0
-		row_score_limit := 1 / float32(len(earliest_tags))
-		for _, t := range earliest_tags {
-
-			// convert to all lowercase
-			lc := strings.ToLower(t.Categories)
-
-			// use square root of life span overlap in order to smooth out scores and allow brand-new tags to still have some influence
-			// e.g. sqrt(0.01) = 0.1
-			t.LifeSpanOverlap = float32(math.Sqrt(float64(t.LifeSpanOverlap)))
-
-			// split row effect among categories, if multiple
-			if strings.Contains(t.Categories, ",") {
-				c := strings.Split(lc, ",")
-				split := float32(len(c))
-				for _, cat := range c {
-					category_scores[cat] += t.LifeSpanOverlap * row_score_limit / split
-
-					// update max score (to be used when assigning global categories)
-					if category_scores[cat] > max_cat_score {
-						max_cat_score = category_scores[cat]
-					}
-				}
-			} else {
-				category_scores[lc] += t.LifeSpanOverlap * row_score_limit
-
-				// update max score
-				if category_scores[lc] > max_cat_score {
-					max_cat_score = category_scores[lc]
-				}
-			}
-		}
-
-		// Determine categories with scores >= 50% of max
-		var global_cats string
-		for cat, score := range category_scores {
-			if score >= 0.5*max_cat_score {
-				global_cats += cat + ","
-			}
-		}
-		global_cats = global_cats[:len(global_cats)-1]
-
-		// Assign to link
-		res, err = db.Exec("UPDATE Links SET global_cats = ? WHERE id = ?;", global_cats, tag_data.LinkID)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		var id int64
-		if id, err = res.LastInsertId(); err != nil {
-			log.Fatal(err)
-		}
-		tag_data.ID = id
-
-		render.Status(r, http.StatusCreated)
-		render.JSON(w, r, tag_data)
-	})
-
 	// Get Most-Used Tag Categories
 	r.Get("/tags/popular", func(w http.ResponseWriter, r *http.Request) {
 
@@ -602,6 +473,94 @@ func main() {
 
 		render.Status(r, http.StatusOK)
 		render.JSON(w, r, top_categories)
+	})
+
+	// Add New Tag
+	r.Post("/tags", func(w http.ResponseWriter, r *http.Request) {
+		tag_data := &NewTagRequest{}
+		if err := render.Bind(r, tag_data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+
+		// Check if link exists, Abort if invalid link ID provided
+		var s sql.NullString
+		err = db.QueryRow("SELECT id FROM Links WHERE id = ?;", tag_data.LinkID).Scan(&s)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("invalid link id provided")))
+			return
+		}
+
+		// Check if duplicate (same link ID, submitted by), Abort if so
+		err = db.QueryRow("SELECT id FROM Tags WHERE link_id = ? AND submitted_by = ?;", tag_data.LinkID, tag_data.SubmittedBy).Scan(&s)
+		if err == nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("duplicate tag")))
+			return
+		}
+
+		// Convert tag categories to lowercase
+		tag_data.Categories = strings.ToLower(tag_data.Categories)
+
+		// Insert new tag
+		res, err := db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, tag_data.LinkID, tag_data.Categories, tag_data.SubmittedBy, tag_data.LastUpdated)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Recalculate global categories for this link
+		recalc_global_cats(db, tag_data.LinkID)
+
+		var id int64
+		if id, err = res.LastInsertId(); err != nil {
+			log.Fatal(err)
+		}
+		tag_data.ID = id
+
+		render.Status(r, http.StatusCreated)
+		render.JSON(w, r, tag_data)
+	})
+
+	// Edit Tag
+	r.Put("/tags", func(w http.ResponseWriter, r *http.Request) {
+		edit_tag_data := &EditTagRequest{}
+		if err := render.Bind(r, edit_tag_data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+
+		// TODO: check auth token
+
+		_, err = db.Exec("UPDATE Tags SET categories = ?, last_updated = ? WHERE id = ?;", edit_tag_data.Categories, time.Now().Format("2006-01-02 15:04:05"), edit_tag_data.ID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Get link ID from tag ID
+		var lid sql.NullString
+		err = db.QueryRow("SELECT link_id FROM Tags WHERE id = ?;", edit_tag_data.ID).Scan(&lid)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("invalid tag id provided")))
+			return
+		}
+
+		// Recalculate global categories for this link
+		recalc_global_cats(db, lid.String)
+
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, edit_tag_data)
+
 	})
 
 	// SUMMARIES
@@ -746,6 +705,84 @@ func main() {
 	}
 }
 
+// Recalculate global categories for a link whose tags changed
+ func recalc_global_cats(db *sql.DB, link_id string) {
+	// (technically should affect all links that share 1+ categories but that's too complicated.) 
+	// (Plus, many links will not be seen enough to justify being updated constantly. Makes enough sense to only update a link's global cats when a new tag is added to that link.)
+
+	// Global category(ies) based on aggregated scores from all tags of the link, based on time between link creation and tag creation/last edit
+	category_scores := make(map[string]float32)
+
+	// which tags have the earliest last_updated of this link's tags?
+	// (in other words, occupying the greatest % of the link's lifetime without needing revision)
+	// what are the categories of those tags? (top 20)
+	rows, err := db.Query(`select (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) as prcnt_lo, categories from Tags INNER JOIN Links on Links.id = Tags.link_id WHERE link_id = ? ORDER BY prcnt_lo DESC LIMIT 20;`, link_id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	earliest_tags := []EarliestTagCats{}
+	for rows.Next() {
+		var t EarliestTagCats
+		err = rows.Scan(&t.LifeSpanOverlap, &t.Categories)
+		if err != nil {
+			log.Fatal(err)
+		}
+		earliest_tags = append(earliest_tags, t)
+	}
+
+	// add to category_scores
+	var max_cat_score float32 = 0.0
+	row_score_limit := 1 / float32(len(earliest_tags))
+	for _, t := range earliest_tags {
+
+		// convert to all lowercase
+		lc := strings.ToLower(t.Categories)
+
+		// use square root of life span overlap in order to smooth out scores and allow brand-new tags to still have some influence
+		// e.g. sqrt(0.01) = 0.1
+		t.LifeSpanOverlap = float32(math.Sqrt(float64(t.LifeSpanOverlap)))
+
+		// split row effect among categories, if multiple
+		if strings.Contains(t.Categories, ",") {
+			c := strings.Split(lc, ",")
+			split := float32(len(c))
+			for _, cat := range c {
+				category_scores[cat] += t.LifeSpanOverlap * row_score_limit / split
+
+				// update max score (to be used when assigning global categories)
+				if category_scores[cat] > max_cat_score {
+					max_cat_score = category_scores[cat]
+				}
+			}
+		} else {
+			category_scores[lc] += t.LifeSpanOverlap * row_score_limit
+
+			// update max score
+			if category_scores[lc] > max_cat_score {
+				max_cat_score = category_scores[lc]
+			}
+		}
+	}
+
+	// Determine categories with scores >= 50% of max
+	var global_cats string
+	for cat, score := range category_scores {
+		if score >= 0.5*max_cat_score {
+			global_cats += cat + ","
+		}
+	}
+	global_cats = global_cats[:len(global_cats)-1]
+
+	// Assign to link
+	_, err = db.Exec("UPDATE Links SET global_cats = ? WHERE id = ?;", global_cats, link_id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return
+ }
+
 func ErrInvalidRequest(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
@@ -850,7 +887,6 @@ type Link struct {
 }
 
 type NewLink struct {
-	ID int64 `json:"link_id"`
 	URL string `json:"url"`
 	SubmittedBy string `json:"submitted_by"`
 	SubmitDate string `json:"submit_date"`
@@ -858,6 +894,7 @@ type NewLink struct {
 
 type NewLinkRequest struct {
 	*NewLink
+	ID int64
 }
 
 func (a *NewLinkRequest) Bind(r *http.Request) error {
@@ -889,6 +926,26 @@ func (a *NewTagRequest) Bind(r *http.Request) error {
 	}
 
 	a.LastUpdated = time.Now().Format("2006-01-02 15:04:05")
+
+	return nil
+}
+
+type EditTagRequest struct {
+	AuthToken string `json:"token"`
+	ID string `json:"tag_id"`
+	Categories string `json:"categories"`
+}
+
+func (a *EditTagRequest) Bind(r *http.Request) error {
+	if a.AuthToken == "" {
+		return errors.New("missing auth token")
+	}
+	if a.ID == "" {
+		return errors.New("missing tag ID")
+	}
+	if a.Categories == "" {
+		return errors.New("missing categories")
+	}
 
 	return nil
 }
