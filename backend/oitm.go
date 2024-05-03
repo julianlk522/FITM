@@ -362,6 +362,76 @@ func main() {
 
 	})
 
+	// Copy link to user's treasure map
+	r.Post("/links/copy", func(w http.ResponseWriter, r *http.Request) {
+		copy_link_data := &LinkCopyRequest{}
+		if err := render.Bind(r, copy_link_data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+
+		res, err := db.Exec("INSERT INTO 'Link Copies' VALUES(?,?,?);", nil, copy_link_data.LinkID, copy_link_data.UserID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var id int64
+		if id, err = res.LastInsertId(); err != nil {
+			log.Fatal(err)
+		}
+
+		return_json := map[string]int64{
+			"copy_id": id,
+		}
+
+		render.Status(r, http.StatusCreated)
+		render.JSON(w, r, return_json)
+	})
+
+	// Remove copied link from user's treasure map
+	r.Delete("/links/copy", func(w http.ResponseWriter, r *http.Request) {
+		delete_copy_data := &DeleteLinkCopyRequest{}
+		if err := render.Bind(r, delete_copy_data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+
+		// Check if link copy exists
+		var s sql.NullString
+		err = db.QueryRow("SELECT id FROM 'Link Copies' WHERE id = ?;", delete_copy_data.ID).Scan(&s)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("Link copy does not exist")))
+			return
+		}
+
+		// Todo: check auth token, ensure that user is owner of link copy
+
+		// Delete
+		_, err = db.Exec("DELETE FROM 'Link Copies' WHERE id = ?;", delete_copy_data.ID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return_json := map[string]string{
+			"status": "success",
+		}
+
+		render.JSON(w, r, return_json)
+		render.Status(r, http.StatusNoContent)
+	})
+
 	// Get link likes
 	r.Get("/links/{id}/likes", func(w http.ResponseWriter, r *http.Request) {
 		link_id := chi.URLParam(r, "id")
@@ -907,6 +977,43 @@ func (a *NewLinkRequest) Bind(r *http.Request) error {
 	return nil
 }
 
+type LinkCopyRequest struct {
+	ID int64
+	AuthToken string `json:"token"`
+	LinkID string `json:"link_id"`
+	UserID string `json:"user_id"`
+}
+
+func (a *LinkCopyRequest) Bind(r *http.Request) error {
+	if a.AuthToken == "" {
+		return errors.New("missing auth token")
+	}
+	if a.LinkID == "" {
+		return errors.New("missing link ID")
+	}
+	if a.UserID == "" {
+		return errors.New("missing user ID")
+	}
+
+	return nil
+}
+
+type DeleteLinkCopyRequest struct {
+	ID string `json:"copy_id"`
+	AuthToken string `json:"token"`
+}
+
+func (a *DeleteLinkCopyRequest) Bind(r *http.Request) error {
+	if a.ID == "" {
+		return errors.New("missing copy ID")
+	}
+	if a.AuthToken == "" {
+		return errors.New("missing auth token")
+	}
+
+	return nil
+}
+
 // TAG
 type NewTag struct {
 	LinkID string `json:"link_id"`
@@ -988,14 +1095,14 @@ type NewSummaryRequest struct {
 
 type EditSummaryRequest struct {
 	// would use json:"summary_id" here but conflicts with
-	// below SummaryLikeRequest json ... not sure how else to fix
+	// below NewSummaryLikeRequest json ... not sure how else to fix
 	SummaryID string `json:"summary_id_edit"`
 	Text string `json:"text_edit"`
 }
 
 type DeleteSummaryRequest struct {
 	// would use json:"summary_id" here but conflicts with
-	// below SummaryLikeRequest json ... not sure how else to fix
+	// below NewSummaryLikeRequest json ... not sure how else to fix
 	SummaryID string `json:"summary_id_del"`
 }
 
