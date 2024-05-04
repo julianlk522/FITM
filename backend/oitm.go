@@ -21,17 +21,10 @@ import (
 
 func main() {
 	/* Todo API Actions
-	
-	LINKS:
-	-Copy extisting link to user's treasure map
-	-Remove link from user's treasure map
 
 	TREASURE MAPS:
-	-Get user's own treasure map
 	-Get global treasure map chunks
 		-intersectional reports (popular, new, etc.)
-		-sectional top rankings based on likes
-	
 	*/
 	
 	r := chi.NewRouter()
@@ -171,6 +164,70 @@ func main() {
 		render.JSON(w, r, return_json)
 	})
 
+	// Get user treasure map
+	// (includes links tagged by and otherwise copied by user)
+	r.Get("/map/{id}", func(w http.ResponseWriter, r *http.Request) {
+		var user_id string = chi.URLParam(r, "id")
+
+		db ,err := sql.Open("sqlite3", "./db/oitm.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+
+		// get user-assigned tag categories
+		get_custom_cats_sql := fmt.Sprintf(`SELECT link_id, categories as cats FROM Tags JOIN Users
+		ON Users.login_name = Tags.submitted_by
+		WHERE Users.id = '%s'`, user_id)
+
+		rows, err := db.Query(get_custom_cats_sql)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer rows.Close()
+
+		user_custom_cats := []CustomLinkCategories{}
+		for rows.Next() {
+			i := CustomLinkCategories{}
+			err := rows.Scan(&i.LinkID, &i.Categories)
+			if err != nil {
+				log.Fatal(err)
+			}
+			user_custom_cats = append(user_custom_cats, i)
+		}
+
+		// get all map links and their global categories + like counts
+		get_map_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as global_cats, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id WHERE link_id IN (SELECT link_id FROM Tags JOIN Users ON Users.login_name = Tags.submitted_by WHERE Users.id = '%s' UNION SELECT link_id FROM (SELECT link_id, NULL as cats, user_id link_liker_id FROM 'Link Likes' JOIN Users ON Users.id = link_liker_id WHERE link_liker_id = '%s') JOIN Links ON Links.id = link_id) ORDER BY like_count DESC, link_id ASC;`, user_id, user_id)
+
+		links := []Link{}
+		rows, err = db.Query(get_map_sql)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			i := Link{}
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.LikeCount)
+			if err != nil {
+				log.Fatal(err)
+			}
+			links = append(links, i)
+		}
+
+		// replace global categories for links to which the user has submitted their own tags
+		for i, link := range links {
+			for _, cat := range user_custom_cats {
+				if link.ID == cat.LinkID {
+					links[i].Categories = cat.Categories
+				}
+			}
+		}
+
+		render.JSON(w, r, links)
+		render.Status(r, http.StatusOK)
+	})
+
 	// LINKS
 	// Get most-liked links overall
 	// (top 20 for now)
@@ -181,7 +238,7 @@ func main() {
 		}
 		defer db.Close()
 
-		get_link_likes_sql := `SELECT link_id, url, submitted_by, submit_date, like_count FROM Links INNER JOIN (SELECT link_id, count(*) as like_count FROM 'Link Likes' GROUP BY link_id ORDER BY like_count DESC, link_id ASC LIMIT 20) ON link_id = Links.id;`
+		get_link_likes_sql := `SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id ORDER BY like_count DESC, link_id ASC;`
 
 		links := []Link{}
 		rows, err := db.Query(get_link_likes_sql)
@@ -213,7 +270,7 @@ func main() {
 		}
 		defer db.Close()
 
-		get_link_likes_sql := `SELECT link_id, url, submitted_by, submit_date, like_count FROM Links INNER JOIN (SELECT link_id, count(*) as like_count FROM 'Link Likes' GROUP BY link_id ORDER BY like_count DESC, link_id ASC LIMIT 20) ON link_id = Links.id`
+		get_link_likes_sql := `SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id ORDER BY like_count DESC, link_id ASC`
 
 		switch chi.URLParam(r, "period") {
 		case "day":
@@ -247,9 +304,8 @@ func main() {
 		render.JSON(w, r, links)
 	})
 
-	// Get most-liked links with 1+ categories on the global map
+	// Get most-liked links with given category(ies) on the global map
 	// (top 20 for now)
-	// using categories in URL parmams
 	r.Get("/links/cat/{categories}", func(w http.ResponseWriter, r *http.Request) {
 		db ,err := sql.Open("sqlite3", "./db/oitm.db")
 		if err != nil {
@@ -303,7 +359,7 @@ func main() {
 		}
 		defer db.Close()
 
-		rows, err = db.Query(fmt.Sprintf(`SELECT count(*) as like_count, Links.id as link_id, url, submitted_by, submit_date FROM Links INNER JOIN "Link Likes" ON Links.id = "Link Likes".link_id WHERE Links.id IN (%s) GROUP BY link_id ORDER BY like_count DESC LIMIT 20;`, strings.Join(link_ids, ",")))
+		rows, err = db.Query(fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id WHERE link_id IN (%s) ORDER BY like_count DESC, link_id ASC;`, strings.Join(link_ids, ",")))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -324,6 +380,8 @@ func main() {
 	})
 
 	// Add New Link
+	// TODO: edit so that new link submissions always generate a new tag with the initial category selection(s)
+	// (can then be queried easily for user treasure map)
 	r.Post("/links", func(w http.ResponseWriter, r *http.Request) {
 		link_data := &NewLinkRequest{}
 		if err := render.Bind(r, link_data); err != nil {
@@ -433,6 +491,7 @@ func main() {
 	})
 
 	// Get link likes
+	// (not currently used, likely delete but keep for reference)
 	r.Get("/links/{id}/likes", func(w http.ResponseWriter, r *http.Request) {
 		link_id := chi.URLParam(r, "id")
 		if link_id == "" {
@@ -946,13 +1005,18 @@ type EditPfpRequest struct {
 	PFP string `json:"pfp,omitempty"`
 }
 
+type CustomLinkCategories struct {
+	LinkID int64
+	Categories string
+}
+
 // LINK
 type Link struct {
 	ID int64
 	URL string
 	SubmittedBy string
 	SubmitDate string
-	GlobalCats string
+	Categories string
 	LikeCount int64
 }
 
