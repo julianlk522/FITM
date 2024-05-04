@@ -19,14 +19,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func main() {
-	/* Todo API Actions
-
-	TREASURE MAPS:
-	-Get global treasure map chunks
-		-intersectional reports (popular, new, etc.)
-	*/
-	
+func main() {	
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
@@ -322,10 +315,10 @@ func main() {
 			categories := strings.Split(categories_params, ",")
 
 			// get link IDs
-			get_links_sql = fmt.Sprintf(`select link_id from Tags where ',' || categories || ',' like '%%,%s,%%'`, categories[0])
+			get_links_sql = fmt.Sprintf(`select id from Links where ',' || global_cats || ',' like '%%,%s,%%'`, categories[0])
 
 			for i := 1; i < len(categories); i++ {
-				get_links_sql += fmt.Sprintf(` AND ',' || categories || ',' like '%%,%s,%%'`, categories[i])
+				get_links_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, categories[i])
 			}
 
 			get_links_sql += ` group by link_id`
@@ -333,7 +326,7 @@ func main() {
 		} else {
 
 			// get link IDs
-			get_links_sql = fmt.Sprintf(`select link_id from Tags where ',' || categories || ',' like '%%,%s,%%' group by link_id`, categories_params)
+			get_links_sql = fmt.Sprintf(`select id from Links where ',' || global_cats || ',' like '%%,%s,%%' group by id`, categories_params)
 		}
 
 		rows, err := db.Query(get_links_sql)
@@ -352,6 +345,16 @@ func main() {
 			link_ids = append(link_ids, link_id)
 		}
 
+		// if no links found, return status message
+		if len(link_ids) == 0 {
+			return_json := map[string]string{
+				"message": "no links found",
+			}
+			render.JSON(w, r, return_json)
+			render.Status(r, http.StatusNoContent)
+			return
+		}
+
 		// get total likes for each link_id
 		db, err = sql.Open("sqlite3", "./db/oitm.db")
 		if err != nil {
@@ -359,7 +362,7 @@ func main() {
 		}
 		defer db.Close()
 
-		rows, err = db.Query(fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id WHERE link_id IN (%s) ORDER BY like_count DESC, link_id ASC;`, strings.Join(link_ids, ",")))
+		rows, err = db.Query(fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as categories, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id WHERE link_id IN (%s) ORDER BY like_count DESC, link_id ASC;`, strings.Join(link_ids, ",")))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -367,7 +370,7 @@ func main() {
 		links := []Link{}
 		for rows.Next() {
 			i := Link{}
-			err := rows.Scan(&i.LikeCount, &i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate)
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.LikeCount)
 			if err != nil {
 				log.Fatal(err)
 			}
