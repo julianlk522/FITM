@@ -158,7 +158,7 @@ func main() {
 	})
 
 	// Get user treasure map
-	// (includes links tagged by and otherwise copied by user)
+	// (includes links tagged by and copied by user)
 	r.Get("/map/{id}", func(w http.ResponseWriter, r *http.Request) {
 		var user_id string = chi.URLParam(r, "id")
 
@@ -190,7 +190,7 @@ func main() {
 		}
 
 		// get all map links and their global categories + like counts
-		get_map_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as global_cats, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id WHERE link_id IN (SELECT link_id FROM Tags JOIN Users ON Users.login_name = Tags.submitted_by WHERE Users.id = '%s' UNION SELECT link_id FROM (SELECT link_id, NULL as cats, user_id link_liker_id FROM 'Link Likes' JOIN Users ON Users.id = link_liker_id WHERE link_liker_id = '%s') JOIN Links ON Links.id = link_id) ORDER BY like_count DESC, link_id ASC;`, user_id, user_id)
+		get_map_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as global_cats, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as like_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY like_link_id) ON Links.id = like_link_id WHERE link_id IN ( SELECT link_id FROM Tags JOIN Users ON Users.login_name = Tags.submitted_by WHERE Users.id = '%s' UNION SELECT link_id FROM (SELECT link_id, NULL as cats, user_id as link_copier_id FROM 'Link Copies' JOIN Users ON Users.id = link_copier_id WHERE link_copier_id = '%s') JOIN Links ON Links.id = link_id) ORDER BY like_count DESC, link_id ASC;`, user_id, user_id)
 
 		links := []Link{}
 		rows, err = db.Query(get_map_sql)
@@ -383,8 +383,6 @@ func main() {
 	})
 
 	// Add New Link
-	// TODO: edit so that new link submissions always generate a new tag with the initial category selection(s)
-	// (can then be queried easily for user treasure map)
 	r.Post("/links", func(w http.ResponseWriter, r *http.Request) {
 		link_data := &NewLinkRequest{}
 		if err := render.Bind(r, link_data); err != nil {
@@ -398,6 +396,8 @@ func main() {
 		}
 		defer db.Close()
 
+		// TODO: check auth token
+
 		// Check if link exists, Abort if attempting duplicate
 		var s sql.NullString
 		err = db.QueryRow("SELECT url FROM Links WHERE url = ?", link_data.URL).Scan(&s)
@@ -407,9 +407,9 @@ func main() {
 			return
 		}
 
-		res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?);", nil, link_data.URL, link_data.SubmittedBy, link_data.SubmitDate)
+		res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?);", nil, link_data.URL, link_data.SubmittedBy, link_data.SubmitDate, "")
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
+			log.Fatal(err)
 		}
 
 		var id int64
@@ -417,6 +417,12 @@ func main() {
 			render.Render(w, r, ErrInvalidRequest(err))
 		}
 		link_data.ID = id
+
+		// Insert new tag
+		_, err = db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_data.ID, link_data.Categories, link_data.SubmittedBy, link_data.SubmitDate)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		render.Status(r, http.StatusCreated)
 		render.JSON(w, r, link_data)
@@ -533,6 +539,7 @@ func main() {
 
 	// TAGS
 	// Get Most-Used Tag Categories
+	// Todo: edit to search global categories instead
 	r.Get("/tags/popular", func(w http.ResponseWriter, r *http.Request) {
 
 		// Limit 5 for now
@@ -1026,12 +1033,13 @@ type Link struct {
 type NewLink struct {
 	URL string `json:"url"`
 	SubmittedBy string `json:"submitted_by"`
-	SubmitDate string `json:"submit_date"`
+	Categories string `json:"categories"`
 }
 
 type NewLinkRequest struct {
 	*NewLink
 	ID int64
+	SubmitDate string
 }
 
 func (a *NewLinkRequest) Bind(r *http.Request) error {
