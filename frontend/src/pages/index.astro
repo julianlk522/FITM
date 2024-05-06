@@ -1,6 +1,29 @@
 ---
 import Card from '../components/Card.astro'
 import Layout from '../layouts/Layout.astro'
+
+type CategoryCount = {
+	Category: string
+	Count: number
+}
+
+type Link = {
+	ID: number
+	URL: string
+	SubmittedBy: string
+	SubmitDate: string
+	Categories: string
+	LikeCount: number
+}
+
+const popular_cats_resp = await fetch('http://127.0.0.1:8000/tags/popular')
+// [{Category: 'umvc3', Count: 1}, ...]
+const popular_cats: CategoryCount[] = await popular_cats_resp.json()
+
+const trending_links_resp = await fetch('http://127.0.0.1:8000/links/week')
+const trending_links: Link[] = await trending_links_resp.json()
+
+const available_trending_links_durations = ['week', 'month', 'year', 'all']
 ---
 
 <Layout title='Welcome to the Open Internet Treasure Map (OITM)'>
@@ -56,18 +79,39 @@ import Layout from '../layouts/Layout.astro'
 			></path></svg
 		>
 		<h1>Welcome to OITM</h1>
-		<h2 class='subtitle'>Where the internet's hidden gems are revealed.</h2>
+		<h2 class='subtitle'>a map to the web's treasures</h2>
+		<h3>Popular Categories</h3>
+		<ul>
+			{
+				popular_cats.map((cat) => (
+					<li>
+						<a href={`/links/${cat.Category}`}>{cat.Category}</a>
+						<span>({cat.Count})</span>
+					</li>
+				))
+			}
+		</ul>
+		<h3>Most-Liked Links This Week</h3>
+		<div id='change-time-duration'>
+			<p>Change time duration:</p>
+			{
+				available_trending_links_durations.map((duration) => (
+					<a class='time-duration' href={`/links/${duration}`}>
+						{duration}
+					</a>
+				))
+			}
+		</div>
+		<ul>
+			{
+				trending_links.map((link) => (
+					<li>
+						{link.URL} ({link.LikeCount})
+					</li>
+				))
+			}
+		</ul>
 		<ul role='list' class='front-page-sections'>
-			<Card
-				href='https://docs.astro.build/'
-				title='Popular'
-				body='Discover the most upvoted links that have been tagged under the most popular categories.'
-			/>
-			<Card
-				href='https://astro.build/integrations/'
-				title='Trending'
-				body='Discover links that are actively being liked now. (or last week/month/year/etc.)'
-			/>
 			<Card
 				href='https://astro.build/themes/'
 				title='Stats'
@@ -76,7 +120,7 @@ import Layout from '../layouts/Layout.astro'
 			<Card
 				href='https://astro.build/chat/'
 				title='Footer'
-				body='FAQ, CoC, leave feedback, maybe more.'
+				body='FAQ, leave feedback, maybe more.'
 			/>
 		</ul>
 	</main>
@@ -110,11 +154,22 @@ import Layout from '../layouts/Layout.astro'
 		z-index: -1;
 	}
 	.subtitle {
-		font-size: 0.8rem;
+		font-size: 1rem;
 		margin-bottom: 40px;
-		background: rgba(var(--accent-light), 25%);
+		background: rgba(var(--accent-light), 5%);
 		padding: 3px;
 		text-align: center;
+	}
+	#change-time-duration {
+		font-size: 0.9rem;
+		display: flex;
+
+		p {
+			margin-top: 0;
+		}
+	}
+	.time-duration {
+		margin-left: 0.5rem;
 	}
 	.front-page-sections {
 		display: flex;
