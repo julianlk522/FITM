@@ -7,7 +7,6 @@ import (
 	"log"
 	"math"
 	"net/http"
-	"sort"
 	"strings"
 	"time"
 
@@ -565,6 +564,8 @@ func main() {
 				log.Fatal(err)
 			}
 
+			cat_field = strings.ToLower(cat_field)
+
 			if strings.Contains(cat_field, ",") {
 				split := strings.Split(cat_field, ",")
 
@@ -581,37 +582,26 @@ func main() {
 		}
 
 		// get counts for each category
-		category_counts := make(map[string]int64)
+		var category_counts []CategoryCount = make([]CategoryCount, len(categories))
 		for i := 0; i < len(categories); i++ {
-			get_cat_count_sql := fmt.Sprintf(`select count(*) as count_with_cat from (select link_id from Tags where ',' || categories || ',' like '%%,%s,%%' group by link_id)`, categories[i])
+			category_counts[i].Category = categories[i]
 
-			var c sql.NullInt64
+			get_cat_count_sql := fmt.Sprintf(`select count(*) as count_with_cat from (select link_id from Tags where ',' || categories || ',' like '%%,%s,%%' group by Tags.id)`, categories[i])
+
+			var c sql.NullInt32
 			err = db.QueryRow(get_cat_count_sql).Scan(&c)
 			if err != nil {
-				render.Render(w, r, ErrInvalidRequest(err))
-				return
+				log.Fatal(err)
 			}
 
-			category_counts[categories[i]] = c.Int64
+			category_counts[i].Count = c.Int32
 		}
 
-		// sort by count
-		sort.Slice(categories, func(i, j int) bool {
-			return category_counts[categories[i]] > category_counts[categories[j]]
-		})
-		
+		slices.SortFunc(category_counts, sort_categories)
+
 		// return top {LIMIT} categories and their counts
-		if len(categories) > LIMIT {
-			categories = categories[:LIMIT]
-		}
-
-		top_categories := make(map[string]int64, len(categories))
-		for i := 0; i < len(categories); i++ {
-			top_categories[categories[i]] = category_counts[categories[i]]
-		}
-
 		render.Status(r, http.StatusOK)
-		render.JSON(w, r, top_categories)
+		render.JSON(w, r, category_counts[0:LIMIT])
 	})
 
 	// Add New Tag
@@ -918,8 +908,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	return
  }
 
 func ErrInvalidRequest(err error) render.Renderer {
@@ -1130,6 +1118,20 @@ func (a *EditTagRequest) Bind(r *http.Request) error {
 	}
 
 	return nil
+}
+
+type CategoryCount struct {
+	Category string
+	Count int32
+}
+
+func sort_categories(i, j CategoryCount) int {
+	if i.Count > j.Count {
+		return -1
+	} else if i.Count == j.Count && i.Category < j.Category {
+		return -1
+	}
+	return 1
 }
 
 type EarliestTagCats struct {
