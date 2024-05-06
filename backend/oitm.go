@@ -262,19 +262,21 @@ func main() {
 		}
 		defer db.Close()
 
-		get_link_likes_sql := `SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id ORDER BY like_count DESC, link_id ASC`
+		get_link_likes_sql := `SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id`
 
 		switch chi.URLParam(r, "period") {
 		case "day":
-			get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2;`
+			get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2`
 		case "week":
-			get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8;`
+			get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
 		case "month":
-			get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31;`
+			get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
 		default:
 			render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
 			return
 		}
+
+		get_link_likes_sql += ` ORDER BY like_count DESC, link_id ASC;`
 
 		links := []Link{}
 		rows, err := db.Query(get_link_likes_sql)
