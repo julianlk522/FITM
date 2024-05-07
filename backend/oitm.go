@@ -31,6 +31,7 @@ func main() {
 	r.Get("/links", handler.GetTopLinks)
 	r.Get("/links/{period}", handler.GetTopLinksByPeriod)
 	r.Get("/links/cat/{categories}", handler.GetTopLinksByCategories)
+	r.Get("/links/subcat/{categories}", handler.GetTopSubcategories)
 	r.Post("/links", handler.AddLink)
 	r.Post("/links/copy", handler.CopyLinkToMap)
 	r.Delete("/links/copy", handler.UncopyLink)

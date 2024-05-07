@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	"golang.org/x/exp/slices"
 
 	"oitm/model"
 )
@@ -174,6 +175,91 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, links)
 
+}
+
+// GET TOP SUBCATEGORIES WITH GIVEN CATEGORY(IES)
+
+// todo: change from Tags (categories) to Links (global_cats) once there is more data to query
+func GetTopSubcategories(w http.ResponseWriter, r *http.Request) {
+
+	// Limit 5 for now
+	const LIMIT int = 5
+
+	db ,err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// get categories
+	search_cats_params := chi.URLParam(r, "categories")
+	// todo: replace with middleware that converts all URLs to lowercase
+	search_cats_params = strings.ToLower(search_cats_params)
+	search_cats := strings.Split(search_cats_params, ",")
+	
+	// get subcategories
+	get_links_sql := fmt.Sprintf(`select categories from Tags where ',' || categories || ',' like '%%,%s,%%'`, search_cats[0])
+	for i := 1; i < len(search_cats); i++ {
+		get_links_sql += fmt.Sprintf(` AND ',' || categories || ',' like '%%,%s,%%'`, search_cats[i])
+	}
+	get_links_sql += ` group by categories;`
+
+	rows, err := db.Query(get_links_sql)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	
+	var subcats []string
+	for rows.Next() {
+		var row_cats string
+		err := rows.Scan(&row_cats)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		cats := strings.Split(row_cats, ",")
+		for i := 0; i < len(cats); i++ {
+			cat_lc := strings.ToLower(cats[i])
+			if !slices.Contains(search_cats, cat_lc) && !slices.Contains(subcats, cat_lc) {
+				subcats = append(subcats, cat_lc)
+			}
+		}
+	}
+
+	// if no links found, return status message
+	if len(subcats) == 0 {
+		return_json := map[string]string{
+			"message": "no subcategories found",
+		}
+		render.JSON(w, r, return_json)
+		render.Status(r, http.StatusNoContent)
+		return
+	}
+
+	// get total links for each subcategory
+	subcats_with_counts := make([]model.CategoryCount, len(subcats))
+	for i := 0; i < len(subcats); i++ {
+		subcats_with_counts[i].Category = subcats[i]
+
+		get_link_counts_sql := fmt.Sprintf(`select count(*) as link_count from Tags where ',' || categories || ',' like '%%,%s,%%'`, subcats[i])
+
+		for j := 0; j < len(search_cats); j++ {
+			get_link_counts_sql += fmt.Sprintf(` AND ',' || categories || ',' like '%%,%s,%%'`, search_cats[j])
+		}
+		get_link_counts_sql += `;`
+
+		err := db.QueryRow(get_link_counts_sql).Scan(&subcats_with_counts[i].Count)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	// sort by count
+	slices.SortFunc(subcats_with_counts, model.SortCategories)
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, subcats_with_counts[0:LIMIT])
 }
 
 // ADD NEW LINK
