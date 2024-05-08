@@ -1,20 +1,7 @@
 ---
 import Card from '../components/Card.astro'
 import Layout from '../layouts/Layout.astro'
-
-type CategoryCount = {
-	Category: string
-	Count: number
-}
-
-type Link = {
-	ID: number
-	URL: string
-	SubmittedBy: string
-	SubmitDate: string
-	Categories: string
-	LikeCount: number
-}
+import { type CategoryCount, type Link } from '../types'
 
 const popular_cats_resp = await fetch('http://127.0.0.1:8000/tags/popular')
 // [{Category: 'umvc3', Count: 1}, ...]
@@ -85,7 +72,7 @@ const available_trending_links_durations = ['week', 'month', 'year', 'all']
 			{
 				popular_cats.map((cat) => (
 					<li>
-						<a href={`/links/${cat.Category}`}>{cat.Category}</a>
+						<a href={`/cat/${cat.Category}`}>{cat.Category}</a>
 						<span>({cat.Count})</span>
 					</li>
 				))
@@ -127,22 +114,6 @@ const available_trending_links_durations = ['week', 'month', 'year', 'all']
 </Layout>
 
 <style>
-	main {
-		margin: auto;
-		padding: 1rem;
-		width: 800px;
-		max-width: calc(100% - 2rem);
-		color: white;
-		font-size: 20px;
-		line-height: 1.6;
-	}
-	h1 {
-		font-size: 4rem;
-		font-weight: 700;
-		line-height: 1;
-		text-align: center;
-		margin-bottom: 1em;
-	}
 	.chest-backdrop {
 		position: absolute;
 		top: 1em;
@@ -155,7 +126,7 @@ const available_trending_links_durations = ['week', 'month', 'year', 'all']
 	}
 	.subtitle {
 		font-size: 1rem;
-		margin-bottom: 40px;
+		margin-bottom: 60px;
 		background: rgba(var(--accent-light), 5%);
 		padding: 3px;
 		text-align: center;

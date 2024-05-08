@@ -1,0 +1,65 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import type { CategoryContributor, CategoryCount, Link } from '../../types'
+
+const { category } = Astro.params
+
+const top_links_resp = await fetch(
+	`http://127.0.0.1:8000/links/cat/${category}`
+)
+const top_links: Link[] = await top_links_resp.json()
+// [{URL: 'https://example.com', LikeCount: 100}, ...]
+
+const subcats_resp = await fetch(
+	`http://127.0.0.1:8000/links/subcat/${category}`
+)
+const subcats = await subcats_resp.json()
+// [{Category: 'flowers', Count: 2}, ...]
+
+const top_contributors_resp = await fetch(
+	`http://127.0.0.1:8000/links/cat/${category}/users`
+)
+const top_contributors: CategoryContributor[] =
+	await top_contributors_resp.json()
+// [{"Categories":"umvc3,2dfighters","LoginName":"bob","LinksSubmitted":"10"}]
+---
+
+<Layout title='Welcome to the Open Internet Treasure Map (OITM)'>
+	<main>
+		<h1>{category}</h1>
+		<h2>Top Subcategories</h2>
+		<ul>
+			{
+				subcats.map((cat: CategoryCount) => (
+					<li>
+						<a href={`/cat/${cat.Category}`}>{cat.Category}</a>:
+						<span>({cat.Count})</span>
+					</li>
+				))
+			}
+		</ul>
+		<h2>Top Links Overall</h2>
+		<ul>
+			{
+				top_links.map((link) => (
+					<li>
+						<a href={link.URL}>{link.URL}</a>: ({link.LikeCount})
+					</li>
+				))
+			}
+		</ul>
+		<h2>Top Contributors</h2>
+		<ul>
+			{
+				top_contributors.map((contributor: CategoryContributor) => (
+					<li>
+						<strong>{contributor.LoginName}</strong>:{' '}
+						<span>({contributor.LinksSubmitted})</span>
+					</li>
+				))
+			}
+		</ul>
+	</main>
+</Layout>
+
+<style></style>
