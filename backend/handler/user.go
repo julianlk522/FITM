@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	"golang.org/x/crypto/bcrypt"
 
 	"oitm/model"
@@ -48,10 +51,22 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	// TODO: generate and return jwt along with login name
-	var token string = "token"
-	return_json := map[string]string{"token": token, "login_name": signup_data.UserAuth.LoginName}
+	// get new user ID
+	var id int64
+	err = db.QueryRow("SELECT id FROM Users WHERE login_name = ?", signup_data.UserAuth.LoginName).Scan(&id)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	// generate and return jwt containing user ID and login_name
+	token_data := map[string]interface{}{"user_id": id, "login_name": signup_data.LoginName}
+	token_auth := jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(30*time.Second))
+	_, token, err := token_auth.Encode(token_data)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return_json := map[string]string{"token": token}
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, return_json)
 }
@@ -71,10 +86,10 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Attempt to collect user hashed password, 
+	// Attempt to collect user ID and hashed password, 
 	// Abort if user not found
-	var p sql.NullString
-	err = db.QueryRow("SELECT password FROM Users WHERE login_name = ?", login_data.LoginName).Scan(&p)
+	var id, p sql.NullString
+	err = db.QueryRow("SELECT id, password FROM Users WHERE login_name = ?", login_data.LoginName).Scan(&id, &p)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("no user found with given login name")))
 		return
@@ -87,10 +102,15 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: generate and return jwt along with login name
-	var token string = "token"
-	return_json := map[string]string{"token": token, "login_name": login_data.LoginName}
+	// generate and return jwt containing user ID and login_name
+	token_data := map[string]interface{}{"user_id": id.String, "login_name": login_data.LoginName}
+	token_auth := jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(30*time.Second))
+	_, token, err := token_auth.Encode(token_data)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	return_json := map[string]string{"token": token}
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, return_json)
 }
@@ -203,5 +223,12 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.JSON(w, r, links)
+	render.Status(r, http.StatusOK)
+}
+
+func ProtectedArea(w http.ResponseWriter, r *http.Request) {
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	w.Write([]byte(fmt.Sprintf("protected area. hi %v, your user_ID is %v", claims["login_name"], claims["user_id"])))
+
 	render.Status(r, http.StatusOK)
 }
