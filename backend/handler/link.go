@@ -177,6 +177,51 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// GET TOP CONTRIBUTORS FOR GIVEN CATEGORY(IES)
+// (determined by number of links submitted having ALL given categories in global_cats)
+func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
+
+	// Limit 5
+	const LIMIT int = 5
+
+	db ,err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// get categories
+	categories_params := chi.URLParam(r, "categories")
+	categories := strings.Split(categories_params, ",")
+	get_links_sql := fmt.Sprintf(`select count(*), submitted_by from Links where ',' || global_cats || ',' like '%%,%s,%%'`, categories[0])
+
+		for i := 1; i < len(categories); i++ {
+			get_links_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, categories[i])
+		}
+
+	get_links_sql += ` GROUP BY submitted_by ORDER BY count(*) DESC;`
+
+	rows, err := db.Query(get_links_sql)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	contributors := []model.CategoryContributor{}
+	for rows.Next() {
+		var contributor model.CategoryContributor
+		contributor.Categories = categories_params
+		err := rows.Scan(&contributor.LinksSubmitted, &contributor.LoginName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		contributors = append(contributors, contributor)
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, contributors)
+}
+
 // GET TOP SUBCATEGORIES WITH GIVEN CATEGORY(IES)
 
 // todo: change from Tags (categories) to Links (global_cats) once there is more data to query

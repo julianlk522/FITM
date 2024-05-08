@@ -14,6 +14,13 @@ type CustomLinkCategories struct {
 	LinkID int64
 	Categories string
 }
+
+type CategoryContributor struct {
+	Categories string
+	LoginName string
+	LinksSubmitted int
+}
+
 type Link struct {
 	ID int64
 	URL string
