@@ -145,7 +145,7 @@ func EditProfile(w http.ResponseWriter, r *http.Request) {
 // GET USER TREASURE MAP
 // (includes links tagged by and copied by user)
 func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
-	var user_id string = chi.URLParam(r, "id")
+	var login_name string = chi.URLParam(r, "login_name")
 
 	db ,err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
@@ -156,7 +156,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	// get user-assigned tag categories
 	get_custom_cats_sql := fmt.Sprintf(`SELECT link_id, categories as cats FROM Tags JOIN Users
 	ON Users.login_name = Tags.submitted_by
-	WHERE Users.id = '%s'`, user_id)
+	WHERE Users.login_name = '%s'`, login_name)
 
 	rows, err := db.Query(get_custom_cats_sql)
 	if err != nil {
@@ -175,7 +175,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get all map links and their global categories + like counts
-	get_map_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as global_cats, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as like_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY like_link_id) ON Links.id = like_link_id WHERE link_id IN ( SELECT link_id FROM Tags JOIN Users ON Users.login_name = Tags.submitted_by WHERE Users.id = '%s' UNION SELECT link_id FROM (SELECT link_id, NULL as cats, user_id as link_copier_id FROM 'Link Copies' JOIN Users ON Users.id = link_copier_id WHERE link_copier_id = '%s') JOIN Links ON Links.id = link_id) ORDER BY like_count DESC, link_id ASC;`, user_id, user_id)
+	get_map_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as global_cats, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as like_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY like_link_id) ON Links.id = like_link_id WHERE link_id IN ( SELECT link_id FROM Tags JOIN Users ON Users.login_name = Tags.submitted_by WHERE Users.login_name = '%s' UNION SELECT link_id FROM (SELECT link_id, NULL as cats, user_id as link_copier_id FROM 'Link Copies' JOIN Users ON Users.id = link_copier_id WHERE Users.login_name = '%s') JOIN Links ON Links.id = link_id) ORDER BY like_count DESC, link_id ASC;`, login_name, login_name)
 
 	links := []model.Link{}
 	rows, err = db.Query(get_map_sql)

@@ -25,7 +25,7 @@ func main() {
 	r.Post("/signup", handler.SignUp)
 	r.Post("/login", handler.LogIn)
 	r.Patch("/users", handler.EditProfile)
-	r.Get("/map/{id}", handler.GetTreasureMap)
+	r.Get("/map/{login_name}", handler.GetTreasureMap)
 
 	// LINKS
 	r.Get("/links", handler.GetTopLinks)
