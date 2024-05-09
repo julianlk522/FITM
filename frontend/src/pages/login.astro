@@ -1,0 +1,63 @@
+---
+import Layout from '../layouts/Layout.astro'
+---
+
+<Layout title='Log In to the Open Internet Treasure Map (OITM)'>
+	<script>
+		async function handle_login(event: SubmitEvent) {
+			event.preventDefault()
+			const form = event.target as HTMLFormElement
+			const formData = new FormData(form)
+			const login_name = formData.get('login_name')
+			const password = formData.get('password')
+
+			const login_resp = await fetch('http://127.0.0.1:8000/login', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					login_name,
+					password,
+				}),
+			})
+			const login_data = await login_resp.json()
+
+			if (login_data.token) {
+				// set cookie
+				document.cookie = `token=${login_data.token}; path=/; max-age=3600; SameSite=strict; Secure`
+				window.location.href = '/'
+			} else {
+				alert(login_data.error)
+			}
+
+			return
+		}
+
+		document
+			.getElementById('login_form')
+			?.addEventListener('submit', (e) => handle_login(e))
+	</script>
+	<main>
+		<h2>Log In</h2>
+		<form id='login_form' onsubmit='(event) => handle_login(event)'>
+			<label for='username'>Username</label>
+			<input type='text' id='login_name' name='login_name' />
+			<br />
+			<label for='password'>Password</label>
+			<input type='password' id='password' name='password' />
+			<input type='submit' value='Submit' />
+		</form>
+		<h2>Sign Up</h2>
+		<form action='localhost:8000/signup'>
+			<label for='username'>Username</label>
+			<input type='text' id='login_name' name='login_name' />
+			<br />
+			<label for='password'>Password</label>
+			<input type='password' id='password' name='password' />
+			<input type='submit' value='Submit' />
+		</form>
+	</main>
+</Layout>
+
+<style></style>
