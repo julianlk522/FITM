@@ -60,7 +60,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	// generate and return jwt containing user ID and login_name
 	token_data := map[string]interface{}{"user_id": id, "login_name": signup_data.LoginName}
-	token_auth := jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(30*time.Second))
+	token_auth := jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(24*time.Hour))
 	_, token, err := token_auth.Encode(token_data)
 	if err != nil {
 		log.Fatal(err)
@@ -104,7 +104,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 
 	// generate and return jwt containing user ID and login_name
 	token_data := map[string]interface{}{"user_id": id.String, "login_name": login_data.LoginName}
-	token_auth := jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(30*time.Second))
+	token_auth := jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(24*time.Hour))
 	_, token, err := token_auth.Encode(token_data)
 	if err != nil {
 		log.Fatal(err)
