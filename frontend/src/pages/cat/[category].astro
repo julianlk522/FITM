@@ -52,9 +52,14 @@ const top_contributors: CategoryContributor[] =
 		<ul>
 			{
 				top_contributors.map((contributor: CategoryContributor) => (
+					// TODO link to user's treasure map page
 					<li>
-						<strong>{contributor.LoginName}</strong>:{' '}
-						<span>({contributor.LinksSubmitted})</span>
+						<strong>
+							<a href={`/map/${contributor.LoginName}`}>
+								{contributor.LoginName}
+							</a>
+						</strong>
+						: <span>({contributor.LinksSubmitted})</span>
 					</li>
 				))
 			}

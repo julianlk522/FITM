@@ -1,0 +1,29 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import type { Link } from '../../types'
+
+const { login_name } = Astro.params
+
+const user_map_resp = await fetch(`http://127.0.0.1:8000/map/${login_name}`)
+const user_map_links: Link[] = await user_map_resp.json()
+// [{URL: 'https://example.com', LikeCount: 100}, ...]
+---
+
+<Layout title='Welcome to the Open Internet Treasure Map (OITM)'>
+	<main>
+		<h1>{login_name}</h1>
+		<p>Links submitted: {user_map_links.length}</p>
+		<h2>{login_name}'s Treasure Map</h2>
+		<ul>
+			{
+				user_map_links.map((link) => (
+					<li>
+						<a href={link.URL}>{link.URL}</a>: ({link.LikeCount})
+					</li>
+				))
+			}
+		</ul>
+	</main>
+</Layout>
+
+<style></style>
