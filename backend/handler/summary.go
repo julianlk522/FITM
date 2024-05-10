@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -41,7 +42,7 @@ func AddSummaryOrSummaryLike(w http.ResponseWriter, r *http.Request) {
 
 		// TODO: check auth token
 
-		_, err = db.Exec(`INSERT INTO Summaries VALUES (?,?,?,?)`, nil, summary_data.NewSummaryRequest.Text, summary_data.NewSummaryRequest.LinkID, summary_data.NewSummaryRequest.SubmittedBy)
+		_, err := db.Exec(`INSERT INTO Summaries VALUES (?,?,?,?)`, nil, summary_data.NewSummaryRequest.Text, summary_data.NewSummaryRequest.LinkID, summary_data.NewSummaryRequest.SubmittedByID)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -64,6 +65,9 @@ func AddSummaryOrSummaryLike(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 	}
+
+	// Recalculate global_summary
+	recalc_global_summary(summary_data.LinkID, db)
 
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, summary_data)
@@ -118,14 +122,25 @@ func DeleteOrUnlikeSummary(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer db.Close()
+
+	// TODO: check auth token
+
+	// Declare link ID for summary / summary like to update global_summary later
+	var lid sql.NullString
+	var get_lid_sql string
 
 	// Delete Summary
 	if summary_data.DeleteSummaryRequest != nil {
-		
-		// TODO: check auth token
 
+		// Get link ID
+		get_lid_sql = fmt.Sprintf(`SELECT link_id FROM Summaries WHERE id = '%s'`, summary_data.DeleteSummaryRequest.SummaryID)
+		err = db.QueryRow(get_lid_sql).Scan(&lid)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Delete Summary
 		_, err = db.Exec(`DELETE FROM Summaries WHERE id = ?`, summary_data.DeleteSummaryRequest.SummaryID)
 		if err != nil {
 			log.Fatal(err)
@@ -133,16 +148,43 @@ func DeleteOrUnlikeSummary(w http.ResponseWriter, r *http.Request) {
 
 	// Unlike Summary
 	} else if summary_data.DeleteSummaryLikeRequest != nil {
-		
-		// TODO: check auth token
 
+		// Get link ID
+		get_lid_sql = fmt.Sprintf(`SELECT link_id FROM Summaries WHERE Summaries.id IN (SELECT summary_id FROM 'Summary Likes' WHERE 'Summary Likes'.id = '%s');`, summary_data.DeleteSummaryLikeRequest.SummaryLikeID)
+		err = db.QueryRow(get_lid_sql).Scan(&lid)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Delete Summary Like
 		_, err = db.Exec(`DELETE FROM 'Summary Likes' WHERE id = ?`, summary_data.DeleteSummaryLikeRequest.SummaryLikeID)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
+	// Recalculate global_summary
+	recalc_global_summary(lid.String, db)
+
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"status": "accepted"})
 
+}
+
+func recalc_global_summary(link_id string, db *sql.DB) {
+	// Recalculate global_summary
+	// (Summary with the most upvotes is the global summary)
+	get_summary_like_counts_sql := fmt.Sprintf(`select text from summaries LEFT JOIN 'Summary Likes' ON summaries.id = 'Summary Likes'.summary_id WHERE link_id = '%s' GROUP BY summaries.id ORDER BY count(*) DESC, text ASC LIMIT 1;`, link_id)
+
+	var top_summary_text string
+	err := db.QueryRow(get_summary_like_counts_sql).Scan(&top_summary_text)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Update global_summary
+	_, err = db.Exec(`UPDATE Links SET global_summary = ? WHERE id = ?`, top_summary_text, link_id)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

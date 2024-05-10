@@ -14,15 +14,75 @@ type SummaryRequest struct {
 }
 
 func (a *SummaryRequest) Bind(r *http.Request) error {
-	if a.NewSummaryRequest == nil && a.NewSummaryLikeRequest == nil && a.EditSummaryRequest == nil && a.DeleteSummaryRequest == nil && a.DeleteSummaryLikeRequest == nil {
-		return errors.New("missing required Summary fields")
+	// New Summary
+	if a.NewSummaryRequest != nil {
+		if a.NewSummaryRequest.SubmittedByID == "" {
+			return errors.New("missing submitted_by_id")
+		}
+		if a.NewSummaryRequest.LinkID == "" {
+			return errors.New("missing link_id")
+		}
+		if a.NewSummaryRequest.Text == "" {
+			return errors.New("missing summary text")
+		}
+
+		// error if other fields present
+		if a.EditSummaryRequest != nil || a.DeleteSummaryRequest != nil || a.NewSummaryLikeRequest != nil || a.DeleteSummaryLikeRequest != nil {
+			return errors.New("invalid fields")
+		}
 	}
 
+	// Edit Summary
 	if a.EditSummaryRequest != nil {
+		if a.EditSummaryRequest.SummaryID == "" {
+			return errors.New("missing summary_id")
+		}
 		if a.EditSummaryRequest.Text == "" {
-			return errors.New("missing replacement summary text")
-		} else if a.EditSummaryRequest.SummaryID == "" {
-			return errors.New("missing summary ID")
+			return errors.New("missing replacement text")
+		}
+
+		// error if other fields present
+		if a.NewSummaryRequest != nil || a.DeleteSummaryRequest != nil || a.NewSummaryLikeRequest != nil || a.DeleteSummaryLikeRequest != nil {
+			return errors.New("invalid fields")
+		}
+	}
+
+	// Delete Summary
+	if a.DeleteSummaryRequest != nil {
+		if a.DeleteSummaryRequest.SummaryID == "" {
+			return errors.New("missing summary_id")
+		}
+
+		// error if other fields present
+		if a.NewSummaryRequest != nil || a.EditSummaryRequest != nil || a.NewSummaryLikeRequest != nil || a.DeleteSummaryLikeRequest != nil {
+			return errors.New("invalid fields")
+		}
+	}
+
+	// New Summary Like
+	if a.NewSummaryLikeRequest != nil {
+		if a.NewSummaryLikeRequest.SummaryID == "" {
+			return errors.New("missing summary_id")
+		}
+		if a.NewSummaryLikeRequest.UserID == "" {
+			return errors.New("missing user_id")
+		}
+
+		// error if other fields present
+		if a.NewSummaryRequest != nil || a.EditSummaryRequest != nil || a.DeleteSummaryRequest != nil || a.DeleteSummaryLikeRequest != nil {
+			return errors.New("invalid fields")
+		}
+	}
+
+	// Delete Summary Like
+	if a.DeleteSummaryLikeRequest != nil {
+		if a.DeleteSummaryLikeRequest.SummaryLikeID == "" {
+			return errors.New("missing slike_id")
+		}
+
+		// error if other fields present
+		if a.NewSummaryRequest != nil || a.EditSummaryRequest != nil || a.DeleteSummaryRequest != nil || a.NewSummaryLikeRequest != nil {
+			return errors.New("invalid fields")
 		}
 	}
 
@@ -30,21 +90,17 @@ func (a *SummaryRequest) Bind(r *http.Request) error {
 }
 
 type NewSummaryRequest struct {
-	SubmittedBy string `json:"submitted_by"`
+	SubmittedByID string `json:"submitted_by_id"`
 	LinkID string `json:"link_id"`
 	Text string `json:"text"`
 }
 
 type EditSummaryRequest struct {
-	// would use json:"summary_id" here but conflicts with
-	// below NewSummaryLikeRequest json ... not sure how else to fix
 	SummaryID string `json:"summary_id_edit"`
 	Text string `json:"text_edit"`
 }
 
 type DeleteSummaryRequest struct {
-	// would use json:"summary_id" here but conflicts with
-	// below NewSummaryLikeRequest json ... not sure how else to fix
 	SummaryID string `json:"summary_id_del"`
 }
 
