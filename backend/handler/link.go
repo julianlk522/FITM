@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	"github.com/jonlaing/htmlmeta"
 	"golang.org/x/exp/slices"
 
 	"oitm/model"
@@ -182,7 +183,7 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
 
 	// Limit 5
-	const LIMIT int = 5
+	const LIMIT string = "5"
 
 	db ,err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
@@ -199,7 +200,7 @@ func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
 			get_links_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, categories[i])
 		}
 
-	get_links_sql += ` GROUP BY submitted_by ORDER BY count(*) DESC;`
+	get_links_sql += fmt.Sprintf(` GROUP BY submitted_by ORDER BY count(*) DESC LIMIT %s;`, LIMIT)
 
 	rows, err := db.Query(get_links_sql)
 	if err != nil {
@@ -327,12 +328,36 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	var s sql.NullString
 	err = db.QueryRow("SELECT url FROM Links WHERE url = ?", link_data.URL).Scan(&s)
 	if err == nil {
-		// note: use this error
 		render.Render(w, r, ErrInvalidRequest(errors.New("link already exists")))
 		return
 	}
 
-	res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?);", nil, link_data.URL, link_data.SubmittedBy, link_data.SubmitDate, "")
+	// Prepend https:// if not provided
+	if !strings.HasPrefix(link_data.URL, "https://") {
+		link_data.URL = "https://" + link_data.URL
+	}
+
+	// Verify that link is valid
+	resp, err := http.Get(link_data.URL)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link")))
+		return
+	} else if resp.StatusCode > 299 {
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link: detected redirect")))
+		return
+	}
+
+	// Get initial link summary from meta description or title
+	var auto_summary string
+	defer resp.Body.Close()
+	meta := htmlmeta.Extract(resp.Body)
+	if meta.Description != "" {
+		auto_summary = meta.Description
+	} else if meta.Title != "" {
+		auto_summary = meta.Title
+	}
+	
+	res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?);", nil, link_data.URL, link_data.SubmittedBy, link_data.SubmitDate, "", auto_summary)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -343,8 +368,22 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	}
 	link_data.ID = id
 
-	// Insert new tag
+	// Create initial tag
 	_, err = db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_data.ID, link_data.Categories, link_data.SubmittedBy, link_data.SubmitDate)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Create initial summary
+	// get user ID
+	var user_id int64
+	err = db.QueryRow("SELECT id FROM Users WHERE login_name = ?", link_data.SubmittedBy).Scan(&user_id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// insert summary
+	_, err = db.Exec("INSERT INTO Summaries VALUES(?,?,?,?);", nil, auto_summary, link_data.ID, user_id)
 	if err != nil {
 		log.Fatal(err)
 	}

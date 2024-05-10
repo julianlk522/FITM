@@ -15,6 +15,7 @@ require (
 	github.com/go-chi/cors v1.2.1 // indirect
 	github.com/go-chi/jwtauth/v5 v5.3.1 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/jonlaing/htmlmeta v0.0.0-20151027182219-aa8670c4f78c // indirect
 	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.4 // indirect
@@ -23,5 +24,6 @@ require (
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	golang.org/x/crypto v0.22.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
 )
