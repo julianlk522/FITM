@@ -374,18 +374,20 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	// Create initial summary
-	// get user ID
-	var user_id int64
-	err = db.QueryRow("SELECT id FROM Users WHERE login_name = ?", link_data.SubmittedBy).Scan(&user_id)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Create initial summary if auto_summary successfully retrieves a title or description
+	if auto_summary != "" {
+		// get user ID
+		var user_id int64
+		err = db.QueryRow("SELECT id FROM Users WHERE login_name = ?", link_data.SubmittedBy).Scan(&user_id)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	// insert summary
-	_, err = db.Exec("INSERT INTO Summaries VALUES(?,?,?,?);", nil, auto_summary, link_data.ID, user_id)
-	if err != nil {
-		log.Fatal(err)
+		// insert summary
+		_, err = db.Exec("INSERT INTO Summaries VALUES(?,?,?,?);", nil, auto_summary, link_data.ID, user_id)
+		if err != nil {
+			log.Fatal(err)
+		}	
 	}
 
 	render.Status(r, http.StatusCreated)
