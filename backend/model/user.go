@@ -75,3 +75,8 @@ type EditAboutRequest struct {
 type EditPfpRequest struct {
 	PFP string `json:"pfp,omitempty"`
 }
+
+type TreasureMap struct {
+	Links []Link
+	Categories []CategoryCount
+}
