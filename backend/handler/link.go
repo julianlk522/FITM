@@ -25,7 +25,7 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	get_link_likes_sql := `SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id ORDER BY like_count DESC, link_id ASC;`
+	get_link_likes_sql := `SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id ORDER BY like_count DESC, link_id ASC;`
 
 	links := []model.Link{}
 	rows, err := db.Query(get_link_likes_sql)
@@ -36,7 +36,7 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		i := model.Link{}
-		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.LikeCount)
+		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.LikeCount)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -57,7 +57,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	get_link_likes_sql := `SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id`
+	get_link_likes_sql := `SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id`
 
 	switch chi.URLParam(r, "period") {
 	case "day":
@@ -82,7 +82,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		i := model.Link{}
-		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.LikeCount)
+		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.LikeCount)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -158,7 +158,7 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	rows, err = db.Query(fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as categories, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id WHERE link_id IN (%s) ORDER BY like_count DESC, link_id ASC;`, strings.Join(link_ids, ",")))
+	rows, err = db.Query(fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id WHERE link_id IN (%s) ORDER BY like_count DESC, link_id ASC;`, strings.Join(link_ids, ",")))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -166,7 +166,7 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	links := []model.Link{}
 	for rows.Next() {
 		i := model.Link{}
-		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.LikeCount)
+		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.LikeCount)
 		if err != nil {
 			log.Fatal(err)
 		}
