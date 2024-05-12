@@ -1,14 +1,14 @@
 ---
-import Card from '../components/Card.astro'
+import Link from '../components/Link.astro'
 import Layout from '../layouts/Layout.astro'
-import { type CategoryCount, type Link } from '../types'
+import { type CategoryCount, type LinkData } from '../types'
 
 const popular_cats_resp = await fetch('http://127.0.0.1:8000/tags/popular')
 // [{Category: 'umvc3', Count: 1}, ...]
 const popular_cats: CategoryCount[] = await popular_cats_resp.json()
 
 const trending_links_resp = await fetch('http://127.0.0.1:8000/links/week')
-const trending_links: Link[] = await trending_links_resp.json()
+const trending_links: LinkData[] = await trending_links_resp.json()
 
 const available_trending_links_durations = ['week', 'month', 'year', 'all']
 ---
@@ -66,7 +66,7 @@ const available_trending_links_durations = ['week', 'month', 'year', 'all']
 			></path></svg
 		>
 		<h1>Welcome to OITM</h1>
-		<h2 class='subtitle'>a map to the web's treasures</h2>
+		<h2 class='subtitle'>a map of the web's treasures</h2>
 		<h3>Popular Categories</h3>
 		<ul>
 			{
@@ -89,26 +89,8 @@ const available_trending_links_durations = ['week', 'month', 'year', 'all']
 				))
 			}
 		</div>
-		<ul>
-			{
-				trending_links.map((link) => (
-					<li>
-						{link.URL} ({link.LikeCount})
-					</li>
-				))
-			}
-		</ul>
-		<ul role='list' class='front-page-sections'>
-			<Card
-				href='https://astro.build/themes/'
-				title='Stats'
-				body='View statistics about overall link submissions and feedback.'
-			/>
-			<Card
-				href='https://astro.build/chat/'
-				title='Footer'
-				body='FAQ, leave feedback, maybe more.'
-			/>
+		<ul id='trending-links'>
+			{trending_links.map((link) => <Link link={link} />)}
 		</ul>
 	</main>
 </Layout>
@@ -142,10 +124,7 @@ const available_trending_links_durations = ['week', 'month', 'year', 'all']
 	.time-duration {
 		margin-left: 0.5rem;
 	}
-	.front-page-sections {
-		display: flex;
-		flex-direction: column;
-		gap: 20px;
+	#trending-links {
 		padding: 0;
 	}
 </style>

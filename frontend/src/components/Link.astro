@@ -1,0 +1,56 @@
+---
+import type { LinkData } from '../types'
+import format_date from '../util/format_date'
+interface Props {
+	link: LinkData
+}
+
+const {
+	URL: url,
+	SubmittedBy: submitted_by,
+	SubmitDate: submit_date,
+	Categories: categories,
+	Summary: summary,
+	LikeCount: like_count,
+} = Astro.props.link
+---
+
+<li class='link'>
+	<a href={url}>
+		<h2>
+			{summary ? summary : url}
+		</h2>
+	</a>
+	<p>Submitted By: {submitted_by} on {format_date(submit_date)}</p>
+	<p>
+		Categories: {
+			categories ? (
+				categories
+			) : (
+				<>
+					<span>none - </span>
+					<a href='/'>add category(ies)</a>
+				</>
+			)
+		}
+	</p>
+	<p>Likes: {like_count}</p>
+	<button>Like</button>
+	<button>View alternative summaries / submit new summary</button>
+</li>
+<style>
+	h2 {
+		margin: 0;
+		font-size: 1.25rem;
+		transition: color 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+	p {
+		margin-top: 0.5rem;
+		margin-bottom: 0;
+	}
+	.link {
+		list-style: none;
+		border: 1px solid rgba(var(--accent), 25%);
+		margin: 10px 0;
+	}
+</style>

@@ -9,14 +9,15 @@ type CategoryContributor = {
 	LinksSubmitted: number
 }
 
-type Link = {
+type LinkData = {
 	ID: number
 	URL: string
 	SubmittedBy: string
 	SubmitDate: string
-	Categories: string
+	Categories: string | null
+	Summary: string | null
 	LikeCount: number
 }
 
-export type { CategoryContributor, CategoryCount, Link }
+export type { CategoryContributor, CategoryCount, LinkData }
 
