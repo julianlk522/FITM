@@ -60,7 +60,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 
 	const LIMIT string = "20"
 
-	get_link_likes_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id LIMIT %s;`, LIMIT)
+	get_link_likes_sql := `SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id`
 
 	switch chi.URLParam(r, "period") {
 	case "day":
@@ -74,7 +74,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	get_link_likes_sql += ` ORDER BY like_count DESC, link_id ASC;`
+	get_link_likes_sql += fmt.Sprintf(` ORDER BY like_count DESC, link_id ASC LIMIT %s;`, LIMIT)
 
 	links := []model.Link{}
 	rows, err := db.Query(get_link_likes_sql)
