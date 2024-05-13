@@ -169,10 +169,6 @@ func EditProfile(w http.ResponseWriter, r *http.Request) {
 // (includes links tagged by and copied by user, plus category sum counts)
 // (all links submitted by a user will have a tag from that user, so includes all user's submitted links)
 func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
-	
-	// limit to top 5 categories for now
-	CATEGORY_LIMIT := 5
-
 	var login_name string = chi.URLParam(r, "login_name")
 
 	db ,err := sql.Open("sqlite3", "./db/oitm.db")
@@ -180,6 +176,14 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
+	// check that user exists
+	var u sql.NullString
+	err = db.QueryRow("SELECT login_name FROM Users WHERE login_name = ?;", login_name).Scan(&u)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("user not found")))
+		return
+	}
 
 	// get user-assigned tag categories
 	get_custom_cats_sql := fmt.Sprintf(`SELECT link_id, categories as cats FROM Tags JOIN Users
@@ -215,9 +219,8 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	if !rows.Next() {
-		render.Status(r, http.StatusNoContent)
-		render.JSON(w, r, nil)
-		return
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, model.TreasureMap{})
 	}
 	
 	links := []model.Link{}
@@ -285,9 +288,15 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 
 	// sort categories by count
 	slices.SortFunc(cat_counts, model.SortCategories)
+
+	// limit to top 5 categories for now
+	CATEGORY_LIMIT := 5
+	if len(cat_counts) > CATEGORY_LIMIT {
+		cat_counts = cat_counts[:CATEGORY_LIMIT]
+	}
 	
 	// combine links and categories in response
-	tmap := model.TreasureMap{Links: links, Categories: cat_counts[:CATEGORY_LIMIT]}
+	tmap := model.TreasureMap{Links: links, Categories: cat_counts}
 
 	render.JSON(w, r, tmap)
 	render.Status(r, http.StatusOK)

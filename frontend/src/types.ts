@@ -19,5 +19,10 @@ type LinkData = {
 	LikeCount: number
 }
 
-export type { CategoryContributor, CategoryCount, LinkData }
+type TreasureMap = {
+	Links: LinkData[]
+	CategoryCounts: CategoryCount[]
+}
+
+export type { CategoryContributor, CategoryCount, LinkData, TreasureMap }
 
