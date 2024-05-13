@@ -24,9 +24,10 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	defer db.Close()
-
-	get_link_likes_sql := `SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id ORDER BY like_count DESC, link_id ASC;`
-
+	
+	const LIMIT string = "20"
+	get_link_likes_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id ORDER BY like_count DESC, link_id ASC LIMIT %s;`, LIMIT)
+	
 	links := []model.Link{}
 	rows, err := db.Query(get_link_likes_sql)
 	if err != nil {
@@ -57,7 +58,9 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	get_link_likes_sql := `SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id`
+	const LIMIT string = "20"
+
+	get_link_likes_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id LIMIT %s;`, LIMIT)
 
 	switch chi.URLParam(r, "period") {
 	case "day":
@@ -143,11 +146,8 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 
 	// if no links found, return status message
 	if len(link_ids) == 0 {
-		return_json := map[string]string{
-			"message": "no links found",
-		}
-		render.JSON(w, r, return_json)
-		render.Status(r, http.StatusNoContent)
+		render.JSON(w, r, []model.Link{})
+		render.Status(r, http.StatusOK)
 		return
 	}
 
@@ -158,7 +158,8 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	rows, err = db.Query(fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id WHERE link_id IN (%s) ORDER BY like_count DESC, link_id ASC;`, strings.Join(link_ids, ",")))
+	const LIMIT string = "20"
+	rows, err = db.Query(fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id WHERE link_id IN (%s) ORDER BY like_count DESC, link_id ASC LIMIT %s;`, strings.Join(link_ids, ","), LIMIT))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -228,8 +229,8 @@ func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
 // todo: change from Tags (categories) to Links (global_cats) once there is more data to query
 func GetTopSubcategories(w http.ResponseWriter, r *http.Request) {
 
-	// Limit 5 for now
-	const LIMIT int = 5
+	// Limit 20 for now
+	const LIMIT int = 20
 
 	db ,err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
@@ -275,11 +276,8 @@ func GetTopSubcategories(w http.ResponseWriter, r *http.Request) {
 
 	// if no links found, return status message
 	if len(subcats) == 0 {
-		return_json := map[string]string{
-			"message": "no subcategories found",
-		}
-		render.JSON(w, r, return_json)
-		render.Status(r, http.StatusNoContent)
+		render.JSON(w, r, []string{})
+		render.Status(r, http.StatusOK)
 		return
 	}
 
@@ -304,8 +302,13 @@ func GetTopSubcategories(w http.ResponseWriter, r *http.Request) {
 	// sort by count
 	slices.SortFunc(subcats_with_counts, model.SortCategories)
 
+	// limit to top {LIMIT} categories
+	if len(subcats_with_counts) > LIMIT {
+		subcats_with_counts = subcats_with_counts[0:LIMIT]
+	}
+
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, subcats_with_counts[0:LIMIT])
+	render.JSON(w, r, subcats_with_counts)
 }
 
 // ADD NEW LINK
