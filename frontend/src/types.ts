@@ -21,7 +21,7 @@ type LinkData = {
 
 type TreasureMap = {
 	Links: LinkData[]
-	CategoryCounts: CategoryCount[]
+	Categories: CategoryCount[]
 }
 
 export type { CategoryContributor, CategoryCount, LinkData, TreasureMap }
