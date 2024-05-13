@@ -117,13 +117,13 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 			get_links_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, categories[i])
 		}
 
-		get_links_sql += ` group by link_id`
 	// single category
 	} else {
 
 		// get link IDs
-		get_links_sql = fmt.Sprintf(`select id from Links where ',' || global_cats || ',' like '%%,%s,%%' group by id`, categories_params)
+		get_links_sql = fmt.Sprintf(`select id from Links where ',' || global_cats || ',' like '%%,%s,%%'`, categories_params)
 	}
+	get_links_sql += ` group by id`
 
 	rows, err := db.Query(get_links_sql)
 	if err != nil {
