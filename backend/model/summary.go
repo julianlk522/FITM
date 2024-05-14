@@ -5,6 +5,12 @@ import (
 	"net/http"
 )
 
+type Summary struct {
+	ID string `json:"id"`
+	Text string `json:"text"`
+	SubmittedByID string `json:"submitted_by_id"`
+}
+
 type SummaryRequest struct {
 	*NewSummaryRequest
 	*EditSummaryRequest

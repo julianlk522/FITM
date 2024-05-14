@@ -72,6 +72,7 @@ func main() {
 	r.Put("/tags", handler.EditTag)
 
 	// SUMMARIES
+	r.Get("/summaries/{link_id}", handler.GetSummariesForLink)
 	r.Post("/summaries", handler.AddSummaryOrSummaryLike)
 	r.Patch("/summaries", handler.EditSummary)
 	r.Delete("/summaries", handler.DeleteOrUnlikeSummary)

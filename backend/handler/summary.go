@@ -7,10 +7,54 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 
 	"oitm/model"
 )
+
+// GET SUMMARIES FOR LINK
+func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
+
+	link_id := chi.URLParam(r, "link_id")
+	if link_id == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no link id found")))
+		return
+	}
+
+	db, err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// TODO: check auth token
+
+	// Get summaries
+	get_summaries_sql := fmt.Sprintf(`SELECT id, text, submitted_by FROM Summaries WHERE link_id = '%s'`, link_id)
+	rows, err := db.Query(get_summaries_sql)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	summaries := []model.Summary{}
+
+	if rows.Next() {
+		for ok := true; ok; ok = rows.Next() {
+			i := model.Summary{}
+			err := rows.Scan(&i.ID, &i.Text, &i.SubmittedByID)
+			if err != nil {
+				log.Fatal(err)
+			}
+			summaries = append(summaries, i)
+		
+		}
+	}
+
+	render.JSON(w, r, summaries)
+	render.Status(r, http.StatusOK)
+}
 
 // ADD / LIKE SUMMARY
 // (depending on JSON fields supplied)
