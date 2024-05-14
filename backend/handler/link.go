@@ -59,9 +59,18 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	const LIMIT string = "20"
-
-	get_link_likes_sql := `SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id`
+	get_link_likes_sql := `SELECT links_id as link_id, url, link_author as subitted_by, submit_date, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count
+	FROM
+		(
+		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count
+		FROM LINKS
+		LEFT JOIN 
+			(
+			SELECT link_id as likes_link_id, count(*) as like_count
+			FROM 'Link Likes'
+			GROUP BY likes_link_id
+			)
+		ON Links.id = likes_link_id`
 
 	switch chi.URLParam(r, "period") {
 	case "day":
@@ -75,7 +84,10 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	get_link_likes_sql += fmt.Sprintf(` ORDER BY like_count DESC, link_id ASC LIMIT %s;`, LIMIT)
+	const LIMIT string = "20"
+	get_link_likes_sql += fmt.Sprintf(`) LEFT JOIN Summaries
+	ON Summaries.link_id = links_id
+	GROUP BY links_id ORDER BY like_count DESC, link_id ASC LIMIT %s;`, LIMIT)
 
 	links := []model.Link{}
 	rows, err := db.Query(get_link_likes_sql)
@@ -86,7 +98,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		i := model.Link{}
-		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.LikeCount)
+		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
 		if err != nil {
 			log.Fatal(err)
 		}
