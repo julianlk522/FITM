@@ -6,13 +6,17 @@ interface Props {
 }
 
 const {
+	ID: id,
 	URL: url,
 	SubmittedBy: submitted_by,
 	SubmitDate: submit_date,
 	Categories: categories,
 	Summary: summary,
+	SummaryCount: summary_count,
 	LikeCount: like_count,
 } = Astro.props.link
+
+const is_summary_page = Astro.url.pathname.startsWith('/summary/')
 ---
 
 <li class='link'>
@@ -35,7 +39,13 @@ const {
 		}
 	</p>
 	<button>Like ({like_count})</button>
-	<button>View alternative summaries / submit new summary</button>
+	{
+		is_summary_page ? null : (
+			<a href={`/summary/${id}`}>
+				View all summaries ({summary_count}) or add new
+			</a>
+		)
+	}
 </li>
 <style>
 	h2 {

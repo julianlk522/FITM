@@ -7,6 +7,7 @@ type LinkData = {
 	SubmitDate: string
 	Categories: string | null
 	Summary: string | null
+	SummaryCount: number
 	LikeCount: number
 }
 
