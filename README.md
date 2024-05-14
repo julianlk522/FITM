@@ -2,10 +2,14 @@
 
 ## Todos:
 
--User API actions (sign up, log in, edit profile)
--Create tag categories db (single terms available for assignment)
--backend logic to follow link and observe HTTP status before adding to db
--Edit link tags actions
+-Upload/change user profile pic
+-Display user about / profile pic on treasure map page
+-Link like/unlike client-side logic and display
+-Summary like/unlike client-side logic and display
+-Pagination
+-Tests
+-Make frontend look decent
+    -A11y for phones / tablets
 
 ## Why?
 

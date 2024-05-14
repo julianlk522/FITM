@@ -28,6 +28,7 @@ type Link struct {
 	SubmitDate string
 	Categories string
 	Summary string
+	SummaryCount int
 	LikeCount int64
 }
 
