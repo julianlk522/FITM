@@ -38,8 +38,9 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get link
+	get_link_sql := fmt.Sprintf(`SELECT links_id as link_id, url, submitted_by, submit_date, coalesce(categories,"") as categories, summary, COUNT('Link Likes'.id) as like_count FROM (SELECT id as links_id, url, submitted_by, submit_date, global_cats as categories, global_summary as summary FROM Links WHERE id = '%s') LEFT JOIN 'Link Likes' ON 'Link Likes'.link_id = links_id`, link_id)
 	var link model.Link
-	err = db.QueryRow(fmt.Sprintf(`SELECT links_id as link_id, url, submitted_by, submit_date, categories, summary, COUNT(*) as like_count FROM 'Link Likes' JOIN (SELECT id as links_id, url, submitted_by, submit_date, global_cats as categories, global_summary as summary FROM Links WHERE id = '%s') ON 'Link Likes'.link_id = links_id`, link_id)).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount)
+	err = db.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			render.Status(r, http.StatusNotFound)
@@ -50,7 +51,7 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get summaries and like counts
-	get_summaries_sql := fmt.Sprintf(`SELECT sumid, text, login_name, count(*) as like_count FROM 'Summary Likes' JOIN (SELECT sumid, text, Users.login_name FROM (SELECT id as sumid, text, submitted_by FROM Summaries WHERE link_id = '%s') JOIN Users ON Users.id = submitted_by) ON 'Summary Likes'.summary_id = sumid GROUP BY 'Summary Likes'.summary_id;`, link_id)
+	get_summaries_sql := fmt.Sprintf(`SELECT sumid, text, login_name, coalesce(count('Summary Likes'.id),0) as like_count FROM (SELECT sumid, text, Users.login_name FROM (SELECT id as sumid, text, submitted_by FROM Summaries WHERE link_id = '%s') JOIN Users ON Users.id = submitted_by) LEFT JOIN 'Summary Likes' ON 'Summary Likes'.summary_id = sumid GROUP BY sumid;`, link_id)
 	rows, err := db.Query(get_summaries_sql)
 	if err != nil {
 		log.Fatal(err)
@@ -58,16 +59,13 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	summaries := []model.Summary{}
-	if rows.Next() {
-		for ok := true; ok; ok = rows.Next() {
-			i := model.Summary{}
-			err := rows.Scan(&i.ID, &i.Text, &i.SubmittedBy, &i.LikeCount)
-			if err != nil {
-				log.Fatal(err)
-			}
-			summaries = append(summaries, i)
-		
+	for rows.Next() {
+		i := model.Summary{}
+		err := rows.Scan(&i.ID, &i.Text, &i.SubmittedBy, &i.LikeCount)
+		if err != nil {
+			log.Fatal(err)
 		}
+		summaries = append(summaries, i)
 	}
 	if err != nil {
 		log.Fatal(err)

@@ -197,16 +197,14 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	var user_custom_cats []model.CustomLinkCategories
-	if rows.Next() {
-		for ok := true; ok; ok = rows.Next() {
-			i := model.CustomLinkCategories{}
-			err := rows.Scan(&i.LinkID, &i.Categories)
-			if err != nil {
-				log.Fatal(err)
-			}
-			user_custom_cats = append(user_custom_cats, i)
-		
+	for rows.Next() {
+		i := model.CustomLinkCategories{}
+		err := rows.Scan(&i.LinkID, &i.Categories)
+		if err != nil {
+			log.Fatal(err)
 		}
+		user_custom_cats = append(user_custom_cats, i)
+	
 	}
 	
 
@@ -224,7 +222,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	links := []model.Link{}
-	for ok := true; ok; ok = rows.Next() {
+	for rows.Next() {
 		i := model.Link{}
 		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.LikeCount)
 		if err != nil {

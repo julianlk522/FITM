@@ -13,7 +13,6 @@ if (get_summaries_resp.status > 399) {
 	return Astro.redirect('/404')
 }
 const summary_data: SummaryPage = await get_summaries_resp.json()
-console.log(summary_data)
 ---
 
 <Layout title=`Summaries for ${summary_data.Link.Summary}`>
