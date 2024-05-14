@@ -1,0 +1,34 @@
+---
+import Link from '../../components/Link.astro'
+import Summary from '../../components/Summary.astro'
+import Layout from '../../layouts/Layout.astro'
+import type { SummaryPage } from '../../types'
+
+const { link_id } = Astro.params
+
+const get_summaries_resp = await fetch(
+	`http://127.0.0.1:8000/summaries/${link_id}`
+)
+if (get_summaries_resp.status > 399) {
+	return Astro.redirect('/404')
+}
+const summary_data: SummaryPage = await get_summaries_resp.json()
+console.log(summary_data)
+---
+
+<Layout title=`Summaries for ${summary_data.Link.Summary}`>
+	<main>
+		<h2>Link:</h2>
+		<Link link={summary_data.Link} />
+		<h2>Summaries:</h2>
+		<ul>
+			{
+				summary_data.Summaries.map((summary) => (
+					<Summary summary={summary} />
+				))
+			}
+		</ul>
+	</main>
+</Layout>
+
+<style></style>

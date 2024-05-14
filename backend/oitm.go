@@ -78,7 +78,7 @@ func main() {
 	r.Delete("/summaries", handler.DeleteOrUnlikeSummary)
 
 	// Serve
-	// make sure this runs *after* all routes
+	// make sure this runs after all routes
 	if err := http.ListenAndServe("localhost:8000", r); err != nil {
 		log.Fatal(err)
 	}

@@ -1,0 +1,16 @@
+---
+import type { Summary } from '../types'
+interface Props {
+	summary: Summary
+}
+
+const { ID, Text, SubmittedBy, LikeCount } = Astro.props.summary
+console.log(Astro.props)
+---
+
+<li class='summary'>
+	{Text}
+	<p>Submitted By: {SubmittedBy}</p>
+	<button class='like-button'>Like ({LikeCount})</button>
+</li>
+<style></style>

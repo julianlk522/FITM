@@ -1,3 +1,16 @@
+
+// LINK
+type LinkData = {
+	ID: number
+	URL: string
+	SubmittedBy: string
+	SubmitDate: string
+	Categories: string | null
+	Summary: string | null
+	LikeCount: number
+}
+
+// CATEGORY
 type CategoryCount = {
 	Category: string
 	Count: number
@@ -9,20 +22,24 @@ type CategoryContributor = {
 	LinksSubmitted: number
 }
 
-type LinkData = {
+// SUMMARY
+type Summary = {
 	ID: number
-	URL: string
+	Text: string
 	SubmittedBy: string
-	SubmitDate: string
-	Categories: string | null
-	Summary: string | null
 	LikeCount: number
 }
 
+type SummaryPage = {
+	Link: LinkData
+	Summaries: Summary[]
+}
+
+// TREASURE MAP
 type TreasureMap = {
 	Links: LinkData[]
 	Categories: CategoryCount[]
 }
 
-export type { CategoryContributor, CategoryCount, LinkData, TreasureMap }
+export type { CategoryContributor, CategoryCount, LinkData, Summary, SummaryPage, TreasureMap }
 

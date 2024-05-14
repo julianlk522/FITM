@@ -15,7 +15,6 @@ import (
 
 // GET SUMMARIES FOR LINK
 func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
-
 	link_id := chi.URLParam(r, "link_id")
 	if link_id == "" {
 		render.Render(w, r, ErrInvalidRequest(errors.New("no link id found")))
@@ -30,8 +29,28 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: check auth token
 
-	// Get summaries
-	get_summaries_sql := fmt.Sprintf(`SELECT id, text, submitted_by FROM Summaries WHERE link_id = '%s'`, link_id)
+	// Check if link exists, Abort if invalid link ID provided
+	var l sql.NullString
+	err = db.QueryRow("SELECT id FROM Links WHERE id = ?;", link_id).Scan(&l)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no link found with given ID")))
+		return
+	}
+
+	// Get link
+	var link model.Link
+	err = db.QueryRow(fmt.Sprintf(`SELECT links_id as link_id, url, submitted_by, submit_date, categories, summary, COUNT(*) as like_count FROM 'Link Likes' JOIN (SELECT id as links_id, url, submitted_by, submit_date, global_cats as categories, global_summary as summary FROM Links WHERE id = '%s') ON 'Link Likes'.link_id = links_id`, link_id)).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			render.Status(r, http.StatusNotFound)
+			render.JSON(w, r, ErrResponse{Err: errors.New("link not found")})
+		} else {
+			log.Fatal(err)
+		}
+	}
+
+	// Get summaries and like counts
+	get_summaries_sql := fmt.Sprintf(`SELECT sumid, text, login_name, count(*) as like_count FROM 'Summary Likes' JOIN (SELECT sumid, text, Users.login_name FROM (SELECT id as sumid, text, submitted_by FROM Summaries WHERE link_id = '%s') JOIN Users ON Users.id = submitted_by) ON 'Summary Likes'.summary_id = sumid GROUP BY 'Summary Likes'.summary_id;`, link_id)
 	rows, err := db.Query(get_summaries_sql)
 	if err != nil {
 		log.Fatal(err)
@@ -39,11 +58,10 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	summaries := []model.Summary{}
-
 	if rows.Next() {
 		for ok := true; ok; ok = rows.Next() {
 			i := model.Summary{}
-			err := rows.Scan(&i.ID, &i.Text, &i.SubmittedByID)
+			err := rows.Scan(&i.ID, &i.Text, &i.SubmittedBy, &i.LikeCount)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -51,8 +69,16 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 		
 		}
 	}
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	render.JSON(w, r, summaries)
+	summary_page := model.SummaryPage{
+		Link: link,
+		Summaries: summaries,
+	}
+
+	render.JSON(w, r, summary_page)
 	render.Status(r, http.StatusOK)
 }
 
