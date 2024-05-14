@@ -62,6 +62,8 @@ func main() {
 	r.Get("/links/cat/{categories}/users", handler.GetTopCategoryContributors)
 	r.Get("/links/subcat/{categories}", handler.GetTopSubcategories)
 	r.Post("/links", handler.AddLink)
+	r.Post("/links/{link_id}/like", handler.LikeLink)
+	r.Delete("/links/{like_id}/like", handler.UnlikeLink)
 	r.Post("/links/copy", handler.CopyLinkToMap)
 	r.Delete("/links/copy", handler.UncopyLink)
 	r.Get("/links/{id}/likes", handler.GetLinkLikes)

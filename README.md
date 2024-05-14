@@ -5,11 +5,12 @@
 -Upload/change user profile pic
 -Display user about / profile pic on treasure map page
 -Link like/unlike client-side logic and display
+    -way to know that requesting user has liked {link} when it is fetched
 -Summary like/unlike client-side logic and display
 -Pagination
 -Tests
 -Make frontend look decent
-    -A11y for phones / tablets
+    -A11y, responsive layouts for phones / tablets
 
 ## Why?
 

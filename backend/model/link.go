@@ -54,6 +54,31 @@ func (a *NewLinkRequest) Bind(r *http.Request) error {
 	return nil
 }
 
+type LinkLikeRequest struct {
+	ID int64
+	UserID string `json:"user_id"`
+}
+
+func (a *LinkLikeRequest) Bind(r *http.Request) error {
+	if a.UserID == "" {
+		return errors.New("missing user ID")
+	}
+
+	return nil
+}
+
+type DeleteLinkLikeRequest struct {
+	AuthToken string `json:"token"`
+}
+
+func (a *DeleteLinkLikeRequest) Bind(r *http.Request) error {
+	if a.AuthToken == "" {
+		return errors.New("missing auth token")
+	}
+
+	return nil
+}
+
 type LinkCopyRequest struct {
 	ID int64
 	AuthToken string `json:"token"`

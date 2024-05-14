@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -426,6 +427,109 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, link_data)
+}
+
+// LIKE LINK
+func LikeLink(w http.ResponseWriter, r *http.Request) {
+	like_link_data := &model.LinkLikeRequest{}
+	if err := render.Bind(r, like_link_data); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	link_id := chi.URLParam(r, "link_id")
+
+	db, err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// TODO: check auth token
+
+	// Check if link doesn't exist or if link submitted by same user, Abort if either
+	var n sql.NullString
+	err = db.QueryRow("SELECT submitted_by FROM Links WHERE id = ?;", link_id).Scan(&n)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link ID")))
+		return
+	}
+
+	var uid sql.NullInt64
+	err = db.QueryRow("SELECT id FROM Users WHERE login_name = ?;",n.String).Scan(&uid)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	req_uid, _ := strconv.ParseInt(like_link_data.UserID, 10, 64)
+	if uid.Int64 == req_uid {
+		render.Render(w, r, ErrInvalidRequest(errors.New("cannot like your own link")))
+		return
+	}
+
+	// Check if user already liked this link, Abort if already liked
+	var l sql.NullString
+	err = db.QueryRow("SELECT id FROM 'Link Likes' WHERE link_id = ? AND user_id = ?;", link_id, like_link_data.UserID).Scan(&l)
+	if err == nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("already liked")))
+		return
+	}
+
+	res, err := db.Exec("INSERT INTO 'Link Likes' VALUES(?,?,?);", nil, like_link_data.UserID, link_id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var id int64
+	if id, err = res.LastInsertId(); err != nil {
+		log.Fatal(err)
+	}
+	like_link_data.ID = id
+
+	render.Status(r, http.StatusCreated)
+	render.JSON(w, r, like_link_data)
+}
+
+// UN-LIKE LINK
+func UnlikeLink(w http.ResponseWriter, r *http.Request) {
+	unlike_link_data := &model.DeleteLinkLikeRequest{}
+	if err := render.Bind(r, unlike_link_data); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	like_id := chi.URLParam(r, "like_id")
+	if like_id == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link like ID provided")))
+		return
+	}
+
+	db, err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// TODO: check auth token
+
+	// Check if link like exists, Abort if invalid link ID provided
+	var l sql.NullString
+	err = db.QueryRow("SELECT id FROM 'Link Likes' WHERE id = ?;", like_id).Scan(&l)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("link like not found")))
+		return
+	}
+
+	_, err = db.Exec("DELETE FROM 'Link Likes' WHERE id = ?;", like_id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	response_json := map[string]string{
+		"message": "deleted",
+	}
+	render.Status(r, http.StatusAccepted)
+	render.JSON(w, r, response_json)
 }
 
 // COPY LINK TO USER'S TREASURE MAP
