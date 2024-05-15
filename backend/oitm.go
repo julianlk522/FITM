@@ -85,7 +85,7 @@ func main() {
 
 		// SUMMARIES
 		r.Post("/summaries", handler.AddSummaryOrSummaryLike)
-		r.Patch("/summaries", handler.EditSummary)
+		r.Put("/summaries", handler.EditSummary)
 		r.Delete("/summaries", handler.DeleteOrUnlikeSummary)
 
 	})

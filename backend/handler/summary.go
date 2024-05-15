@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
 
 	"oitm/model"
@@ -26,8 +28,6 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	defer db.Close()
-
-	// TODO: check auth token
 
 	// Check if link exists, Abort if invalid link ID provided
 	var l sql.NullString
@@ -83,11 +83,22 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 // ADD / LIKE SUMMARY
 // (depending on JSON fields supplied)
 func AddSummaryOrSummaryLike(w http.ResponseWriter, r *http.Request) {
-	summary_data := &model.SummaryRequest{}
+	summary_data := &model.NewSummaryOrSummaryLikeRequest{}
 
 	if err := render.Bind(r, summary_data); err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
+	}
+
+	// Check auth token
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err != nil {
+		log.Fatal(err)
+	}
+	req_user_id, ok := claims["user_id"]
+	if !ok {
+		log.Fatal("invalid auth token")
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -108,9 +119,15 @@ func AddSummaryOrSummaryLike(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// TODO: check auth token
+		// Check if user already submitted a summary to this link, Abort if so
+		var lid sql.NullString
+		err = db.QueryRow("SELECT id FROM Summaries WHERE link_id = ? AND submitted_by = ?", summary_data.LinkID, req_user_id).Scan(&lid)
+		if err == nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("existing summary found from user for link")))
+			return
+		}
 
-		_, err := db.Exec(`INSERT INTO Summaries VALUES (?,?,?,?)`, nil, summary_data.NewSummaryRequest.Text, summary_data.NewSummaryRequest.LinkID, summary_data.NewSummaryRequest.SubmittedByID)
+		_, err := db.Exec(`INSERT INTO Summaries VALUES (?,?,?,?)`, nil, summary_data.NewSummaryRequest.Text, summary_data.NewSummaryRequest.LinkID, req_user_id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -126,9 +143,15 @@ func AddSummaryOrSummaryLike(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// TODO: check auth token
+		// Check if user already liked summary, Abort if so
+		var lid sql.NullString
+		err = db.QueryRow("SELECT id FROM 'Summary Likes' WHERE summary_id = ? AND user_id = ?", summary_data.NewSummaryLikeRequest.SummaryID, req_user_id).Scan(&lid)
+		if err == nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("already liked")))
+			return
+		}
 
-		_, err = db.Exec(`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, nil, summary_data.NewSummaryLikeRequest.UserID, summary_data.NewSummaryLikeRequest.SummaryID)
+		_, err = db.Exec(`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, nil, req_user_id, summary_data.NewSummaryLikeRequest.SummaryID)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -143,31 +166,50 @@ func AddSummaryOrSummaryLike(w http.ResponseWriter, r *http.Request) {
 
 // EDIT SUMMARY
 func EditSummary(w http.ResponseWriter, r *http.Request) {
-	edit_data := &model.SummaryRequest{}
+	edit_data := &model.EditSummaryRequest{}
 
 	if err := render.Bind(r, edit_data); err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
 
+	// Check auth token
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err != nil {
+		log.Fatal(err)
+	}
+	req_user_id, ok := claims["user_id"]
+	if !ok {
+		log.Fatal("invalid auth token")
+	}
+
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer db.Close()
 
-	// TODO: check auth token
-
-	// Check if summary exists, Abort if not
+	// Check if summary doesn't exist or submitted by a different user, Abort if either
 	var s sql.NullString
-	err = db.QueryRow("SELECT id FROM Summaries WHERE id = ?", edit_data.EditSummaryRequest.SummaryID).Scan(&s)
+	var u sql.NullInt64
+	err = db.QueryRow("SELECT id, submitted_by FROM Summaries WHERE id = ?", edit_data.SummaryID).Scan(&s, &u)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
 		return
 	}
 
-	_, err = db.Exec(`UPDATE Summaries SET text = ? WHERE id = ?`, edit_data.EditSummaryRequest.Text, edit_data.EditSummaryRequest.SummaryID)
+	req_user_id_int64, err := strconv.ParseInt(req_user_id.(string), 10, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if u.Int64 != req_user_id_int64 {
+		render.Render(w, r, ErrInvalidRequest(errors.New("cannot edit another user's summary")))
+		return
+	}
+
+	// Update summary
+	_, err = db.Exec(`UPDATE Summaries SET text = ? WHERE id = ?`, edit_data.Text, edit_data.SummaryID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -179,11 +221,21 @@ func EditSummary(w http.ResponseWriter, r *http.Request) {
 // DELETE / UN-LIKE SUMMARY
 // (depending on JSON fields supplied)
 func DeleteOrUnlikeSummary(w http.ResponseWriter, r *http.Request) {
-	summary_data := &model.SummaryRequest{}
-
+	summary_data := &model.DeleteSummaryOrSummaryLikeRequest{}
 	if err := render.Bind(r, summary_data); err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
+	}
+
+	// Check auth token
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err != nil {
+		log.Fatal(err)
+	}
+	req_user_id, ok := claims["user_id"]
+	if !ok {
+		log.Fatal("invalid auth token")
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -192,20 +244,45 @@ func DeleteOrUnlikeSummary(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// TODO: check auth token
+	// req_user_id_int64 will be used to check if user submitted summary / summary like
+	req_user_id_int64, err := strconv.ParseInt(req_user_id.(string), 10, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// Declare link ID for summary / summary like to update global_summary later
+	// link ID will be used to recalculate link's new global_summary after summary deletion
 	var lid sql.NullString
 	var get_lid_sql string
 
 	// Delete Summary
 	if summary_data.DeleteSummaryRequest != nil {
 
+		// Check that summary exists and submitted by user, Abort if not
+		var u sql.NullInt64
+		err = db.QueryRow("SELECT submitted_by FROM Summaries WHERE id = ?", summary_data.DeleteSummaryRequest.SummaryID).Scan(&u)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
+			return
+		} else if u.Int64 != req_user_id_int64 {
+			render.Render(w, r, ErrInvalidRequest(errors.New("not your summary")))
+			return
+		}
+
 		// Get link ID
 		get_lid_sql = fmt.Sprintf(`SELECT link_id FROM Summaries WHERE id = '%s'`, summary_data.DeleteSummaryRequest.SummaryID)
 		err = db.QueryRow(get_lid_sql).Scan(&lid)
 		if err != nil {
 			log.Fatal(err)
+		}
+
+		// Check that summary is not only summary for its link, Abort if so
+		var c sql.NullInt32
+		err = db.QueryRow("SELECT COUNT(id) FROM Summaries WHERE link_id = ?", lid.String).Scan(&c)
+		if err != nil {
+			log.Fatal(err)
+		} else if c.Int32 == 1 {
+			render.Render(w, r, ErrInvalidRequest(errors.New("last summary for link, cannot delete")))
+			return
 		}
 
 		// Delete Summary
@@ -216,6 +293,17 @@ func DeleteOrUnlikeSummary(w http.ResponseWriter, r *http.Request) {
 
 	// Unlike Summary
 	} else if summary_data.DeleteSummaryLikeRequest != nil {
+
+		// Check that summary like exists and submitted by user, Abort if not
+		var u sql.NullInt64
+		err = db.QueryRow("SELECT user_id FROM 'Summary Likes' WHERE id = ?", summary_data.DeleteSummaryLikeRequest.SummaryLikeID).Scan(&u)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(errors.New("summary like not found")))
+			return
+		} else if u.Int64 != req_user_id_int64 {
+			render.Render(w, r, ErrInvalidRequest(errors.New("not your summary like")))
+			return
+		}
 
 		// Get link ID
 		get_lid_sql = fmt.Sprintf(`SELECT link_id FROM Summaries WHERE Summaries.id IN (SELECT summary_id FROM 'Summary Likes' WHERE 'Summary Likes'.id = '%s');`, summary_data.DeleteSummaryLikeRequest.SummaryLikeID)
@@ -235,7 +323,7 @@ func DeleteOrUnlikeSummary(w http.ResponseWriter, r *http.Request) {
 	recalc_global_summary(lid.String, db)
 
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]string{"status": "accepted"})
+	render.JSON(w, r, map[string]string{"message": "deleted"})
 
 }
 

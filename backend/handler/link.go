@@ -561,11 +561,8 @@ func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	response_json := map[string]string{
-		"message": "deleted",
-	}
-	render.Status(r, http.StatusAccepted)
-	render.JSON(w, r, response_json)
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, map[string]string{"message": "deleted"})
 }
 
 // COPY LINK TO USER'S TREASURE MAP
