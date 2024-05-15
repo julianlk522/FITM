@@ -118,6 +118,31 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, return_json)
 }
 
+// GET PROFILE
+func GetProfile(w http.ResponseWriter, r *http.Request) {
+	login_name := chi.URLParam(r, "login_name")
+	if login_name == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid login name provided")))
+		return
+	}
+
+	db, err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	var u model.User
+	err = db.QueryRow(`SELECT login_name, coalesce(about,"") as about, coalesce(pfp,"") as pfp, coalesce(created,"") as created FROM Users WHERE login_name = ?;`, login_name).Scan(&u.LoginName, &u.About, &u.PFP, &u.Created)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("user not found")))
+		return
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, u)
+}
+
 // EDIT PROFILE
 func EditProfile(w http.ResponseWriter, r *http.Request) {
 	edit_profile_data := &model.EditProfileRequest{}
@@ -133,15 +158,25 @@ func EditProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 	
-	return_json := map[string]string{"token": edit_profile_data.AuthToken}
-	
-	// TODO: check auth token
+	// Check auth token
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err != nil {
+		log.Fatal(err)
+	}
+	req_user_id, ok := claims["user_id"]
+	if !ok {
+		log.Fatal("invalid auth token")
+	}
+
+	// Update profile
+	return_json := map[string]interface{}{}
 
 	// About
 	if edit_profile_data.EditAboutRequest != nil {
 		// TODO replace hard-coded id with id corresponding
 		// to provided auth token
-		_, err = db.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_profile_data.EditAboutRequest.About, edit_profile_data.AuthToken)
+		_, err = db.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_profile_data.EditAboutRequest.About, req_user_id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -153,7 +188,7 @@ func EditProfile(w http.ResponseWriter, r *http.Request) {
 	if edit_profile_data.EditPfpRequest != nil {
 		// TODO replace hard-coded id with id corresponding
 		// to provided auth token
-		_, err = db.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, edit_profile_data.EditPfpRequest.PFP, edit_profile_data.AuthToken)
+		_, err = db.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, edit_profile_data.EditPfpRequest.PFP, req_user_id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -297,12 +332,5 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	tmap := model.TreasureMap{Links: links, Categories: cat_counts}
 
 	render.JSON(w, r, tmap)
-	render.Status(r, http.StatusOK)
-}
-
-func ProtectedArea(w http.ResponseWriter, r *http.Request) {
-	_, claims, _ := jwtauth.FromContext(r.Context())
-	w.Write([]byte(fmt.Sprintf("protected area. hi %v, your user_ID is %v", claims["login_name"], claims["user_id"])))
-
 	render.Status(r, http.StatusOK)
 }

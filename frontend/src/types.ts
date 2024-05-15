@@ -1,4 +1,12 @@
 
+// USER
+type User = {
+	LoginName: string
+	About: string
+	PFP: string
+	Created: string
+}
+
 // LINK
 type LinkData = {
 	ID: number
@@ -42,5 +50,5 @@ type TreasureMap = {
 	Categories: CategoryCount[]
 }
 
-export type { CategoryContributor, CategoryCount, LinkData, Summary, SummaryPage, TreasureMap }
+export type { CategoryContributor, CategoryCount, LinkData, Summary, SummaryPage, TreasureMap, User }
 

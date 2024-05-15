@@ -44,9 +44,10 @@ func main() {
 
 	// PUBLIC
 	// USER ACCOUNTS
+	r.Get("/users/{login_name}", handler.GetProfile)
+	r.Get("/map/{login_name}", handler.GetTreasureMap)
 	r.Post("/signup", handler.SignUp)
 	r.Post("/login", handler.LogIn)
-	r.Get("/map/{login_name}", handler.GetTreasureMap)
 
 	// LINKS
 	r.Get("/links", handler.GetTopLinks)
@@ -66,8 +67,6 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(jwtauth.Verifier(token_auth))
 		r.Use(jwtauth.Authenticator(token_auth))
-
-		r.Get("/protected", handler.ProtectedArea)
 
 		// USER ACCOUNTS
 		r.Patch("/users", handler.EditProfile)

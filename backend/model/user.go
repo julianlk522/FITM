@@ -6,16 +6,10 @@ import (
 	"time"
 )
 
+// AUTH
 type UserAuth struct {
 	LoginName string `json:"login_name"`
 	Password string `json:"password"`
-}
-
-type User struct {
-	*UserAuth
-	ID int64
-	About string
-	ProfilePic string
 }
 type SignUpRequest struct {
 	*UserAuth
@@ -52,19 +46,16 @@ func (a *LogInRequest) Bind(r *http.Request) error {
 	return nil
 }
 
+// EDIT PROFILE
 type EditProfileRequest struct {
-	AuthToken string `json:"token"`
 	*EditAboutRequest
 	*EditPfpRequest
 }
 
 func (a *EditProfileRequest) Bind(r *http.Request) error {
-	if a.AuthToken == "" {
-		return errors.New("missing auth token")
+	if a.EditAboutRequest == nil && a.EditPfpRequest == nil {
+		return errors.New("no data provided")
 	}
-
-	// TODO: check auth token
-
 	return nil
 }
 
@@ -76,7 +67,16 @@ type EditPfpRequest struct {
 	PFP string `json:"pfp,omitempty"`
 }
 
+// TREASURE MAP
 type TreasureMap struct {
 	Links []Link
 	Categories []CategoryCount
+}
+
+// GENERAL
+type User struct {
+	LoginName string
+	About string
+	PFP string
+	Created string
 }
