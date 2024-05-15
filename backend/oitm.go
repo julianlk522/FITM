@@ -42,18 +42,11 @@ func main() {
 		fmt.Fprint(w, "Hello World!")
 	})
 
+	// PUBLIC
 	// USER ACCOUNTS
 	r.Post("/signup", handler.SignUp)
 	r.Post("/login", handler.LogIn)
-	r.Patch("/users", handler.EditProfile)
 	r.Get("/map/{login_name}", handler.GetTreasureMap)
-
-	// PROTECTED (just testing for now)
-	r.Group(func(r chi.Router) {
-		r.Use(jwtauth.Verifier(token_auth))
-		r.Use(jwtauth.Authenticator(token_auth))
-		r.Get("/protected", handler.ProtectedArea)
-	})
 
 	// LINKS
 	r.Get("/links", handler.GetTopLinks)
@@ -61,23 +54,41 @@ func main() {
 	r.Get("/links/cat/{categories}", handler.GetTopLinksByCategories)
 	r.Get("/links/cat/{categories}/users", handler.GetTopCategoryContributors)
 	r.Get("/links/subcat/{categories}", handler.GetTopSubcategories)
-	r.Post("/links", handler.AddLink)
-	r.Post("/links/{link_id}/like", handler.LikeLink)
-	r.Delete("/links/{like_id}/like", handler.UnlikeLink)
-	r.Post("/links/copy", handler.CopyLinkToMap)
-	r.Delete("/links/copy", handler.UncopyLink)
 	r.Get("/links/{id}/likes", handler.GetLinkLikes)
 
 	// TAGS
 	r.Get("/tags/popular", handler.GetTopTagCategories)
-	r.Post("/tags", handler.AddTag)
-	r.Put("/tags", handler.EditTag)
-
+	
 	// SUMMARIES
 	r.Get("/summaries/{link_id}", handler.GetSummariesForLink)
-	r.Post("/summaries", handler.AddSummaryOrSummaryLike)
-	r.Patch("/summaries", handler.EditSummary)
-	r.Delete("/summaries", handler.DeleteOrUnlikeSummary)
+
+	// PROTECTED
+	r.Group(func(r chi.Router) {
+		r.Use(jwtauth.Verifier(token_auth))
+		r.Use(jwtauth.Authenticator(token_auth))
+
+		r.Get("/protected", handler.ProtectedArea)
+
+		// USER ACCOUNTS
+		r.Patch("/users", handler.EditProfile)
+
+		// LINKS
+		r.Post("/links", handler.AddLink)
+		r.Post("/links/{link_id}/like", handler.LikeLink)
+		r.Delete("/links/{like_id}/like", handler.UnlikeLink)
+		r.Post("/links/copy", handler.CopyLinkToMap)
+		r.Delete("/links/copy", handler.UncopyLink)
+
+		// TAGS
+		r.Post("/tags", handler.AddTag)
+		r.Put("/tags", handler.EditTag)
+
+		// SUMMARIES
+		r.Post("/summaries", handler.AddSummaryOrSummaryLike)
+		r.Patch("/summaries", handler.EditSummary)
+		r.Delete("/summaries", handler.DeleteOrUnlikeSummary)
+
+	})
 
 	// Serve
 	// make sure this runs after all routes

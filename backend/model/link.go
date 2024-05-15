@@ -10,31 +10,8 @@ import (
 	"time"
 )
 
-type CustomLinkCategories struct {
-	LinkID int64
-	Categories string
-}
-
-type CategoryContributor struct {
-	Categories string
-	LoginName string
-	LinksSubmitted int
-}
-
-type Link struct {
-	ID int64
-	URL string
-	SubmittedBy string
-	SubmitDate string
-	Categories string
-	Summary string
-	SummaryCount int
-	LikeCount int64
-}
-
 type NewLink struct {
 	URL string `json:"url"`
-	SubmittedBy string `json:"submitted_by"`
 	Categories string `json:"categories"`
 }
 
@@ -54,47 +31,14 @@ func (a *NewLinkRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-type LinkLikeRequest struct {
-	ID int64
-	UserID string `json:"user_id"`
-}
-
-func (a *LinkLikeRequest) Bind(r *http.Request) error {
-	if a.UserID == "" {
-		return errors.New("missing user ID")
-	}
-
-	return nil
-}
-
-type DeleteLinkLikeRequest struct {
-	AuthToken string `json:"token"`
-}
-
-func (a *DeleteLinkLikeRequest) Bind(r *http.Request) error {
-	if a.AuthToken == "" {
-		return errors.New("missing auth token")
-	}
-
-	return nil
-}
-
 type LinkCopyRequest struct {
 	ID int64
-	AuthToken string `json:"token"`
 	LinkID string `json:"link_id"`
-	UserID string `json:"user_id"`
 }
 
 func (a *LinkCopyRequest) Bind(r *http.Request) error {
-	if a.AuthToken == "" {
-		return errors.New("missing auth token")
-	}
 	if a.LinkID == "" {
 		return errors.New("missing link ID")
-	}
-	if a.UserID == "" {
-		return errors.New("missing user ID")
 	}
 
 	return nil
@@ -102,18 +46,36 @@ func (a *LinkCopyRequest) Bind(r *http.Request) error {
 
 type DeleteLinkCopyRequest struct {
 	ID string `json:"copy_id"`
-	AuthToken string `json:"token"`
 }
 
 func (a *DeleteLinkCopyRequest) Bind(r *http.Request) error {
 	if a.ID == "" {
 		return errors.New("missing copy ID")
 	}
-	if a.AuthToken == "" {
-		return errors.New("missing auth token")
-	}
 
 	return nil
+}
+
+type Link struct {
+	ID int64
+	URL string
+	SubmittedBy string
+	SubmitDate string
+	Categories string
+	Summary string
+	SummaryCount int
+	LikeCount int64
+}
+
+type CustomLinkCategories struct {
+	LinkID int64
+	Categories string
+}
+
+type CategoryContributor struct {
+	Categories string
+	LoginName string
+	LinksSubmitted int
 }
 
 // Recalculate global categories for a link whose tags changed

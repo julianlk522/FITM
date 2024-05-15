@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
 	"github.com/jonlaing/htmlmeta"
 	"golang.org/x/exp/slices"
@@ -357,7 +358,16 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// TODO: check auth token
+	// Check auth token
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err != nil {
+		log.Fatal(err)
+	}
+	req_login_name, ok := claims["login_name"]
+	if !ok {
+		log.Fatal("invalid auth token")
+	}
 
 	// Check if link exists, Abort if attempting duplicate
 	var s sql.NullString
@@ -392,7 +402,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		auto_summary = meta.Title
 	}
 	
-	res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?);", nil, link_data.URL, link_data.SubmittedBy, link_data.SubmitDate, "", auto_summary)
+	res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, "", auto_summary)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -404,7 +414,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	link_data.ID = id
 
 	// Create initial tag
-	_, err = db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_data.ID, link_data.Categories, link_data.SubmittedBy, link_data.SubmitDate)
+	_, err = db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_data.ID, link_data.Categories, req_login_name, link_data.SubmitDate)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -413,7 +423,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	if auto_summary != "" {
 		// get user ID
 		var user_id int64
-		err = db.QueryRow("SELECT id FROM Users WHERE login_name = ?", link_data.SubmittedBy).Scan(&user_id)
+		err = db.QueryRow("SELECT id FROM Users WHERE login_name = ?", req_login_name).Scan(&user_id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -431,13 +441,22 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 // LIKE LINK
 func LikeLink(w http.ResponseWriter, r *http.Request) {
-	like_link_data := &model.LinkLikeRequest{}
-	if err := render.Bind(r, like_link_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+	link_id := chi.URLParam(r, "link_id")
+	if link_id == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link ID provided")))
 		return
 	}
 
-	link_id := chi.URLParam(r, "link_id")
+	// Check auth token
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err != nil {
+		log.Fatal(err)
+	}
+	req_user_id, ok := claims["user_id"]
+	if !ok {
+		log.Fatal("invalid auth token")
+	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
@@ -445,37 +464,39 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// TODO: check auth token
-
 	// Check if link doesn't exist or if link submitted by same user, Abort if either
-	var n sql.NullString
-	err = db.QueryRow("SELECT submitted_by FROM Links WHERE id = ?;", link_id).Scan(&n)
+	var link_submitted_by_name sql.NullString
+	err = db.QueryRow("SELECT submitted_by FROM Links WHERE id = ?;", link_id).Scan(&link_submitted_by_name)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link ID")))
 		return
 	}
 
-	var uid sql.NullInt64
-	err = db.QueryRow("SELECT id FROM Users WHERE login_name = ?;",n.String).Scan(&uid)
+	var link_submitted_by_id sql.NullInt64
+	err = db.QueryRow("SELECT id FROM Users WHERE login_name = ?;",link_submitted_by_name.String).Scan(&link_submitted_by_id)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	req_uid, _ := strconv.ParseInt(like_link_data.UserID, 10, 64)
-	if uid.Int64 == req_uid {
+	req_user_id_int64, err := strconv.ParseInt(req_user_id.(string), 10, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if link_submitted_by_id.Int64 == req_user_id_int64 {
 		render.Render(w, r, ErrInvalidRequest(errors.New("cannot like your own link")))
 		return
 	}
 
 	// Check if user already liked this link, Abort if already liked
 	var l sql.NullString
-	err = db.QueryRow("SELECT id FROM 'Link Likes' WHERE link_id = ? AND user_id = ?;", link_id, like_link_data.UserID).Scan(&l)
+	err = db.QueryRow("SELECT id FROM 'Link Likes' WHERE link_id = ? AND user_id = ?;", link_id, req_user_id).Scan(&l)
 	if err == nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("already liked")))
 		return
 	}
 
-	res, err := db.Exec("INSERT INTO 'Link Likes' VALUES(?,?,?);", nil, like_link_data.UserID, link_id)
+	res, err := db.Exec("INSERT INTO 'Link Likes' VALUES(?,?,?);", nil, req_user_id, link_id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -484,24 +505,30 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 	if id, err = res.LastInsertId(); err != nil {
 		log.Fatal(err)
 	}
-	like_link_data.ID = id
 
+	like_link_data := make(map[string]int64, 1)
+	like_link_data["ID"] = id
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, like_link_data)
 }
 
 // UN-LIKE LINK
 func UnlikeLink(w http.ResponseWriter, r *http.Request) {
-	unlike_link_data := &model.DeleteLinkLikeRequest{}
-	if err := render.Bind(r, unlike_link_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
-		return
-	}
-
 	like_id := chi.URLParam(r, "like_id")
 	if like_id == "" {
 		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link like ID provided")))
 		return
+	}
+
+	// Check auth token
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err != nil {
+		log.Fatal(err)
+	}
+	req_user_id, ok := claims["user_id"]
+	if !ok {
+		log.Fatal("invalid auth token")
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -510,13 +537,22 @@ func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// TODO: check auth token
-
-	// Check if link like exists, Abort if invalid link ID provided
+	// Check if link like exists or if submitted by a different user, Abort if either
 	var l sql.NullString
-	err = db.QueryRow("SELECT id FROM 'Link Likes' WHERE id = ?;", like_id).Scan(&l)
+	var u sql.NullInt64
+	err = db.QueryRow("SELECT id, user_id FROM 'Link Likes' WHERE id = ?;", like_id).Scan(&l, &u)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("link like not found")))
+		return
+	}
+
+	req_user_id_int64, err := strconv.ParseInt(req_user_id.(string), 10, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	if u.Int64 != req_user_id_int64 {
+		render.Render(w, r, ErrInvalidRequest(errors.New("cannot unlike someone else's link like")))
 		return
 	}
 
@@ -540,13 +576,32 @@ func CopyLinkToMap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check auth token
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err != nil {
+		log.Fatal(err)
+	}
+	req_user_id, ok := claims["user_id"]
+	if !ok {
+		log.Fatal("invalid auth token")
+	}
+
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
-	res, err := db.Exec("INSERT INTO 'Link Copies' VALUES(?,?,?);", nil, copy_link_data.LinkID, copy_link_data.UserID)
+	// Check if link already in map, Abort if attempting duplicate
+	var l sql.NullString
+	err = db.QueryRow("SELECT id FROM 'Link Copies' WHERE link_id = ? AND user_id = ?;", copy_link_data.LinkID, req_user_id).Scan(&l)
+	if err == nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("link already in map")))
+		return
+	}
+
+	res, err := db.Exec("INSERT INTO 'Link Copies' VALUES(?,?,?);", nil, copy_link_data.LinkID, req_user_id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -572,21 +627,30 @@ func UncopyLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check auth token
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err != nil {
+		log.Fatal(err)
+	}
+	req_user_id, ok := claims["user_id"]
+	if !ok {
+		log.Fatal("invalid auth token")
+	}
+
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
-	// Check if link copy exists
+	// Check if link copy exists and was submitted by same user, Abort if either unsatisfied
 	var s sql.NullString
-	err = db.QueryRow("SELECT id FROM 'Link Copies' WHERE id = ?;", delete_copy_data.ID).Scan(&s)
+	err = db.QueryRow("SELECT id FROM 'Link Copies' WHERE id = ? AND user_id = ?;", delete_copy_data.ID, req_user_id).Scan(&s)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("link copy does not exist")))
 		return
 	}
-
-	// Todo: check auth token, ensure that user is owner of link copy
 
 	// Delete
 	_, err = db.Exec("DELETE FROM 'Link Copies' WHERE id = ?;", delete_copy_data.ID)
