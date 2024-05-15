@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
 	"golang.org/x/exp/slices"
 
@@ -90,6 +91,17 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check auth token
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err != nil {
+		log.Fatal(err)
+	}
+	req_login_name, ok := claims["login_name"]
+	if !ok {
+		log.Fatal("invalid auth token")
+	}
+
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
 		log.Fatal(err)
@@ -105,7 +117,7 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if duplicate (same link ID, submitted by), Abort if so
-	err = db.QueryRow("SELECT id FROM Tags WHERE link_id = ? AND submitted_by = ?;", tag_data.LinkID, tag_data.SubmittedBy).Scan(&s)
+	err = db.QueryRow("SELECT id FROM Tags WHERE link_id = ? AND submitted_by = ?;", tag_data.LinkID, req_login_name).Scan(&s)
 	if err == nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("duplicate tag")))
 		return
@@ -115,7 +127,7 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 	tag_data.Categories = strings.ToLower(tag_data.Categories)
 
 	// Insert new tag
-	res, err := db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, tag_data.LinkID, tag_data.Categories, tag_data.SubmittedBy, tag_data.LastUpdated)
+	res, err := db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, tag_data.LinkID, tag_data.Categories, req_login_name, tag_data.LastUpdated)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -141,13 +153,33 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check auth token
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err != nil {
+		log.Fatal(err)
+	}
+	req_login_name, ok := claims["login_name"]
+	if !ok {
+		log.Fatal("invalid auth token")
+	}
+
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
-	// TODO: check auth token
+	// Check if tag doesn't exist or submitted by a different user, Abort if either
+	var t sql.NullString
+	err = db.QueryRow("SELECT submitted_by FROM Tags WHERE id = ?;", edit_tag_data.ID).Scan(&t)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("tag not found")))
+		return
+	} else if t.String != req_login_name {
+		render.Render(w, r, ErrInvalidRequest(errors.New("cannot edit another user's tag")))
+		return
+	}
 
 	_, err = db.Exec("UPDATE Tags SET categories = ?, last_updated = ? WHERE id = ?;", edit_tag_data.Categories, time.Now().Format("2006-01-02 15:04:05"), edit_tag_data.ID)
 	if err != nil {

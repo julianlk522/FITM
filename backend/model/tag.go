@@ -9,7 +9,6 @@ import (
 type NewTag struct {
 	LinkID string `json:"link_id"`
 	Categories string `json:"categories"`
-	SubmittedBy string `json:"submitted_by"`
 }
 
 type NewTagRequest struct {
@@ -29,15 +28,11 @@ func (a *NewTagRequest) Bind(r *http.Request) error {
 }
 
 type EditTagRequest struct {
-	AuthToken string `json:"token"`
 	ID string `json:"tag_id"`
 	Categories string `json:"categories"`
 }
 
 func (a *EditTagRequest) Bind(r *http.Request) error {
-	if a.AuthToken == "" {
-		return errors.New("missing auth token")
-	}
 	if a.ID == "" {
 		return errors.New("missing tag ID")
 	}
