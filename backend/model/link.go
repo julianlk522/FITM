@@ -67,6 +67,11 @@ type Link struct {
 	LikeCount int64
 }
 
+type LinkSignedIn struct {
+	Link
+	IsLiked bool
+}
+
 type CustomLinkCategories struct {
 	LinkID int64
 	Categories string

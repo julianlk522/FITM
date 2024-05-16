@@ -30,25 +30,69 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	const LIMIT string = "20"
 	get_link_likes_sql := fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, submit_date, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count
 	FROM (SELECT Links.id as links_id, url, submitted_by as link_author, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id) LEFT JOIN Summaries ON Summaries.link_id = links_id GROUP BY links_id ORDER BY like_count DESC, links_id ASC LIMIT %s;`, LIMIT)
-	
-	links := []model.Link{}
 	rows, err := db.Query(get_link_likes_sql)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 
-	for rows.Next() {
-		i := model.Link{}
-		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
-		if err != nil {
-			log.Fatal(err)
+	// Check auth token
+	req_user_id := 0
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err == nil {
+		_, ok := claims["user_id"]
+		if !ok {
+
+			// no auth token
+			req_user_id = 0
+		} else {
+
+			// get user ID from auth token
+			req_user_id, err = strconv.Atoi(claims["user_id"].(string))
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
-		links = append(links, i)
+	}
+
+	// Scan links
+	// User signed in: get isLiked for each link
+	if req_user_id != 0 {
+		var links []model.LinkSignedIn
+		for rows.Next() {
+			i := model.LinkSignedIn{}
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
+			if err != nil {
+				log.Fatal(err)
+			}
+	
+			// Add IsLiked
+			var l sql.NullInt32
+			err = db.QueryRow("SELECT count(*) as is_liked FROM 'Link Likes' WHERE link_id = ? AND user_id = ?;", i.ID, req_user_id).Scan(&l)
+			if err != nil {
+				log.Fatal(err)
+			}
+			i.IsLiked = l.Int32 > 0
+			links = append(links, i)
+		}
+		render.JSON(w, r, links)
+		
+	// User not signed in: omit isLiked
+	} else {
+		var links []model.Link
+		for rows.Next() {
+			i := model.Link{}
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
+			if err != nil {
+				log.Fatal(err)
+			}
+			links = append(links, i)
+		}
+		render.JSON(w, r, links)
 	}
 
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, links)
 }
 
 // GET MOST-LIKED LINKS DURING PERIOD
@@ -91,24 +135,69 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	ON Summaries.link_id = links_id
 	GROUP BY links_id ORDER BY like_count DESC, link_id ASC LIMIT %s;`, LIMIT)
 
-	links := []model.Link{}
 	rows, err := db.Query(get_link_likes_sql)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 
-	for rows.Next() {
-		i := model.Link{}
-		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
-		if err != nil {
-			log.Fatal(err)
+	// Check auth token
+	req_user_id := 0
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err == nil {
+		_, ok := claims["user_id"]
+		if !ok {
+
+			// no auth token
+			req_user_id = 0
+		} else {
+
+			// get user ID from auth token
+			req_user_id, err = strconv.Atoi(claims["user_id"].(string))
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
-		links = append(links, i)
+	}
+	
+	// Scan links
+	// User signed in: get isLiked for each link
+	if req_user_id != 0 {
+		var links []model.LinkSignedIn
+		for rows.Next() {
+			i := model.LinkSignedIn{}
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
+			if err != nil {
+				log.Fatal(err)
+			}
+	
+			// Add IsLiked
+			var l sql.NullInt32
+			err = db.QueryRow("SELECT count(*) as is_liked FROM 'Link Likes' WHERE link_id = ? AND user_id = ?;", i.ID, req_user_id).Scan(&l)
+			if err != nil {
+				log.Fatal(err)
+			}
+			i.IsLiked = l.Int32 > 0
+			links = append(links, i)
+		}
+		render.JSON(w, r, links)
+		
+	// User not signed in: omit isLiked
+	} else {
+		var links []model.Link
+		for rows.Next() {
+			i := model.Link{}
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
+			if err != nil {
+				log.Fatal(err)
+			}
+			links = append(links, i)
+		}
+		render.JSON(w, r, links)
 	}
 
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, links)
 }
 
 // GET MOST-LIKED LINKS WITH GIVEN CATEGORY(IES)
@@ -197,19 +286,63 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	links := []model.Link{}
-	for rows.Next() {
-		i := model.Link{}
-		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
-		if err != nil {
-			log.Fatal(err)
+	// Check auth token
+	req_user_id := 0
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err == nil {
+		_, ok := claims["user_id"]
+		if !ok {
+
+			// no auth token
+			req_user_id = 0
+		} else {
+
+			// get user ID from auth token
+			req_user_id, err = strconv.Atoi(claims["user_id"].(string))
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
-		links = append(links, i)
 	}
 
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, links)
+	// Scan links
+	// User signed in: get isLiked for each link
+	if req_user_id != 0 {
+		var links []model.LinkSignedIn
+		for rows.Next() {
+			i := model.LinkSignedIn{}
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
+			if err != nil {
+				log.Fatal(err)
+			}
+	
+			// Add IsLiked
+			var l sql.NullInt32
+			err = db.QueryRow("SELECT count(*) as is_liked FROM 'Link Likes' WHERE link_id = ? AND user_id = ?;", i.ID, req_user_id).Scan(&l)
+			if err != nil {
+				log.Fatal(err)
+			}
+			i.IsLiked = l.Int32 > 0
+			links = append(links, i)
+		}
+		render.JSON(w, r, links)
+		
+	// User not signed in: omit isLiked
+	} else {
+		var links []model.Link
+		for rows.Next() {
+			i := model.Link{}
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
+			if err != nil {
+				log.Fatal(err)
+			}
+			links = append(links, i)
+		}
+		render.JSON(w, r, links)
+	}	
 
+	render.Status(r, http.StatusOK)
 }
 
 // GET TOP CONTRIBUTORS FOR GIVEN CATEGORY(IES)
@@ -514,9 +647,9 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 
 // UN-LIKE LINK
 func UnlikeLink(w http.ResponseWriter, r *http.Request) {
-	like_id := chi.URLParam(r, "like_id")
-	if like_id == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link like ID provided")))
+	link_id := chi.URLParam(r, "link_id")
+	if link_id == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link ID provided")))
 		return
 	}
 
@@ -537,26 +670,16 @@ func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Check if link like exists or if submitted by a different user, Abort if either
+	// Check if link like submitted by requesting user exists, Abort if not
 	var l sql.NullString
-	var u sql.NullInt64
-	err = db.QueryRow("SELECT id, user_id FROM 'Link Likes' WHERE id = ?;", like_id).Scan(&l, &u)
+	err = db.QueryRow("SELECT id FROM 'Link Likes' WHERE user_id = ? AND link_id = ?;", req_user_id, link_id).Scan(&l)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("link like not found")))
 		return
 	}
 
-	req_user_id_int64, err := strconv.ParseInt(req_user_id.(string), 10, 64)
-	if err != nil {
-		log.Fatal(err)
-	}
-	
-	if u.Int64 != req_user_id_int64 {
-		render.Render(w, r, ErrInvalidRequest(errors.New("cannot unlike someone else's link like")))
-		return
-	}
-
-	_, err = db.Exec("DELETE FROM 'Link Likes' WHERE id = ?;", like_id)
+	// Delete like
+	_, err = db.Exec("DELETE FROM 'Link Likes' WHERE id = ?;", link_id)
 	if err != nil {
 		log.Fatal(err)
 	}
