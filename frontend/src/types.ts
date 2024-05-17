@@ -17,6 +17,7 @@ type LinkData = {
 	Summary: string | null
 	SummaryCount: number
 	LikeCount: number
+	IsLiked: boolean | undefined
 }
 
 // CATEGORY

@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.5.10",
+    "@astrojs/preact": "^3.3.0",
     "astro": "^4.8.2",
     "jsonwebtoken": "^9.0.2",
+    "preact": "^10.22.0",
     "typescript": "^5.4.5"
   },
   "devDependencies": {

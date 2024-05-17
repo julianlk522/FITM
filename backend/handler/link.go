@@ -671,15 +671,15 @@ func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// Check if link like submitted by requesting user exists, Abort if not
-	var l sql.NullString
-	err = db.QueryRow("SELECT id FROM 'Link Likes' WHERE user_id = ? AND link_id = ?;", req_user_id, link_id).Scan(&l)
+	var like_id sql.NullString
+	err = db.QueryRow("SELECT id FROM 'Link Likes' WHERE user_id = ? AND link_id = ?;", req_user_id, link_id).Scan(&like_id)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("link like not found")))
 		return
 	}
 
 	// Delete like
-	_, err = db.Exec("DELETE FROM 'Link Likes' WHERE id = ?;", link_id)
+	_, err = db.Exec("DELETE FROM 'Link Likes' WHERE id = ?;", like_id)
 	if err != nil {
 		log.Fatal(err)
 	}

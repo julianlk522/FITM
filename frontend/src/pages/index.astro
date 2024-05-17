@@ -1,14 +1,27 @@
 ---
-import Link from '../components/Link.astro'
+import Link from '../components/Link'
 import Layout from '../layouts/Layout.astro'
 import { type CategoryCount, type LinkData } from '../types'
 
-const popular_cats_resp = await fetch('http://127.0.0.1:8000/tags/popular')
+// get auth token and user if user signed in
+const token = Astro.cookies.get('token')
+const user = Astro.cookies.get('user')
+
+const popular_cats_resp = await (token
+	? fetch('http://127.0.0.1:8000/tags/popular', {
+			headers: { Authorization: `Bearer ${token.value}` },
+		})
+	: fetch('http://127.0.0.1:8000/tags/popular'))
 // [{Category: 'umvc3', Count: 1}, ...]
 const popular_cats: CategoryCount[] = await popular_cats_resp.json()
 
-const trending_links_resp = await fetch('http://127.0.0.1:8000/links/week')
+const trending_links_resp = await (token
+	? fetch('http://127.0.0.1:8000/links/month', {
+			headers: { Authorization: `Bearer ${token.value}` },
+		})
+	: fetch('http://127.0.0.1:8000/links/month'))
 const trending_links: LinkData[] = await trending_links_resp.json()
+// [{URL: 'https://example.com', LikeCount: 100}, ...]
 
 const available_trending_links_durations = ['week', 'month', 'year', 'all']
 ---
@@ -90,7 +103,17 @@ const available_trending_links_durations = ['week', 'month', 'year', 'all']
 			}
 		</div>
 		<ul id='trending-links'>
-			{trending_links.map((link) => <Link link={link} />)}
+			{
+				trending_links.map((link) => (
+					<Link
+						client:load
+						link={link}
+						is_summary_page={false}
+						token={token?.value}
+						user={user?.value}
+					/>
+				))
+			}
 		</ul>
 	</main>
 </Layout>

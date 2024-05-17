@@ -14,19 +14,17 @@ if (Astro.cookies.has('token')) {
 if (token) {
 	// check if token is valid
 	jwt.verify(token, 'secret', function (err: any, decoded) {
-		if (err) {
+		// @ts-ignore
+		if (err || !decoded?.login_name) {
 			token = null
 			Astro.cookies.delete('token')
+			Astro.cookies.delete('user')
 			return
 		}
-		// @ts-ignore
-		if (!decoded?.login_name) {
-			return
-		}
+
 		// @ts-ignore
 		user = decoded.login_name
-		// @ts-ignore
-		Astro.cookies.set('user', decoded.login_name, {path: '/', maxAge: 3600, sameSite: 'strict', secure: true})
+		Astro.cookies.set('user', user, {path: '/', maxAge: 3600, sameSite: 'strict', secure: true})
 	})
 }
 ---
