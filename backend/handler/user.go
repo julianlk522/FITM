@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -16,20 +17,19 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
+
+	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"golang.org/x/crypto/bcrypt"
 
 	"oitm/model"
 )
 
-var work_dir string
 var pic_dir string
-var pic_files http.FileSystem
 
 func init() {
-	work_dir, _ = os.Getwd()
+	work_dir, _ := os.Getwd()
 	pic_dir = filepath.Join(work_dir, "db/profile-pics")
-	pic_files = http.Dir(pic_dir)
 }
 
 // SIGN UP
@@ -225,11 +225,74 @@ func GetProfilePic(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// Serve if found
-	rctx := chi.RouteContext(r.Context())
-	path_prefix := strings.TrimSuffix(rctx.RoutePattern(), "{file_name}")
+	http.ServeFile(w, r, path)
+}
 
-	fs := http.StripPrefix(path_prefix, http.FileServer(pic_files))
-	fs.ServeHTTP(w, r)
+// UPLOAD NEW PROFILE PICTURE
+func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
+
+	// Get file up to 10MB
+	r.ParseMultipartForm( 10 << 20 )
+	file, handler, err := r.FormFile("pic")
+    if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+        return
+    }
+    defer file.Close()
+
+	// Check that file is valid image
+	if !strings.Contains(handler.Header.Get("Content-Type"), "image") {
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid file provided")))
+		return
+	}
+
+	// Get file extension
+	ext := filepath.Ext(handler.Filename)
+
+	// Generate unique file name
+	new_name := uuid.New().String() + ext
+	full_path := pic_dir + "/" + new_name
+
+	// Create new file
+	dst, err := os.Create(full_path)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("could not create new file")))
+		return
+	}
+	defer dst.Close()
+
+	// Save to new file
+	if _, err := io.Copy(dst, file); err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("could not copy profile pic into new file")))
+		return
+	}
+
+	// Get requesting user from auth token context
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err != nil {
+		log.Fatal(err)
+	}
+	req_user_id, ok := claims["user_id"]
+	if !ok {
+		log.Fatal("invalid auth token")
+	}
+
+	// Update db with new pic name
+	db, err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	
+	_, err = db.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, new_name, req_user_id)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("could not save new profile pic")))
+		return
+	}
+
+	// Return saved file
+	http.ServeFile(w, r, full_path)
 }
 
 // GET USER TREASURE MAP
