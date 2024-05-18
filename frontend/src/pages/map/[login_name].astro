@@ -1,9 +1,13 @@
 ---
-import Link from '../../components/Link.astro'
+import Link from '../../components/Link'
+import ProfilePic from '../../components/ProfilePic'
 import Layout from '../../layouts/Layout.astro'
 import type { TreasureMap, User } from '../../types'
 
 const { login_name } = Astro.params
+if (!login_name) {
+	return Astro.redirect('/')
+}
 
 const tmap_resp = await fetch(`http://127.0.0.1:8000/map/${login_name}`)
 if (tmap_resp.status > 399) {
@@ -18,15 +22,24 @@ if (user_resp.status > 399) {
 }
 const user: User = await user_resp.json()
 // {LoginName: 'bob', About: '...', PFP: '...', Created: '2022-01-01 00:00:00'}
+
+const token = Astro.cookies.get('token')?.value
+const signed_in_user = Astro.cookies.get('user')?.value
 ---
 
-<Layout title='Welcome to the Open Internet Treasure Map (OITM)'>
+<Layout title=`${login_name}'s Treasure Map`>
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
-		<p>Profile Pic Link: {user.PFP}</p>
+		<ProfilePic client:load pfp={user.PFP} login_name={login_name} />
 		<p>Created: {user.Created}</p>
-		<h2>About</h2>
-		<p>{user.About}</p>
+		{
+			user.About ? (
+				<>
+					<h2>About</h2>
+					<p>{user.About}</p>
+				</>
+			) : null
+		}
 		<h2>Top Categories</h2>
 		<ul>
 			{
@@ -42,7 +55,17 @@ const user: User = await user_resp.json()
 		</ul>
 		<h2>Top Links</h2>
 		<ul>
-			{tmap.Links.map((link) => <Link link={link} />)}
+			{
+				tmap.Links.map((link) => (
+					<Link
+						client:load
+						link={link}
+						is_summary_page={false}
+						token={token}
+						user={signed_in_user}
+					/>
+				))
+			}
 		</ul>
 	</main>
 </Layout>
