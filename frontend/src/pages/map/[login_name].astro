@@ -3,6 +3,7 @@ import Link from '../../components/Link'
 import ProfilePic from '../../components/ProfilePic'
 import Layout from '../../layouts/Layout.astro'
 import type { TreasureMap, User } from '../../types'
+import format_date from '../../util/format_date'
 
 const { login_name } = Astro.params
 if (!login_name) {
@@ -30,8 +31,14 @@ const signed_in_user = Astro.cookies.get('user')?.value
 <Layout title=`${login_name}'s Treasure Map`>
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
-		<ProfilePic client:load pfp={user.PFP} login_name={login_name} />
-		<p>Created: {user.Created}</p>
+		<ProfilePic
+			client:load
+			pfp={user.PFP ? user.PFP : undefined}
+			login_name={login_name}
+			signed_in_user={signed_in_user}
+			token={token}
+		/>
+		<p>Created: {format_date(user.Created)}</p>
 		{
 			user.About ? (
 				<>
