@@ -3,10 +3,8 @@
 ## Todos:
 
 -Upload/change user profile pic
--Display user about / profile pic on treasure map page
--Link like/unlike client-side logic and display
-    -way to know that requesting user has liked {link} when it is fetched
--Summary like/unlike client-side logic and display
+	-Save uploaded profile pic to disk, add path to database
+-Organize user treasure map page links into subsections (submitted, tagged, copied)
 -Pagination
 -Tests
 -Make frontend look decent

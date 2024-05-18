@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -19,8 +20,9 @@ import (
 var token_auth *jwtauth.JWTAuth
 
 func init() {
-	// new JWT for protected routes (1 day)
+	// new JWT for protected routes (1-day exiration)
 	token_auth = jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(24*time.Hour))
+	
 }
 
 func main() {	
@@ -50,6 +52,7 @@ func main() {
 	// PUBLIC
 	// USER ACCOUNTS
 	r.Get("/users/{login_name}", handler.GetProfile)
+	r.Get("/pic/{file_name}", handler.GetProfilePic)
 	r.Get("/map/{login_name}", handler.GetTreasureMap)
 	r.Post("/signup", handler.SignUp)
 	r.Post("/login", handler.LogIn)
@@ -66,7 +69,7 @@ func main() {
 	r.Get("/summaries/{link_id}", handler.GetSummariesForLink)
 
 	// OPTIONAL AUTHENTICATION
-	// e.g., links include is_liked property
+	// (bearer token optional; used to get is_liked property for links)
 	r.Group(func(r chi.Router) {
 		r.Use(VerifierOptional(token_auth))
 		r.Use(AuthenticatorOptional(token_auth))

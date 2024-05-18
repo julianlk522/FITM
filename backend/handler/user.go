@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -19,6 +21,16 @@ import (
 
 	"oitm/model"
 )
+
+var work_dir string
+var pic_dir string
+var pic_files http.FileSystem
+
+func init() {
+	work_dir, _ = os.Getwd()
+	pic_dir = filepath.Join(work_dir, "db/profile-pics")
+	pic_files = http.Dir(pic_dir)
+}
 
 // SIGN UP
 func SignUp(w http.ResponseWriter, r *http.Request) {
@@ -198,6 +210,26 @@ func EditProfile(w http.ResponseWriter, r *http.Request) {
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, return_json)
+}
+
+// GET PROFILE PICTURE
+// (from backend/db/profile-pics/{file_name})
+func GetProfilePic(w http.ResponseWriter, r *http.Request) {
+	var file_name string = chi.URLParam(r, "file_name")
+	path := pic_dir + "/" + file_name
+	
+	// Error if pic not found at path
+	if _, err := os.Stat(path); err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("profile pic not found")))
+		return
+	}
+	
+	// Serve if found
+	rctx := chi.RouteContext(r.Context())
+	path_prefix := strings.TrimSuffix(rctx.RoutePattern(), "{file_name}")
+
+	fs := http.StripPrefix(path_prefix, http.FileServer(pic_files))
+	fs.ServeHTTP(w, r)
 }
 
 // GET USER TREASURE MAP
