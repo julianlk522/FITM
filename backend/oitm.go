@@ -53,7 +53,6 @@ func main() {
 	// USER ACCOUNTS
 	r.Get("/users/{login_name}", handler.GetProfile)
 	r.Get("/pic/{file_name}", handler.GetProfilePic)
-	r.Get("/map/{login_name}", handler.GetTreasureMap)
 	r.Post("/signup", handler.SignUp)
 	r.Post("/login", handler.LogIn)
 
@@ -74,6 +73,10 @@ func main() {
 		r.Use(VerifierOptional(token_auth))
 		r.Use(AuthenticatorOptional(token_auth))
 
+		// USER ACCOUNTS
+		r.Get("/map/{login_name}", handler.GetTreasureMap)
+
+		// LINKS
 		r.Get("/links", handler.GetTopLinks)
 		r.Get("/links/{period}", handler.GetTopLinksByPeriod)
 		r.Get("/links/cat/{categories}", handler.GetTopLinksByCategories)	

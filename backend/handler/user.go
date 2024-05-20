@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
@@ -315,117 +315,314 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get user-assigned tag categories
-	get_custom_cats_sql := fmt.Sprintf(`SELECT link_id, categories as cats FROM Tags JOIN Users
-	ON Users.login_name = Tags.submitted_by
-	WHERE Users.login_name = '%s'`, login_name)
+	// Check auth token
+	req_user_id := 0
+	_, claims, err := jwtauth.FromContext(r.Context())
+	// claims = {"user_id":"1234","login_name":"johndoe"}
+	if err == nil {
+		_, ok := claims["user_id"]
+		if !ok {
 
-	rows, err := db.Query(get_custom_cats_sql)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
+			// no auth token
+			req_user_id = 0
+		} else {
 
-	var user_custom_cats []model.CustomLinkCategories
-	for rows.Next() {
-		i := model.CustomLinkCategories{}
-		err := rows.Scan(&i.LinkID, &i.Categories)
-		if err != nil {
-			log.Fatal(err)
-		}
-		user_custom_cats = append(user_custom_cats, i)
-	
-	}
-	
-
-	// get all map links and their global categories + like counts,
-	get_map_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, coalesce(global_cats,"") as global_cats, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as like_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY like_link_id) ON Links.id = like_link_id WHERE link_id IN ( SELECT link_id FROM Tags JOIN Users ON Users.login_name = Tags.submitted_by WHERE Users.login_name = '%s' UNION SELECT link_id FROM (SELECT link_id, NULL as cats, user_id as link_copier_id FROM 'Link Copies' JOIN Users ON Users.id = link_copier_id WHERE Users.login_name = '%s') JOIN Links ON Links.id = link_id) ORDER BY like_count DESC, link_id ASC;`, login_name, login_name)
-	rows, err = db.Query(get_map_sql)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-
-	if !rows.Next() {
-		render.Status(r, http.StatusOK)
-		render.JSON(w, r, model.TreasureMap{})
-	}
-	
-	links := []model.Link{}
-	for rows.Next() {
-		i := model.Link{}
-		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.LikeCount)
-		if err != nil {
-			log.Fatal(err)
-		}
-		links = append(links, i)
-	}
-
-	// replace global categories for links to which the user has submitted their own tags
-	if len(user_custom_cats) > 0 {
-		for l, link := range links {
-			for c, cat := range user_custom_cats {
-				if link.ID == cat.LinkID {
-
-					// replace scanned categories with user's
-					links[l].Categories = cat.Categories
-
-					// remove custom cats from slice to speed up remaining lookups
-					user_custom_cats = append(user_custom_cats[:c], user_custom_cats[c+1:]...)
-				}
+			// get user ID from auth token
+			req_user_id, err = strconv.Atoi(claims["user_id"].(string))
+			if err != nil {
+				log.Fatal(err)
 			}
-		}	
+		}
 	}
 
-	// get category counts
-	cat_counts := []model.CategoryCount{}
-	cats_found := []string{}
-	var cat_found bool
-	for _, link := range links {
+	// Get links
+	// User signed in: get isLiked for each link
+	if req_user_id != 0 {
 
-		// for each category in the comma-separated string,
-		for _, cat := range strings.Split(link.Categories, ",") {
+		// Get submitted links, replacing global categories with user-assigned
+		var submitted []model.LinkSignedIn
+		get_submitted_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by as login_name, submit_date, categories, coalesce(global_summary,"") as summary, coalesce(summary_count,0) as summary_count, coalesce(like_count,0) as like_count, coalesce(is_liked,0) as is_liked
+		FROM Links
+		JOIN
+			(
+			SELECT categories, link_id as tag_link_id
+			FROM Tags
+			WHERE submitted_by = '%s'
+			)
+		ON link_id = tag_link_id
+		LEFT JOIN
+					(
+					SELECT count(*) as like_count, link_id as like_link_id
+					FROM 'Link Likes'
+					GROUP BY link_id
+					)
+			ON like_link_id = link_id
+			LEFT JOIN
+					(
+					SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
+					FROM 'Link Likes'
+					WHERE user_id == %d
+					GROUP BY id
+					)
+			ON like_link_id2 = link_id
+			LEFT JOIN
+				(
+				SELECT count(*) as summary_count, link_id as summary_link_id
+				FROM Summaries
+				GROUP BY link_id
+				)
+			ON summary_link_id = link_id
+		WHERE login_name = '%s';`, login_name, req_user_id, login_name)
+		rows, err := db.Query(get_submitted_sql)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer rows.Close()
 
-			// check if category is already in cat_counts
-			cat_found = false
-			for _, fc := range cats_found {
+		// Scan submitted
+		for rows.Next() {
+			i := model.LinkSignedIn{}
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.IsLiked)
+			if err != nil {
+				log.Fatal(err)
+			}
+			submitted = append(submitted, i)
+		}
 
-				// if found
-				if fc == cat {
-					cat_found = true
+		// Get tagged links submitted by other users
+		get_tagged_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by as login_name, submit_date, categories, coalesce(global_summary,"") as summary, coalesce(summary_count,0) as summary_count, coalesce(like_count,0) as like_count, coalesce(is_liked,0) as is_liked
+		FROM Links
+		JOIN
+			(
+			SELECT categories, link_id as tag_link_id
+			FROM Tags
+			WHERE submitted_by = '%s'
+			)
+		ON tag_link_id = link_id
+	LEFT JOIN
+			(
+			SELECT count(*) as like_count, link_id as like_link_id
+			FROM 'Link Likes'
+			GROUP BY link_id
+			)
+	ON like_link_id = link_id
+	LEFT JOIN
+			(
+			SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
+			FROM 'Link Likes'
+			WHERE user_id == %d
+			GROUP BY id
+			)
+	ON like_link_id2 = link_id
+	LEFT JOIN
+		(
+		SELECT count(*) as summary_count, link_id as summary_link_id
+		FROM Summaries
+		GROUP BY link_id
+		)
+	ON summary_link_id = link_id
+	WHERE login_name != '%s';`, login_name, req_user_id, login_name)
+		rows, err = db.Query(get_tagged_sql)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer rows.Close()
 
-					// find slice with category and increment count
-					for i, count := range cat_counts {
-						if count.Category == cat {
-							cat_counts[i].Count++
-							break
+		// Scan tagged
+		var tagged []model.LinkSignedIn
+		for rows.Next() {
+			i := model.LinkSignedIn{}
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.IsLiked)
+			if err != nil {
+				log.Fatal(err)
+			}
+			tagged = append(tagged, i)
+		}
+
+		// Get copied links
+		get_copied_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by as login_name, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(summary_count,0) as summary_count, coalesce(like_count,0) as like_count, coalesce(is_liked,0) as is_liked
+		FROM Links
+		JOIN
+			(
+			SELECT link_id as copy_link_id, user_id as copier_id
+			FROM 'Link Copies'
+			JOIN Users
+			ON Users.id = copier_id
+			WHERE Users.login_name = '%s'
+			)
+		ON copy_link_id = link_id
+		LEFT JOIN
+			(
+			SELECT count(*) as like_count, link_id as like_link_id
+			FROM 'Link Likes'
+			GROUP BY link_id
+			)
+		ON like_link_id = link_id
+		LEFT JOIN
+			(
+			SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
+			FROM 'Link Likes'
+			WHERE user_id == %d
+			GROUP BY id
+			)
+		ON like_link_id2 = link_id
+		LEFT JOIN
+			(
+			SELECT count(*) as summary_count, link_id as summary_link_id
+			FROM Summaries
+			GROUP BY link_id
+			)
+		ON summary_link_id = link_id;`, login_name, req_user_id)
+		rows, err = db.Query(get_copied_sql)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer rows.Close()
+
+		// Scan copied
+		var copied []model.LinkSignedIn
+		for rows.Next() {
+			i := model.LinkSignedIn{}
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.IsLiked)
+			if err != nil {
+				log.Fatal(err)
+			}
+			copied = append(copied, i)
+		}
+
+		// Add links to tmap
+		tmap := model.TreasureMapSignedIn{Submitted: submitted, Tagged: tagged, Copied: copied}
+
+		// get category counts
+		cat_counts := []model.CategoryCount{}
+		cats_found := []string{}
+		var cat_found bool
+		for _, link := range slices.Concat(submitted, tagged, copied) {
+
+			// for each category in the comma-separated string,
+			for _, cat := range strings.Split(link.Categories, ",") {
+
+				// check if category is already in cat_counts
+				cat_found = false
+				for _, fc := range cats_found {
+
+					// if found
+					if fc == cat {
+						cat_found = true
+
+						// find slice with category and increment count
+						for i, count := range cat_counts {
+							if count.Category == cat {
+								cat_counts[i].Count++
+								break
+							}
 						}
 					}
 				}
-			}
 
-			// else add to slice with fresh count
-			if !cat_found {
-				cat_counts = append(cat_counts, model.CategoryCount{Category: cat, Count: 1})
+				// else add to slice with fresh count
+				if !cat_found {
+					cat_counts = append(cat_counts, model.CategoryCount{Category: cat, Count: 1})
 
-				// add to found categories
-				cats_found = append(cats_found, cat)
+					// add to found categories
+					cats_found = append(cats_found, cat)
+				}
 			}
 		}
+
+		// sort categories by count
+		slices.SortFunc(cat_counts, model.SortCategories)
+
+		// limit to top 5 categories for now
+		CATEGORY_LIMIT := 5
+		if len(cat_counts) > CATEGORY_LIMIT {
+			cat_counts = cat_counts[:CATEGORY_LIMIT]
+		}
+		
+		// combine links and categories in response
+		tmap.Categories = cat_counts
+		render.JSON(w, r, tmap)
+		
+
+	// User not signed in: omit isLiked
+	} else {
+	// 	var links []model.Link
+	// 	for rows.Next() {
+	// 		i := model.Link{}
+	// 		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
+	// 		if err != nil {
+	// 			log.Fatal(err)
+	// 		}
+	// 		links = append(links, i)
+	// 	}
+	// 	// replace global categories for links to which the user has submitted their own tags
+	// 	if len(user_custom_cats) > 0 {
+	// 		for l, link := range links {
+	// 			for c, cat := range user_custom_cats {
+	// 				if link.ID == cat.LinkID {
+
+	// 					// replace scanned categories with user's
+	// 					links[l].Categories = cat.Categories
+
+	// 					// remove custom cats from slice to speed up remaining lookups
+	// 					user_custom_cats = append(user_custom_cats[:c], user_custom_cats[c+1:]...)
+	// 				}
+	// 			}
+	// 		}	
+	// 	}
+
+	// 	// get category counts
+	// 	cat_counts := []model.CategoryCount{}
+	// 	cats_found := []string{}
+	// 	var cat_found bool
+	// 	for _, link := range links {
+
+	// 		// for each category in the comma-separated string,
+	// 		for _, cat := range strings.Split(link.Categories, ",") {
+
+	// 			// check if category is already in cat_counts
+	// 			cat_found = false
+	// 			for _, fc := range cats_found {
+
+	// 				// if found
+	// 				if fc == cat {
+	// 					cat_found = true
+
+	// 					// find slice with category and increment count
+	// 					for i, count := range cat_counts {
+	// 						if count.Category == cat {
+	// 							cat_counts[i].Count++
+	// 							break
+	// 						}
+	// 					}
+	// 				}
+	// 			}
+
+	// 			// else add to slice with fresh count
+	// 			if !cat_found {
+	// 				cat_counts = append(cat_counts, model.CategoryCount{Category: cat, Count: 1})
+
+	// 				// add to found categories
+	// 				cats_found = append(cats_found, cat)
+	// 			}
+	// 		}
+	// 	}
+
+	// 	// sort categories by count
+	// 	slices.SortFunc(cat_counts, model.SortCategories)
+
+	// 	// limit to top 5 categories for now
+	// 	CATEGORY_LIMIT := 5
+	// 	if len(cat_counts) > CATEGORY_LIMIT {
+	// 		cat_counts = cat_counts[:CATEGORY_LIMIT]
+	// 	}
+		
+	// 	// combine links and categories in response
+	// 	tmap := model.TreasureMap{Links: links, Categories: cat_counts}
+	// 	render.JSON(w, r, tmap)
+	// }
+
+	// render.Status(r, http.StatusOK)
+		render.Status(r, http.StatusOK)
 	}
-
-	// sort categories by count
-	slices.SortFunc(cat_counts, model.SortCategories)
-
-	// limit to top 5 categories for now
-	CATEGORY_LIMIT := 5
-	if len(cat_counts) > CATEGORY_LIMIT {
-		cat_counts = cat_counts[:CATEGORY_LIMIT]
-	}
-	
-	// combine links and categories in response
-	tmap := model.TreasureMap{Links: links, Categories: cat_counts}
-
-	render.JSON(w, r, tmap)
-	render.Status(r, http.StatusOK)
 }
