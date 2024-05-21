@@ -2,13 +2,11 @@
 
 ## Todos:
 
--Upload/change user profile pic
-	-Save uploaded profile pic to disk, add path to database
--Organize user treasure map page links into subsections (submitted, tagged, copied)
 -Pagination
 -Tests
 -Make frontend look decent
     -A11y, responsive layouts for phones / tablets
+-Fix dumb repeat code in GetTreasureMap handler
 
 ## Why?
 

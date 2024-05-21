@@ -68,24 +68,12 @@ type EditPfpRequest struct {
 }
 
 // TREASURE MAP
-
-// end goal:
-// type TreasureMap struct {
-// 	Submitted []Link
-// 	Tagged []Link
-// 	Copied []Link
-// 	Categories []CategoryCount
-// }
-
 type TreasureMap struct {
-	Links []Link
+	Submitted []Link
+	Tagged []Link
+	Copied []Link
 	Categories []CategoryCount
 }
-
-// type TreasureMapSignedIn struct {
-// 	Links []LinkSignedIn
-// 	Categories []CategoryCount
-// }
 
 type TreasureMapSignedIn struct {
 	Submitted []LinkSignedIn
