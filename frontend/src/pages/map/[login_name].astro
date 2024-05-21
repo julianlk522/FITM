@@ -10,12 +10,24 @@ if (!login_name) {
 	return Astro.redirect('/')
 }
 
-const tmap_resp = await fetch(`http://127.0.0.1:8000/map/${login_name}`)
+const token = Astro.cookies.get('token')?.value
+const signed_in_user = Astro.cookies.get('user')?.value
+
+const tmap_resp = token
+	? await fetch(`http://127.0.0.1:8000/map/${login_name}`, {
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		})
+	: await fetch(`http://127.0.0.1:8000/map/${login_name}`)
 if (tmap_resp.status > 399) {
 	return Astro.redirect('/404')
 }
 const tmap: TreasureMap = await tmap_resp.json()
-// {CategoryCounts: [{Category: 'umvc3', Count: 1}, ...], Links: [{URL: 'https://example.com', LikeCount: 100}, ...]}
+// Submitted: [{URL: 'https://example.com', LikeCount: 100}, ...],
+// Tagged: [{URL: 'https://example.com', LikeCount: 2}, ...],
+// Copied: [{URL: 'https://example.com', LikeCount: 1}, ...]}
+// {CategoryCounts: [{Category: 'umvc3', Count: 1}, ...],
 
 const user_resp = await fetch(`http://127.0.0.1:8000/users/${login_name}`)
 if (user_resp.status > 399) {
@@ -23,9 +35,6 @@ if (user_resp.status > 399) {
 }
 const user: User = await user_resp.json()
 // {LoginName: 'bob', About: '...', PFP: '...', Created: '2022-01-01 00:00:00'}
-
-const token = Astro.cookies.get('token')?.value
-const signed_in_user = Astro.cookies.get('user')?.value
 ---
 
 <Layout title=`${login_name}'s Treasure Map`>
@@ -47,33 +56,69 @@ const signed_in_user = Astro.cookies.get('user')?.value
 				</>
 			) : null
 		}
-		<h2>Top Categories</h2>
-		<ul>
-			{
-				tmap.Categories.map((cat) => (
-					<li>
-						<a href={`/usercat/${login_name}/${cat.Category}`}>
-							{cat.Category}
-						</a>
-						<span>({cat.Count})</span>
-					</li>
-				))
-			}
-		</ul>
-		<h2>Top Links</h2>
-		<ul>
-			{
-				tmap.Links.map((link) => (
-					<Link
-						client:load
-						link={link}
-						is_summary_page={false}
-						token={token}
-						user={signed_in_user}
-					/>
-				))
-			}
-		</ul>
+		{
+			tmap.Categories.length ? (
+				<>
+					<h2>Top Categories</h2>
+					{tmap.Categories.map((cat) => (
+						<li>
+							<a href={`/usercat/${login_name}/${cat.Category}`}>
+								{cat.Category}
+							</a>
+							<span>({cat.Count})</span>
+						</li>
+					))}
+				</>
+			) : null
+		}
+		{
+			tmap.Submitted.length ? (
+				<>
+					<h2>Submitted</h2>
+					{tmap.Submitted.map((link) => (
+						<Link
+							client:load
+							link={link}
+							is_summary_page={false}
+							token={token}
+							user={signed_in_user}
+						/>
+					))}
+				</>
+			) : null
+		}
+		{
+			tmap.Tagged.length ? (
+				<>
+					<h2>Tagged</h2>
+					{tmap.Tagged.map((link) => (
+						<Link
+							client:load
+							link={link}
+							is_summary_page={false}
+							token={token}
+							user={signed_in_user}
+						/>
+					))}
+				</>
+			) : null
+		}
+		{
+			tmap.Copied.length ? (
+				<>
+					<h2>Copied</h2>
+					{tmap.Copied.map((link) => (
+						<Link
+							client:load
+							link={link}
+							is_summary_page={false}
+							token={token}
+							user={signed_in_user}
+						/>
+					))}
+				</>
+			) : null
+		}
 	</main>
 </Layout>
 

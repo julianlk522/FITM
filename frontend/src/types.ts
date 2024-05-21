@@ -47,7 +47,9 @@ type SummaryPage = {
 
 // TREASURE MAP
 type TreasureMap = {
-	Links: LinkData[]
+	Submitted: LinkData[]
+	Tagged: LinkData[]
+	Copied: LinkData[]
 	Categories: CategoryCount[]
 }
 
