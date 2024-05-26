@@ -4,15 +4,15 @@ import Layout from '../layouts/Layout.astro'
 import { type CategoryCount, type LinkData } from '../types'
 
 // get auth token and user if user signed in
-const token = Astro.cookies.get('token')
-const user: string | undefined = Astro.cookies.get('user')
-	? Astro.cookies.get('user')
+const token = Astro.cookies.get('token')?.value
+let user: string | undefined = Astro.cookies.get('user')
+	? Astro.cookies.get('user')?.value
 	: // @ts-ignore
 		Astro.locals.user
 
 const popular_cats_resp = await (token
 	? fetch('http://127.0.0.1:8000/tags/popular', {
-			headers: { Authorization: `Bearer ${token.value}` },
+			headers: { Authorization: `Bearer ${token}` },
 		})
 	: fetch('http://127.0.0.1:8000/tags/popular'))
 // [{Category: 'umvc3', Count: 1}, ...]
@@ -20,7 +20,7 @@ const popular_cats: CategoryCount[] = await popular_cats_resp.json()
 
 const trending_links_resp = await (token
 	? fetch('http://127.0.0.1:8000/links/month', {
-			headers: { Authorization: `Bearer ${token.value}` },
+			headers: { Authorization: `Bearer ${token}` },
 		})
 	: fetch('http://127.0.0.1:8000/links/month'))
 const trending_links: LinkData[] = await trending_links_resp.json()
@@ -119,7 +119,7 @@ const available_trending_links_durations = ['week', 'month', 'year', 'all']
 						client:load
 						link={link}
 						is_summary_page={false}
-						token={token?.value}
+						token={token}
 						user={user}
 					/>
 				))

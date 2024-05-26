@@ -8,11 +8,19 @@ const { title } = Astro.props
 
 let token = Astro.cookies.get('token')?.value
 // @ts-ignore
-let user = Astro.locals.user
+let locals_user = Astro.locals.user
+let user = locals_user ?? Astro.cookies.get('user')?.value
 
-// verify JWT if token found but not directly redirected from login
-if (token && !user) {
-	jwt.verify(token, 'secret', function (err: any, decoded) {
+if (token) {
+
+	// set cookie if redirected from login
+	if (locals_user) {
+		Astro.cookies.set('user', locals_user, {path: '/', maxAge: 3600, sameSite: 'strict', secure: true})
+	}
+
+	// verify JWT if token found but not directly redirected from login
+	else if (!user) {
+		jwt.verify(token, 'secret', function (err: any, decoded) {
 		// @ts-ignore
 		if (err || !decoded?.login_name) {
 			token = undefined
@@ -22,11 +30,10 @@ if (token && !user) {
 		}
 
 		// @ts-ignore
-		user = decoded.login_name
-		if (user) {
-			Astro.cookies.set('user', user, {path: '/', maxAge: 3600, sameSite: 'strict', secure: true})
-		}
-	})
+		user = decoded.login_name as string
+		Astro.cookies.set('user', user, {path: '/', maxAge: 3600, sameSite: 'strict', secure: true})
+		})
+	}
 }
 ---
 
@@ -43,7 +50,7 @@ if (token && !user) {
 	<nav>
 		<a href='/'>Home</a>
 		{
-			token && user ? (
+			user ? (
 			<a href=`/map/${user}` id="username">{user}</a>) : (<a href='/login'>Login</a>)
 		}
 	</nav>
