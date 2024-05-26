@@ -18,7 +18,11 @@ type NewLink struct {
 type NewLinkRequest struct {
 	*NewLink
 	ID int64
+	SubmittedBy string
 	SubmitDate string
+	Summary string
+	SummaryCount int
+	LikeCount int64
 }
 
 func (a *NewLinkRequest) Bind(r *http.Request) error {
@@ -27,6 +31,7 @@ func (a *NewLinkRequest) Bind(r *http.Request) error {
 	}
 
 	a.SubmitDate = time.Now().Format("2006-01-02 15:04:05")
+	a.LikeCount = 0
 
 	return nil
 }

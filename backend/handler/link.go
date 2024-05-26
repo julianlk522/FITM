@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -498,8 +499,29 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	req_login_name, ok := claims["login_name"]
-	if !ok {
-		log.Fatal("invalid auth token")
+	req_user_id, ok2 := claims["user_id"]
+	if !ok || !ok2 {
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid auth token")))
+	}
+	link_data.SubmittedBy = req_login_name.(string)
+
+	// Check if link contains any subdomains
+	regex, _ := regexp.Compile(`^(?:http[s]*\:\/\/)?(?:[^\/]+\.){2,}(?:[^\/]+){1}$`)
+	subdomain_found := regex.MatchString(link_data.URL)
+	if !subdomain_found {
+
+		// Prepend "https://www."" if no subdomain or protocol found
+		if !strings.HasPrefix(link_data.URL, "https://") {
+			link_data.URL = "https://www." + link_data.URL
+		
+		// Else append "www." after "https://" if protocol found but not subdomain
+		} else {
+			link_data.URL = strings.Replace(link_data.URL, "https://", "https://www.", 1)
+		}
+		
+	// Else prepend "https://" if subdomain found but protocol not
+	} else if (!strings.HasPrefix(link_data.URL, "http")) {
+		link_data.URL = "https://" + link_data.URL
 	}
 
 	// Check if link exists, Abort if attempting duplicate
@@ -510,34 +532,45 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Prepend https:// if not provided
-	if !strings.HasPrefix(link_data.URL, "https://") {
-		link_data.URL = "https://" + link_data.URL
-	}
-
 	// Verify that link is valid
 	resp, err := http.Get(link_data.URL)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link")))
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link: " + link_data.URL)))
 		return
 	} else if resp.StatusCode > 299 {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link: detected redirect")))
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link destination: redirect detected")))
 		return
 	}
 
-	// Get initial link summary from meta description or title
+	// Get automatically-generated link summary from meta description or title
 	var auto_summary string
+	var summary_count int
+
 	defer resp.Body.Close()
 	meta := htmlmeta.Extract(resp.Body)
 	if meta.Description != "" {
 		auto_summary = meta.Description
+		summary_count = 1
 	} else if meta.Title != "" {
 		auto_summary = meta.Title
+		summary_count = 1
+	} else {
+		summary_count = 0
 	}
+	link_data.Summary = auto_summary
+	link_data.SummaryCount = summary_count
 	
 	res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, "", auto_summary)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	// Create new summary if auto_summary successfully retrieves a title or description
+	if auto_summary != "" {
+		_, err = db.Exec("INSERT INTO Summaries VALUES(?,?,?,?);", nil, auto_summary, link_data.ID, req_user_id)
+		if err != nil {
+			log.Fatal(err)
+		}	
 	}
 
 	var id int64
@@ -550,22 +583,6 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	_, err = db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_data.ID, link_data.Categories, req_login_name, link_data.SubmitDate)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	// Create initial summary if auto_summary successfully retrieves a title or description
-	if auto_summary != "" {
-		// get user ID
-		var user_id int64
-		err = db.QueryRow("SELECT id FROM Users WHERE login_name = ?", req_login_name).Scan(&user_id)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// insert summary
-		_, err = db.Exec("INSERT INTO Summaries VALUES(?,?,?,?);", nil, auto_summary, link_data.ID, user_id)
-		if err != nil {
-			log.Fatal(err)
-		}	
 	}
 
 	render.Status(r, http.StatusCreated)
