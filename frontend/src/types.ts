@@ -1,3 +1,12 @@
+// ERROR
+type ErrorResponse = {
+	status: string
+	error: string
+}
+
+function is_error_response(obj: any): obj is ErrorResponse {
+    return obj.error !== undefined 
+  }
 
 // USER
 type User = {
@@ -53,5 +62,6 @@ type TreasureMap = {
 	Categories: CategoryCount[]
 }
 
-export type { CategoryContributor, CategoryCount, LinkData, Summary, SummaryPage, TreasureMap, User }
+export { is_error_response }
+export type { CategoryContributor, CategoryCount, ErrorResponse, LinkData, Summary, SummaryPage, TreasureMap, User }
 

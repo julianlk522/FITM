@@ -1,0 +1,24 @@
+---
+import NewLink from '../components/NewLink.tsx'
+import Layout from '../layouts/Layout.astro'
+
+let token = Astro.cookies.get('token')?.value
+let user = Astro.cookies.get('user')?.value
+
+if (!token || !user) {
+	return Astro.redirect('/login')
+}
+---
+
+<Layout title='Submit a New Link to OITM'>
+	<main>
+		<h1>New Link</h1>
+		<h2>Rules:</h2>
+		<p>Anything NSFW needs to be tagged "NSFW" or will be removed.</p>
+		<p>That's it.</p>
+
+		<NewLink client:load token={token} user={user} />
+	</main>
+</Layout>
+
+<style></style>
