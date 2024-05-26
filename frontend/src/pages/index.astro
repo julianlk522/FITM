@@ -5,7 +5,10 @@ import { type CategoryCount, type LinkData } from '../types'
 
 // get auth token and user if user signed in
 const token = Astro.cookies.get('token')
-const user = Astro.cookies.get('user')
+const user: string | undefined = Astro.cookies.get('user')
+	? Astro.cookies.get('user')
+	: // @ts-ignore
+		Astro.locals.user
 
 const popular_cats_resp = await (token
 	? fetch('http://127.0.0.1:8000/tags/popular', {
@@ -80,6 +83,13 @@ const available_trending_links_durations = ['week', 'month', 'year', 'all']
 		>
 		<h1>Welcome to OITM</h1>
 		<h2 class='subtitle'>a map of the web's treasures</h2>
+		{
+			user ? (
+				<p>
+					<a href={`/new`}>Submit new link</a>
+				</p>
+			) : null
+		}
 		<h3>Popular Categories</h3>
 		<ul>
 			{
@@ -110,7 +120,7 @@ const available_trending_links_durations = ['week', 'month', 'year', 'all']
 						link={link}
 						is_summary_page={false}
 						token={token?.value}
-						user={user?.value}
+						user={user}
 					/>
 				))
 			}

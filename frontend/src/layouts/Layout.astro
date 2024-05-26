@@ -5,18 +5,17 @@ interface Props {
 }
 
 const { title } = Astro.props
-// read cookie
-let token = null
-let user = null
-if (Astro.cookies.has('token')) {
-	token = Astro.cookies.get('token')?.value
-}
-if (token) {
-	// check if token is valid
+
+let token = Astro.cookies.get('token')?.value
+// @ts-ignore
+let user = Astro.locals.user
+
+// verify JWT if token found but not directly redirected from login
+if (token && !user) {
 	jwt.verify(token, 'secret', function (err: any, decoded) {
 		// @ts-ignore
 		if (err || !decoded?.login_name) {
-			token = null
+			token = undefined
 			Astro.cookies.delete('token')
 			Astro.cookies.delete('user')
 			return
@@ -24,7 +23,9 @@ if (token) {
 
 		// @ts-ignore
 		user = decoded.login_name
-		Astro.cookies.set('user', user, {path: '/', maxAge: 3600, sameSite: 'strict', secure: true})
+		if (user) {
+			Astro.cookies.set('user', user, {path: '/', maxAge: 3600, sameSite: 'strict', secure: true})
+		}
 	})
 }
 ---
