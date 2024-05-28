@@ -7,8 +7,7 @@ import { type CategoryCount, type LinkData } from '../types'
 const token = Astro.cookies.get('token')?.value
 let user: string | undefined = Astro.cookies.get('user')
 	? Astro.cookies.get('user')?.value
-	: // @ts-ignore
-		Astro.locals.user
+	: Astro.locals.user
 
 const popular_cats_resp = await (token
 	? fetch('http://127.0.0.1:8000/tags/popular', {

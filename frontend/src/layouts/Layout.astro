@@ -7,7 +7,6 @@ interface Props {
 const { title } = Astro.props
 
 let token = Astro.cookies.get('token')?.value
-// @ts-ignore
 let locals_user = Astro.locals.user
 let user = locals_user ?? Astro.cookies.get('user')?.value
 
@@ -18,20 +17,19 @@ if (token) {
 		Astro.cookies.set('user', locals_user, {path: '/', maxAge: 3600, sameSite: 'strict', secure: true})
 	}
 
-	// verify JWT if token found but not directly redirected from login
+	// else verify JWT if token found but not redirected from login
 	else if (!user) {
 		jwt.verify(token, 'secret', function (err: any, decoded) {
-		// @ts-ignore
-		if (err || !decoded?.login_name) {
-			token = undefined
-			Astro.cookies.delete('token')
-			Astro.cookies.delete('user')
-			return
-		}
+			// @ts-ignore
+			if (err || !decoded || !decoded.login_name) {
+				token = undefined
+				Astro.cookies.delete('token')
+				Astro.cookies.delete('user')
+				return
+			}
 
-		// @ts-ignore
-		user = decoded.login_name as string
-		Astro.cookies.set('user', user, {path: '/', maxAge: 3600, sameSite: 'strict', secure: true})
+			// @ts-ignore
+			Astro.cookies.set('user', decoded.login_name, {path: '/', maxAge: 3600, sameSite: 'strict', secure: true})
 		})
 	}
 }
