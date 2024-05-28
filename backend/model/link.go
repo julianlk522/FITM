@@ -23,6 +23,7 @@ type NewLinkRequest struct {
 	Summary string
 	SummaryCount int
 	LikeCount int64
+	ImgURL string
 }
 
 func (a *NewLinkRequest) Bind(r *http.Request) error {
@@ -70,6 +71,7 @@ type Link struct {
 	Summary string
 	SummaryCount int
 	LikeCount int64
+	ImgURL string
 }
 
 type LinkSignedIn struct {

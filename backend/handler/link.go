@@ -29,8 +29,8 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 	
 	const LIMIT string = "20"
-	get_link_likes_sql := fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, submit_date, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count
-	FROM (SELECT Links.id as links_id, url, submitted_by as link_author, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id) LEFT JOIN Summaries ON Summaries.link_id = links_id GROUP BY links_id ORDER BY like_count DESC, links_id ASC LIMIT %s;`, LIMIT)
+	get_link_likes_sql := fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, submit_date, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
+	FROM (SELECT Links.id as links_id, url, submitted_by as link_author, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id) LEFT JOIN Summaries ON Summaries.link_id = links_id GROUP BY links_id ORDER BY like_count DESC, links_id ASC LIMIT %s;`, LIMIT)
 	rows, err := db.Query(get_link_likes_sql)
 	if err != nil {
 		log.Fatal(err)
@@ -63,7 +63,7 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 		var links []model.LinkSignedIn
 		for rows.Next() {
 			i := model.LinkSignedIn{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -84,7 +84,7 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 		var links []model.Link
 		for rows.Next() {
 			i := model.Link{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -106,10 +106,10 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	get_link_likes_sql := `SELECT links_id as link_id, url, link_author as subitted_by, submit_date, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count
+	get_link_likes_sql := `SELECT links_id as link_id, url, link_author as subitted_by, submit_date, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
 	FROM
 		(
-		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count
+		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
 		FROM LINKS
 		LEFT JOIN 
 			(
@@ -168,7 +168,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 		var links []model.LinkSignedIn
 		for rows.Next() {
 			i := model.LinkSignedIn{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -189,7 +189,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 		var links []model.Link
 		for rows.Next() {
 			i := model.Link{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -264,10 +264,10 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	const LIMIT string = "20"
-	rows, err = db.Query(fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, submit_date, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count
+	rows, err = db.Query(fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, submit_date, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
 	FROM
 		(
-		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count
+		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
 		FROM LINKS
 		LEFT JOIN 
 			(
@@ -313,7 +313,7 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 		var links []model.LinkSignedIn
 		for rows.Next() {
 			i := model.LinkSignedIn{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -334,7 +334,7 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 		var links []model.Link
 		for rows.Next() {
 			i := model.Link{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount)
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -506,6 +506,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	link_data.SubmittedBy = req_login_name.(string)
 
 	// Check if link contains any subdomains
+	// TODO: fix double www. (e.g. www.chatgpt.com -> www.www.chatgpt.com)
 	regex, _ := regexp.Compile(`^(?:http[s]*\:\/\/)?(?:[^\/]+\.){2,}(?:[^\/]+){1}$`)
 	subdomain_found := regex.MatchString(link_data.URL)
 	if !subdomain_found {
@@ -534,33 +535,44 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	// Verify that link is valid
 	resp, err := http.Get(link_data.URL)
-	if err != nil {
+	if err != nil || resp.StatusCode == 404 {
 		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link: " + link_data.URL)))
 		return
-	} else if resp.StatusCode > 299 {
+	} else if resp.StatusCode > 299 && resp.StatusCode < 400 {
+		log.Println(resp)
 		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link destination: redirect detected")))
 		return
 	}
 
-	// Get automatically-generated link summary from meta description or title
-	var auto_summary string
-	var summary_count int
-
+	// Extract meta data
 	defer resp.Body.Close()
 	meta := htmlmeta.Extract(resp.Body)
+
+	// Get automatically-generated link summary from meta description or title
+	var summary_count int = 1
+	var auto_summary string
 	if meta.Description != "" {
 		auto_summary = meta.Description
-		summary_count = 1
+	} else if meta.OGDescription != "" {
+		auto_summary = meta.OGDescription
 	} else if meta.Title != "" {
 		auto_summary = meta.Title
-		summary_count = 1
 	} else {
+		// no extractible summary
 		summary_count = 0
 	}
+
 	link_data.Summary = auto_summary
 	link_data.SummaryCount = summary_count
-	
-	res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, "", auto_summary)
+
+	// Get og:image, if available, for link preview image
+	var og_image string
+	if meta.OGImage != "" {
+		og_image = meta.OGImage
+	}
+	link_data.ImgURL = og_image
+
+	res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, "", auto_summary, og_image)
 	if err != nil {
 		log.Fatal(err)
 	}
