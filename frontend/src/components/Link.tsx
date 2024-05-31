@@ -19,6 +19,7 @@ export default function Link(props: Props) {
         Categories: categories,
         Summary: summary,
         SummaryCount: summary_count,
+        ImgURL: img_url,
     } = props.link
 
     const [is_liked, set_is_liked] = useState(props.link.IsLiked)
@@ -74,11 +75,22 @@ export default function Link(props: Props) {
 
     return (
         <li class='link'>
-            <a href={url}>
+            {img_url
+                ? 
+                <div class="preview"><
+                    img src={img_url} alt={summary ? summary : url} height={100} width={100} />
+                    <a href={url}>
                 <h2>
                     {summary ? summary : url}
                 </h2>
             </a>
+                    </div>
+                : <a href={url}>
+                <h2>
+                    {summary ? summary : url}
+                </h2>
+            </a>}
+            
             <p>
                 Submitted By: <a href={`/map/${submitted_by}`}>{submitted_by}</a> on {
                     format_date(submit_date)
@@ -88,10 +100,7 @@ export default function Link(props: Props) {
                 ? 
                     <p>Categories: {categories}</p>
                 : 
-                    <>
-                        <p>Categories: none - </p>
-                        <p><a href='/'>add category(ies)</a></p>
-                    </>
+                        <p>No categories. <a href='/'>Add tag</a></p>
             
             }
 

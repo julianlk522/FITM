@@ -26,6 +26,7 @@ type LinkData = {
 	Summary: string | null
 	SummaryCount: number
 	LikeCount: number
+	ImgURL: string | undefined
 	IsLiked: boolean | undefined
 }
 

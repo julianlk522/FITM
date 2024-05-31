@@ -19,3 +19,10 @@ p {
     background-color: rgba(var(--accent), 50%);
     color: white;
 }
+.preview {
+    display: flex;
+    gap: 20px;
+}
+.preview img {
+    object-fit: cover;
+}
