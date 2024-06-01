@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
 
 	"oitm/model"
@@ -91,14 +90,13 @@ func AddSummaryOrSummaryLike(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check auth token
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
 	if err != nil {
-		log.Fatal(err)
-	}
-	req_user_id, ok := claims["user_id"]
-	if !ok {
-		log.Fatal("invalid auth token")
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -174,14 +172,13 @@ func EditSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check auth token
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
 	if err != nil {
-		log.Fatal(err)
-	}
-	req_user_id, ok := claims["user_id"]
-	if !ok {
-		log.Fatal("invalid auth token")
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -199,7 +196,7 @@ func EditSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id_int64, err := strconv.ParseInt(req_user_id.(string), 10, 64)
+	req_user_id_int64, err := strconv.ParseInt(req_user_id, 10, 64)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -228,16 +225,15 @@ func DeleteOrUnlikeSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check auth token
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
 	}
-	req_user_id, ok := claims["user_id"]
-	if !ok {
-		log.Fatal("invalid auth token")
-	}
-
+	
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
 		log.Fatal(err)
@@ -245,7 +241,7 @@ func DeleteOrUnlikeSummary(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// req_user_id_int64 will be used to check if user submitted summary / summary like
-	req_user_id_int64, err := strconv.ParseInt(req_user_id.(string), 10, 64)
+	req_user_id_int64, err := strconv.ParseInt(req_user_id, 10, 64)
 	if err != nil {
 		log.Fatal(err)
 	}

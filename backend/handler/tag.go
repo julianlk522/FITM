@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
 	"golang.org/x/exp/slices"
 
@@ -93,14 +92,13 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check auth token
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
+	var req_login_name string
+	claims, err := GetJWTClaims(r)
 	if err != nil {
-		log.Fatal(err)
-	}
-	req_login_name, ok := claims["login_name"]
-	if !ok {
-		log.Fatal("invalid auth token")
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_login_name = claims["login_name"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -155,14 +153,13 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check auth token
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
+	var req_login_name string
+	claims, err := GetJWTClaims(r)
 	if err != nil {
-		log.Fatal(err)
-	}
-	req_login_name, ok := claims["login_name"]
-	if !ok {
-		log.Fatal("invalid auth token")
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_login_name = claims["login_name"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")

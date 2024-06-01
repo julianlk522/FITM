@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
 	"github.com/jonlaing/htmlmeta"
 	"golang.org/x/exp/slices"
@@ -133,28 +132,18 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	// Check auth token
-	req_user_id := 0
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
-	if err == nil {
-		_, ok := claims["user_id"]
-		if !ok {
-
-			// no auth token
-			req_user_id = 0
-		} else {
-
-			// get user ID from auth token
-			req_user_id, err = strconv.Atoi(claims["user_id"].(string))
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
 	}
 	
 	// Scan links
 	// User signed in: get isLiked for each link
-	if req_user_id != 0 {
+	if req_user_id != "" {
 		var links []model.LinkSignedIn
 		for rows.Next() {
 			i := model.LinkSignedIn{}
@@ -278,28 +267,18 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check auth token
-	req_user_id := 0
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
-	if err == nil {
-		_, ok := claims["user_id"]
-		if !ok {
-
-			// no auth token
-			req_user_id = 0
-		} else {
-
-			// get user ID from auth token
-			req_user_id, err = strconv.Atoi(claims["user_id"].(string))
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
 	}
 
 	// Scan links
 	// User signed in: get isLiked for each link
-	if req_user_id != 0 {
+	if req_user_id != "" {
 		var links []model.LinkSignedIn
 		for rows.Next() {
 			i := model.LinkSignedIn{}
@@ -483,17 +462,17 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// Check auth token
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
+	var req_user_id, req_login_name string
+	claims, err := GetJWTClaims(r)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
+		req_login_name = claims["login_name"].(string)
+
+		link_data.SubmittedBy = req_login_name
 	}
-	req_login_name, ok := claims["login_name"]
-	req_user_id, ok2 := claims["user_id"]
-	if !ok || !ok2 {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid auth token")))
-	}
-	link_data.SubmittedBy = req_login_name.(string)
 
 	// Check if link contains any subdomains
 	regex, _ := regexp.Compile(`^(?:http[s]?\:\/\/)?(?:[^\/\W]+?\.){2,}(?:[^\/\n\r]+)`)
@@ -611,14 +590,13 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check auth token
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
 	if err != nil {
-		log.Fatal(err)
-	}
-	req_user_id, ok := claims["user_id"]
-	if !ok {
-		log.Fatal("invalid auth token")
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -641,7 +619,7 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	req_user_id_int64, err := strconv.ParseInt(req_user_id.(string), 10, 64)
+	req_user_id_int64, err := strconv.ParseInt(req_user_id, 10, 64)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -684,14 +662,13 @@ func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check auth token
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
 	if err != nil {
-		log.Fatal(err)
-	}
-	req_user_id, ok := claims["user_id"]
-	if !ok {
-		log.Fatal("invalid auth token")
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -727,14 +704,13 @@ func CopyLinkToMap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check auth token
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
 	if err != nil {
-		log.Fatal(err)
-	}
-	req_user_id, ok := claims["user_id"]
-	if !ok {
-		log.Fatal("invalid auth token")
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -778,14 +754,13 @@ func UncopyLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check auth token
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
 	if err != nil {
-		log.Fatal(err)
-	}
-	req_user_id, ok := claims["user_id"]
-	if !ok {
-		log.Fatal("invalid auth token")
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")

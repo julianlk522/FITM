@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -171,14 +170,13 @@ func EditProfile(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 	
 	// Check auth token
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
 	if err != nil {
-		log.Fatal(err)
-	}
-	req_user_id, ok := claims["user_id"]
-	if !ok {
-		log.Fatal("invalid auth token")
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
 	}
 
 	// Update profile
@@ -268,14 +266,13 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get requesting user from auth token context
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
 	if err != nil {
-		log.Fatal(err)
-	}
-	req_user_id, ok := claims["user_id"]
-	if !ok {
-		log.Fatal("invalid auth token")
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
 	}
 
 	// Update db with new pic name
@@ -316,28 +313,18 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check auth token
-	req_user_id := 0
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
-	if err == nil {
-		_, ok := claims["user_id"]
-		if !ok {
-
-			// no auth token
-			req_user_id = 0
-		} else {
-
-			// get user ID from auth token
-			req_user_id, err = strconv.Atoi(claims["user_id"].(string))
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
 	}
 
 	// Get links
 	// User signed in: get isLiked for each link
-	if req_user_id != 0 {
+	if req_user_id != "" {
 
 		// Get submitted links, replacing global categories with user-assigned
 		get_submitted_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by as login_name, submit_date, categories, coalesce(global_summary,"") as summary, coalesce(summary_count,0) as summary_count, coalesce(like_count,0) as like_count, coalesce(is_liked,0) as is_liked
@@ -360,7 +347,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 					(
 					SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
 					FROM 'Link Likes'
-					WHERE user_id == %d
+					WHERE user_id == %s
 					GROUP BY id
 					)
 			ON like_link_id2 = link_id
@@ -410,7 +397,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 			(
 			SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
 			FROM 'Link Likes'
-			WHERE user_id == %d
+			WHERE user_id == %s
 			GROUP BY id
 			)
 	ON like_link_id2 = link_id
@@ -462,7 +449,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 			(
 			SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
 			FROM 'Link Likes'
-			WHERE user_id == %d
+			WHERE user_id == %s
 			GROUP BY id
 			)
 		ON like_link_id2 = link_id
