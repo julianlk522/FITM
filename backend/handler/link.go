@@ -506,8 +506,19 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	link_data.SubmittedBy = req_login_name.(string)
 
 	// Check if link contains any subdomains
-	// TODO: fix double www. (e.g. www.chatgpt.com -> www.www.chatgpt.com)
-	regex, _ := regexp.Compile(`^(?:http[s]*\:\/\/)?(?:[^\/]+\.){2,}(?:[^\/]+){1}$`)
+	regex, _ := regexp.Compile(`^(?:http[s]?\:\/\/)?(?:[^\/\W]+?\.){2,}(?:[^\/\n\r]+)`)
+	// regex should match:
+	// www.google.com
+	// www.www.google.com
+	// https://www.google.com
+	// http://www.google.com
+	// http://www.www.google.com
+	// etc.
+
+	// should not match:
+	// google.com
+	// https://google.com
+	// etc.
 	subdomain_found := regex.MatchString(link_data.URL)
 	if !subdomain_found {
 
@@ -548,15 +559,15 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 	meta := htmlmeta.Extract(resp.Body)
 
-	// Get automatically-generated link summary from meta description or title
+	// Get automatically-generated link summary from meta title or description
 	var summary_count int = 1
 	var auto_summary string
-	if meta.Description != "" {
+	if meta.Title != "" {
+		auto_summary = meta.Title
+	} else if meta.Description != "" {
 		auto_summary = meta.Description
 	} else if meta.OGDescription != "" {
 		auto_summary = meta.OGDescription
-	} else if meta.Title != "" {
-		auto_summary = meta.Title
 	} else {
 		// no extractible summary
 		summary_count = 0
