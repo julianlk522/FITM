@@ -38,28 +38,18 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	// Check auth token
-	req_user_id := 0
-	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
-	if err == nil {
-		_, ok := claims["user_id"]
-		if !ok {
-
-			// no auth token
-			req_user_id = 0
-		} else {
-
-			// get user ID from auth token
-			req_user_id, err = strconv.Atoi(claims["user_id"].(string))
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
 	}
 
 	// Scan links
 	// User signed in: get isLiked for each link
-	if req_user_id != 0 {
+	if req_user_id != "" {
 		var links []model.LinkSignedIn
 		for rows.Next() {
 			i := model.LinkSignedIn{}
