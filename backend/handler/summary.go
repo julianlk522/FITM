@@ -158,7 +158,7 @@ func AddSummaryOrSummaryLike(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Recalculate global_summary
-	recalc_global_summary(summary_data.LinkID, db)
+	RecalculateGlobalSummary(summary_data.LinkID, db)
 
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, summary_data)
@@ -320,14 +320,14 @@ func DeleteOrUnlikeSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Recalculate global_summary
-	recalc_global_summary(lid.String, db)
+	RecalculateGlobalSummary(lid.String, db)
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "deleted"})
 
 }
 
-func recalc_global_summary(link_id string, db *sql.DB) {
+func RecalculateGlobalSummary(link_id string, db *sql.DB) {
 	// Recalculate global_summary
 	// (Summary with the most upvotes is the global summary)
 	get_summary_like_counts_sql := fmt.Sprintf(`select text from summaries LEFT JOIN 'Summary Likes' ON summaries.id = 'Summary Likes'.summary_id WHERE link_id = '%s' GROUP BY summaries.id ORDER BY count(*) DESC, text ASC LIMIT 1;`, link_id)
