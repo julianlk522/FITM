@@ -1,32 +1,70 @@
 ---
-import Link from '../../components/Link.astro'
-import Summary from '../../components/Summary.astro'
+import Link from '../../components/Link'
+import Summary from '../../components/Summary'
 import Layout from '../../layouts/Layout.astro'
 import type { SummaryPage } from '../../types'
 
+const token = Astro.cookies.get('token')?.value
+const user = Astro.cookies.get('user')?.value
+
 const { link_id } = Astro.params
 
-const get_summaries_resp = await fetch(
-	`http://127.0.0.1:8000/summaries/${link_id}`
-)
+const get_summaries_resp = await (token
+	? fetch(`http://127.0.0.1:8000/summaries/${link_id}`, {
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		})
+	: fetch(`http://127.0.0.1:8000/summaries/${link_id}`))
 if (get_summaries_resp.status > 399) {
 	return Astro.redirect('/404')
 }
 const summary_data: SummaryPage = await get_summaries_resp.json()
+const { Link: link, Summaries: summaries } = summary_data
 ---
 
 <Layout title=`Summaries for ${summary_data.Link.Summary}`>
 	<main>
 		<h2>Link:</h2>
-		<Link link={summary_data.Link} />
+		<Link {link} is_summary_page={true} {token} {user} />
 		<h2>Summaries:</h2>
-		<ul>
+		{
+			user ? (
+				// TODO: connect to backend and test
+				<form>
+					<h3>Add Summary</h3>
+					<label for='summary'>Summary</label>
+					<input type='text' id='summary' name='summary' />
+					<input type='submit' value='Submit' />
+				</form>
+			) : null
+		}
+		<ol>
 			{
-				summary_data.Summaries.map((summary) => (
-					<Summary summary={summary} />
-				))
+				summaries.length ? (
+					summaries.map((summary) => (
+						<Summary
+							client:load
+							Token={token}
+							ID={summary.ID}
+							Text={summary.Text}
+							SubmittedBy={summary.SubmittedBy}
+							LikeCount={summary.LikeCount}
+							IsLiked={summary.IsLiked}
+						/>
+					))
+				) : (
+					<>
+						<p>None yet.</p>
+						{user ? null : (
+							<span>
+								<a href='/login'>Login</a> to add a summary.
+							</span>
+						)}
+					</>
+				)
 			}
-		</ul>
+		</ol>
 	</main>
 </Layout>
 
