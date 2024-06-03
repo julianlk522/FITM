@@ -7,8 +7,6 @@
 -Make frontend look decent
     -A11y, responsive layouts for phones / tablets
 -Fix dumb repeat code in GetTreasureMap handler
--'Add link' UI
--link image grabber and thumbnail UI
 
 ## Why?
 

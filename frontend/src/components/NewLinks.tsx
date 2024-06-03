@@ -2,13 +2,13 @@ import { useState } from 'preact/hooks';
 import type { ErrorResponse, LinkData } from "../types";
 import { is_error_response } from "../types";
 import Link from './Link';
-import './NewLink.css';
+import './NewLinks.css';
 interface Props {
 	token: string
     user: string
 }
 
-export default function NewLink(props: Props) {
+export default function NewLinks(props: Props) {
     const [status, set_status] = useState<"Success" | "Error" | undefined>(undefined)
     const [message, set_message] = useState<string | undefined>(undefined)
     const [submitted_links, set_submitted_links] = useState<LinkData[]>([])
@@ -49,8 +49,8 @@ export default function NewLink(props: Props) {
     }
 
     return (
-        <>
-            <h2>New Link</h2>
+        <div id='new_links'>
+            <h2>Enter New Link Details</h2>
             {status 
                 ? 
                     status === "Success"
@@ -70,18 +70,21 @@ export default function NewLink(props: Props) {
             </form>
 
             {submitted_links.length ? (
-                <ul>
-                    {submitted_links.map((link) => (
-                        <Link
-                            key={link.ID}
-                            link={link}
-                            token={props.token}
-                            user={props.user}
-                            is_summary_page={false} />
-                    ))}
-                </ul>
+                <div id='submitted'>
+                    <h2>Submitted Links</h2>
+                    <ul>
+                        {submitted_links.map((link) => (
+                            <Link
+                                key={link.ID}
+                                link={link}
+                                token={props.token}
+                                user={props.user}
+                                is_summary_page={false} />
+                        ))}
+                    </ul>
+                </div>
             ) : null}
-        </>
+        </div>
     )
     
 }
