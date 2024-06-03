@@ -103,7 +103,20 @@ type Summary struct {
 	LikeCount int
 }
 
+type SummarySignedIn struct {
+	ID string
+	Text string
+	SubmittedBy string
+	LikeCount int
+	IsLiked bool
+}
+
 type SummaryPage struct {
 	Link Link
 	Summaries []Summary
+}
+
+type SummaryPageSignedIn struct {
+	Link LinkSignedIn
+	Summaries []SummarySignedIn
 }

@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import type { LinkData } from '../types';
 import format_date from '../util/format_date';
 import './Link.css';
+
 interface Props {
 	link: LinkData
     is_summary_page: boolean
@@ -98,7 +99,10 @@ export default function Link(props: Props) {
             </p>
             {categories 
                 ? 
-                    <p>Categories: {categories}</p>
+                    <>
+                        <p>Categories: {categories}</p>
+                        <a href='/'>Add tag</a>
+                    </>
                 : 
                         <p>No categories. <a href='/'>Add tag</a></p>
             
@@ -113,7 +117,7 @@ export default function Link(props: Props) {
                         <a href={`/summary/${id}`}>
                             {summary_count > 1
                                 ? `View all summaries (${summary_count}) or add new`
-                                : 'Add new summary'}
+                                : 'Add summary'}
                         </a>
                     </p>
                     

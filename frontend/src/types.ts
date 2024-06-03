@@ -48,6 +48,7 @@ type Summary = {
 	Text: string
 	SubmittedBy: string
 	LikeCount: number
+	IsLiked: boolean | undefined
 }
 
 type SummaryPage = {

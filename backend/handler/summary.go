@@ -36,47 +36,143 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get link
-	get_link_sql := fmt.Sprintf(`SELECT links_id as link_id, url, submitted_by, submit_date, coalesce(categories,"") as categories, summary, COUNT('Link Likes'.id) as like_count FROM (SELECT id as links_id, url, submitted_by, submit_date, global_cats as categories, global_summary as summary FROM Links WHERE id = '%s') LEFT JOIN 'Link Likes' ON 'Link Likes'.link_id = links_id`, link_id)
-	var link model.Link
-	err = db.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount)
+	// Check auth token
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			render.Status(r, http.StatusNotFound)
-			render.JSON(w, r, ErrResponse{Err: errors.New("link not found")})
-		} else {
-			log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
+	}
+
+	// authenticated
+	if req_user_id != "" {
+
+		// Get link
+		get_link_sql := fmt.Sprintf(`SELECT links_id as link_id, url, submitted_by, submit_date, coalesce(categories,"") as categories, summary, COUNT('Link Likes'.id) as like_count, coalesce(is_liked,0) as is_liked, img_url
+		FROM
+			(
+			SELECT id as links_id, url, submitted_by, submit_date, global_cats as categories, global_summary as summary, coalesce(img_url,"") as img_url
+			FROM Links
+			WHERE id = '%s'
+			)
+		LEFT JOIN 'Link Likes'
+		ON 'Link Likes'.link_id = links_id
+		LEFT JOIN
+			(
+			SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
+			FROM 'Link Likes'
+			WHERE user_id = '%s'
+			GROUP BY id
+			)
+		ON like_link_id2 = link_id`, link_id, req_user_id)
+		var link model.LinkSignedIn
+		err = db.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.IsLiked, &link.ImgURL)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				render.Status(r, http.StatusNotFound)
+				render.JSON(w, r, ErrResponse{Err: errors.New("link not found")})
+			} else {
+				log.Fatal(err)
+			}
 		}
-	}
 
-	// Get summaries and like counts
-	get_summaries_sql := fmt.Sprintf(`SELECT sumid, text, login_name, coalesce(count('Summary Likes'.id),0) as like_count FROM (SELECT sumid, text, Users.login_name FROM (SELECT id as sumid, text, submitted_by FROM Summaries WHERE link_id = '%s') JOIN Users ON Users.id = submitted_by) LEFT JOIN 'Summary Likes' ON 'Summary Likes'.summary_id = sumid GROUP BY sumid;`, link_id)
-	rows, err := db.Query(get_summaries_sql)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-
-	summaries := []model.Summary{}
-	for rows.Next() {
-		i := model.Summary{}
-		err := rows.Scan(&i.ID, &i.Text, &i.SubmittedBy, &i.LikeCount)
+		// Get summaries and like counts
+		get_summaries_sql := fmt.Sprintf(`SELECT sumid, text, login_name as submitted_by, coalesce(count(sl.id),0) as like_count, coalesce(is_liked,0) as is_liked
+		FROM 
+			(
+			SELECT sumid, text, Users.login_name 
+			FROM 
+				(
+				SELECT id as sumid, text, submitted_by 
+				FROM Summaries 
+				WHERE link_id = '%s'
+				) 
+			JOIN Users 
+			ON Users.id = submitted_by
+			)
+		LEFT JOIN
+			(
+			SELECT id, count(*) as is_liked, user_id, summary_id as slsumid
+			FROM 'Summary Likes'
+			WHERE user_id = '%s'
+			GROUP BY id
+			)
+		ON slsumid = sumid
+		LEFT JOIN 'Summary Likes' as sl
+		ON sl.summary_id = sumid 
+		GROUP BY sumid;`, link_id, req_user_id)
+		rows, err := db.Query(get_summaries_sql)
 		if err != nil {
 			log.Fatal(err)
 		}
-		summaries = append(summaries, i)
-	}
-	if err != nil {
-		log.Fatal(err)
-	}
+		defer rows.Close()
 
-	summary_page := model.SummaryPage{
-		Link: link,
-		Summaries: summaries,
-	}
+		summaries := []model.SummarySignedIn{}
+		for rows.Next() {
+			i := model.SummarySignedIn{}
+			err := rows.Scan(&i.ID, &i.Text, &i.SubmittedBy, &i.LikeCount, &i.IsLiked)
+			if err != nil {
+				log.Fatal(err)
+			}
+			summaries = append(summaries, i)
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	render.JSON(w, r, summary_page)
-	render.Status(r, http.StatusOK)
+		summary_page := model.SummaryPageSignedIn{
+			Link: link,
+			Summaries: summaries,
+		}
+
+		render.JSON(w, r, summary_page)
+
+	// unathenticated
+	} else {
+
+		// Get link
+		get_link_sql := fmt.Sprintf(`SELECT links_id as link_id, url, submitted_by, submit_date, coalesce(categories,"") as categories, summary, COUNT('Link Likes'.id) as like_count, img_url FROM (SELECT id as links_id, url, submitted_by, submit_date, global_cats as categories, global_summary as summary, coalesce(img_url,"") as img_url FROM Links WHERE id = '%s') LEFT JOIN 'Link Likes' ON 'Link Likes'.link_id = links_id`, link_id)
+		var link model.Link
+		err = db.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.ImgURL)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				render.Status(r, http.StatusNotFound)
+				render.JSON(w, r, ErrResponse{Err: errors.New("link not found")})
+			} else {
+				log.Fatal(err)
+			}
+		}
+
+		// Get summaries and like counts
+		get_summaries_sql := fmt.Sprintf(`SELECT sumid, text, login_name, coalesce(count('Summary Likes'.id),0) as like_count FROM (SELECT sumid, text, Users.login_name FROM (SELECT id as sumid, text, submitted_by FROM Summaries WHERE link_id = '%s') JOIN Users ON Users.id = submitted_by) LEFT JOIN 'Summary Likes' ON 'Summary Likes'.summary_id = sumid GROUP BY sumid;`, link_id)
+		rows, err := db.Query(get_summaries_sql)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer rows.Close()
+
+		summaries := []model.Summary{}
+		for rows.Next() {
+			i := model.Summary{}
+			err := rows.Scan(&i.ID, &i.Text, &i.SubmittedBy, &i.LikeCount)
+			if err != nil {
+				log.Fatal(err)
+			}
+			summaries = append(summaries, i)
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		summary_page := model.SummaryPage{
+			Link: link,
+			Summaries: summaries,
+		}
+
+		render.JSON(w, r, summary_page)
+	}
 }
 
 // ADD / LIKE SUMMARY

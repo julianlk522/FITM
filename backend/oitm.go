@@ -61,9 +61,6 @@ func main() {
 
 	// TAGS
 	r.Get("/tags/popular", handler.GetTopTagCategories)
-	
-	// SUMMARIES
-	r.Get("/summaries/{link_id}", handler.GetSummariesForLink)
 
 	// OPTIONAL AUTHENTICATION
 	// (bearer token optional; used to get is_liked property for links)
@@ -79,6 +76,8 @@ func main() {
 		r.Get("/links/{period}", handler.GetTopLinksByPeriod)
 		r.Get("/links/cat/{categories}", handler.GetTopLinksByCategories)	
 
+		// SUMMARIES
+		r.Get("/summaries/{link_id}", handler.GetSummariesForLink)
 	})
 
 	// PROTECTED
