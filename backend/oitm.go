@@ -102,9 +102,11 @@ func main() {
 		r.Put("/tags", handler.EditTag)
 
 		// SUMMARIES
-		r.Post("/summaries", handler.AddSummaryOrSummaryLike)
+		r.Post("/summaries", handler.AddSummary)
 		r.Put("/summaries", handler.EditSummary)
-		r.Delete("/summaries", handler.DeleteOrUnlikeSummary)
+		r.Delete("/summaries", handler.DeleteSummary)
+		r.Post("/summaries/{summary_id}/like", handler.LikeSummary)
+		r.Delete("/summaries/{summary_id}/like", handler.UnlikeSummary)
 
 	})
 

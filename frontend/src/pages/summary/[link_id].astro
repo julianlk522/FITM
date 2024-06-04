@@ -54,17 +54,17 @@ const { Link: link, Summaries: summaries } = summary_data
 						/>
 					))
 				) : (
-					<>
-						<p>None yet.</p>
-						{user ? null : (
-							<span>
-								<a href='/login'>Login</a> to add a summary.
-							</span>
-						)}
-					</>
+					<p>None yet.</p>
 				)
 			}
 		</ol>
+		{
+			user ? null : (
+				<span>
+					<a href='/login'>Login</a> to add a summary.
+				</span>
+			)
+		}
 	</main>
 </Layout>
 

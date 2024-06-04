@@ -177,9 +177,8 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 
 // ADD / LIKE SUMMARY
 // (depending on JSON fields supplied)
-func AddSummaryOrSummaryLike(w http.ResponseWriter, r *http.Request) {
-	summary_data := &model.NewSummaryOrSummaryLikeRequest{}
-
+func AddSummary(w http.ResponseWriter, r *http.Request) {
+	summary_data := &model.NewSummaryRequest{}
 	if err := render.Bind(r, summary_data); err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
@@ -199,56 +198,27 @@ func AddSummaryOrSummaryLike(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer db.Close()
 
-	// Create Summary
-	if summary_data.NewSummaryRequest != nil {
+	// Check if link exists, Abort if not
+	var s sql.NullString
+	err = db.QueryRow("SELECT id FROM Links WHERE id = ?", summary_data.LinkID).Scan(&s)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("link not found")))
+		return
+	}
 
-		// Check if link exists, Abort if not
-		var s sql.NullString
-		err = db.QueryRow("SELECT id FROM Links WHERE id = ?", summary_data.LinkID).Scan(&s)
-		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(errors.New("link not found")))
-			return
-		}
+	// Check if user already submitted a summary to this link, Abort if so
+	var lid sql.NullString
+	err = db.QueryRow("SELECT id FROM Summaries WHERE link_id = ? AND submitted_by = ?", summary_data.LinkID, req_user_id).Scan(&lid)
+	if err == nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("existing summary found from user for link")))
+		return
+	}
 
-		// Check if user already submitted a summary to this link, Abort if so
-		var lid sql.NullString
-		err = db.QueryRow("SELECT id FROM Summaries WHERE link_id = ? AND submitted_by = ?", summary_data.LinkID, req_user_id).Scan(&lid)
-		if err == nil {
-			render.Render(w, r, ErrInvalidRequest(errors.New("existing summary found from user for link")))
-			return
-		}
-
-		_, err := db.Exec(`INSERT INTO Summaries VALUES (?,?,?,?)`, nil, summary_data.NewSummaryRequest.Text, summary_data.NewSummaryRequest.LinkID, req_user_id)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-	// Like Summary
-	} else if summary_data.NewSummaryLikeRequest != nil {
-
-		// Check if summary exists, Abort if not
-		var s sql.NullString
-		err = db.QueryRow("SELECT id FROM Summaries WHERE id = ?", summary_data.NewSummaryLikeRequest.SummaryID).Scan(&s)
-		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
-			return
-		}
-
-		// Check if user already liked summary, Abort if so
-		var lid sql.NullString
-		err = db.QueryRow("SELECT id FROM 'Summary Likes' WHERE summary_id = ? AND user_id = ?", summary_data.NewSummaryLikeRequest.SummaryID, req_user_id).Scan(&lid)
-		if err == nil {
-			render.Render(w, r, ErrInvalidRequest(errors.New("already liked")))
-			return
-		}
-
-		_, err = db.Exec(`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, nil, req_user_id, summary_data.NewSummaryLikeRequest.SummaryID)
-		if err != nil {
-			log.Fatal(err)
-		}
+	_, err = db.Exec(`INSERT INTO Summaries VALUES (?,?,?,?)`, nil, summary_data.Text, summary_data.LinkID, req_user_id)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Recalculate global_summary
@@ -256,6 +226,76 @@ func AddSummaryOrSummaryLike(w http.ResponseWriter, r *http.Request) {
 
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, summary_data)
+}
+
+// DELETE SUMMARY
+func DeleteSummary(w http.ResponseWriter, r *http.Request) {
+	delete_data := &model.DeleteSummaryRequest{}
+	if err := render.Bind(r, delete_data); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	// Check auth token
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
+	}
+	
+	db, err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// Check that summary exists and submitted by user, Abort if not
+	var u sql.NullInt64
+	req_user_id_int64, err := strconv.ParseInt(req_user_id, 10, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = db.QueryRow("SELECT submitted_by FROM Summaries WHERE id = ?", delete_data.SummaryID).Scan(&u)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
+		return
+	} else if u.Int64 != req_user_id_int64 {
+		render.Render(w, r, ErrInvalidRequest(errors.New("not your summary")))
+		return
+	}
+		
+	// Get link ID
+	var lid sql.NullString
+	get_lid_sql := fmt.Sprintf(`SELECT link_id FROM Summaries WHERE id = '%s'`, delete_data.SummaryID)
+	err = db.QueryRow(get_lid_sql).Scan(&lid)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Check that summary is not only summary for its link, Abort if so
+	var c sql.NullInt32
+	err = db.QueryRow("SELECT COUNT(id) FROM Summaries WHERE link_id = ?", lid.String).Scan(&c)
+	if err != nil {
+		log.Fatal(err)
+	} else if c.Int32 == 1 {
+		render.Render(w, r, ErrInvalidRequest(errors.New("last summary for link, cannot delete")))
+		return
+	}
+
+	// Delete Summary
+	_, err = db.Exec(`DELETE FROM Summaries WHERE id = ?`, delete_data.SummaryID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Recalculate global_summary
+	RecalculateGlobalSummary(lid.String, db)
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, map[string]string{"message": "deleted"})
 }
 
 // EDIT SUMMARY
@@ -311,12 +351,11 @@ func EditSummary(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, edit_data)
 }
 
-// DELETE / UN-LIKE SUMMARY
-// (depending on JSON fields supplied)
-func DeleteOrUnlikeSummary(w http.ResponseWriter, r *http.Request) {
-	summary_data := &model.DeleteSummaryOrSummaryLikeRequest{}
-	if err := render.Bind(r, summary_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+// LIKE SUMMARY
+func LikeSummary(w http.ResponseWriter, r *http.Request) {
+	summary_id := chi.URLParam(r, "summary_id")
+	if summary_id == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no summary ID provided")))
 		return
 	}
 
@@ -336,79 +375,81 @@ func DeleteOrUnlikeSummary(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// req_user_id_int64 will be used to check if user submitted summary / summary like
-	req_user_id_int64, err := strconv.ParseInt(req_user_id, 10, 64)
+	// Check if summary exists, Abort if not
+	// Also save link_id for recalculating global_summary later
+	var s, lid sql.NullString
+	err = db.QueryRow("SELECT id, link_id FROM Summaries WHERE id = ?", summary_id).Scan(&s, &lid)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
+		return
+	}
+
+	// Check if user already liked summary, Abort if so
+	var slid sql.NullString
+	err = db.QueryRow("SELECT id FROM 'Summary Likes' WHERE summary_id = ? AND user_id = ?", summary_id, req_user_id).Scan(&slid)
+	if err == nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("already liked")))
+		return
+	}
+
+	// Add like
+	_, err = db.Exec(`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, nil, req_user_id, summary_id)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// link ID will be used to recalculate link's new global_summary after summary deletion
+	// Recalculate global_summary
+	RecalculateGlobalSummary(lid.String, db)
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, map[string]string{"message": "liked"})
+}
+
+// DELETE / UN-LIKE SUMMARY
+// (depending on JSON fields supplied)
+func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
+	summary_id := chi.URLParam(r, "summary_id")
+	if summary_id == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no summary ID provided")))
+		return
+	}
+
+	// Check auth token
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
+	}
+	
+	db, err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// Check that user has liked summary with given ID, Abort if not
+	var slid sql.NullString
+	err = db.QueryRow("SELECT id FROM 'Summary Likes' WHERE summary_id = ? AND user_id = ?", summary_id, req_user_id).Scan(&slid)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("not liked")))
+		return
+	}
+
+	// Get link ID before deleting
 	var lid sql.NullString
-	var get_lid_sql string
+	get_lid_sql := fmt.Sprintf(`SELECT link_id FROM Summaries WHERE Summaries.id = (SELECT summary_id FROM 'Summary Likes' WHERE 'Summary Likes'.id = '%s');`, slid.String)
+	err = db.QueryRow(get_lid_sql).Scan(&lid)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// Delete Summary
-	if summary_data.DeleteSummaryRequest != nil {
-
-		// Check that summary exists and submitted by user, Abort if not
-		var u sql.NullInt64
-		err = db.QueryRow("SELECT submitted_by FROM Summaries WHERE id = ?", summary_data.DeleteSummaryRequest.SummaryID).Scan(&u)
-		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
-			return
-		} else if u.Int64 != req_user_id_int64 {
-			render.Render(w, r, ErrInvalidRequest(errors.New("not your summary")))
-			return
-		}
-
-		// Get link ID
-		get_lid_sql = fmt.Sprintf(`SELECT link_id FROM Summaries WHERE id = '%s'`, summary_data.DeleteSummaryRequest.SummaryID)
-		err = db.QueryRow(get_lid_sql).Scan(&lid)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Check that summary is not only summary for its link, Abort if so
-		var c sql.NullInt32
-		err = db.QueryRow("SELECT COUNT(id) FROM Summaries WHERE link_id = ?", lid.String).Scan(&c)
-		if err != nil {
-			log.Fatal(err)
-		} else if c.Int32 == 1 {
-			render.Render(w, r, ErrInvalidRequest(errors.New("last summary for link, cannot delete")))
-			return
-		}
-
-		// Delete Summary
-		_, err = db.Exec(`DELETE FROM Summaries WHERE id = ?`, summary_data.DeleteSummaryRequest.SummaryID)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-	// Unlike Summary
-	} else if summary_data.DeleteSummaryLikeRequest != nil {
-
-		// Check that summary like exists and submitted by user, Abort if not
-		var u sql.NullInt64
-		err = db.QueryRow("SELECT user_id FROM 'Summary Likes' WHERE id = ?", summary_data.DeleteSummaryLikeRequest.SummaryLikeID).Scan(&u)
-		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(errors.New("summary like not found")))
-			return
-		} else if u.Int64 != req_user_id_int64 {
-			render.Render(w, r, ErrInvalidRequest(errors.New("not your summary like")))
-			return
-		}
-
-		// Get link ID
-		get_lid_sql = fmt.Sprintf(`SELECT link_id FROM Summaries WHERE Summaries.id IN (SELECT summary_id FROM 'Summary Likes' WHERE 'Summary Likes'.id = '%s');`, summary_data.DeleteSummaryLikeRequest.SummaryLikeID)
-		err = db.QueryRow(get_lid_sql).Scan(&lid)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Delete Summary Like
-		_, err = db.Exec(`DELETE FROM 'Summary Likes' WHERE id = ?`, summary_data.DeleteSummaryLikeRequest.SummaryLikeID)
-		if err != nil {
-			log.Fatal(err)
-		}
+	// Delete Summary Like
+	_, err = db.Exec(`DELETE FROM 'Summary Likes' WHERE id = ?`, slid.String)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Recalculate global_summary
@@ -416,14 +457,13 @@ func DeleteOrUnlikeSummary(w http.ResponseWriter, r *http.Request) {
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "deleted"})
-
 }
 
 func RecalculateGlobalSummary(link_id string, db *sql.DB) {
+	
 	// Recalculate global_summary
 	// (Summary with the most upvotes is the global summary)
 	get_summary_like_counts_sql := fmt.Sprintf(`select text from summaries LEFT JOIN 'Summary Likes' ON summaries.id = 'Summary Likes'.summary_id WHERE link_id = '%s' GROUP BY summaries.id ORDER BY count(*) DESC, text ASC LIMIT 1;`, link_id)
-
 	var top_summary_text string
 	err := db.QueryRow(get_summary_like_counts_sql).Scan(&top_summary_text)
 	if err != nil {

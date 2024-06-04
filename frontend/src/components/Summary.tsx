@@ -16,6 +16,8 @@ export default function Summary(props: Props) {
 	const [is_liked, set_is_liked] = useState(props.IsLiked)
     const [like_count, set_like_count] = useState(props.LikeCount)
 
+	const like_api_url = `http://127.0.0.1:8000/summaries/${ID}/like`
+
 	async function handle_like() {
 		if (!token) {
 			return (window.location.href = '/login')
@@ -24,20 +26,17 @@ export default function Summary(props: Props) {
 		// like
 		if (!is_liked) {
 			const like_resp = await fetch(
-				`http://127.0.0.1:8000/summaries`,
+				like_api_url,
 				{
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
 						Authorization: `Bearer ${token}`,
 					},
-					body: JSON.stringify({
-						summary_id: ID
-					})
 				}
 			)
 			const like_data = await like_resp.json()
-			if (like_data.ID) {
+			if (like_data.message === 'liked') {
 				set_is_liked(true)
 				set_like_count(like_count + 1)
 				return
@@ -48,16 +47,13 @@ export default function Summary(props: Props) {
 		// unlike
 		} else {
 			const unlike_resp = await fetch(
-				`http://127.0.0.1:8000/summaries`,
+				like_api_url,
 				{
 					method: 'DELETE',
 					headers: {
 						'Content-Type': 'application/json',
 						Authorization: `Bearer ${token}`,
 					},
-					// body: JSON.stringify({
-					// 	slike_id: ID
-					// })
 				}
 			)
 			const unlike_data = await unlike_resp.json()
@@ -76,7 +72,7 @@ export default function Summary(props: Props) {
 			<p>Submitted By: {submitted_by}</p>
 			<button
 				onClick={handle_like}
-				class={`like-btn${is_liked ? ' liked' : ''}`}>Like ({like_count})
+				class={`like-btn${is_liked ? ' liked' : ''}`}>{is_liked ? 'Unlike' : 'Like'} ({like_count})
 			</button>
 		</li>
 	)

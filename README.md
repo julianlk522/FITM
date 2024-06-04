@@ -10,9 +10,7 @@
 -Make frontend look decent
     -A11y, responsive layouts for phones / tablets
 -Fix dumb repeat code in GetTreasureMap handler
--Submit new summary page
--Top Links page (different timeframes)
--Separate summary like/unlike from summary add/delete requests in backend
+-Return to last page after being redirected for auth
 
 ## Why?
 
