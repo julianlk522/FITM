@@ -1,7 +1,7 @@
 ---
 import Link from '../components/Link'
 import Layout from '../layouts/Layout.astro'
-import { type CategoryCount, type LinkData } from '../types'
+import { Periods, type CategoryCount, type LinkData } from '../types'
 
 // get auth token and user if user signed in
 const token = Astro.cookies.get('token')?.value
@@ -17,15 +17,14 @@ const popular_cats_resp = await (token
 // [{Category: 'umvc3', Count: 1}, ...]
 const popular_cats: CategoryCount[] = await popular_cats_resp.json()
 
-const trending_links_resp = await (token
+const get_links_resp = await (token
 	? fetch('http://127.0.0.1:8000/links/month', {
 			headers: { Authorization: `Bearer ${token}` },
 		})
 	: fetch('http://127.0.0.1:8000/links/month'))
-const trending_links: LinkData[] = await trending_links_resp.json()
+const links: LinkData[] = await get_links_resp.json()
 // [{URL: 'https://example.com', LikeCount: 100}, ...]
-
-const available_trending_links_durations = ['week', 'month', 'year', 'all']
+const other_periods = Periods.filter((other) => other !== 'month')
 ---
 
 <Layout title='Welcome to the Open Internet Treasure Map (OITM)'>
@@ -100,20 +99,20 @@ const available_trending_links_durations = ['week', 'month', 'year', 'all']
 				))
 			}
 		</ul>
-		<h3>Most-Liked Links This Week</h3>
-		<div id='change-time-duration'>
-			<p>Change time duration:</p>
+		<h3>Top Links This Month</h3>
+		<div id='change-period'>
+			<p>Change period:</p>
 			{
-				available_trending_links_durations.map((duration) => (
-					<a class='time-duration' href={`/links/${duration}`}>
-						{duration}
+				other_periods.map((period) => (
+					<a class='period' href={`/top/${period}`}>
+						{period}
 					</a>
 				))
 			}
 		</div>
 		<ul id='trending-links'>
 			{
-				trending_links.map((link) => (
+				links.map((link) => (
 					<Link
 						client:load
 						link={link}
@@ -145,7 +144,7 @@ const available_trending_links_durations = ['week', 'month', 'year', 'all']
 		padding: 3px;
 		text-align: center;
 	}
-	#change-time-duration {
+	#change-period {
 		font-size: 0.9rem;
 		display: flex;
 
@@ -153,7 +152,7 @@ const available_trending_links_durations = ['week', 'month', 'year', 'all']
 			margin-top: 0;
 		}
 	}
-	.time-duration {
+	.period {
 		margin-left: 0.5rem;
 	}
 	#trending-links {

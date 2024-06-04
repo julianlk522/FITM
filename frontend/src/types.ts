@@ -30,6 +30,9 @@ type LinkData = {
 	IsLiked: boolean | undefined
 }
 
+const Periods = ['day', 'week', 'month', 'year', 'all'] as const
+type Period = typeof Periods[number]
+
 // CATEGORY
 type CategoryCount = {
 	Category: string
@@ -64,6 +67,6 @@ type TreasureMap = {
 	Categories: CategoryCount[]
 }
 
-export { is_error_response }
-export type { CategoryContributor, CategoryCount, ErrorResponse, LinkData, Summary, SummaryPage, TreasureMap, User }
+export { Periods, is_error_response }
+export type { CategoryContributor, CategoryCount, ErrorResponse, LinkData, Period, Summary, SummaryPage, TreasureMap, User }
 

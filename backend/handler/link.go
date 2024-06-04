@@ -115,6 +115,8 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 		get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
 	case "month":
 		get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
+	case "year":
+		get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 366`
 	default:
 		render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
 		return

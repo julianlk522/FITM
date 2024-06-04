@@ -1,0 +1,88 @@
+---
+import Link from '../../components/Link'
+import Layout from '../../layouts/Layout.astro'
+import { Periods, type LinkData, type Period } from '../../types'
+
+// get auth token and user if user signed in
+const token = Astro.cookies.get('token')?.value
+let user: string | undefined = Astro.cookies.get('user')
+	? Astro.cookies.get('user')?.value
+	: Astro.locals.user
+
+const { period } = Astro.params as { period: Period }
+if (period && !Periods.includes(period)) {
+	return Astro.redirect('/404')
+}
+const other_periods = Periods.filter((other) => other !== period)
+
+const api_url =
+	period === 'all'
+		? 'http://127.0.0.1:8000/links'
+		: `http://127.0.0.1:8000/links/${period}`
+const get_links_resp = await (token
+	? fetch(api_url, {
+			headers: { Authorization: `Bearer ${token}` },
+		})
+	: fetch(api_url))
+const links: LinkData[] = await get_links_resp.json()
+// [{URL: 'https://example.com', LikeCount: 100}, ...]
+---
+
+<Layout title='Welcome to the Open Internet Treasure Map (OITM)'>
+	<main>
+		<h1>
+			{`Top Links (${period.charAt(0).toUpperCase() + period.slice(1)})`}
+		</h1>
+		<div id='change-period'>
+			<p>Change time duration:</p>
+			{
+				other_periods.map((period) => (
+					<a class='period' href={`/top/${period}`}>
+						{period ? period : 'all'}
+					</a>
+				))
+			}
+		</div>
+		{
+			links ? (
+				<ul id='links'>
+					{links.map((link) => (
+						<Link
+							client:load
+							link={link}
+							is_summary_page={false}
+							token={token}
+							user={user}
+						/>
+					))}
+				</ul>
+			) : (
+				<>
+					<p>No results</p>
+					{user ? (
+						<p>
+							<a href={`/new`}>Add link</a>
+						</p>
+					) : null}
+				</>
+			)
+		}
+	</main>
+</Layout>
+
+<style>
+	#change-period {
+		font-size: 0.9rem;
+		display: flex;
+
+		p {
+			margin-top: 0;
+		}
+	}
+	.period {
+		margin-left: 0.5rem;
+	}
+	#links {
+		padding: 0;
+	}
+</style>
