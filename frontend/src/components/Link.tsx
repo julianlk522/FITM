@@ -91,6 +91,8 @@ export default function Link(props: Props) {
                     {summary ? summary : url}
                 </h2>
             </a>}
+
+            {summary ? <p class='url'>{url}</p> : null}
             
             <p>
                 Submitted By: <a href={`/map/${submitted_by}`}>{submitted_by}</a> on {

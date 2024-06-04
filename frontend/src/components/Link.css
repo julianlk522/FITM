@@ -26,3 +26,8 @@ p {
 .preview img {
     object-fit: cover;
 }
+.url {
+    font-size: 0.9rem;
+    line-height: 0.5;
+    margin-bottom: 20px
+}
