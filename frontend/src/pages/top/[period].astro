@@ -5,9 +5,7 @@ import { Periods, type LinkData, type Period } from '../../types'
 
 // get auth token and user if user signed in
 const token = Astro.cookies.get('token')?.value
-let user: string | undefined = Astro.cookies.get('user')
-	? Astro.cookies.get('user')?.value
-	: Astro.locals.user
+const user = Astro.cookies.get('user')?.value
 
 const { period } = Astro.params as { period: Period }
 if (period && !Periods.includes(period)) {

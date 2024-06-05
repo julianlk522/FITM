@@ -25,7 +25,9 @@ import Layout from '../layouts/Layout.astro'
 
 			if (login_data.token) {
 				// set cookie
-				document.cookie = `token=${login_data.token}; path=/; max-age=3600; SameSite=strict; Secure`
+				document.cookie = `token=${login_data.token}; max-age=3600; SameSite=strict; Secure`
+
+				// redirect
 				window.location.href = '/'
 			} else {
 				alert(login_data.error)
@@ -50,6 +52,7 @@ import Layout from '../layouts/Layout.astro'
 			<input type='submit' value='Submit' />
 		</form>
 		<h2>Sign Up</h2>
+		<!-- TODO: make sure this works -->
 		<form action='localhost:8000/signup'>
 			<label for='username'>Username</label>
 			<input type='text' id='login_name' name='login_name' />

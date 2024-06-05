@@ -6,6 +6,11 @@ let token = Astro.cookies.get('token')?.value
 let user = Astro.cookies.get('user')?.value
 
 if (!token || !user) {
+	Astro.cookies.set('redirect_to', Astro.url.pathname, {
+		maxAge: 3600,
+		sameSite: 'strict',
+		secure: true,
+	})
 	return Astro.redirect('/login')
 }
 ---

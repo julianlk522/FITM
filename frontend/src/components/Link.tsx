@@ -28,7 +28,8 @@ export default function Link(props: Props) {
 
     async function handle_like() {
         if (!token) {
-            return (window.location.href = '/login')
+            document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/; max-age=3600; SameSite=strict; Secure`
+            return window.location.href = '/login'
         }
 
         // like
@@ -51,6 +52,7 @@ export default function Link(props: Props) {
             } else {
                 console.error("WTF is this: ",like_data)
             }
+
         // unlike
         } else {
             const unlike_resp = await fetch(
