@@ -10,12 +10,13 @@ import (
 
 func GetJWTClaims(r *http.Request) (map[string]interface{}, error) {
 	_, claims, err := jwtauth.FromContext(r.Context())
-	// claims = {"user_id":"1234","login_name":"johndoe"}
 	if len(claims) == 0 {
 		return nil, nil
 	} else if err != nil {
 		return nil, err
 	}
+	
+	// claims = {"user_id":"1234","login_name":"johndoe"}
 	req_login_name, ok := claims["login_name"]
 	req_user_id, ok2 := claims["user_id"]
 	if !ok || !ok2 {

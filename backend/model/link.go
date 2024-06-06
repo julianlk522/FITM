@@ -33,31 +33,6 @@ func (a *NewLinkRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-type LinkCopyRequest struct {
-	ID int64
-	LinkID string `json:"link_id"`
-}
-
-func (a *LinkCopyRequest) Bind(r *http.Request) error {
-	if a.LinkID == "" {
-		return errors.New("missing link ID")
-	}
-
-	return nil
-}
-
-type DeleteLinkCopyRequest struct {
-	ID string `json:"copy_id"`
-}
-
-func (a *DeleteLinkCopyRequest) Bind(r *http.Request) error {
-	if a.ID == "" {
-		return errors.New("missing copy ID")
-	}
-
-	return nil
-}
-
 type Link struct {
 	ID int64
 	URL string
@@ -73,6 +48,7 @@ type Link struct {
 type LinkSignedIn struct {
 	Link
 	IsLiked bool
+	IsCopied bool
 }
 
 type CustomLinkCategories struct {

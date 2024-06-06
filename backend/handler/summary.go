@@ -50,23 +50,31 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 	if req_user_id != "" {
 
 		// Get link
-		get_link_sql := fmt.Sprintf(`SELECT links_id as link_id, url, submitted_by, submit_date, coalesce(categories,"") as categories, summary, COUNT('Link Likes'.id) as like_count, coalesce(is_liked,0) as is_liked, img_url
+		get_link_sql := fmt.Sprintf(`SELECT links_id as link_id, url, submitted_by, submit_date, coalesce(categories,"") as categories, summary, COUNT('Link Likes'.id) as like_count, coalesce(is_liked,0) as is_liked, coalesce(is_copied,0) as is_copied, img_url
 		FROM
 			(
 			SELECT id as links_id, url, submitted_by, submit_date, global_cats as categories, global_summary as summary, coalesce(img_url,"") as img_url
 			FROM Links
-			WHERE id = '%s'
+			WHERE id = '%[1]s'
 			)
 		LEFT JOIN 'Link Likes'
 		ON 'Link Likes'.link_id = links_id
 		LEFT JOIN
 			(
-			SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
+			SELECT id as like_id, count(*) as is_liked, user_id as luser_id, link_id as like_link_id2
 			FROM 'Link Likes'
-			WHERE user_id = '%s'
-			GROUP BY id
+			WHERE luser_id = '%[2]s'
+			GROUP BY like_id
 			)
-		ON like_link_id2 = link_id`, link_id, req_user_id)
+		ON like_link_id2 = link_id
+		LEFT JOIN
+			(
+			SELECT id as copy_id, count(*) as is_copied, user_id as cuser_id, link_id as copy_link_id
+			FROM 'Link Copies'
+			WHERE cuser_id = '%[2]s'
+			GROUP BY copy_id
+			)
+		ON copy_link_id = link_id`, link_id, req_user_id)
 		var link model.LinkSignedIn
 		err = db.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.IsLiked, &link.ImgURL)
 		if err != nil {

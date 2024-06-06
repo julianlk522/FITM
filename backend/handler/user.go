@@ -323,42 +323,50 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get links
-	// User signed in: get isLiked for each link
+	// User signed in: get isLiked and isCopied for each link
 	if req_user_id != "" {
 
 		// Get submitted links, replacing global categories with user-assigned
-		get_submitted_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by as login_name, submit_date, categories, coalesce(global_summary,"") as summary, coalesce(summary_count,0) as summary_count, coalesce(like_count,0) as like_count, coalesce(is_liked,0) as is_liked, coalesce(img_url,"") as img_url
+		get_submitted_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, categories, coalesce(global_summary,"") as summary, coalesce(summary_count,0) as summary_count, coalesce(like_count,0) as like_count, coalesce(is_liked,0) as is_liked, coalesce(is_copied,0) as is_copied, coalesce(img_url,"") as img_url
 		FROM Links
 		JOIN
 			(
 			SELECT categories, link_id as tag_link_id
 			FROM Tags
-			WHERE submitted_by = '%s'
+			WHERE submitted_by = '%[1]s'
 			)
 		ON link_id = tag_link_id
 		LEFT JOIN
-					(
-					SELECT count(*) as like_count, link_id as like_link_id
-					FROM 'Link Likes'
-					GROUP BY link_id
-					)
-			ON like_link_id = link_id
-			LEFT JOIN
-					(
-					SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
-					FROM 'Link Likes'
-					WHERE user_id == %s
-					GROUP BY id
-					)
-			ON like_link_id2 = link_id
-			LEFT JOIN
-				(
-				SELECT count(*) as summary_count, link_id as summary_link_id
-				FROM Summaries
-				GROUP BY link_id
-				)
-			ON summary_link_id = link_id
-		WHERE login_name = '%s';`, login_name, req_user_id, login_name)
+			(
+			SELECT count(*) as like_count, link_id as like_link_id
+			FROM 'Link Likes'
+			GROUP BY link_id
+			)
+		ON like_link_id = link_id
+		LEFT JOIN
+			(
+			SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
+			FROM 'Link Likes'
+			WHERE user_id = '%[2]s'
+			GROUP BY id
+			)
+		ON like_link_id2 = link_id
+		LEFT JOIN
+			(
+			SELECT count(*) as summary_count, link_id as summary_link_id
+			FROM Summaries
+			GROUP BY link_id
+			)
+		ON summary_link_id = link_id
+		LEFT JOIN
+			(
+			SELECT id as copy_id, count(*) as is_copied, user_id as cuser_id, link_id as copy_link_id
+			FROM 'Link Copies'
+			WHERE cuser_id = '%[2]s'
+			GROUP BY copy_id
+			)
+		ON copy_link_id = link_id
+		WHERE submitted_by = '%[1]s';`, login_name, req_user_id)
 		rows, err := db.Query(get_submitted_sql)
 		if err != nil {
 			log.Fatal(err)
@@ -369,7 +377,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		submitted := []model.LinkSignedIn{}
 		for rows.Next() {
 			i := model.LinkSignedIn{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.IsLiked, &i.ImgURL)
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.IsLiked, &i.IsCopied, &i.ImgURL)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -377,38 +385,46 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Get tagged links submitted by other users
-		get_tagged_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by as login_name, submit_date, categories, coalesce(global_summary,"") as summary, coalesce(summary_count,0) as summary_count, coalesce(like_count,0) as like_count, coalesce(is_liked,0) as is_liked, coalesce(img_url,"") as img_url
+		get_tagged_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, categories, coalesce(global_summary,"") as summary, coalesce(summary_count,0) as summary_count, coalesce(like_count,0) as like_count, coalesce(is_liked,0) as is_liked, coalesce(is_copied,0) as is_copied, coalesce(img_url,"") as img_url
 		FROM Links
 		JOIN
 			(
 			SELECT categories, link_id as tag_link_id
 			FROM Tags
-			WHERE submitted_by = '%s'
+			WHERE submitted_by = '%[1]s'
 			)
 		ON tag_link_id = link_id
-	LEFT JOIN
+		LEFT JOIN
 			(
 			SELECT count(*) as like_count, link_id as like_link_id
 			FROM 'Link Likes'
 			GROUP BY link_id
 			)
-	ON like_link_id = link_id
-	LEFT JOIN
+		ON like_link_id = link_id
+		LEFT JOIN
 			(
 			SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
 			FROM 'Link Likes'
-			WHERE user_id == %s
+			WHERE user_id = '%[2]s'
 			GROUP BY id
 			)
-	ON like_link_id2 = link_id
-	LEFT JOIN
-		(
-		SELECT count(*) as summary_count, link_id as summary_link_id
-		FROM Summaries
-		GROUP BY link_id
-		)
-	ON summary_link_id = link_id
-	WHERE login_name != '%s';`, login_name, req_user_id, login_name)
+		ON like_link_id2 = link_id
+		LEFT JOIN
+			(
+			SELECT count(*) as summary_count, link_id as summary_link_id
+			FROM Summaries
+			GROUP BY link_id
+			)
+		ON summary_link_id = link_id
+		LEFT JOIN
+			(
+			SELECT id as copy_id, count(*) as is_copied, user_id as cuser_id, link_id as copy_link_id
+			FROM 'Link Copies'
+			WHERE cuser_id = '%[2]s'
+			GROUP BY copy_id
+			)
+		ON copy_link_id = link_id
+		WHERE submitted_by != '%[1]s';`, login_name, req_user_id)
 		rows, err = db.Query(get_tagged_sql)
 		if err != nil {
 			log.Fatal(err)
@@ -419,7 +435,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		tagged := []model.LinkSignedIn{}
 		for rows.Next() {
 			i := model.LinkSignedIn{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.IsLiked, &i.ImgURL)
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.IsLiked, &i.IsCopied, &i.ImgURL)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -427,7 +443,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Get copied links
-		get_copied_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by as login_name, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(summary_count,0) as summary_count, coalesce(like_count,0) as like_count, coalesce(is_liked,0) as is_liked, coalesce(img_url,"") as img_url
+		get_copied_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by as login_name, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(summary_count,0) as summary_count, coalesce(like_count,0) as like_count, coalesce(is_liked,0) as is_liked, coalesce(is_copied,0) as is_copied, coalesce(img_url,"") as img_url
 		FROM Links
 		JOIN
 			(
@@ -435,7 +451,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 			FROM 'Link Copies'
 			JOIN Users
 			ON Users.id = copier_id
-			WHERE Users.login_name = '%s'
+			WHERE Users.login_name = '%[1]s'
 			)
 		ON copy_link_id = link_id
 		LEFT JOIN
@@ -449,7 +465,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 			(
 			SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
 			FROM 'Link Likes'
-			WHERE user_id == %s
+			WHERE user_id = '%[2]s'
 			GROUP BY id
 			)
 		ON like_link_id2 = link_id
@@ -459,7 +475,15 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 			FROM Summaries
 			GROUP BY link_id
 			)
-		ON summary_link_id = link_id;`, login_name, req_user_id)
+		ON summary_link_id = link_id
+		LEFT JOIN
+			(
+			SELECT id as copy_id, count(*) as is_copied, user_id as copier_id2, link_id as copy_link_id2
+			FROM 'Link Copies'
+			WHERE copier_id2 = '%[2]s'
+			GROUP BY copy_id
+			)
+		ON copy_link_id2 = link_id`, login_name, req_user_id)
 		rows, err = db.Query(get_copied_sql)
 		if err != nil {
 			log.Fatal(err)
@@ -470,7 +494,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		copied := []model.LinkSignedIn{}
 		for rows.Next() {
 			i := model.LinkSignedIn{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.IsLiked, &i.ImgURL)
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.IsLiked, &i.IsCopied, &i.ImgURL)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -530,17 +554,17 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		tmap.Categories = cat_counts
 		render.JSON(w, r, tmap)
 		
-	// User not signed in: omit isLiked
+	// User not signed in: omit isLiked and isCopied
 	} else {
 
 		// Get submitted links, replacing global categories with user-assigned
-		get_submitted_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by as login_name, submit_date, categories, coalesce(global_summary,"") as summary, coalesce(summary_count,0) as summary_count, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
+		get_submitted_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, categories, coalesce(global_summary,"") as summary, coalesce(summary_count,0) as summary_count, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
 		FROM Links
 		JOIN
 			(
 			SELECT categories, link_id as tag_link_id
 			FROM Tags
-			WHERE submitted_by = '%s'
+			WHERE submitted_by = '%[1]s'
 			)
 		ON link_id = tag_link_id
 		LEFT JOIN
@@ -557,7 +581,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 			GROUP BY link_id
 			)
 		ON summary_link_id = link_id
-		WHERE login_name = '%s';`, login_name, login_name)
+		WHERE submitted_by = '%[1]s';`, login_name)
 		rows, err := db.Query(get_submitted_sql)
 		if err != nil {
 			log.Fatal(err)
@@ -576,21 +600,21 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Get tagged links submitted by other users
-		get_tagged_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by as login_name, submit_date, categories, coalesce(global_summary,"") as summary, coalesce(summary_count,0) as summary_count, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
+		get_tagged_sql := fmt.Sprintf(`SELECT Links.id as link_id, url, submitted_by, submit_date, categories, coalesce(global_summary,"") as summary, coalesce(summary_count,0) as summary_count, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
 		FROM Links
 		JOIN
 			(
 			SELECT categories, link_id as tag_link_id
 			FROM Tags
-			WHERE submitted_by = '%s'
+			WHERE submitted_by = '%[1]s'
 			)
 		ON tag_link_id = link_id
 		LEFT JOIN
-				(
-				SELECT count(*) as like_count, link_id as like_link_id
-				FROM 'Link Likes'
-				GROUP BY link_id
-				)
+			(
+			SELECT count(*) as like_count, link_id as like_link_id
+			FROM 'Link Likes'
+			GROUP BY link_id
+			)
 		ON like_link_id = link_id
 		LEFT JOIN
 			(
@@ -599,7 +623,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 			GROUP BY link_id
 			)
 		ON summary_link_id = link_id
-	WHERE login_name != '%s';`, login_name, login_name)
+		WHERE submitted_by != '%[1]s';`, login_name)
 		rows, err = db.Query(get_tagged_sql)
 		if err != nil {
 			log.Fatal(err)

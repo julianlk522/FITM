@@ -47,7 +47,7 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Scan links
-	// User signed in: get isLiked for each link
+	// User signed in: get isLiked and isCopied for each link
 	if req_user_id != "" {
 		var links []model.LinkSignedIn
 		for rows.Next() {
@@ -57,18 +57,30 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 				log.Fatal(err)
 			}
 	
-			// Add IsLiked
+			// Add IsLiked and IsCopied
 			var l sql.NullInt32
-			err = db.QueryRow("SELECT count(*) as is_liked FROM 'Link Likes' WHERE link_id = ? AND user_id = ?;", i.ID, req_user_id).Scan(&l)
+			var c sql.NullInt32
+			err = db.QueryRow(`SELECT
+			(
+			SELECT count(*) FROM 'Link Likes'
+			WHERE link_id = '%[1]s' AND user_id = '%[2]s'
+			) as is_liked,
+			(
+			SELECT count(*) FROM 'Link Copies'
+			WHERE link_id = '%[1]s' AND user_id = '%[2]s'
+			) as is_copied;`, i.ID, req_user_id).Scan(&l, &c)
 			if err != nil {
 				log.Fatal(err)
 			}
+
 			i.IsLiked = l.Int32 > 0
+			i.IsCopied = c.Int32 > 0
+
 			links = append(links, i)
 		}
 		render.JSON(w, r, links)
 		
-	// User not signed in: omit isLiked
+	// User not signed in: omit isLiked and isCopied
 	} else {
 		var links []model.Link
 		for rows.Next() {
@@ -144,7 +156,6 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// Scan links
-	// User signed in: get isLiked for each link
 	if req_user_id != "" {
 		var links []model.LinkSignedIn
 		for rows.Next() {
@@ -154,18 +165,28 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 				log.Fatal(err)
 			}
 	
-			// Add IsLiked
+			// Add IsLiked and IsCopied
 			var l sql.NullInt32
-			err = db.QueryRow("SELECT count(*) as is_liked FROM 'Link Likes' WHERE link_id = ? AND user_id = ?;", i.ID, req_user_id).Scan(&l)
+			var c sql.NullInt32
+			err = db.QueryRow(`SELECT
+			(
+			SELECT count(*) FROM 'Link Likes'
+			WHERE link_id = '%[1]s' AND user_id = '%[2]s'
+			) as is_liked,
+			(
+			SELECT count(*) FROM 'Link Copies'
+			WHERE link_id = '%[1]s' AND user_id = '%[2]s'
+			) as is_copied;`, i.ID, req_user_id).Scan(&l, &c)
 			if err != nil {
 				log.Fatal(err)
 			}
+
 			i.IsLiked = l.Int32 > 0
+			i.IsCopied = c.Int32 > 0
+
 			links = append(links, i)
 		}
-		render.JSON(w, r, links)
-		
-	// User not signed in: omit isLiked
+		render.JSON(w, r, links)		
 	} else {
 		var links []model.Link
 		for rows.Next() {
@@ -279,7 +300,6 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Scan links
-	// User signed in: get isLiked for each link
 	if req_user_id != "" {
 		var links []model.LinkSignedIn
 		for rows.Next() {
@@ -289,13 +309,25 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 				log.Fatal(err)
 			}
 	
-			// Add IsLiked
+			// Add IsLiked and IsCopied
 			var l sql.NullInt32
-			err = db.QueryRow("SELECT count(*) as is_liked FROM 'Link Likes' WHERE link_id = ? AND user_id = ?;", i.ID, req_user_id).Scan(&l)
+			var c sql.NullInt32
+			err = db.QueryRow(`SELECT
+			(
+			SELECT count(*) FROM 'Link Likes'
+			WHERE link_id = '%[1]s' AND user_id = '%[2]s'
+			) as is_liked,
+			(
+			SELECT count(*) FROM 'Link Copies'
+			WHERE link_id = '%[1]s' AND user_id = '%[2]s'
+			) as is_copied;`, i.ID, req_user_id).Scan(&l, &c)
 			if err != nil {
 				log.Fatal(err)
 			}
+
 			i.IsLiked = l.Int32 > 0
+			i.IsCopied = c.Int32 > 0
+
 			links = append(links, i)
 		}
 		render.JSON(w, r, links)
@@ -698,10 +730,10 @@ func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 }
 
 // COPY LINK TO USER'S TREASURE MAP
-func CopyLinkToMap(w http.ResponseWriter, r *http.Request) {
-	copy_link_data := &model.LinkCopyRequest{}
-	if err := render.Bind(r, copy_link_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+func CopyLink(w http.ResponseWriter, r *http.Request) {
+	link_id := chi.URLParam(r, "link_id")
+	if link_id == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no link ID provided")))
 		return
 	}
 
@@ -723,24 +755,25 @@ func CopyLinkToMap(w http.ResponseWriter, r *http.Request) {
 
 	// Check if link already in map, Abort if attempting duplicate
 	var l sql.NullString
-	err = db.QueryRow("SELECT id FROM 'Link Copies' WHERE link_id = ? AND user_id = ?;", copy_link_data.LinkID, req_user_id).Scan(&l)
+	err = db.QueryRow("SELECT id FROM 'Link Copies' WHERE link_id = ? AND user_id = ?;", link_id, req_user_id).Scan(&l)
 	if err == nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("link already in map")))
 		return
 	}
 
-	res, err := db.Exec("INSERT INTO 'Link Copies' VALUES(?,?,?);", nil, copy_link_data.LinkID, req_user_id)
+	res, err := db.Exec("INSERT INTO 'Link Copies' VALUES(?,?,?);", nil, link_id, req_user_id)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// Get ID of new link copy
 	var id int64
 	if id, err = res.LastInsertId(); err != nil {
 		log.Fatal(err)
 	}
 
 	return_json := map[string]int64{
-		"copy_id": id,
+		"ID": id,
 	}
 
 	render.Status(r, http.StatusCreated)
@@ -749,9 +782,9 @@ func CopyLinkToMap(w http.ResponseWriter, r *http.Request) {
 
 // UN-COPY LINK
 func UncopyLink(w http.ResponseWriter, r *http.Request) {
-	delete_copy_data := &model.DeleteLinkCopyRequest{}
-	if err := render.Bind(r, delete_copy_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+	link_id := chi.URLParam(r, "link_id")
+	if link_id == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no link ID provided")))
 		return
 	}
 
@@ -772,21 +805,21 @@ func UncopyLink(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// Check if link copy exists and was submitted by same user, Abort if either unsatisfied
-	var s sql.NullString
-	err = db.QueryRow("SELECT id FROM 'Link Copies' WHERE id = ? AND user_id = ?;", delete_copy_data.ID, req_user_id).Scan(&s)
+	var cid sql.NullString
+	err = db.QueryRow("SELECT id FROM 'Link Copies' WHERE link_id = ? AND user_id = ?;", link_id, req_user_id).Scan(&cid)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("link copy does not exist")))
 		return
 	}
 
 	// Delete
-	_, err = db.Exec("DELETE FROM 'Link Copies' WHERE id = ?;", delete_copy_data.ID)
+	_, err = db.Exec("DELETE FROM 'Link Copies' WHERE id = ?;", cid.String)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	return_json := map[string]string{
-		"status": "success",
+		"message": "deleted",
 	}
 
 	render.JSON(w, r, return_json)
