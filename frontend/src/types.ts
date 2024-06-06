@@ -28,6 +28,7 @@ type LinkData = {
 	LikeCount: number
 	ImgURL: string | undefined
 	IsLiked: boolean | undefined
+	IsCopied: boolean | undefined
 }
 
 const Periods = ['day', 'week', 'month', 'year', 'all'] as const

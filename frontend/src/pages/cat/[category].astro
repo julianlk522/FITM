@@ -1,19 +1,23 @@
 ---
+import Link from '../../components/Link'
 import Layout from '../../layouts/Layout.astro'
 import type { CategoryContributor, CategoryCount, LinkData } from '../../types'
 
 const { category } = Astro.params
 
-const top_links_resp = await fetch(
+const token = Astro.cookies.get('token')?.value
+const user = Astro.cookies.get('user')?.value
+
+const get_links_resp = await fetch(
 	`http://127.0.0.1:8000/links/cat/${category}`
 )
-const top_links: LinkData[] = await top_links_resp.json()
+const links: LinkData[] = await get_links_resp.json()
 // [{URL: 'https://example.com', LikeCount: 100}, ...]
 
 let subcats: CategoryCount[]
 let top_contributors: CategoryContributor[]
 
-if (!top_links || top_links.length === 0) {
+if (!links || links.length === 0) {
 	return Astro.redirect('/404')
 } else {
 	const subcats_resp = await fetch(
@@ -50,18 +54,8 @@ if (!top_links || top_links.length === 0) {
 				<p>No further subcategories</p>
 			)
 		}
-		<h2>Top Links</h2>
-		<ul>
-			{
-				top_links.map((link) => (
-					<li>
-						<a href={link.URL}>{link.URL}</a>: ({link.LikeCount})
-					</li>
-				))
-			}
-		</ul>
 		<h2>Top Contributors</h2>
-		<ul>
+		<ol>
 			{
 				top_contributors.map((contributor: CategoryContributor) => (
 					<li>
@@ -74,7 +68,21 @@ if (!top_links || top_links.length === 0) {
 					</li>
 				))
 			}
-		</ul>
+		</ol>
+		<h2>Top Links</h2>
+		<ol>
+			{
+				links.map((link) => (
+					<Link
+						client:load
+						link={link}
+						is_summary_page={false}
+						token={token}
+						user={user}
+					/>
+				))
+			}
+		</ol>
 	</main>
 </Layout>
 

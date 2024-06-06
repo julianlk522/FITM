@@ -60,14 +60,18 @@ const user: User = await user_resp.json()
 			tmap.Categories.length ? (
 				<>
 					<h2>Top Categories</h2>
-					{tmap.Categories.map((cat) => (
-						<li>
-							<a href={`/usercat/${login_name}/${cat.Category}`}>
-								{cat.Category}
-							</a>
-							<span>({cat.Count})</span>
-						</li>
-					))}
+					<ol>
+						{tmap.Categories.map((cat) => (
+							<li>
+								<a
+									href={`/usercat/${login_name}/${cat.Category}`}
+								>
+									{cat.Category}
+								</a>
+								<span>({cat.Count})</span>
+							</li>
+						))}
+					</ol>
 				</>
 			) : null
 		}

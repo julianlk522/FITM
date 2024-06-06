@@ -23,6 +23,7 @@ export default function Link(props: Props) {
         ImgURL: img_url,
     } = props.link
 
+    const [is_copied, set_is_copied] = useState(props.link.IsCopied)
     const [is_liked, set_is_liked] = useState(props.link.IsLiked)
     const [like_count, set_like_count] = useState(props.link.LikeCount)
 
@@ -76,6 +77,51 @@ export default function Link(props: Props) {
 	    }
     }
 
+    async function handle_copy() {
+        if (!token) {
+            document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/; max-age=3600; SameSite=strict; Secure`
+            return window.location.href = '/login'
+        }
+
+        if (!is_copied) {
+            const copy_resp = await fetch(
+                `http://127.0.0.1:8000/links/${id}/copy`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            )
+            const copy_data = await copy_resp.json()
+            if (copy_data.ID) {
+                set_is_copied(true)
+                return
+            } else {
+                console.error("WTF is this: ",copy_data)
+            }
+        } else {
+            const uncopy_resp = await fetch(
+                `http://127.0.0.1:8000/links/${id}/copy`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            )
+            const uncopy_data = await uncopy_resp.json()
+            if (uncopy_data.message === 'deleted') {
+                set_is_copied(false)
+                return
+            } else {
+                console.error("WTF is this: ", uncopy_data)
+            }
+        }
+    }
+
     return (
         <li class='link'>
             {img_url
@@ -127,10 +173,21 @@ export default function Link(props: Props) {
                     
             }
 
-            {user !== submitted_by ? <button onClick={handle_like} class={`like-btn${is_liked ? ' liked' : ''}`}
-            >
-                {is_liked ? `Unlike (${like_count})` : `Like (${like_count})`}
-            </button> : null}
+            {user !== submitted_by
+                ?
+                    <>
+                        <button onClick={handle_like} class={`like-btn${is_liked ? ' liked' : ''}`}>
+                        
+                            {is_liked ? `Unlike (${like_count})` : `Like (${like_count})`}
+                        </button>
+
+                        <button onClick={handle_copy} class={`copy-btn${is_copied ? ' copied' : ''}`}>
+                            {is_copied ? 'Uncopy' : 'Copy'}
+                        </button>
+                    </> 
+                : 
+                    null
+            }
         </li>
     );
 }

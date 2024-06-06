@@ -5,9 +5,7 @@ import { Periods, type CategoryCount, type LinkData } from '../types'
 
 // get auth token and user if user signed in
 const token = Astro.cookies.get('token')?.value
-let user: string | undefined = Astro.cookies.get('user')
-	? Astro.cookies.get('user')?.value
-	: Astro.locals.user
+const user: string | undefined = Astro.cookies.get('user')?.value
 
 const popular_cats_resp = await (token
 	? fetch('http://127.0.0.1:8000/tags/popular', {
