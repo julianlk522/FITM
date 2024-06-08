@@ -23,15 +23,14 @@ let user = Astro.cookies.get('user')?.value
 			user ? (
 			<a href=`/map/${user}` id="username">{user}</a>) : (<a href='/login'>Login</a>)
 		}
+		<a href='/about'>About</a>
 	</nav>
 	<body>
 		<slot />
-		<footer>
-			<a href='/faq'>FAQ</a>
-			<span> | </span>
-			<a href='/feedback'>Leave Feedback</a>
-		</footer>
 	</body>
+	<footer>
+		<a href='/feedback'>Leave Feedback</a>
+	</footer>
 
 	<style is:global>
 		:root {
