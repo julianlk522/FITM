@@ -481,7 +481,14 @@ func RecalculateGlobalSummary(link_id string, db *sql.DB) {
 	
 	// Recalculate global_summary
 	// (Summary with the most upvotes is the global summary)
-	get_summary_like_counts_sql := fmt.Sprintf(`select text from summaries LEFT JOIN 'Summary Likes' ON summaries.id = 'Summary Likes'.summary_id WHERE link_id = '%s' GROUP BY summaries.id ORDER BY count(*) DESC, text ASC LIMIT 1;`, link_id)
+	get_summary_like_counts_sql := fmt.Sprintf(`SELECT text
+	FROM 'Summary Likes'
+	LEFT JOIN Summaries
+	ON Summaries.id = 'Summary Likes'.summary_id
+	WHERE link_id = '%s'
+	GROUP BY Summaries.id
+	ORDER BY count(*) DESC, text DESC
+	LIMIT 1;`, link_id)
 	var top_summary_text string
 	err := db.QueryRow(get_summary_like_counts_sql).Scan(&top_summary_text)
 	if err != nil {
