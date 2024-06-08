@@ -15,6 +15,7 @@
 -Improve profile pic upload
     -Crop to square
     -Shrink to 100x100
+-Treasure Map skip to each main section (sidebar)
 
 ## Why?
 

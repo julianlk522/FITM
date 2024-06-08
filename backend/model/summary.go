@@ -3,12 +3,14 @@ package model
 import (
 	"errors"
 	"net/http"
+	"time"
 )
 
 // ADD
 type NewSummaryRequest struct {
 	LinkID string `json:"link_id"`
 	Text string `json:"text"`
+	SubmitDate string
 }
 
 func (a *NewSummaryRequest) Bind(r *http.Request) error {
@@ -18,7 +20,11 @@ func (a *NewSummaryRequest) Bind(r *http.Request) error {
 	if a.Text == "" {
 		return errors.New("missing summary text")
 	}
+
+	a.SubmitDate = time.Now().Format("2006-01-02 15:04:05")
+	
 	return nil
+
 }
 
 // DELETE
@@ -54,6 +60,7 @@ type Summary struct {
 	ID string
 	Text string
 	SubmittedBy string
+	SubmitDate string
 	LikeCount int
 }
 
@@ -61,6 +68,7 @@ type SummarySignedIn struct {
 	ID string
 	Text string
 	SubmittedBy string
+	SubmitDate string
 	LikeCount int
 	IsLiked bool
 }

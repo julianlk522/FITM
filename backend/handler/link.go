@@ -28,8 +28,23 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 	
 	const LIMIT string = "20"
-	get_link_likes_sql := fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, submit_date, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
-	FROM (SELECT Links.id as links_id, url, submitted_by as link_author, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url FROM LINKS LEFT JOIN (SELECT link_id as likes_link_id, count(*) as like_count FROM 'Link Likes' GROUP BY likes_link_id) ON Links.id = likes_link_id) LEFT JOIN Summaries ON Summaries.link_id = links_id GROUP BY links_id ORDER BY like_count DESC, links_id ASC LIMIT %s;`, LIMIT)
+	get_link_likes_sql := fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
+	FROM 
+		(
+		SELECT Links.id as links_id, url, submitted_by as link_author, Links.submit_date as sd, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url 
+		FROM LINKS 
+		LEFT JOIN 
+			(
+			SELECT link_id as likes_link_id, count(*) as like_count 
+			FROM 'Link Likes'
+			GROUP BY likes_link_id
+			) 
+		ON Links.id = likes_link_id
+		) 
+	LEFT JOIN Summaries 
+	ON Summaries.link_id = links_id 
+	GROUP BY links_id 
+	ORDER BY like_count DESC, links_id ASC LIMIT %s;`, LIMIT)
 	rows, err := db.Query(get_link_likes_sql)
 	if err != nil {
 		log.Fatal(err)
@@ -107,10 +122,10 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	get_link_likes_sql := `SELECT links_id as link_id, url, link_author as subitted_by, submit_date, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
+	get_link_likes_sql := `SELECT links_id as link_id, url, link_author as subitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
 	FROM
 		(
-		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
+		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date as sd, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
 		FROM LINKS
 		LEFT JOIN 
 			(
@@ -266,10 +281,10 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	const LIMIT string = "20"
-	rows, err = db.Query(fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, submit_date, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
+	rows, err = db.Query(fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
 	FROM
 		(
-		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
+		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date as sd, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
 		FROM LINKS
 		LEFT JOIN 
 			(

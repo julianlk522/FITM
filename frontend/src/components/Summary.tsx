@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import format_date from '../util/format_date';
 import './Summary.css';
 
 interface Props {
@@ -7,12 +8,13 @@ interface Props {
 	ID: number
 	Text: string
 	SubmittedBy: string
+	SubmitDate: string
 	LikeCount: number
 	IsLiked: boolean | undefined
 }
 
 export default function Summary(props: Props) {
-	const {ID, Token: token, User: user, Text: text, SubmittedBy: submitted_by} = props
+	const {ID, Token: token, User: user, Text: text, SubmittedBy: submitted_by, SubmitDate: submit_date} = props
 
 	const [is_liked, set_is_liked] = useState(props.IsLiked)
     const [like_count, set_like_count] = useState(props.LikeCount)
@@ -70,7 +72,9 @@ export default function Summary(props: Props) {
 	return (
 		<li class='summary'>
 			{text}
-			<p>Submitted By: {submitted_by}</p>
+			<p>Submitted by <a href={`/map/${submitted_by}`}>{submitted_by}</a> on {
+                    format_date(submit_date)
+                }</p>
 			{user && user !== submitted_by
 				?
 					(

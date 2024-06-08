@@ -143,7 +143,7 @@ export default function Link(props: Props) {
             {summary ? <p class='url'>{url}</p> : null}
             
             <p>
-                Submitted By: <a href={`/map/${submitted_by}`}>{submitted_by}</a> on {
+                Submitted by <a href={`/map/${submitted_by}`}>{submitted_by}</a> on {
                     format_date(submit_date)
                 }
             </p>

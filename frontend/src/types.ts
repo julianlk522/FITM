@@ -51,6 +51,7 @@ type Summary = {
 	ID: number
 	Text: string
 	SubmittedBy: string
+	SubmitDate: string
 	LikeCount: number
 	IsLiked: boolean | undefined
 }
