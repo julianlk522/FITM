@@ -182,7 +182,7 @@ export default function Link(props: Props) {
                         </button>
 
                         <button onClick={handle_copy} class={`copy-btn${is_copied ? ' copied' : ''}`}>
-                            {is_copied ? 'Uncopy' : 'Copy'}
+                            {is_copied ? 'Uncopy' : 'Copy to Treasure Map'}
                         </button>
                     </> 
                 : 

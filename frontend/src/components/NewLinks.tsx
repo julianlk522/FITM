@@ -60,7 +60,7 @@ export default function NewLinks(props: Props) {
                             <p class='error'>{`Error: ${message}`}</p>
                 : null
             }
-            <form id='new_link_form' onSubmit={async (e) => await handle_submit(e, props.token)}>
+            <form onSubmit={async (e) => await handle_submit(e, props.token)}>
             <label for='url'>URL</label>
             <input type='text' id='url' name='url' />
             <br />

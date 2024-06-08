@@ -9,8 +9,13 @@
 -Tests
 -Make frontend look decent
     -A11y, responsive layouts for phones / tablets
+    -Link articles
 -Fix dumb repeat code in GetTreasureMap handler
--Copy/Uncopy button on Link component when signed in
+-Prevent duplicate summary submissions (frontend)
+-Improve profile pic upload
+    -Crop to square
+    -Shrink to 100x100
+-Remove summary likes after summary is updated
 
 ## Why?
 
