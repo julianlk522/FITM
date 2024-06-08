@@ -355,6 +355,23 @@ func EditSummary(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
+	// Remove Summary Likes
+	_, err = db.Exec(`DELETE FROM 'Summary Likes' WHERE summary_id = ?`, edit_data.SummaryID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Get link ID to recalculate global summary
+	var lid sql.NullString
+	get_lid_sql := fmt.Sprintf(`SELECT link_id FROM Summaries WHERE id = '%s'`, edit_data.SummaryID)
+	err = db.QueryRow(get_lid_sql).Scan(&lid)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Recalculate global_summary
+	RecalculateGlobalSummary(lid.String, db)
+
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, edit_data)
 }
@@ -478,17 +495,22 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 }
 
 func RecalculateGlobalSummary(link_id string, db *sql.DB) {
-	
-	// Recalculate global_summary
+
 	// (Summary with the most upvotes is the global summary)
 	get_summary_like_counts_sql := fmt.Sprintf(`SELECT text
-	FROM 'Summary Likes'
-	LEFT JOIN Summaries
-	ON Summaries.id = 'Summary Likes'.summary_id
+	FROM Summaries
+	LEFT JOIN
+		(
+		SELECT summary_id, count(*) as like_count
+		FROM 'Summary Likes'
+		GROUP BY summary_id
+		)
+	ON Summaries.id = summary_id
 	WHERE link_id = '%s'
 	GROUP BY Summaries.id
-	ORDER BY count(*) DESC, text DESC
-	LIMIT 1;`, link_id)
+	ORDER BY like_count DESC, text DESC
+	LIMIT 1
+	`, link_id)
 	var top_summary_text string
 	err := db.QueryRow(get_summary_like_counts_sql).Scan(&top_summary_text)
 	if err != nil {

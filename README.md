@@ -15,7 +15,6 @@
 -Improve profile pic upload
     -Crop to square
     -Shrink to 100x100
--Remove summary likes after summary is updated
 
 ## Why?
 
