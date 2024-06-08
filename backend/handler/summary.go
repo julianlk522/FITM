@@ -76,7 +76,7 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 			)
 		ON copy_link_id = link_id`, link_id, req_user_id)
 		var link model.LinkSignedIn
-		err = db.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.IsLiked, &link.ImgURL)
+		err = db.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.IsLiked, &link.IsCopied, &link.ImgURL)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				render.Status(r, http.StatusNotFound)
@@ -220,7 +220,7 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 	var lid sql.NullString
 	err = db.QueryRow("SELECT id FROM Summaries WHERE link_id = ? AND submitted_by = ?", summary_data.LinkID, req_user_id).Scan(&lid)
 	if err == nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("existing summary found from user for link")))
+		render.Render(w, r, ErrInvalidRequest(errors.New("you have already submitted a summary to this link")))
 		return
 	}
 
@@ -389,6 +389,16 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 	err = db.QueryRow("SELECT id, link_id FROM Summaries WHERE id = ?", summary_id).Scan(&s, &lid)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
+		return
+	}
+
+	// Check if summary submitted by same user, Abort if so
+	var u sql.NullInt64
+	err = db.QueryRow("SELECT submitted_by FROM Summaries WHERE id = ?", summary_id).Scan(&u)
+	if err != nil {
+		log.Fatal(err)
+	} else if uid64, err := strconv.ParseInt(req_user_id, 10, 64); err == nil && u.Int64 == uid64 {
+		render.Render(w, r, ErrInvalidRequest(errors.New("cannot like your own summary")))
 		return
 	}
 
