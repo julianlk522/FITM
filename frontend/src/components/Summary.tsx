@@ -3,6 +3,7 @@ import './Summary.css';
 
 interface Props {
     Token: string | undefined
+	User: string | undefined
 	ID: number
 	Text: string
 	SubmittedBy: string
@@ -11,7 +12,7 @@ interface Props {
 }
 
 export default function Summary(props: Props) {
-	const {ID, Token: token, Text: text, SubmittedBy: submitted_by} = props
+	const {ID, Token: token, User: user, Text: text, SubmittedBy: submitted_by} = props
 
 	const [is_liked, set_is_liked] = useState(props.IsLiked)
     const [like_count, set_like_count] = useState(props.LikeCount)
@@ -70,10 +71,20 @@ export default function Summary(props: Props) {
 		<li class='summary'>
 			{text}
 			<p>Submitted By: {submitted_by}</p>
-			<button
-				onClick={handle_like}
-				class={`like-btn${is_liked ? ' liked' : ''}`}>{is_liked ? 'Unlike' : 'Like'} ({like_count})
-			</button>
+			{user && user !== submitted_by
+				?
+					(
+						<button
+						onClick={handle_like}
+						class={`like-btn${is_liked ? ' liked' : ''}`}>{is_liked ? 'Unlike' : 'Like'} ({like_count})
+						</button>
+					)
+				:
+					// TODO: connect to backend
+					<button>
+						Delete
+					</button>
+			}
 		</li>
 	)
 }
