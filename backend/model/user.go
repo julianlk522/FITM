@@ -68,18 +68,11 @@ type EditPfpRequest struct {
 }
 
 // TREASURE MAP
-type TreasureMap struct {
-	Submitted []LinkSignedOut
-	Tagged []LinkSignedOut
-	Copied []LinkSignedOut
-	Categories []CategoryCount
-}
-
-type TreasureMapSignedIn struct {
-	Submitted []LinkSignedIn
-	Tagged []LinkSignedIn
-	Copied []LinkSignedIn
-	Categories []CategoryCount
+type TreasureMap[T LinkSignedIn | LinkSignedOut] struct {
+	Submitted *[]T
+	Tagged *[]T
+	Copied *[]T
+	Categories *[]CategoryCount
 }
 
 // GENERAL

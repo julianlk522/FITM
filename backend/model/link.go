@@ -51,6 +51,18 @@ type LinkSignedIn struct {
 	IsCopied bool
 }
 
+type Link interface {
+	GetCategories() string
+}
+
+func (l LinkSignedOut) GetCategories() string {
+	return l.Categories
+}
+
+func (l LinkSignedIn) GetCategories() string {
+	return l.Categories
+}
+
 type CustomLinkCategories struct {
 	LinkID int64
 	Categories string

@@ -10,12 +10,14 @@
 -Make frontend look decent
     -A11y, responsive layouts for phones / tablets
     -Link articles
--Fix dumb repeat code in GetTreasureMap handler
 -Prevent duplicate summary submissions (frontend)
 -Improve profile pic upload
     -Crop to square
     -Shrink to 100x100
 -Treasure Map skip to each main section (sidebar)
+-Fix popular tags links so they check global cats
+-Add GetTreasureMapWithCategories handler, implement in frontend
+-Remove repeat code wherever possible
 
 ## Why?
 
