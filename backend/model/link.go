@@ -33,7 +33,7 @@ func (a *NewLinkRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-type Link struct {
+type LinkSignedOut struct {
 	ID int64
 	URL string
 	SubmittedBy string
@@ -46,7 +46,7 @@ type Link struct {
 }
 
 type LinkSignedIn struct {
-	Link
+	LinkSignedOut
 	IsLiked bool
 	IsCopied bool
 }

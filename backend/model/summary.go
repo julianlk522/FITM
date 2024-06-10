@@ -74,7 +74,7 @@ type SummarySignedIn struct {
 }
 
 type SummaryPage struct {
-	Link Link
+	Link LinkSignedOut
 	Summaries []Summary
 }
 

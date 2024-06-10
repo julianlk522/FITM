@@ -589,9 +589,9 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		defer rows.Close()
 
 		// Scan submitted
-		submitted := []model.Link{}
+		submitted := []model.LinkSignedOut{}
 		for rows.Next() {
-			i := model.Link{}
+			i := model.LinkSignedOut{}
 			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
 			if err != nil {
 				log.Fatal(err)
@@ -631,9 +631,9 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		defer rows.Close()
 
 		// Scan tagged
-		tagged := []model.Link{}
+		tagged := []model.LinkSignedOut{}
 		for rows.Next() {
-			i := model.Link{}
+			i := model.LinkSignedOut{}
 			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
 			if err != nil {
 				log.Fatal(err)
@@ -674,9 +674,9 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		defer rows.Close()
 
 		// Scan copied
-		copied := []model.Link{}
+		copied := []model.LinkSignedOut{}
 		for rows.Next() {
-			i := model.Link{}
+			i := model.LinkSignedOut{}
 			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
 			if err != nil {
 				log.Fatal(err)

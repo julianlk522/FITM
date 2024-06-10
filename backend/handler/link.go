@@ -62,51 +62,15 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Scan links
-	// User signed in: get isLiked and isCopied for each link
+	// User signed in
 	if req_user_id != "" {
-		var links []model.LinkSignedIn
-		for rows.Next() {
-			i := model.LinkSignedIn{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
-			if err != nil {
-				log.Fatal(err)
-			}
-	
-			// Add IsLiked and IsCopied
-			var l sql.NullInt32
-			var c sql.NullInt32
-			err = db.QueryRow(`SELECT
-			(
-			SELECT count(*) FROM 'Link Likes'
-			WHERE link_id = '%[1]s' AND user_id = '%[2]s'
-			) as is_liked,
-			(
-			SELECT count(*) FROM 'Link Copies'
-			WHERE link_id = '%[1]s' AND user_id = '%[2]s'
-			) as is_copied;`, i.ID, req_user_id).Scan(&l, &c)
-			if err != nil {
-				log.Fatal(err)
-			}
+		links := ScanLinksSignedIn(db, rows, req_user_id)
+		render.JSON(w, r, &links)
 
-			i.IsLiked = l.Int32 > 0
-			i.IsCopied = c.Int32 > 0
-
-			links = append(links, i)
-		}
-		render.JSON(w, r, links)
-		
-	// User not signed in: omit isLiked and isCopied
+	// User signed out: IsLiked and IsCopied not included		
 	} else {
-		var links []model.Link
-		for rows.Next() {
-			i := model.Link{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
-			if err != nil {
-				log.Fatal(err)
-			}
-			links = append(links, i)
-		}
-		render.JSON(w, r, links)
+		links := ScanLinksSignedOut(db, rows)
+		render.JSON(w, r, &links)
 	}
 
 	render.Status(r, http.StatusOK)
@@ -171,48 +135,15 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// Scan links
+	// User signed in
 	if req_user_id != "" {
-		var links []model.LinkSignedIn
-		for rows.Next() {
-			i := model.LinkSignedIn{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
-			if err != nil {
-				log.Fatal(err)
-			}
-	
-			// Add IsLiked and IsCopied
-			var l sql.NullInt32
-			var c sql.NullInt32
-			err = db.QueryRow(`SELECT
-			(
-			SELECT count(*) FROM 'Link Likes'
-			WHERE link_id = '%[1]s' AND user_id = '%[2]s'
-			) as is_liked,
-			(
-			SELECT count(*) FROM 'Link Copies'
-			WHERE link_id = '%[1]s' AND user_id = '%[2]s'
-			) as is_copied;`, i.ID, req_user_id).Scan(&l, &c)
-			if err != nil {
-				log.Fatal(err)
-			}
+		links := ScanLinksSignedIn(db, rows, req_user_id)
+		render.JSON(w, r, &links)
 
-			i.IsLiked = l.Int32 > 0
-			i.IsCopied = c.Int32 > 0
-
-			links = append(links, i)
-		}
-		render.JSON(w, r, links)		
+	// User signed out: IsLiked and IsCopied not included		
 	} else {
-		var links []model.Link
-		for rows.Next() {
-			i := model.Link{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
-			if err != nil {
-				log.Fatal(err)
-			}
-			links = append(links, i)
-		}
-		render.JSON(w, r, links)
+		links := ScanLinksSignedOut(db, rows)
+		render.JSON(w, r, &links)
 	}
 
 	render.Status(r, http.StatusOK)
@@ -268,7 +199,7 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 
 	// if no links found, return status message
 	if len(link_ids) == 0 {
-		render.JSON(w, r, []model.Link{})
+		render.JSON(w, r, []model.LinkSignedOut{})
 		render.Status(r, http.StatusOK)
 		return
 	}
@@ -315,51 +246,16 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Scan links
+	// User signed in
 	if req_user_id != "" {
-		var links []model.LinkSignedIn
-		for rows.Next() {
-			i := model.LinkSignedIn{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
-			if err != nil {
-				log.Fatal(err)
-			}
-	
-			// Add IsLiked and IsCopied
-			var l sql.NullInt32
-			var c sql.NullInt32
-			err = db.QueryRow(`SELECT
-			(
-			SELECT count(*) FROM 'Link Likes'
-			WHERE link_id = '%[1]s' AND user_id = '%[2]s'
-			) as is_liked,
-			(
-			SELECT count(*) FROM 'Link Copies'
-			WHERE link_id = '%[1]s' AND user_id = '%[2]s'
-			) as is_copied;`, i.ID, req_user_id).Scan(&l, &c)
-			if err != nil {
-				log.Fatal(err)
-			}
+		links := ScanLinksSignedIn(db, rows, req_user_id)
+		render.JSON(w, r, &links)
 
-			i.IsLiked = l.Int32 > 0
-			i.IsCopied = c.Int32 > 0
-
-			links = append(links, i)
-		}
-		render.JSON(w, r, links)
-		
-	// User not signed in: omit isLiked
+	// User signed out: IsLiked and IsCopied not included		
 	} else {
-		var links []model.Link
-		for rows.Next() {
-			i := model.Link{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
-			if err != nil {
-				log.Fatal(err)
-			}
-			links = append(links, i)
-		}
-		render.JSON(w, r, links)
-	}	
+		links := ScanLinksSignedOut(db, rows)
+		render.JSON(w, r, &links)
+	}
 
 	render.Status(r, http.StatusOK)
 }
@@ -396,8 +292,7 @@ func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
 
 	contributors := []model.CategoryContributor{}
 	for rows.Next() {
-		var contributor model.CategoryContributor
-		contributor.Categories = categories_params
+		contributor := model.CategoryContributor{Categories: categories_params}
 		err := rows.Scan(&contributor.LinksSubmitted, &contributor.LoginName)
 		if err != nil {
 			log.Fatal(err)
@@ -425,7 +320,8 @@ func GetTopSubcategories(w http.ResponseWriter, r *http.Request) {
 
 	// get categories
 	search_cats_params := chi.URLParam(r, "categories")
-	// todo: replace with middleware that converts all URLs to lowercase
+
+	// TODO: replace with middleware that converts all URLs to lowercase
 	search_cats_params = strings.ToLower(search_cats_params)
 	search_cats := strings.Split(search_cats_params, ",")
 	
@@ -877,4 +773,54 @@ func GetLinkLikes(w http.ResponseWriter, r *http.Request) {
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, return_json)
+}
+
+func ScanLinksSignedOut(db *sql.DB, rows *sql.Rows) *[]model.LinkSignedOut {
+	var links = []model.LinkSignedOut{}
+
+	for rows.Next() {
+		i := model.LinkSignedOut{}
+		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		links = append(links, i)
+	}
+
+	return &links
+}
+
+func ScanLinksSignedIn(db *sql.DB, rows *sql.Rows, user_id string) *[]model.LinkSignedIn {
+	var links = []model.LinkSignedIn{}
+
+	for rows.Next() {
+		i := model.LinkSignedIn{}
+		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Add IsLiked and IsCopied
+		var l sql.NullInt32
+		var c sql.NullInt32
+		err = db.QueryRow(`SELECT
+		(
+		SELECT count(*) FROM 'Link Likes'
+		WHERE link_id = '%[1]s' AND user_id = '%[2]s'
+		) as is_liked,
+		(
+		SELECT count(*) FROM 'Link Copies'
+		WHERE link_id = '%[1]s' AND user_id = '%[2]s'
+		) as is_copied;`, i.ID, user_id).Scan(&l, &c)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		i.IsLiked = l.Int32 > 0
+		i.IsCopied = c.Int32 > 0
+
+		links = append(links, i)
+	}
+	return &links
 }

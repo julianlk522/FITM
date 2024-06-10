@@ -69,9 +69,9 @@ type EditPfpRequest struct {
 
 // TREASURE MAP
 type TreasureMap struct {
-	Submitted []Link
-	Tagged []Link
-	Copied []Link
+	Submitted []LinkSignedOut
+	Tagged []LinkSignedOut
+	Copied []LinkSignedOut
 	Categories []CategoryCount
 }
 
