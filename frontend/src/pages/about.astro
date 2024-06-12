@@ -1,100 +1,145 @@
 ---
+import { Image } from 'astro:assets'
+import cornucopia from '../../public/cornucopia.png'
 import Layout from '../layouts/Layout.astro'
 ---
 
 <Layout title='OITM Frequently Asked Questions'>
 	<main>
 		<h1>About OITM</h1>
-		<h2>What is OITM?</h2>
-		<p>
-			The <strong>Open Internet Treasure Map (OITM)</strong> is a tool for
-			sharing valuable Internet content. It seeks to overcome the challenges
-			of high obscurity and low discoverability in order to confer the benefits
-			of the vast collection of resources that we have access to, scattered
-			across the web, to all Internet users.
-		</p>
+		<Image src={cornucopia} alt='a cornucopia of links' />
+		<section>
+			<h2>What is OITM? Why Does it Exist?</h2>
+			<p>
+				The <strong>Open Internet Treasure Map (OITM)</strong> is a tool
+				for sharing valuable Internet content. It seeks to defeat the challenges
+				of high obscurity and resultingly low discoverability in today's
+				web, to confer upon more people the cornucopia of greatness within
+				its sprawling contents.
+			</p>
+			<p>
+				"Treasure" is intentionally vague. This site is about sharing
+				and discovering anything on the Internet that's worth sharing or
+				discovering.
+			</p>
+			<h3>"But Search Engines?"</h3>
+			<p>Search engines help a bit, but they don't think like people.</p>
+			<p>
+				For example, search engines promote results that are optimized
+				aggressively for SEO features (not always relevant with regard
+				to content quality; an article, video, meme, or other rarity may
+				be essential despite also being barebones or less friendly to
+				assistive technologies), or they promote results from the
+				highest bidders (again, not necessarily an indicator of high
+				quality, depending on your metrics for that).
+			</p>
+			<p>
+				OITM aims to be a direct portal to the the most celebrated World
+				Wide Web (WWW) links, as determined by simple popular vote from
+				site visitors.
+			</p>
+			<h3>"Reddit?"</h3>
+			<p>
+				OITM was inspired partly by Reddit. Reddit is a great resource
+				for content sharing, and has been incredibly useful for myself
+				and many others for years.
+			</p>
+			<p>
+				However, these tools are different in that OITM is primarily a
+				data hub while Reddit is primarily a communication hub. There is
+				no user-to-user messaging on OITM, only personal and global
+				treasure maps to explore.
+			</p>
+		</section>
 
-		<h2>Why Does it Exist?</h2>
-		<p>
-			Because there's a lot of good shit on the Internet that's hard to be
-			aware of and, to a lesser extent, hard to find even when you know
-			about it.
-		</p>
-		<h3>"I Thought That's What Search Engines Were For..."</h3>
-		<p>
-			Search engines help somewhat, but they are biased in favor of
-			results that are optimized aggressively for SEO features (pretty
-			irrelevant with regard to content quality; gaming SEO buries a lot
-			of barebones but high-value material) or that offer the highest
-			payment for promotion (again, irrelevant to, and arguably negatively
-			correlated with, content quality).
-		</p>
-		<p>
-			These conditions funnel engagement mainly to high-profile,
-			established Internet entities rather than to new and/or varied
-			sources. But, in the opinion of this site's author, the most
-			well-known, "trusted" domains specialize in farming visitor
-			engagement at the expense of overall Internet enjoyability and
-			idea-generation potential. Search engines that favor these domains
-			cannot be trusted to lead us to high-quality resources.
-		</p>
-		<p>
-			Internet users deserve a direct portal into the web's most essential
-			contents, as determined by simple popular vote rather than opaque,
-			black-box algorithms that are, in all likelihood, guided by
-			anti-intellectual bias.
-		</p>
+		<section>
+			<h2>Core Features</h2>
+			<p><strong>Copy to Treasure Map</strong></p>
+			<p><strong>Like</strong></p>
+			<p><strong>Tag</strong></p>
 
-		<h2>Core Features: Copy to Treasure Map vs. Like vs. Tag</h2>
-		<p>
-			Though similar-sounding, these actions each serve a diffferent
-			purpose for the Internet treasure hunter or archivist.
-		</p>
-		<h3>Copy</h3>
-		<p>
-			<strong>Copying</strong> a link to your Treasure Map is about improving
-			discoverability via visibility. It allows you to easily find the link
-			again or let others with similar interests find it by reading your Treasure
-			Map.
-		</p>
-		<h3>Like</h3>
-		<p>
-			<strong>Liking</strong> is about improving discoverability via corroboration,
-			allowing great content to filter to the top of searches and be found
-			easily. It is a way to vouch for the "goodness" (authenticity, hilarity,
-			comprehensiveness, etc.) of links that do not need to be kept readily
-			available on your Treasure Map.
-		</p>
-		<h3>Tag</h3>
-		<p>
-			<strong>Tagging</strong> a link is about improving organization. A tag
-			represents a user's interpretation about how a link's content should
-			be categorized. Tags can be used to filter links in searches.
-		</p>
-		<p>
-			Internetters are expected to often disagree on their preferred
-			categorization(s) for a given link; each is invited to tag any link
-			however they see fit. Then, their unique categorization(s) can be
-			used to query for the link in their own Treasure Map using the most
-			intuitive terms.
-		</p>
-		<p>
-			Let's use "www.example.com" as an example. Sarah may tag the link as
-			"funny" and Nigel may tag it as "example" and "reference." Sarah
-			could then search her Treasure Map for "funny" or search Nigel's
-			Treasure Map for "example" or "reference" to find the link.
-		</p>
-		<p>
-			Each link is also associated with 1+ global categories, which are
-			used to organize and query for links on the Global Treasure Map.
-			Global categories are determined by the age and frequency of
-			individual tag categorizations: categories that many users agree on
-			are more likely to be universally relevant, as are categorizations
-			that have remained unedited for a long time. So, tagging a link not
-			only helps individuals organize Internet content but also everyone
-			else who searches the Global Treasure Map.
-		</p>
+			<p>
+				Each plays a different part in helping Internet treasure hunters
+				and archivists to best share findings.
+			</p>
+			<h3>Copy</h3>
+			<p>
+				<strong>Copying</strong> a link to your Treasure Map is about improving
+				discoverability via proliferation. It allows you to easily find a
+				link again or let others with similar interests find it by reading
+				your Treasure Map.
+			</p>
+			<p>
+				If Fred wanted to know what links Ted is especially fond of, all
+				he would have to do is visit Ted's Treasure Map and browse the
+				ones that Ted copied.
+			</p>
+			<h3>Like</h3>
+			<p>
+				<strong>Liking</strong> is about improving discoverability via corroboration.
+				It's a way to vouch for the "goodness" (authenticity, hilarity, comprehensiveness,
+				etc.) of a link without needing to save it to your Treasure Map.
+				It allows great content to filter to the top of searches, which helps
+				more people (even those with very different interests) find it.
+			</p>
+			<h3>Tag</h3>
+			<p>
+				<strong>Tagging</strong> a link is about improving clarity and efficiency
+				via organization. A tag represents a user's interpretation about
+				how a link's content should be categorized. Tags can be used to filter
+				links in searches.
+			</p>
+			<p>
+				Internetters will, no doubt, disagree on their preferred
+				categorization(s) for a given link; each is invited to tag any
+				link however they see fit. Then, their unique categorization(s)
+				can be used to query for the link in their own Treasure Map
+				using the most intuitive terms.
+			</p>
+			<p>
+				Let's use "www.example.com" as an example. Sarah may tag the
+				link as "funny" and Nigel may tag it as "example" and
+				"reference." Sarah could then search her Treasure Map for
+				"funny" or search Nigel's Treasure Map for "example" or
+				"reference" to find the link.
+			</p>
+			<h3>The Global Treasure Map</h3>
+			<p>
+				Each link is also associated with 1+ <strong
+					>global categories</strong
+				>, which filter the results of Global Treasure Map searches.
+			</p>
+			<p>
+				Global categories are determined automatically by the age and
+				frequency of individual, user-submitted tag categorizations<sup
+					>*</sup
+				>. So, tagging a link not only helps the submitter stay
+				organized but also improves navigability of the Global Treasure
+				Map for everyone.
+			</p>
+			<p>
+				*Categorizations that many users agree on are more likely to be
+				universally relevant, as are those that have remained unedited
+				for a long time.
+			</p>
+		</section>
 	</main>
 </Layout>
 
-<style></style>
+<style>
+	img {
+		display: flex;
+		margin: 0 auto;
+	}
+	section {
+		margin: 100px 0;
+	}
+	section:first-of-type {
+		margin-top: 0;
+	}
+	h2,
+	h3 {
+		margin-top: 50px;
+		text-align: center;
+	}
+</style>
