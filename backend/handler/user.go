@@ -297,6 +297,10 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 // (all links submitted by a user will have a tag from that user, so includes all user's submitted links)
 func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	var login_name string = chi.URLParam(r, "login_name")
+	if login_name == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no user provided")))
+		return
+	}
 
 	db ,err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
@@ -323,14 +327,13 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Prepare SQL to get submitted / tagged / copied links from User
-	// Start with SQL for signed-out users
-
+	// (Start with queries for signed-out user, append additional ones if needed)
 	base_fields := `SELECT 
 		Links.id as link_id, 
 		url, 
 		submitted_by as login_name, 
 		submit_date, 
-		coalesce(global_cats,"") as categories, 
+		categories, 
 		coalesce(global_summary,"") as summary, 
 		coalesce(summary_count,0) as summary_count, 
 		coalesce(like_count,0) as like_count, 
@@ -338,7 +341,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	`
 
 	// Get submitted links, replacing global categories with user-assigned
-	get_submitted_from_sql := fmt.Sprintf(` FROM Links
+	submitted_from := fmt.Sprintf(` FROM Links
 	JOIN
 		(
 		SELECT categories, link_id as tag_link_id
@@ -361,36 +364,15 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		)
 	ON summary_link_id = link_id`, login_name)
 
-	get_submitted_where_sql := fmt.Sprintf(` WHERE submitted_by = '%[1]s';`, login_name)
+	submitted_where := fmt.Sprintf(` WHERE submitted_by = '%[1]s';`, login_name)
 
 	// Get tagged links submitted by other users, replacing global categories with user-assigned
-	get_tagged_from_sql := fmt.Sprintf(` FROM Links
-	JOIN
-		(
-		SELECT categories, link_id as tag_link_id
-		FROM Tags
-		WHERE submitted_by = '%[1]s'
-		)
-	ON tag_link_id = link_id
-	LEFT JOIN
-		(
-		SELECT count(*) as like_count, link_id as like_link_id
-		FROM 'Link Likes'
-		GROUP BY link_id
-		)
-	ON like_link_id = link_id
-	LEFT JOIN
-		(
-		SELECT count(*) as summary_count, link_id as summary_link_id
-		FROM Summaries
-		GROUP BY link_id
-		)
-	ON summary_link_id = link_id`, login_name)
-
-	get_tagged_where_sql := get_submitted_where_sql
+	tagged_from := submitted_from
+	tagged_where := fmt.Sprintf(` WHERE submitted_by != '%[1]s';`, login_name)
 
 	// Get copied links
-	get_copied_from_sql := fmt.Sprintf(` FROM Links
+	copied_fields := strings.Replace(base_fields, "categories", `coalesce(global_cats,"") as categories`, 1)
+	copied_from := fmt.Sprintf(` FROM Links
 	JOIN
 		(
 		SELECT link_id as copy_link_id, user_id as copier_id
@@ -439,26 +421,23 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		ON clink_id = link_id`, req_user_id)
 
 		// Submitted
-		get_submitted_fields_sql := base_fields + added_fields
-		get_submitted_from_sql += added_from
-
-		get_submitted_sql := get_submitted_fields_sql + get_submitted_from_sql + get_submitted_where_sql
+		submitted_fields := base_fields + added_fields
+		submitted_from += added_from
+		submitted_sql := submitted_fields + submitted_from + submitted_where
 
 		// Tagged
-		get_tagged_fields_sql := base_fields + added_fields
-		get_tagged_from_sql += added_from
-
-		get_tagged_sql := get_tagged_fields_sql + get_tagged_from_sql + get_tagged_where_sql
+		tagged_fields := base_fields + added_fields
+		tagged_from += added_from
+		tagged_sql := tagged_fields + tagged_from + tagged_where
 
 		// Copied
-		get_copied_fields_sql := base_fields + added_fields
-		get_copied_from_sql += added_from
-
-		get_copied_sql := get_copied_fields_sql + get_copied_from_sql
+		copied_fields += added_fields
+		copied_from += added_from
+		copied_sql := copied_fields + copied_from
 
 		// Scan links
 		var submitted, tagged, copied *[]model.LinkSignedIn
-		for _, sql := range []string{get_submitted_sql, get_tagged_sql, get_copied_sql} {
+		for _, sql := range []string{submitted_sql, tagged_sql, copied_sql} {
 			rows, err := db.Query(sql)
 			if err != nil {
 				log.Fatal(err)
@@ -466,11 +445,11 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 			defer rows.Close()
 			
 			switch sql {
-			case get_submitted_sql:
+			case submitted_sql:
 				submitted = ScanTmapLinksSignedIn(db, rows)
-			case get_tagged_sql:
+			case tagged_sql:
 				tagged = ScanTmapLinksSignedIn(db, rows)
-			case get_copied_sql:
+			case copied_sql:
 				copied = ScanTmapLinksSignedIn(db, rows)
 			}
 		}
@@ -478,9 +457,9 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		// Add links to tmap
 		tmap := model.TreasureMap[model.LinkSignedIn]{Submitted: submitted, Tagged: tagged, Copied: copied}
 
-		// get category counts
+		// Get category counts
 		all_links := slices.Concat(*submitted, *tagged, *copied)
-		cat_counts := GetTreasureMapCategoryCounts(&all_links)
+		cat_counts := GetTmapCategoryCounts(&all_links)
 
 		// combine links and categories in response
 		tmap.Categories = cat_counts
@@ -488,11 +467,9 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		
 	// User not signed in: omit isLiked and isCopied fields
 	} else {
-		get_submitted_sql := base_fields + get_submitted_from_sql + get_submitted_where_sql
-
-		get_tagged_sql := base_fields + get_tagged_from_sql + get_tagged_where_sql
-		
-		get_copied_sql := base_fields + get_copied_from_sql
+		get_submitted_sql := base_fields + submitted_from + submitted_where
+		get_tagged_sql := base_fields + tagged_from + tagged_where
+		get_copied_sql := copied_fields + copied_from
 
 		// Scan links
 		var submitted, tagged, copied *[]model.LinkSignedOut
@@ -516,11 +493,242 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		// Add links to tmap
 		tmap := model.TreasureMap[model.LinkSignedOut]{Submitted: submitted, Tagged: tagged, Copied: copied}
 
-		// get category counts
+		// Get category counts
 		all_links := slices.Concat(*submitted, *tagged, *copied)
-		cat_counts := GetTreasureMapCategoryCounts(&all_links)
+		cat_counts := GetTmapCategoryCounts(&all_links)
 
-		// combine links and categories in response
+		// Add categories to tmap
+		tmap.Categories = cat_counts
+		render.JSON(w, r, tmap)
+	}
+}
+
+func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
+	var login_name string = chi.URLParam(r, "login_name")
+	if login_name == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no user provided")))
+		return
+	}
+
+	var categories string = chi.URLParam(r, "categories")
+	if categories == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no categories provided")))
+		return
+	}
+
+	db ,err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// check that user exists
+	var u sql.NullString
+	err = db.QueryRow("SELECT login_name FROM Users WHERE login_name = ?;", login_name).Scan(&u)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("user not found")))
+		return
+	}
+
+	// Check auth token
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
+	}
+
+	// Prepare SQL to get submitted / tagged / copied links from User
+	// (Start with queries for signed-out user, append additional ones if needed)
+
+	base_fields := `SELECT 
+		Links.id as link_id, 
+		url, 
+		submitted_by as login_name, 
+		submit_date, 
+		categories, 
+		coalesce(global_summary,"") as summary, 
+		coalesce(summary_count,0) as summary_count, 
+		coalesce(like_count,0) as like_count, 
+		coalesce(img_url,"") as img_url
+	`
+
+	// Get submitted links, replacing global categories with user-assigned
+	submitted_from := fmt.Sprintf(` FROM Links
+		JOIN
+		(
+			SELECT categories, link_id as tag_link_id
+			FROM Tags
+			WHERE submitted_by = '%[1]s'
+		)
+		ON link_id = tag_link_id
+		LEFT JOIN
+		(
+			SELECT count(*) as like_count, link_id as like_link_id
+			FROM 'Link Likes'
+			GROUP BY link_id
+		)
+		ON like_link_id = link_id
+		LEFT JOIN
+		(
+			SELECT count(*) as summary_count, link_id as summary_link_id
+			FROM Summaries
+			GROUP BY link_id
+		)
+		ON summary_link_id = link_id`, login_name)
+	
+	submitted_where := fmt.Sprintf(` WHERE submitted_by = '%[1]s'`, login_name)
+
+	// Append category filters to submitted_where
+	categories_split := strings.Split(categories, ",")
+	for _, cat := range categories_split {
+		submitted_where += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
+	}
+
+	// Get tagged links submitted by other users, replacing global categories with user-assigned
+	tagged_from := submitted_from
+	tagged_where := fmt.Sprintf(` WHERE submitted_by != '%[1]s'`, login_name)
+
+	// Append category filters to tagged_where
+	for _, cat := range categories_split {
+		tagged_where += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
+	}
+
+	// Get copied links
+	copied_fields := strings.Replace(base_fields, "categories", `coalesce(global_cats,"") as categories`, 1)
+	copied_from := fmt.Sprintf(` FROM Links
+	JOIN
+		(
+		SELECT link_id as copy_link_id, user_id as copier_id
+		FROM 'Link Copies'
+		JOIN Users
+		ON Users.id = copier_id
+		WHERE Users.login_name = '%[1]s'
+		)
+	ON copy_link_id = link_id
+	LEFT JOIN
+		(
+		SELECT count(*) as like_count, link_id as like_link_id
+		FROM 'Link Likes'
+		GROUP BY link_id
+		)
+	ON like_link_id = link_id
+	LEFT JOIN
+		(
+		SELECT count(*) as summary_count, link_id as summary_link_id
+		FROM Summaries
+		GROUP BY link_id
+		)
+	ON summary_link_id = link_id`, login_name)
+
+	copied_where := fmt.Sprintf(` WHERE ',' || categories || ',' LIKE '%%,%s,%%'`, categories_split[0])
+	for _, cat := range categories_split[1:] {
+		copied_where += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
+	}
+
+	// Append additional queries for IsLiked and IsCopied fields if auth claims verified
+	if req_user_id != "" {
+		added_fields := `, 
+		coalesce(is_liked,0) as is_liked, 
+		coalesce(is_copied,0) as is_copied`
+
+		added_from := fmt.Sprintf(` LEFT JOIN
+			(
+			SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
+			FROM 'Link Likes'
+			WHERE user_id = '%[1]s'
+			GROUP BY id
+			)
+		ON like_link_id2 = link_id 
+		LEFT JOIN
+			(
+			SELECT id as copy_id, count(*) as is_copied, user_id as cuser_id, link_id as clink_id
+			FROM 'Link Copies'
+			WHERE cuser_id = '%[1]s'
+			GROUP BY copy_id
+			)
+		ON clink_id = link_id`, req_user_id)
+
+		// Submitted
+		submitted_fields := base_fields + added_fields
+		submitted_from += added_from
+		submitted_sql := submitted_fields + submitted_from + submitted_where
+
+		// Tagged
+		tagged_fields := base_fields + added_fields
+		tagged_from += added_from
+		tagged_sql := tagged_fields + tagged_from + tagged_where
+
+		// Copied
+		copied_fields += added_fields
+		copied_from += added_from
+		copied_sql := copied_fields + copied_from + copied_where
+
+		// Scan links
+		var submitted, tagged, copied *[]model.LinkSignedIn
+		for _, sql := range []string{submitted_sql, tagged_sql, copied_sql} {
+			rows, err := db.Query(sql)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer rows.Close()
+			
+			switch sql {
+			case submitted_sql:
+				submitted = ScanTmapLinksSignedIn(db, rows)
+			case tagged_sql:
+				tagged = ScanTmapLinksSignedIn(db, rows)
+			case copied_sql:
+				copied = ScanTmapLinksSignedIn(db, rows)
+			}
+		}
+
+		// Add links to tmap
+		tmap := model.TreasureMap[model.LinkSignedIn]{Submitted: submitted, Tagged: tagged, Copied: copied}
+
+		// Get category counts
+		all_links := slices.Concat(*submitted, *tagged, *copied)
+		cat_counts := GetTmapCategoryCounts(&all_links)
+
+		// Add categories to tmap
+		tmap.Categories = cat_counts
+		render.JSON(w, r, tmap)
+		
+	// User not signed in: omit isLiked and isCopied fields
+	} else {
+		submitted_sql := base_fields + submitted_from + submitted_where
+		tagged_sql := base_fields + tagged_from + tagged_where
+		copied_sql := copied_fields + copied_from + copied_where
+
+		// Scan links
+		var submitted, tagged, copied *[]model.LinkSignedOut
+		for _, sql := range []string{submitted_sql, tagged_sql, copied_sql} {
+			rows, err := db.Query(sql)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer rows.Close()
+			
+			switch sql {
+			case submitted_sql:
+				submitted = ScanTmapLinksSignedOut(db, rows)
+			case tagged_sql:
+				tagged = ScanTmapLinksSignedOut(db, rows)
+			case copied_sql:
+				copied = ScanTmapLinksSignedOut(db, rows)
+			}
+		}
+
+		// Add links to tmap
+		tmap := model.TreasureMap[model.LinkSignedOut]{Submitted: submitted, Tagged: tagged, Copied: copied}
+
+		// Get category counts
+		all_links := slices.Concat(*submitted, *tagged, *copied)
+		cat_counts := GetTmapCategoryCounts(&all_links)
+
+		// Add categories to tmap
 		tmap.Categories = cat_counts
 		render.JSON(w, r, tmap)
 	}
@@ -541,7 +749,7 @@ func ScanTmapLinksSignedIn (db *sql.DB, rows *sql.Rows) *[]model.LinkSignedIn {
 	return &links
 }
 
-func ScanTmapLinksSignedOut (db *sql.DB, rows *sql.Rows) *[]model.LinkSignedOut {
+func ScanTmapLinksSignedOut (db *sql.DB, rows *sql.Rows) *[]model.LinkSignedOut {	
 	var links = []model.LinkSignedOut{}
 
 	for rows.Next() {
@@ -556,7 +764,7 @@ func ScanTmapLinksSignedOut (db *sql.DB, rows *sql.Rows) *[]model.LinkSignedOut 
 	return &links
 }
 
-func GetTreasureMapCategoryCounts[T model.Link] (links *[]T) *[]model.CategoryCount {
+func GetTmapCategoryCounts[T model.Link] (links *[]T) *[]model.CategoryCount {
 	// get category counts
 	cat_counts := []model.CategoryCount{}
 	cats_found := []string{}

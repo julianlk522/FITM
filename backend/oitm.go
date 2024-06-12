@@ -70,6 +70,7 @@ func main() {
 
 		// USER ACCOUNTS
 		r.Get("/map/{login_name}", handler.GetTreasureMap)
+		r.Get("/map/{login_name}/{categories}", handler.GetTreasureMapByCategories)
 
 		// LINKS
 		r.Get("/links", handler.GetTopLinks)
