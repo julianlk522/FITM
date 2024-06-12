@@ -459,7 +459,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 
 		// Get category counts
 		all_links := slices.Concat(*submitted, *tagged, *copied)
-		cat_counts := GetTmapCategoryCounts(&all_links)
+		cat_counts := GetTmapCategoryCounts(&all_links, nil)
 
 		// combine links and categories in response
 		tmap.Categories = cat_counts
@@ -495,7 +495,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 
 		// Get category counts
 		all_links := slices.Concat(*submitted, *tagged, *copied)
-		cat_counts := GetTmapCategoryCounts(&all_links)
+		cat_counts := GetTmapCategoryCounts(&all_links, nil)
 
 		// Add categories to tmap
 		tmap.Categories = cat_counts
@@ -582,8 +582,8 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 	submitted_where := fmt.Sprintf(` WHERE submitted_by = '%[1]s'`, login_name)
 
 	// Append category filters to submitted_where
-	categories_split := strings.Split(categories, ",")
-	for _, cat := range categories_split {
+	cats_split := strings.Split(categories, ",")
+	for _, cat := range cats_split {
 		submitted_where += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
 	}
 
@@ -592,7 +592,7 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 	tagged_where := fmt.Sprintf(` WHERE submitted_by != '%[1]s'`, login_name)
 
 	// Append category filters to tagged_where
-	for _, cat := range categories_split {
+	for _, cat := range cats_split {
 		tagged_where += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
 	}
 
@@ -623,8 +623,8 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 		)
 	ON summary_link_id = link_id`, login_name)
 
-	copied_where := fmt.Sprintf(` WHERE ',' || categories || ',' LIKE '%%,%s,%%'`, categories_split[0])
-	for _, cat := range categories_split[1:] {
+	copied_where := fmt.Sprintf(` WHERE ',' || categories || ',' LIKE '%%,%s,%%'`, cats_split[0])
+	for _, cat := range cats_split[1:] {
 		copied_where += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
 	}
 
@@ -688,11 +688,11 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 		// Add links to tmap
 		tmap := model.TreasureMap[model.LinkSignedIn]{Submitted: submitted, Tagged: tagged, Copied: copied}
 
-		// Get category counts
+		// Get subcategory counts
 		all_links := slices.Concat(*submitted, *tagged, *copied)
-		cat_counts := GetTmapCategoryCounts(&all_links)
+		cat_counts := GetTmapCategoryCounts(&all_links, cats_split)
 
-		// Add categories to tmap
+		// Add subcategories to tmap
 		tmap.Categories = cat_counts
 		render.JSON(w, r, tmap)
 		
@@ -724,11 +724,11 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 		// Add links to tmap
 		tmap := model.TreasureMap[model.LinkSignedOut]{Submitted: submitted, Tagged: tagged, Copied: copied}
 
-		// Get category counts
+		// Get subcategory counts
 		all_links := slices.Concat(*submitted, *tagged, *copied)
-		cat_counts := GetTmapCategoryCounts(&all_links)
+		cat_counts := GetTmapCategoryCounts(&all_links, cats_split)
 
-		// Add categories to tmap
+		// Add subcategories to tmap
 		tmap.Categories = cat_counts
 		render.JSON(w, r, tmap)
 	}
@@ -764,15 +764,24 @@ func ScanTmapLinksSignedOut (db *sql.DB, rows *sql.Rows) *[]model.LinkSignedOut 
 	return &links
 }
 
-func GetTmapCategoryCounts[T model.Link] (links *[]T) *[]model.CategoryCount {
-	// get category counts
+// Get counts of each category found in links
+// Omit any categories passed via omitted_cats
+// (omit used to retrieve subcategories by passing directly searched categories)
+func GetTmapCategoryCounts[T model.Link] (links *[]T, omitted_cats []string) *[]model.CategoryCount {
 	cat_counts := []model.CategoryCount{}
 	cats_found := []string{}
 	var cat_found bool
+
+	// for each link in links
 	for _, link := range *links {
 
-		// for each category in the comma-separated string,
+		// for each category in categories (comma-separated string)
 		for _, cat := range strings.Split(link.GetCategories(), ",") {
+
+			// skip if category is in omitted_cats
+			if omitted_cats != nil && slices.Contains(omitted_cats, cat) {
+				continue
+			}
 
 			// check if category is already in cat_counts
 			cat_found = false
@@ -792,7 +801,7 @@ func GetTmapCategoryCounts[T model.Link] (links *[]T) *[]model.CategoryCount {
 				}
 			}
 
-			// else add to slice with fresh count
+			// add new category to cat_counts with fresh count if not found
 			if !cat_found {
 				cat_counts = append(cat_counts, model.CategoryCount{Category: cat, Count: 1})
 
