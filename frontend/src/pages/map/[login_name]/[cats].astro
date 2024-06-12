@@ -1,0 +1,116 @@
+---
+import Link from '../../../components/Link'
+import Layout from '../../../layouts/Layout.astro'
+import type { TreasureMap } from '../../../types'
+
+const { login_name, cats: categories } = Astro.params
+if (!login_name) {
+	return Astro.redirect('/')
+} else if (!categories) {
+	return Astro.redirect(`/map/${login_name}`)
+}
+const cats_split = categories.split(',')
+
+const token = Astro.cookies.get('token')?.value
+const signed_in_user = Astro.cookies.get('user')?.value
+
+const tmap_resp = token
+	? await fetch(`http://127.0.0.1:8000/map/${login_name}/${categories}`, {
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		})
+	: await fetch(`http://127.0.0.1:8000/map/${login_name}/${categories}`)
+if (tmap_resp.status > 399) {
+	return Astro.redirect('/404')
+}
+const tmap: TreasureMap = await tmap_resp.json()
+// Submitted: [{URL: 'https://example.com', LikeCount: 100}, ...],
+// Tagged: [{URL: 'https://example.com', LikeCount: 2}, ...],
+// Copied: [{URL: 'https://example.com', LikeCount: 1}, ...]
+// CategoryCounts: [{Category: 'umvc3', Count: 1}, ...],
+---
+
+<Layout title=`${login_name}'s Treasure Map (Filtered)`>
+	<main>
+		<h1>{login_name}'s Treasure Map</h1>
+		<p>
+			{
+				cats_split.length > 1
+					? `Category Filters: ${cats_split.join(', ')}`
+					: `Category Filter: ${cats_split[0]}`
+			}
+		</p>
+		{
+			tmap.Categories.length ? (
+				<h2>Top Categories</h2>
+			) : (
+				<h2>No further subcategories.</h2>
+			)
+		}
+		<ol>
+			{
+				tmap.Categories.map((cat) => (
+					<li>
+						<a
+							href={`/map/${login_name}/${categories},${cat.Category}`}
+						>
+							{cat.Category}
+						</a>
+						<span>({cat.Count})</span>
+					</li>
+				))
+			}
+		</ol>
+		{
+			tmap.Submitted.length ? (
+				<>
+					<h2>Submitted</h2>
+					{tmap.Submitted.map((link) => (
+						<Link
+							client:load
+							link={link}
+							is_summary_page={false}
+							token={token}
+							user={signed_in_user}
+						/>
+					))}
+				</>
+			) : null
+		}
+		{
+			tmap.Tagged.length ? (
+				<>
+					<h2>Tagged</h2>
+					{tmap.Tagged.map((link) => (
+						<Link
+							client:load
+							link={link}
+							is_summary_page={false}
+							token={token}
+							user={signed_in_user}
+						/>
+					))}
+				</>
+			) : null
+		}
+		{
+			tmap.Copied.length ? (
+				<>
+					<h2>Copied</h2>
+					{tmap.Copied.map((link) => (
+						<Link
+							client:load
+							link={link}
+							is_summary_page={false}
+							token={token}
+							user={signed_in_user}
+						/>
+					))}
+				</>
+			) : null
+		}
+	</main>
+</Layout>
+
+<style></style>
