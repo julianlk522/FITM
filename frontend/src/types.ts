@@ -69,6 +69,8 @@ type TreasureMap = {
 	Categories: CategoryCount[]
 }
 
-export { Periods, is_error_response }
+const tmap_sections = ['Submitted', 'Tagged', 'Copied'] as const
+
+export { Periods, is_error_response, tmap_sections }
 export type { CategoryContributor, CategoryCount, ErrorResponse, LinkData, Period, Summary, SummaryPage, TreasureMap, User }
 

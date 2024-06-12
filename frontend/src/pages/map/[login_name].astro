@@ -3,6 +3,7 @@ import Link from '../../components/Link'
 import ProfilePic from '../../components/ProfilePic'
 import Layout from '../../layouts/Layout.astro'
 import type { TreasureMap, User } from '../../types'
+import { tmap_sections } from '../../types'
 import format_date from '../../util/format_date'
 
 const { login_name } = Astro.params
@@ -26,8 +27,13 @@ if (tmap_resp.status > 399) {
 const tmap: TreasureMap = await tmap_resp.json()
 // Submitted: [{URL: 'https://example.com', LikeCount: 100}, ...],
 // Tagged: [{URL: 'https://example.com', LikeCount: 2}, ...],
-// Copied: [{URL: 'https://example.com', LikeCount: 1}, ...]}
-// {CategoryCounts: [{Category: 'umvc3', Count: 1}, ...],
+// Copied: [{URL: 'https://example.com', LikeCount: 1}, ...]
+// CategoryCounts: [{Category: 'umvc3', Count: 1}, ...],
+
+const used_sections = tmap_sections.filter((s) => tmap[s].length)
+if (!used_sections.length) {
+	return Astro.redirect(`/map/${login_name}`)
+}
 
 const user_resp = await fetch(`http://127.0.0.1:8000/users/${login_name}`)
 if (user_resp.status > 399) {
@@ -56,72 +62,38 @@ const user: User = await user_resp.json()
 				</>
 			) : null
 		}
+		<section>
+			<h2>Top Categories</h2>
+			<ol>
+				{
+					tmap.Categories.map((cat) => (
+						<li>
+							<a href={`/map/${login_name}/${cat.Category}`}>
+								{cat.Category}
+							</a>
+							<span>({cat.Count})</span>
+						</li>
+					))
+				}
+			</ol>
+		</section>
 		{
-			tmap.Categories.length ? (
-				<>
-					<h2>Top Categories</h2>
-					<ol>
-						{tmap.Categories.map((cat) => (
-							<li>
-								<a
-									href={`/usercat/${login_name}/${cat.Category}`}
-								>
-									{cat.Category}
-								</a>
-								<span>({cat.Count})</span>
-							</li>
+			used_sections.map((s) => {
+				return (
+					<section>
+						<h2>{s}</h2>
+						{tmap[s].map((link) => (
+							<Link
+								client:load
+								link={link}
+								is_summary_page={false}
+								token={token}
+								user={signed_in_user}
+							/>
 						))}
-					</ol>
-				</>
-			) : null
-		}
-		{
-			tmap.Submitted.length ? (
-				<>
-					<h2>Submitted</h2>
-					{tmap.Submitted.map((link) => (
-						<Link
-							client:load
-							link={link}
-							is_summary_page={false}
-							token={token}
-							user={signed_in_user}
-						/>
-					))}
-				</>
-			) : null
-		}
-		{
-			tmap.Tagged.length ? (
-				<>
-					<h2>Tagged</h2>
-					{tmap.Tagged.map((link) => (
-						<Link
-							client:load
-							link={link}
-							is_summary_page={false}
-							token={token}
-							user={signed_in_user}
-						/>
-					))}
-				</>
-			) : null
-		}
-		{
-			tmap.Copied.length ? (
-				<>
-					<h2>Copied</h2>
-					{tmap.Copied.map((link) => (
-						<Link
-							client:load
-							link={link}
-							is_summary_page={false}
-							token={token}
-							user={signed_in_user}
-						/>
-					))}
-				</>
-			) : null
+					</section>
+				)
+			})
 		}
 	</main>
 </Layout>
