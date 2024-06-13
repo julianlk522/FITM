@@ -474,7 +474,7 @@ func RecalculateGlobalSummary(link_id string, db *sql.DB) {
 	ON Summaries.id = summary_id
 	WHERE link_id = '%s'
 	GROUP BY Summaries.id
-	ORDER BY like_count DESC, text DESC
+	ORDER BY like_count DESC, text ASC
 	LIMIT 1
 	`, link_id)
 	var top_summary_text string
