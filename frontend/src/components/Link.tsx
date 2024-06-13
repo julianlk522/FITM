@@ -27,6 +27,18 @@ export default function Link(props: Props) {
     const [is_liked, set_is_liked] = useState(props.link.IsLiked)
     const [like_count, set_like_count] = useState(props.link.LikeCount)
 
+    const split_cats = categories?.split(',')
+    const categories_html = 
+    // tag1 ==> <a href='/cat/tag1'>tag1</a>
+    // tag1,tag2 ==> <a href='/cat/tag1'>tag1</a>, <a href='/cat/tag2'>tag2</a>
+    split_cats?.map((cat, i) => {
+        if (i === split_cats.length - 1) {
+            return <a href={`/cat/${cat}`}>{cat}</a>
+        } else {
+            return <span><a href={`/cat/${cat}`}>{cat}</a>, </span>
+        }
+    }) 
+
     async function handle_like() {
         if (!token) {
             document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/; max-age=3600; SameSite=strict; Secure`
@@ -150,7 +162,7 @@ export default function Link(props: Props) {
             {categories 
                 ? 
                     <>
-                        <p>Categories: {categories}</p>
+                        <p>Categories: {categories_html}</p>
                         <a href='/'>Add tag</a>
                     </>
                 : 
@@ -166,7 +178,7 @@ export default function Link(props: Props) {
                     <p>
                         <a href={`/summary/${id}`}>
                             {summary_count > 1
-                                ? `View all summaries (${summary_count}) or add new`
+                                ? `View summaries (${summary_count})`
                                 : 'Add summary'}
                         </a>
                     </p>

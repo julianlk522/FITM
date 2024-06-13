@@ -211,7 +211,13 @@ func RecalculateGlobalCategories(db *sql.DB, link_id string) {
 	// which tags have the earliest last_updated of this link's tags?
 	// (in other words, occupying the greatest % of the link's lifetime without needing revision)
 	// what are the categories of those tags? (top 20)
-	rows, err := db.Query(`select (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) as prcnt_lo, categories from Tags INNER JOIN Links on Links.id = Tags.link_id WHERE link_id = ? ORDER BY prcnt_lo DESC LIMIT 20;`, link_id)
+	rows, err := db.Query(`SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS prcnt_lo, categories 
+		FROM Tags 
+		INNER JOIN Links 
+		ON Links.id = Tags.link_id 
+		WHERE link_id = ? 
+		ORDER BY prcnt_lo DESC 
+		LIMIT 20;`, link_id)
 	if err != nil {
 		log.Fatal(err)
 	}

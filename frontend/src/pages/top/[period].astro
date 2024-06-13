@@ -42,7 +42,7 @@ const links: LinkData[] = await get_links_resp.json()
 			}
 		</div>
 		{
-			links ? (
+			links.length ? (
 				<ul id='links'>
 					{links.map((link) => (
 						<Link

@@ -2,12 +2,7 @@
 // Output: May 4, 2024 8:08:44 PM
 export default function format_date(date: string): string {
     const date_obj = new Date(date);
-    return date_obj.toLocaleDateString('en-US', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true
-    });
+    // format to local timezone
+    date_obj.setMinutes(date_obj.getMinutes() + date_obj.getTimezoneOffset());
+    return date_obj.toLocaleString("en-US", { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true });
 }

@@ -10,8 +10,7 @@ interface Props {
 export default function NewSummary(props: Props) {
     const { Token: token, LinkID: link_id } = props
 
-    const [status, set_status] = useState<"Success" | "Error" | undefined>(undefined)
-    const [message, set_message] = useState<string | undefined>(undefined)
+    const [error, set_error] = useState<string | undefined>(undefined)
 
     async function handle_submit(event: SubmitEvent, token: string | undefined) {
         event.preventDefault()
@@ -42,10 +41,10 @@ export default function NewSummary(props: Props) {
         let new_summary_data = await new_summary_resp.json()
 
         if (is_error_response(new_summary_data)) {
-            set_status("Error")
-            set_message(new_summary_data.error)
+            set_error(new_summary_data.error)
             return
         } else {
+            form.reset()
             window.location.reload()
         }
     
@@ -55,13 +54,9 @@ export default function NewSummary(props: Props) {
     return (
         <form onSubmit={async (e) => await handle_submit(e, token)}>
             <h3>Enter New Summary Details</h3>
-            {status 
+            {error 
                 ? 
-                    status === "Success"
-                        ?
-                            <p class='success'>Submitted</p>
-                        :
-                            <p class='error'>{`Error: ${message}`}</p>
+                <p class='error'>{`Error: ${error}`}</p>
                 : null
             }
                 <label for='summary'>Summary</label>
