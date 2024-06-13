@@ -10,7 +10,7 @@ import (
 type NewSummaryRequest struct {
 	LinkID string `json:"link_id"`
 	Text string `json:"text"`
-	SubmitDate string
+	LastUpdated string
 }
 
 func (a *NewSummaryRequest) Bind(r *http.Request) error {
@@ -21,7 +21,7 @@ func (a *NewSummaryRequest) Bind(r *http.Request) error {
 		return errors.New("missing summary text")
 	}
 
-	a.SubmitDate = time.Now().Format("2006-01-02 15:04:05")
+	a.LastUpdated = time.Now().Format("2006-01-02 15:04:05")
 	
 	return nil
 
@@ -56,29 +56,20 @@ func (a *EditSummaryRequest) Bind(r *http.Request) error {
 }
 
 // GENERAL
-type Summary struct {
+type SummarySignedOut struct {
 	ID string
 	Text string
 	SubmittedBy string
-	SubmitDate string
+	LastUpdated string
 	LikeCount int
 }
 
 type SummarySignedIn struct {
-	ID string
-	Text string
-	SubmittedBy string
-	SubmitDate string
-	LikeCount int
+	SummarySignedOut
 	IsLiked bool
 }
 
-type SummaryPage struct {
-	Link LinkSignedOut
-	Summaries []Summary
-}
-
-type SummaryPageSignedIn struct {
-	Link LinkSignedIn
-	Summaries []SummarySignedIn
+type SummaryPage[T SummarySignedIn | SummarySignedOut, L LinkSignedIn | LinkSignedOut ] struct {
+	Link L
+	Summaries []T
 }

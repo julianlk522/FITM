@@ -8,13 +8,13 @@ interface Props {
 	ID: number
 	Text: string
 	SubmittedBy: string
-	SubmitDate: string
+	LastUpdated: string
 	LikeCount: number
 	IsLiked: boolean | undefined
 }
 
 export default function Summary(props: Props) {
-	const {ID, Token: token, User: user, Text: text, SubmittedBy: submitted_by, SubmitDate: submit_date} = props
+	const {ID, Token: token, User: user, Text: text, SubmittedBy: submitted_by, LastUpdated: last_updated} = props
 
 	const [is_liked, set_is_liked] = useState(props.IsLiked)
     const [like_count, set_like_count] = useState(props.LikeCount)
@@ -69,25 +69,50 @@ export default function Summary(props: Props) {
 			}
 		}
 	}
+
+	async function handle_delete() {
+		if (!token) {
+			return (window.location.href = '/login')
+		}
+		const delete_resp = await fetch(
+			`http://127.0.0.1:8000/summaries`,
+			{
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify({summary_id: ID}),
+			}
+		)
+		const delete_data = await delete_resp.json()
+		if (delete_data.message === 'deleted') {
+			return window.location.reload()
+		} else {
+			console.error("WTF is this: ",delete_data)
+		}
+	}
 	return (
 		<li class='summary'>
 			{text}
-			<p>Submitted by <a href={`/map/${submitted_by}`}>{submitted_by}</a> on {
-                    format_date(submit_date)
+			<p>Last Updated by <a href={`/map/${submitted_by}`}>{submitted_by}</a> on {
+                    format_date(last_updated)
                 }</p>
-			{user && user !== submitted_by
+			{user
 				?
-					(
-						<button
-						onClick={handle_like}
-						class={`like-btn${is_liked ? ' liked' : ''}`}>{is_liked ? 'Unlike' : 'Like'} ({like_count})
-						</button>
-					)
-				:
-					// TODO: connect to backend
-					<button>
+				user !== submitted_by
+					?
+						(
+							<button
+							onClick={handle_like}
+							class={`like-btn${is_liked ? ' liked' : ''}`}>{is_liked ? 'Unlike' : 'Like'} ({like_count})
+							</button>
+						)
+					:
+					<button onClick={handle_delete}>
 						Delete
 					</button>
+				: null
 			}
 		</li>
 	)

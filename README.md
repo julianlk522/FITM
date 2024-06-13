@@ -2,21 +2,19 @@
 
 ## Todos:
 
+-Treasure Map skip to each main section (sidebar)
+-Fix popular tags links so they check global cats
 -Pagination
     -Home
     -Top Links 
-    -User Treasure Map 
--Tests
--Make frontend look decent
-    -A11y, responsive layouts for phones / tablets
-    -Link articles
--Prevent duplicate summary submissions (frontend)
+    -User Treasure Map
 -Improve profile pic upload
     -Crop to square
     -Shrink to 100x100
--Treasure Map skip to each main section (sidebar)
--Fix popular tags links so they check global cats
--Add GetTreasureMapWithCategories handler, implement in frontend
+-Improve frontend look/semantic markup
+    -A11y, responsive layouts for phones / tablets
+    -Link articles
+-Tests
 -Remove repeat code wherever possible
 
 ## Why?
