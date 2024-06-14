@@ -99,12 +99,12 @@ func main() {
 		r.Delete("/links/{link_id}/copy", handler.UncopyLink)
 
 		// TAGS
+		r.Get("/tags/{link_id}", handler.GetTagsForLink)
 		r.Post("/tags", handler.AddTag)
 		r.Put("/tags", handler.EditTag)
 
 		// SUMMARIES
 		r.Post("/summaries", handler.AddSummary)
-		// r.Put("/summaries", handler.EditSummary)
 		r.Delete("/summaries", handler.DeleteSummary)
 		r.Post("/summaries/{summary_id}/like", handler.LikeSummary)
 		r.Delete("/summaries/{summary_id}/like", handler.UnlikeSummary)

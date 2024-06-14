@@ -10,11 +10,136 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"golang.org/x/exp/slices"
 
 	"oitm/model"
 )
+
+func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
+	link_id := chi.URLParam(r, "link_id")
+	if link_id == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no link id found")))
+		return
+	}
+
+	// Check auth token
+	var req_user_id string
+	var login_name string
+	claims, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
+		login_name = claims["login_name"].(string)
+	}
+
+	db, err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// Check if link exists, Abort if invalid link ID provided
+	var l sql.NullString
+	err = db.QueryRow("SELECT id FROM Links WHERE id = ?;", link_id).Scan(&l)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no link found with given ID")))
+		return
+	}
+
+	// Get link
+	get_link_sql := fmt.Sprintf(`SELECT links_id as link_id, url, submitted_by, submit_date, coalesce(categories,"") as categories, summary, COUNT('Link Likes'.id) as like_count, coalesce(is_liked,0) as is_liked, coalesce(is_copied,0) as is_copied, img_url
+	FROM
+		(
+		SELECT id as links_id, url, submitted_by, submit_date, global_cats as categories, global_summary as summary, coalesce(img_url,"") as img_url
+		FROM Links
+		WHERE id = '%[1]s'
+		)
+	LEFT JOIN 'Link Likes'
+	ON 'Link Likes'.link_id = links_id
+	LEFT JOIN
+		(
+		SELECT id as like_id, count(*) as is_liked, user_id as luser_id, link_id as like_link_id2
+		FROM 'Link Likes'
+		WHERE luser_id = '%[2]s'
+		GROUP BY like_id
+		)
+	ON like_link_id2 = link_id
+	LEFT JOIN
+		(
+		SELECT id as copy_id, count(*) as is_copied, user_id as cuser_id, link_id as copy_link_id
+		FROM 'Link Copies'
+		WHERE cuser_id = '%[2]s'
+		GROUP BY copy_id
+		)
+	ON copy_link_id = link_id`, link_id, req_user_id)
+	var link model.LinkSignedIn
+	err = db.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.IsLiked, &link.IsCopied, &link.ImgURL)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			render.Status(r, http.StatusNotFound)
+			render.JSON(w, r, ErrResponse{Err: errors.New("link not found")})
+		} else {
+			log.Fatal(err)
+		}
+	}
+
+	// Get earliest tags and Lifespan-Overlap scores
+	rows, err := db.Query(`SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, categories, Tags.submitted_by, last_updated 
+		FROM Tags 
+		INNER JOIN Links 
+		ON Links.id = Tags.link_id 
+		WHERE link_id = ? 
+		ORDER BY lifespan_overlap DESC 
+		LIMIT 20;`, link_id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	earliest_tags := []model.EarlyTagPublic{}
+	for rows.Next() {
+		var tag model.EarlyTagPublic
+		err = rows.Scan(&tag.LifeSpanOverlap, &tag.Categories, &tag.SubmittedBy, &tag.LastUpdated)
+		if err != nil {
+			log.Fatal(err)
+		}
+		earliest_tags = append(earliest_tags, tag)
+	}
+
+	// Get user-submitted tag if user has submitted one
+	var user_tag_cats, user_tag_last_updated sql.NullString
+	err = db.QueryRow("SELECT categories, last_updated FROM 'Tags' WHERE link_id = ? AND submitted_by = ?;", link_id, login_name).Scan(&user_tag_cats, &user_tag_last_updated)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Fatal(err)
+		}
+
+		tag_page := model.TagPage{
+			Link: &link,
+			UserTag: nil,
+			TopTags: &earliest_tags,
+		}
+		render.JSON(w, r, tag_page)
+
+	} else if user_tag_cats.Valid {
+		user_tag := model.Tag{
+			Categories: user_tag_cats.String,
+			LastUpdated: user_tag_last_updated.String,
+			LinkID: link_id,
+			SubmittedBy: login_name,
+		}
+
+		tag_page := model.TagPage{
+			Link: &link,
+			UserTag: &user_tag,
+			TopTags: &earliest_tags,
+		}
+		render.JSON(w, r, tag_page)
+	}
+}
 
 // GET MOST-USED TAG CATEGORIES
 // Todo: edit to search global categories instead
@@ -208,23 +333,24 @@ func RecalculateGlobalCategories(db *sql.DB, link_id string) {
 	// Global category(ies) based on aggregated scores from all tags of the link, based on time between link creation and tag creation/last edit
 	category_scores := make(map[string]float32)
 
-	// which tags have the earliest last_updated of this link's tags?
-	// (in other words, occupying the greatest % of the link's lifetime without needing revision)
-	// what are the categories of those tags? (top 20)
-	rows, err := db.Query(`SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS prcnt_lo, categories 
+	// Which tags have the earliest last_updated of this link's tags?
+	// (in other words, occupying the greatest % of the link's lifetime without revision)
+	// What are the categories of those tags? (top 20)
+
+	rows, err := db.Query(`SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, categories 
 		FROM Tags 
 		INNER JOIN Links 
 		ON Links.id = Tags.link_id 
 		WHERE link_id = ? 
-		ORDER BY prcnt_lo DESC 
+		ORDER BY lifespan_overlap DESC 
 		LIMIT 20;`, link_id)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	earliest_tags := []model.EarliestTagCats{}
+	earliest_tags := []model.EarlyTag{}
 	for rows.Next() {
-		var t model.EarliestTagCats
+		var t model.EarlyTag
 		err = rows.Scan(&t.LifeSpanOverlap, &t.Categories)
 		if err != nil {
 			log.Fatal(err)
@@ -232,24 +358,29 @@ func RecalculateGlobalCategories(db *sql.DB, link_id string) {
 		earliest_tags = append(earliest_tags, t)
 	}
 
-	// add to category_scores
-	var max_cat_score float32 = 0.0
+	// 50% Max category score from across all tags used as threshold for assignment to Global Categories
+	var max_cat_score float32
+
+	// Row score limit determined by number of tags so total score is standardized
 	row_score_limit := 1 / float32(len(earliest_tags))
-	for _, t := range earliest_tags {
+	for _, tag := range earliest_tags {
 
 		// convert to all lowercase
-		lc := strings.ToLower(t.Categories)
+		lc := strings.ToLower(tag.Categories)
 
 		// use square root of life span overlap in order to smooth out scores and allow brand-new tags to still have some influence
 		// e.g. sqrt(0.01) = 0.1
-		t.LifeSpanOverlap = float32(math.Sqrt(float64(t.LifeSpanOverlap)))
+		tag.LifeSpanOverlap = float32(math.Sqrt(float64(tag.LifeSpanOverlap)))
 
 		// split row effect among categories, if multiple
-		if strings.Contains(t.Categories, ",") {
+		if strings.Contains(tag.Categories, ",") {
 			c := strings.Split(lc, ",")
 			split := float32(len(c))
+
+			// add scores for each category in this tag
+			// Note: categories which appear multiple times across different tags will have multipled scores, making them more likely to affect Global Categories.
 			for _, cat := range c {
-				category_scores[cat] += t.LifeSpanOverlap * row_score_limit / split
+				category_scores[cat] += tag.LifeSpanOverlap * row_score_limit / split
 
 				// update max score (to be used when assigning global categories)
 				if category_scores[cat] > max_cat_score {
@@ -257,7 +388,7 @@ func RecalculateGlobalCategories(db *sql.DB, link_id string) {
 				}
 			}
 		} else {
-			category_scores[lc] += t.LifeSpanOverlap * row_score_limit
+			category_scores[lc] += tag.LifeSpanOverlap * row_score_limit
 
 			// update max score
 			if category_scores[lc] > max_cat_score {
@@ -266,7 +397,7 @@ func RecalculateGlobalCategories(db *sql.DB, link_id string) {
 		}
 	}
 
-	// Determine categories with scores >= 50% of max
+	// Assign categories scoring 50%+ of max score to Global Categories
 	var global_cats string
 	for cat, score := range category_scores {
 		if score >= 0.5*max_cat_score {
@@ -275,7 +406,7 @@ func RecalculateGlobalCategories(db *sql.DB, link_id string) {
 	}
 	global_cats = global_cats[:len(global_cats)-1]
 
-	// Assign to link
+	// Update link
 	_, err = db.Exec("UPDATE Links SET global_cats = ? WHERE id = ?;", global_cats, link_id)
 	if err != nil {
 		log.Fatal(err)

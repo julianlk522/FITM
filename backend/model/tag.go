@@ -43,6 +43,14 @@ func (a *EditTagRequest) Bind(r *http.Request) error {
 	return nil
 }
 
+// General
+type Tag struct {
+	LinkID string
+	Categories string
+	SubmittedBy string
+	LastUpdated string
+}
+
 type CategoryCount struct {
 	Category string
 	Count int32
@@ -57,7 +65,19 @@ func SortCategories(i, j CategoryCount) int {
 	return 1
 }
 
-type EarliestTagCats struct {
+type EarlyTag struct {
 	LifeSpanOverlap float32
 	Categories string
+}
+
+type EarlyTagPublic struct {
+	EarlyTag
+	SubmittedBy string
+	LastUpdated string
+}
+
+type TagPage struct {
+	Link *LinkSignedIn
+	UserTag *Tag
+	TopTags *[]EarlyTagPublic
 }
