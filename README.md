@@ -2,20 +2,23 @@
 
 ## Todos:
 
--Treasure Map skip to each main section (sidebar)
+-Add form to new tag page
 -Fix popular tags links so they check global cats
+-Treasure Map skip to each main section (sidebar)
+-Improve profile pic upload
+    -Crop to square
+    -Shrink to 100x100
 -Pagination
     -Home
     -Top Links 
     -User Treasure Map
--Improve profile pic upload
-    -Crop to square
-    -Shrink to 100x100
 -Improve frontend look/semantic markup
     -A11y, responsive layouts for phones / tablets
     -Link articles
+    -Proper color scheme
 -Tests
 -Remove repeat code wherever possible
+-Some way to visualize how Global Cats are determined
 
 ## Why?
 

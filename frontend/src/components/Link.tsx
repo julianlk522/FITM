@@ -163,10 +163,10 @@ export default function Link(props: Props) {
                 ? 
                     <>
                         <p>Categories: {categories_html}</p>
-                        <a href='/'>Add tag</a>
+                        <a href={`/tag/${id}`}>Add tag</a>
                     </>
                 : 
-                        <p>No categories. <a href='/'>Add tag</a></p>
+                        <p>No categories. <a href={`/tag/${id}`}>Add tag</a></p>
             
             }
 

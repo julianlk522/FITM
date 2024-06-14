@@ -9,8 +9,7 @@ interface Props {
 }
 
 export default function NewLinks(props: Props) {
-    const [status, set_status] = useState<"Success" | "Error" | undefined>(undefined)
-    const [message, set_message] = useState<string | undefined>(undefined)
+    const [error, set_error] = useState<string | undefined>(undefined)
     const [submitted_links, set_submitted_links] = useState<LinkData[]>([])
 
     async function handle_submit(event: SubmitEvent, token: string) {
@@ -37,12 +36,10 @@ export default function NewLinks(props: Props) {
         let new_link_data: LinkData | ErrorResponse = await new_link_resp.json()
 
         if (is_error_response(new_link_data)) {
-            set_status("Error")
-            set_message(new_link_data.error)
+            set_error(new_link_data.error)
             return
         } else {
             set_submitted_links([...submitted_links, new_link_data])
-            set_status("Success")
         }
     
         return
@@ -51,15 +48,14 @@ export default function NewLinks(props: Props) {
     return (
         <div id='new_links'>
             <h2>Enter New Link Details</h2>
-            {status 
+            
+            {error
                 ? 
-                    status === "Success"
-                        ?
-                            <p class='success'>Submitted</p>
-                        :
-                            <p class='error'>{`Error: ${message}`}</p>
-                : null
+                    <p class='error'>{`Error: ${error}`}</p>
+                :
+                    null
             }
+
             <form onSubmit={async (e) => await handle_submit(e, props.token)}>
             <label for='url'>URL</label>
             <input type='text' id='url' name='url' />

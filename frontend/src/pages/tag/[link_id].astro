@@ -1,0 +1,87 @@
+---
+import Link from '../../components/Link'
+import Layout from '../../layouts/Layout.astro'
+import type { TagPage } from '../../types'
+import format_date from '../../util/format_date'
+
+const token = Astro.cookies.get('token')?.value
+const user = Astro.cookies.get('user')?.value
+if (!user) {
+	Astro.cookies.set('redirect_to', Astro.url.pathname, {
+		maxAge: 3600,
+		sameSite: 'strict',
+		secure: true,
+	})
+	return Astro.redirect('/login')
+}
+
+const { link_id } = Astro.params
+if (!link_id) {
+	return Astro.redirect('/404')
+}
+
+const get_tags_resp = await fetch(`http://127.0.0.1:8000/tags/${link_id}`, {
+	headers: {
+		Authorization: `Bearer ${token}`,
+	},
+})
+if (get_tags_resp.status > 399) {
+	return Astro.redirect('/404')
+}
+const tag_Data: TagPage = await get_tags_resp.json()
+const { Link: link, UserTag: user_tag, TopTags: top_tags } = tag_Data
+const user_cats = user_tag ? user_tag.Categories.split(',') : undefined
+---
+
+<Layout title=`${user}'s tags for ${tag_Data.Link.Summary}`>
+	<main>
+		<h2>Link:</h2>
+		<Link client:load {link} is_summary_page={true} {token} {user} />
+
+		{
+			user_tag && user_cats ? (
+				<section>
+					<h2>Your Tag Categories</h2>
+					<ol>
+						{user_cats.map((cat) => (
+							<li>{cat}</li>
+						))}
+					</ol>
+					<p>Last Updated: {format_date(user_tag.LastUpdated)}</p>
+
+					{/* TODO: form to edit tag */}
+				</section>
+			) : null
+		}
+
+		{
+			top_tags ? (
+				<section>
+					<h2>Top Tags</h2>
+					<ol>
+						{top_tags.map((tag) => (
+							<li>
+								<p>Categories: {tag.Categories}</p>
+								<p>
+									Last Updated: {format_date(tag.LastUpdated)}
+								</p>
+								<p>
+									Submitted By:{' '}
+									<a href={`/user/${tag.SubmittedBy}`}>
+										{tag.SubmittedBy}
+									</a>
+								</p>
+								<p>
+									Lifespan Overlap Score:{' '}
+									{tag.LifeSpanOverlap}
+								</p>
+							</li>
+						))}
+					</ol>
+				</section>
+			) : null
+		}
+	</main>
+</Layout>
+
+<style></style>

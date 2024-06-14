@@ -34,6 +34,21 @@ type LinkData = {
 const Periods = ['day', 'week', 'month', 'year', 'all'] as const
 type Period = typeof Periods[number]
 
+// TAG
+type Tag = {
+	Categories: string
+	SubmittedBy: string
+	LastUpdated: string
+}
+
+type EarlyTag = Tag & {LifeSpanOverlap: number}
+
+type TagPage = {
+	Link: LinkData
+	UserTag: Tag | undefined
+	TopTags: EarlyTag[]
+}
+
 // CATEGORY
 type CategoryCount = {
 	Category: string
@@ -72,5 +87,5 @@ type TreasureMap = {
 const tmap_sections = ['Submitted', 'Tagged', 'Copied'] as const
 
 export { Periods, is_error_response, tmap_sections }
-export type { CategoryContributor, CategoryCount, ErrorResponse, LinkData, Period, Summary, SummaryPage, TreasureMap, User }
+export type { CategoryContributor, CategoryCount, ErrorResponse, LinkData, Period, Summary, SummaryPage, TagPage, TreasureMap, User }
 
