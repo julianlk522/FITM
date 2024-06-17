@@ -27,42 +27,28 @@ func (a *NewTagRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-// type EditTagRequest struct {
-// 	ID string `json:"tag_id"`
-// 	Categories string `json:"categories"`
-// }
-
-// func (a *EditTagRequest) Bind(r *http.Request) error {
-// 	if a.ID == "" {
-// 		return errors.New("missing tag ID")
-// 	}
-// 	if a.Categories == "" {
-// 		return errors.New("missing categories")
-// 	}
-
-// 	return nil
-// }
-
-type EditTagCategoryRequest struct {
+type EditTagRequest struct {
 	ID string `json:"tag_id"`
-	Category string `json:"category"`
+	Categories string `json:"categories"`
 	LastUpdated string
 }
 
-func (a *EditTagCategoryRequest) Bind(r *http.Request) error {
+func (a *EditTagRequest) Bind(r *http.Request) error {
 	if a.ID == "" {
 		return errors.New("missing tag ID")
 	}
-	if a.Category == "" {
-		return errors.New("missing category")
+	if a.Categories == "" {
+		return errors.New("missing categories")
 	}
 
 	a.LastUpdated = time.Now().Format("2006-01-02 15:04:05")
+
 	return nil
 }
 
 // General
 type Tag struct {
+	ID string
 	LinkID string
 	Categories string
 	SubmittedBy string
