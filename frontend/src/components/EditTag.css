@@ -1,0 +1,10 @@
+#user_tags_title_bar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+#user_tags_grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 10px;
+}
