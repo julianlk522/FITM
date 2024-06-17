@@ -43,6 +43,24 @@ func (a *EditTagRequest) Bind(r *http.Request) error {
 	return nil
 }
 
+type DeleteTagCategoryRequest struct {
+	ID string `json:"tag_id"`
+	Category string `json:"category"`
+	LastUpdated string
+}
+
+func (a *DeleteTagCategoryRequest) Bind(r *http.Request) error {
+	if a.ID == "" {
+		return errors.New("missing tag ID")
+	}
+	if a.Category == "" {
+		return errors.New("missing category")
+	}
+
+	a.LastUpdated = time.Now().Format("2006-01-02 15:04:05")
+	return nil
+}
+
 // General
 type Tag struct {
 	LinkID string

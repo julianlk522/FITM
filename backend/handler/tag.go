@@ -26,14 +26,14 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 
 	// Check auth token
 	var req_user_id string
-	var login_name string
+	var req_login_name string
 	claims, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	} else if len(claims) > 0 {
 		req_user_id = claims["user_id"].(string)
-		login_name = claims["login_name"].(string)
+		req_login_name = claims["req_login_name"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -111,7 +111,7 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 
 	// Get user-submitted tag if user has submitted one
 	var user_tag_cats, user_tag_last_updated sql.NullString
-	err = db.QueryRow("SELECT categories, last_updated FROM 'Tags' WHERE link_id = ? AND submitted_by = ?;", link_id, login_name).Scan(&user_tag_cats, &user_tag_last_updated)
+	err = db.QueryRow("SELECT categories, last_updated FROM 'Tags' WHERE link_id = ? AND submitted_by = ?;", link_id, req_login_name).Scan(&user_tag_cats, &user_tag_last_updated)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Fatal(err)
@@ -129,7 +129,7 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 			Categories: user_tag_cats.String,
 			LastUpdated: user_tag_last_updated.String,
 			LinkID: link_id,
-			SubmittedBy: login_name,
+			SubmittedBy: req_login_name,
 		}
 
 		tag_page := model.TagPage{
@@ -323,6 +323,96 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, edit_tag_data)
 
+}
+
+func DeleteCategoryFromTag(w http.ResponseWriter, r *http.Request) {
+	delete_tag_category_data := &model.DeleteTagCategoryRequest{}
+	if err := render.Bind(r, delete_tag_category_data); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	// Check auth token
+	var req_login_name string
+	claims, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_login_name = claims["login_name"].(string)
+	}
+
+	db, err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// Check if tag exists and submitted by requesting user, Abort if invalid tag ID or user ID provided
+	// Else get to-be-upated categories
+	var old_cats sql.NullString
+	err = db.QueryRow("SELECT categories FROM Tags WHERE id = ? AND submitted_by = ?;", delete_tag_category_data.ID, req_login_name).Scan(&old_cats)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("tag not found")))
+		return
+	}
+
+	// Check if tag contains category, Abort if not
+	if !strings.Contains(old_cats.String, delete_tag_category_data.Category) {
+		render.Render(w, r, ErrInvalidRequest(errors.New("category not found in tag")))
+		return
+	}
+	
+	// Abort if only one category in tag (can't be removed)
+	if !strings.Contains(old_cats.String, ",") {
+		render.Render(w, r, ErrInvalidRequest(errors.New("cannot remove only category")))
+		return
+	}
+
+	// Remove category and adjacent comma
+	var remove_str string
+
+	// If first category
+	if strings.HasPrefix(old_cats.String, delete_tag_category_data.Category) {
+
+		// Remove category + ","
+		// e.g., fighting,games,are,great - 'fighting,' = 'games,are,great'
+		remove_str = delete_tag_category_data.Category + ","
+
+	// Else if last or middle
+	} else {
+
+		// Remove "," + category
+		// e.g., fighting,games,are,great - ',great' = 'fighting,games,are'
+		remove_str = "," + delete_tag_category_data.Category
+	}
+
+	_, err = db.Exec(fmt.Sprintf(`UPDATE Tags 
+	SET categories = REPLACE( categories, '%s', '' ), last_updated = '%s' 
+	WHERE ',' || categories || ',' like '%%,%s,%%'
+	AND id = %s;`, 
+	remove_str, 
+	delete_tag_category_data.LastUpdated, 
+	delete_tag_category_data.Category, 
+	delete_tag_category_data.ID))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Recalculate global categories for this link?
+	// (Probably not; wait until user confirms they are done to avoid many recalculations)
+
+	// Get updated categories
+	var new_cats sql.NullString
+	err = db.QueryRow("SELECT categories FROM Tags WHERE id = ?;", delete_tag_category_data.ID).Scan(&new_cats)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return_json := map[string]interface{}{"categories": new_cats.String, "last_updated": delete_tag_category_data.LastUpdated}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, return_json)
 }
 
 // Recalculate global categories for a link whose tags changed
