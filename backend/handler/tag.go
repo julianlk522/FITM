@@ -8,7 +8,6 @@ import (
 	"math"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -269,10 +268,65 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, tag_data)
 }
 
-// EDIT TAG
-func EditTag(w http.ResponseWriter, r *http.Request) {
-	edit_tag_data := &model.EditTagRequest{}
-	if err := render.Bind(r, edit_tag_data); err != nil {
+// // EDIT TAG
+// func EditTag(w http.ResponseWriter, r *http.Request) {
+// 	edit_tag_data := &model.EditTagRequest{}
+// 	if err := render.Bind(r, edit_tag_data); err != nil {
+// 		render.Render(w, r, ErrInvalidRequest(err))
+// 		return
+// 	}
+
+// 	// Check auth token
+// 	var req_login_name string
+// 	claims, err := GetJWTClaims(r)
+// 	if err != nil {
+// 		render.Render(w, r, ErrInvalidRequest(err))
+// 		return
+// 	} else if len(claims) > 0 {
+// 		req_login_name = claims["login_name"].(string)
+// 	}
+
+// 	db, err := sql.Open("sqlite3", "./db/oitm.db")
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	defer db.Close()
+
+// 	// Check if tag doesn't exist or submitted by a different user, Abort if either
+// 	var t sql.NullString
+// 	err = db.QueryRow("SELECT submitted_by FROM Tags WHERE id = ?;", edit_tag_data.ID).Scan(&t)
+// 	if err != nil {
+// 		render.Render(w, r, ErrInvalidRequest(errors.New("tag not found")))
+// 		return
+// 	} else if t.String != req_login_name {
+// 		render.Render(w, r, ErrInvalidRequest(errors.New("cannot edit another user's tag")))
+// 		return
+// 	}
+
+// 	_, err = db.Exec("UPDATE Tags SET categories = ?, last_updated = ? WHERE id = ?;", edit_tag_data.Categories, time.Now().Format("2006-01-02 15:04:05"), edit_tag_data.ID)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	// Get link ID from tag ID
+// 	var lid sql.NullString
+// 	err = db.QueryRow("SELECT link_id FROM Tags WHERE id = ?;", edit_tag_data.ID).Scan(&lid)
+// 	if err != nil {
+// 		render.Render(w, r, ErrInvalidRequest(errors.New("invalid tag id provided")))
+// 		return
+// 	}
+
+// 	// Recalculate global categories for this link
+// 	RecalculateGlobalCategories(db, lid.String)
+
+// 	render.Status(r, http.StatusOK)
+// 	render.JSON(w, r, edit_tag_data)
+
+// }
+
+func AddTagCategory(w http.ResponseWriter, r *http.Request) {
+	add_tag_category_data := &model.EditTagCategoryRequest{}
+	if err := render.Bind(r, add_tag_category_data); err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
@@ -293,40 +347,35 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Check if tag doesn't exist or submitted by a different user, Abort if either
-	var t sql.NullString
-	err = db.QueryRow("SELECT submitted_by FROM Tags WHERE id = ?;", edit_tag_data.ID).Scan(&t)
+	// Check if tag exists and submitted by requesting user, Abort if invalid tag ID or user ID provided
+	// Else get to-be-upated categories
+	var old_cats sql.NullString
+	err = db.QueryRow("SELECT categories FROM Tags WHERE id = ? AND submitted_by = ?;", add_tag_category_data.ID, req_login_name).Scan(&old_cats)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("tag not found")))
 		return
-	} else if t.String != req_login_name {
-		render.Render(w, r, ErrInvalidRequest(errors.New("cannot edit another user's tag")))
-		return
 	}
 
-	_, err = db.Exec("UPDATE Tags SET categories = ?, last_updated = ? WHERE id = ?;", edit_tag_data.Categories, time.Now().Format("2006-01-02 15:04:05"), edit_tag_data.ID)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Add category
+	new_cats := old_cats.String + "," + add_tag_category_data.Category
+	err = db.QueryRow(`UPDATE Tags 
+	SET categories = ?, last_updated = ? 
+	WHERE id = ?;`, 
+	new_cats, 
+	add_tag_category_data.LastUpdated, 
+	add_tag_category_data.ID).Scan(&old_cats)
 
-	// Get link ID from tag ID
-	var lid sql.NullString
-	err = db.QueryRow("SELECT link_id FROM Tags WHERE id = ?;", edit_tag_data.ID).Scan(&lid)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid tag id provided")))
-		return
-	}
+	// Recalculate global categories for this link?
+	// (Probably not; wait until user confirms they are done to avoid many recalculations)
 
-	// Recalculate global categories for this link
-	RecalculateGlobalCategories(db, lid.String)
+	return_json := map[string]interface{}{"categories": new_cats, "last_updated": add_tag_category_data.LastUpdated}
 
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, edit_tag_data)
-
+	render.JSON(w, r, return_json)
 }
 
-func DeleteCategoryFromTag(w http.ResponseWriter, r *http.Request) {
-	delete_tag_category_data := &model.DeleteTagCategoryRequest{}
+func DeleteTagCategory(w http.ResponseWriter, r *http.Request) {
+	delete_tag_category_data := &model.EditTagCategoryRequest{}
 	if err := render.Bind(r, delete_tag_category_data); err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return

@@ -27,29 +27,29 @@ func (a *NewTagRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-type EditTagRequest struct {
-	ID string `json:"tag_id"`
-	Categories string `json:"categories"`
-}
+// type EditTagRequest struct {
+// 	ID string `json:"tag_id"`
+// 	Categories string `json:"categories"`
+// }
 
-func (a *EditTagRequest) Bind(r *http.Request) error {
-	if a.ID == "" {
-		return errors.New("missing tag ID")
-	}
-	if a.Categories == "" {
-		return errors.New("missing categories")
-	}
+// func (a *EditTagRequest) Bind(r *http.Request) error {
+// 	if a.ID == "" {
+// 		return errors.New("missing tag ID")
+// 	}
+// 	if a.Categories == "" {
+// 		return errors.New("missing categories")
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-type DeleteTagCategoryRequest struct {
+type EditTagCategoryRequest struct {
 	ID string `json:"tag_id"`
 	Category string `json:"category"`
 	LastUpdated string
 }
 
-func (a *DeleteTagCategoryRequest) Bind(r *http.Request) error {
+func (a *EditTagCategoryRequest) Bind(r *http.Request) error {
 	if a.ID == "" {
 		return errors.New("missing tag ID")
 	}

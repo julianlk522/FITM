@@ -101,8 +101,9 @@ func main() {
 		// TAGS
 		r.Get("/tags/{link_id}", handler.GetTagsForLink)
 		r.Post("/tags", handler.AddTag)
-		r.Put("/tags", handler.EditTag)
-		r.Delete("/tags", handler.DeleteCategoryFromTag)
+		r.Post("/tags/cat", handler.AddTagCategory)
+		r.Delete("/tags/cat", handler.DeleteTagCategory)
+		// r.Put("/tags", handler.EditTag)
 
 		// SUMMARIES
 		r.Post("/summaries", handler.AddSummary)
