@@ -1,0 +1,15 @@
+.category {
+    display: flex;
+    gap: 10px;
+    list-style: none;
+    margin: 0 auto;
+    padding: 0 5px;
+    border-radius: 2px;
+    background-color: mediumseagreen;
+}
+
+.category p {
+    color: black;
+    font-weight: bold;
+    margin: 0;
+}
