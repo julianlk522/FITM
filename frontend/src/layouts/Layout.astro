@@ -75,6 +75,19 @@ let user = Astro.cookies.get('user')?.value
 				Courier New,
 				monospace;
 		}
+		section {
+			margin: 50px 0;
+		}
+		button.img-btn {
+			padding: 3px 5px 0px;
+			background-color: transparent;
+			border: none;
+			cursor: pointer;
+		}
+
+		button.img-btn img.invert {
+			filter: invert(1);
+		}
 	</style>
 
 

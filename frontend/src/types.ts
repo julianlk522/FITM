@@ -36,6 +36,7 @@ type Period = typeof Periods[number]
 
 // TAG
 type Tag = {
+	ID: number
 	Categories: string
 	SubmittedBy: string
 	LastUpdated: string
@@ -87,5 +88,5 @@ type TreasureMap = {
 const tmap_sections = ['Submitted', 'Tagged', 'Copied'] as const
 
 export { Periods, is_error_response, tmap_sections }
-export type { CategoryContributor, CategoryCount, ErrorResponse, LinkData, Period, Summary, SummaryPage, TagPage, TreasureMap, User }
+export type { CategoryContributor, CategoryCount, ErrorResponse, LinkData, Period, Summary, SummaryPage, Tag, TagPage, TreasureMap, User }
 

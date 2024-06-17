@@ -9,10 +9,12 @@ interface Props {
 }
 
 export default function NewLinks(props: Props) {
+    const {token} = props
+
     const [error, set_error] = useState<string | undefined>(undefined)
     const [submitted_links, set_submitted_links] = useState<LinkData[]>([])
 
-    async function handle_submit(event: SubmitEvent, token: string) {
+    async function handle_submit(event: SubmitEvent) {
         event.preventDefault()
         const form = event.target as HTMLFormElement
         const formData = new FormData(form)
@@ -33,7 +35,7 @@ export default function NewLinks(props: Props) {
         if (new_link_resp.statusText === "Unauthorized") {
             window.location.href = '/login'
         }
-        let new_link_data: LinkData | ErrorResponse = await new_link_resp.json()
+        const new_link_data: LinkData | ErrorResponse = await new_link_resp.json()
 
         if (is_error_response(new_link_data)) {
             set_error(new_link_data.error)
@@ -56,13 +58,13 @@ export default function NewLinks(props: Props) {
                     null
             }
 
-            <form onSubmit={async (e) => await handle_submit(e, props.token)}>
-            <label for='url'>URL</label>
-            <input type='text' id='url' name='url' />
-            <br />
-            <label for='categories'>Tag Category(ies)</label>
-            <input type='text' id='categories' name='categories' />
-            <input type='submit' value='Submit' />
+            <form onSubmit={async (e) => await handle_submit(e)}>
+                <label for='url'>URL</label>
+                <input type='text' id='url' name='url' />
+                <br />
+                <label for='categories'>Tag Category(ies)</label>
+                <input type='text' id='categories' name='categories' />
+                <input type='submit' value='Submit' />
             </form>
 
             {submitted_links.length ? (

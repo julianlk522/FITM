@@ -12,6 +12,8 @@
     -Home
     -Top Links 
     -User Treasure Map
+-Separate tag categories into distinct rows in Tags table
+    -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)
 -Improve frontend look/semantic markup
     -A11y, responsive layouts for phones / tablets
     -Link articles
