@@ -504,7 +504,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	// Create new summary if auto_summary successfully retrieves a title or description
 	if auto_summary != "" {
-		_, err = db.Exec("INSERT INTO Summaries VALUES(?,?,?,?);", nil, auto_summary, link_data.ID, req_user_id)
+		_, err = db.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, auto_summary, link_data.ID, req_user_id,link_data.SubmitDate)
 		if err != nil {
 			log.Fatal(err)
 		}	
