@@ -20,11 +20,17 @@ type NewLinkRequest struct {
 	SummaryCount int
 	LikeCount int64
 	ImgURL string
+
+	// to be assigned by handler after processing
+	URL string
+	Categories string
 }
 
 func (a *NewLinkRequest) Bind(r *http.Request) error {
-	if a.NewLink == nil {
-		return errors.New("missing required Link fields")
+	if a.NewLink.URL == "" {
+		return errors.New("missing url")
+	} else if a.NewLink.Categories == "" {
+		return errors.New("missing categories")
 	}
 
 	a.SubmitDate = time.Now().Format("2006-01-02 15:04:05")

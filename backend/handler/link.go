@@ -12,7 +12,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/jonlaing/htmlmeta"
 	"golang.org/x/exp/slices"
 
 	"oitm/model"
@@ -433,21 +432,21 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	// google.com
 	// https://google.com
 	// etc.
-	subdomain_found := regex.MatchString(link_data.URL)
+	subdomain_found := regex.MatchString(link_data.NewLink.URL)
 	if !subdomain_found {
 
 		// Prepend "https://www."" if no subdomain or protocol found
-		if !strings.HasPrefix(link_data.URL, "https://") {
-			link_data.URL = "https://www." + link_data.URL
+		if !strings.HasPrefix(link_data.NewLink.URL, "https://") {
+			link_data.URL = "https://www." + link_data.NewLink.URL
 		
 		// Else append "www." after "https://" if protocol found but not subdomain
 		} else {
-			link_data.URL = strings.Replace(link_data.URL, "https://", "https://www.", 1)
+			link_data.URL = strings.Replace(link_data.NewLink.URL, "https://", "https://www.", 1)
 		}
 		
 	// Else prepend "https://" if subdomain found but protocol not
-	} else if (!strings.HasPrefix(link_data.URL, "http")) {
-		link_data.URL = "https://" + link_data.URL
+	} else if (!strings.HasPrefix(link_data.NewLink.URL, "http")) {
+		link_data.URL = "https://" + link_data.NewLink.URL
 	}
 
 	// Check if link exists, Abort if attempting duplicate
@@ -471,34 +470,42 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	// Extract meta data
 	defer resp.Body.Close()
-	meta := htmlmeta.Extract(resp.Body)
+	meta := MetaFromHTMLTokens(resp.Body)
 
 	// Get automatically-generated link summary from meta title or description
-	var summary_count int = 1
 	var auto_summary string
+
 	if meta.OGDescription != "" {
 		auto_summary = meta.OGDescription
 	} else if meta.Description != "" {
 		auto_summary = meta.Description
+	} else if meta.OGTitle != "" {
+		auto_summary = meta.OGTitle
 	} else if meta.Title != "" {
 		auto_summary = meta.Title
-	} else {
-		// no extractible summary
-		summary_count = 0
+	} else if meta.OGSiteName != "" {
+		auto_summary = meta.OGSiteName
 	}
-
 	link_data.Summary = auto_summary
-	link_data.SummaryCount = summary_count
 
-	// Get og:image, if available, for link preview image
+	// Get og:image, if available, from meta for link preview
 	var og_image string
 	if meta.OGImage != "" {
-		og_image = meta.OGImage
+
+		// check that image link is valid
+		resp, err := http.Get(meta.OGImage)
+		if err != nil || resp.StatusCode == 404 || (resp.StatusCode > 299 && resp.StatusCode < 400) {
+
+			// use no image if link is invalid
+			og_image = ""
+		} else {
+			og_image = meta.OGImage
+		}
 	}
 	link_data.ImgURL = og_image
 
 	// Sort categories alphabetically
-	split_categories := strings.Split(link_data.Categories, ",")
+	split_categories := strings.Split(link_data.NewLink.Categories, ",")
 	slices.Sort(split_categories)
 	link_data.Categories = strings.Join(split_categories, ",")
 
