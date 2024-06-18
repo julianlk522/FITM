@@ -476,12 +476,12 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	// Get automatically-generated link summary from meta title or description
 	var summary_count int = 1
 	var auto_summary string
-	if meta.Title != "" {
-		auto_summary = meta.Title
+	if meta.OGDescription != "" {
+		auto_summary = meta.OGDescription
 	} else if meta.Description != "" {
 		auto_summary = meta.Description
-	} else if meta.OGDescription != "" {
-		auto_summary = meta.OGDescription
+	} else if meta.Title != "" {
+		auto_summary = meta.Title
 	} else {
 		// no extractible summary
 		summary_count = 0
@@ -497,7 +497,13 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	}
 	link_data.ImgURL = og_image
 
-	res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, "", auto_summary, og_image)
+	// Sort categories alphabetically
+	split_categories := strings.Split(link_data.Categories, ",")
+	slices.Sort(split_categories)
+	link_data.Categories = strings.Join(split_categories, ",")
+
+	// Insert link
+	res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, link_data.Categories, auto_summary, og_image)
 	if err != nil {
 		log.Fatal(err)
 	}
