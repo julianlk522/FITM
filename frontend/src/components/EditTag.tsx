@@ -92,13 +92,11 @@ export default function EditTag(props: Props) {
 
                     <button 
                         onClick={() => {
-                            if (editing) {
-                                
-                                // no changes; skip update
-                                if (categories.length === initial_cats.length && categories.every((c, i) => c === initial_cats[i])) {
-                                } else {
-                                    confirm_edits()
-                                }
+                            set_categories(categories.sort())
+
+                            // update if changes detected, else skip
+                            if (editing && (categories.length !== initial_cats.length || categories.some((c, i) => c !== initial_cats[i]))) {
+                                confirm_edits()
                             }
                             set_editing((e) => !e)
                         }} class='img-btn'>

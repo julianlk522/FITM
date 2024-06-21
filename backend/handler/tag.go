@@ -299,6 +299,11 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Sort categories alphabetically
+	split_categories := strings.Split(edit_tag_data.Categories, ",")
+	slices.Sort(split_categories)
+	edit_tag_data.Categories = strings.Join(split_categories, ",")
+
 	_, err = db.Exec(`UPDATE Tags 
 	SET categories = ?, last_updated = ? 
 	WHERE id = ?;`, 

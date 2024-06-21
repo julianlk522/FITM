@@ -2,8 +2,10 @@
 
 ## Todos:
 
--Add form to new tag page
+-Change "Add Tag" when you already have a tag for that link
 -Fix popular tags links so they check global cats
+-Allow http in AddLink handler
+-Update submit new link page to use TagCategory component and form a la EditTag component
 -Treasure Map skip to each main section (sidebar)
 -Improve profile pic upload
     -Crop to square
