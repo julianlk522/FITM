@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
 	"regexp"
 	"strconv"
 	"strings"
@@ -418,53 +419,63 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		link_data.SubmittedBy = req_login_name
 	}
 
-	// Check if link contains any subdomains
-	regex, _ := regexp.Compile(`^(?:http[s]?\:\/\/)?(?:[^\/\W]+?\.){2,}(?:[^\/\n\r]+)`)
-	// regex should match:
-	// www.google.com
-	// www.www.google.com
-	// https://www.google.com
-	// http://www.google.com
-	// http://www.www.google.com
-	// etc.
+    // Check if URL contains http or https protocol, update if needed
+	protocol_regex, err := regexp.Compile(`^(http(s?)\:\/\/)`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	var resp *http.Response
 
-	// should not match:
-	// google.com
-	// https://google.com
-	// etc.
-	subdomain_found := regex.MatchString(link_data.NewLink.URL)
-	if !subdomain_found {
+	// Protocol not specified, try https then http
+	if !protocol_regex.MatchString(link_data.NewLink.URL) {
+		found := false
 
-		// Prepend "https://www."" if no subdomain or protocol found
-		if !strings.HasPrefix(link_data.NewLink.URL, "https://") {
-			link_data.URL = "https://www." + link_data.NewLink.URL
-		
-		// Else append "www." after "https://" if protocol found but not subdomain
-		} else {
-			link_data.URL = strings.Replace(link_data.NewLink.URL, "https://", "https://www.", 1)
-		}
-		
-	// Else prepend "https://" if subdomain found but protocol not
-	} else if (!strings.HasPrefix(link_data.NewLink.URL, "http")) {
+		// check https
 		link_data.URL = "https://" + link_data.NewLink.URL
+		resp, err = http.Get(link_data.URL)
+		if err == nil {
+			if resp.StatusCode > 299 && resp.StatusCode < 400 {
+				render.Render(w, r, ErrInvalidRequest(errors.New("invalid link destination: redirect detected")))
+				return
+			} else {
+				found = true
+			}
+		}
+
+		// Check http if https not found
+		if !found {
+			link_data.URL = "http://" + link_data.NewLink.URL
+			resp, err = http.Get(link_data.URL)
+			if resp.StatusCode > 299 && resp.StatusCode < 400 {
+				render.Render(w, r, ErrInvalidRequest(errors.New("invalid link destination: redirect detected")))
+				return
+			} else if err != nil {
+				render.Render(w, r, ErrInvalidRequest(errors.New("invalid link: " + link_data.URL)))
+				return
+			}
+		}
+
+	// Protocol specified, check URL as-is
+	} else {
+		resp, err = http.Get(link_data.NewLink.URL)
+		if err != nil || resp.StatusCode == 404 {
+			render.Render(w, r, ErrInvalidRequest(errors.New("invalid link: " + link_data.URL)))
+			return
+		} else if resp.StatusCode > 299 && resp.StatusCode < 400 {
+			render.Render(w, r, ErrInvalidRequest(errors.New("invalid link destination: redirect detected")))
+			return
+		}	
 	}
 
-	// Check if link exists, Abort if attempting duplicate
+	// Get full URL after any redirects e.g., to wwww.
+	link_data.URL = resp.Request.URL.String()
+
+	// Check if link already exists, Abort if attempting duplicate
 	var s sql.NullString
 	err = db.QueryRow("SELECT url FROM Links WHERE url = ?", link_data.URL).Scan(&s)
 	if err == nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("link already exists")))
-		return
-	}
-
-	// Verify that link is valid
-	resp, err := http.Get(link_data.URL)
-	if err != nil || resp.StatusCode == 404 {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link: " + link_data.URL)))
-		return
-	} else if resp.StatusCode > 299 && resp.StatusCode < 400 {
-		log.Println(resp)
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link destination: redirect detected")))
 		return
 	}
 
