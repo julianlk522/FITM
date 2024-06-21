@@ -38,6 +38,12 @@ export const onRequest = defineMiddleware((context, next) => {
 
     }
 
+    // if redirect_to cookie found outside of login page, delete it
+    // (should only be read from login handler)
+    if (context.request.url !== 'http://127.0.0.1:4321/login' && context.cookies.get('redirect_to')) {
+        context.cookies.delete('redirect_to')
+    }
+
     // if not redirecting from login and no token or user cookie found, continue
     return next();
 });
