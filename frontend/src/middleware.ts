@@ -34,22 +34,8 @@ export const onRequest = defineMiddleware((context, next) => {
     // else if no token cookie found but user cookie found, reset user cookie and redirect to login
     } else if (req_user) {
         context.cookies.delete('user')
-        return Response.redirect(new URL("/login", context.request.url), 302)
+        return Response.redirect(new URL("/login", context.request.url))
 
-    } 
-    
-    // if returning to a page that requires login, and redirect_to cookie found, redirect there after authentication
-    // TODO: replace localhost URL with production URL
-    const redirect_from_login = context.request.headers.get('referer') === 'http://localhost:4321/login'
-    if (redirect_from_login) {
-
-        // get redirect URL from cookie
-        const redirect_url = context.cookies.get('redirect_to')?.value
-        const same_url = redirect_url === context.request.url
-        if (redirect_url && !same_url) {
-            context.cookies.delete('redirect_to')
-            return Response.redirect(new URL(redirect_url, context.request.url), 302)
-        }
     }
 
     // if not redirecting from login and no token or user cookie found, continue

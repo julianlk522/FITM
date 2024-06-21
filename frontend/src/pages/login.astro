@@ -4,6 +4,8 @@ import Layout from '../layouts/Layout.astro'
 
 <Layout title='Log In to the Open Internet Treasure Map (OITM)'>
 	<script>
+		import get_cookie from '../util/get_cookie'
+
 		async function handle_login(event: SubmitEvent) {
 			event.preventDefault()
 			const form = event.target as HTMLFormElement
@@ -28,7 +30,24 @@ import Layout from '../layouts/Layout.astro'
 				document.cookie = `token=${login_data.token}; max-age=3600; SameSite=strict; Secure`
 
 				// redirect
-				window.location.href = '/'
+				// check if redirect_to is set
+				if (document.cookie.includes('redirect_to')) {
+					const redirect_to = get_cookie(
+						'redirect_to',
+						document.cookie
+					)
+
+					// clear cookie
+					document.cookie =
+						'redirect_to=; max-age=0; SameSite=strict; Secure'
+
+					// redirect
+					window.location.href = redirect_to
+
+					// else go to home
+				} else {
+					window.location.href = '/'
+				}
 			} else {
 				alert(login_data.error)
 			}
