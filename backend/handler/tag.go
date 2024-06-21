@@ -140,8 +140,8 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 // Todo: edit to search global categories instead
 func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {
 
-	// Limit 5 for now
-	const LIMIT int = 5
+	// Limit 10 for now
+	const LIMIT int = 10
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
@@ -149,12 +149,16 @@ func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// get all categories
-	rows, err := db.Query("select categories from tags GROUP BY categories;")
+	// Get all global categories
+	rows, err := db.Query(`SELECT global_cats
+		FROM links
+		WHERE global_cats != ""
+	`)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// Split global categories for each link into individual categories
 	var categories []string
 	for rows.Next() {
 		var cat_field string

@@ -3,7 +3,7 @@
 ## Todos:
 
 -Change "Add Tag" when you already have a tag for that link
--Fix popular tags links so they check global cats
+    -(probably will involve adding IsTagged to all link queries)
 -Allow http in AddLink handler
 -Update submit new link page to use TagCategory component and form a la EditTag component
 -Treasure Map skip to each main section (sidebar)
@@ -14,6 +14,7 @@
     -Home
     -Top Links 
     -User Treasure Map
+-Search for existing tag cats while adding/editing
 -Separate tag categories into distinct rows in Tags table
     -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)
 -Improve frontend look/semantic markup
