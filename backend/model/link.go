@@ -54,6 +54,7 @@ type LinkSignedOut struct {
 type LinkSignedIn struct {
 	LinkSignedOut
 	IsLiked bool
+	IsTagged bool
 	IsCopied bool
 }
 

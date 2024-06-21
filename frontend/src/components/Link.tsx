@@ -21,6 +21,7 @@ export default function Link(props: Props) {
         Summary: summary,
         SummaryCount: summary_count,
         ImgURL: img_url,
+        IsTagged: is_tagged,
     } = props.link
 
     const [is_copied, set_is_copied] = useState(props.link.IsCopied)
@@ -163,7 +164,14 @@ export default function Link(props: Props) {
                 ? 
                     <>
                         <p>Categories: {categories_html}</p>
-                        <a href={`/tag/${id}`}>Add tag</a>
+                        <a href={`/tag/${id}`}>
+                            {is_tagged
+                                ?
+                                    'Edit Tag'
+                                :
+                                    'Add Tag'
+                            }
+                        </a>
                     </>
                 : 
                         <p>No categories. <a href={`/tag/${id}`}>Add tag</a></p>

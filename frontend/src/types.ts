@@ -28,6 +28,7 @@ type LinkData = {
 	LikeCount: number
 	ImgURL: string | undefined
 	IsLiked: boolean | undefined
+	IsTagged: boolean | undefined
 	IsCopied: boolean | undefined
 }
 

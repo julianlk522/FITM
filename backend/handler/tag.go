@@ -151,7 +151,7 @@ func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {
 
 	// Get all global categories
 	rows, err := db.Query(`SELECT global_cats
-		FROM links
+		FROM Links
 		WHERE global_cats != ""
 	`)
 	if err != nil {

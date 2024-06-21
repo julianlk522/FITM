@@ -816,21 +816,30 @@ func ScanLinksSignedIn(db *sql.DB, rows *sql.Rows, user_id string) *[]model.Link
 
 		// Add IsLiked and IsCopied
 		var l sql.NullInt32
+		var t sql.NullInt32
 		var c sql.NullInt32
-		err = db.QueryRow(`SELECT
+
+		err = db.QueryRow(fmt.Sprintf(`SELECT
 		(
-		SELECT count(*) FROM 'Link Likes'
-		WHERE link_id = '%[1]s' AND user_id = '%[2]s'
+			SELECT count(*) FROM 'Link Likes'
+			WHERE link_id = '%[1]d' AND user_id = '%[2]s'
 		) as is_liked,
 		(
-		SELECT count(*) FROM 'Link Copies'
-		WHERE link_id = '%[1]s' AND user_id = '%[2]s'
-		) as is_copied;`, i.ID, user_id).Scan(&l, &c)
+			SELECT count(*) FROM Tags
+			JOIN Users
+			ON Users.login_name = Tags.submitted_by
+			WHERE link_id = '%[1]d' AND Users.id = '%[2]s'
+		) AS is_tagged,
+		(
+			SELECT count(*) FROM 'Link Copies'
+			WHERE link_id = '%[1]d' AND user_id = '%[2]s'
+		) as is_copied;`, i.ID, user_id)).Scan(&l,&t, &c)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		i.IsLiked = l.Int32 > 0
+		i.IsTagged = t.Int32 > 0
 		i.IsCopied = c.Int32 > 0
 
 		links = append(links, i)
