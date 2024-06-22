@@ -8,9 +8,11 @@ const { category } = Astro.params
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
 
-const get_links_resp = await fetch(
-	`http://127.0.0.1:8000/links/cat/${category}`
-)
+const get_links_resp = await (token
+	? fetch(`http://127.0.0.1:8000/links/cat/${category}`, {
+			headers: { Authorization: `Bearer ${token}` },
+		})
+	: fetch(`http://127.0.0.1:8000/links/cat/${category}`))
 const links: LinkData[] = await get_links_resp.json()
 // [{URL: 'https://example.com', LikeCount: 100}, ...]
 
