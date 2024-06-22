@@ -3,15 +3,17 @@ import type { ErrorResponse, LinkData } from "../types";
 import { is_error_response } from "../types";
 import Link from './Link';
 import './NewLinks.css';
+import NewTag from './NewTag';
 interface Props {
-	token: string
-    user: string
+	Token: string
+    User: string
 }
 
 export default function NewLinks(props: Props) {
-    const {token} = props
+    const {Token: token} = props
 
     const [error, set_error] = useState<string | undefined>(undefined)
+    const [categories, set_categories] = useState<string[]>([])
     const [submitted_links, set_submitted_links] = useState<LinkData[]>([])
 
     async function handle_submit(event: SubmitEvent) {
@@ -19,7 +21,6 @@ export default function NewLinks(props: Props) {
         const form = event.target as HTMLFormElement
         const formData = new FormData(form)
         const url = formData.get('url')
-        const categories = formData.get('categories')
     
         const new_link_resp = await fetch('http://127.0.0.1:8000/links', {
             method: 'POST',
@@ -29,7 +30,7 @@ export default function NewLinks(props: Props) {
             },
             body: JSON.stringify({
                 url,
-                categories,
+                categories: categories.join(','),
             }),
         })
         if (new_link_resp.statusText === "Unauthorized") {
@@ -42,13 +43,15 @@ export default function NewLinks(props: Props) {
             return
         } else {
             set_submitted_links([...submitted_links, new_link_data])
+            set_categories([])
+            set_error(undefined)
         }
     
         return
     }
 
     return (
-        <div id='new_links'>
+        <section>
             <h2>Enter New Link Details</h2>
             
             {error
@@ -62,8 +65,9 @@ export default function NewLinks(props: Props) {
                 <label for='url'>URL</label>
                 <input type='text' id='url' name='url' />
                 <br />
-                <label for='categories'>Tag Category(ies)</label>
-                <input type='text' id='categories' name='categories' />
+
+                <NewTag Categories={categories} SetCategories={set_categories} SetError={set_error} />
+                
                 <input type='submit' value='Submit' />
             </form>
 
@@ -74,15 +78,15 @@ export default function NewLinks(props: Props) {
                         {submitted_links.map((link) => (
                             <Link
                                 key={link.ID}
-                                link={link}
-                                token={props.token}
-                                user={props.user}
-                                is_summary_page={false} />
+                                Link={link}
+                                Token={props.Token}
+                                User={props.User}
+                                IsSummaryPage={false} />
                         ))}
                     </ul>
                 </div>
             ) : null}
-        </div>
+        </section>
     )
     
 }
