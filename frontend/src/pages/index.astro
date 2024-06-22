@@ -25,7 +25,7 @@ const links: LinkData[] = await get_links_resp.json()
 const other_periods = Periods.filter((other) => other !== 'month')
 ---
 
-<Layout title='Welcome to the Open Internet Treasure Map (OITM)'>
+<Layout Title='Welcome to the Open Internet Treasure Map (OITM)'>
 	<main>
 		<img class='chest-backdrop' src='../../chest.svg' />
 		<h1>Welcome to OITM</h1>
@@ -64,10 +64,10 @@ const other_periods = Periods.filter((other) => other !== 'month')
 				links.map((link) => (
 					<Link
 						client:load
-						link={link}
-						is_summary_page={false}
-						token={token}
-						user={user}
+						Link={link}
+						IsSummaryPage={false}
+						Token={token}
+						User={user}
 					/>
 				))
 			}

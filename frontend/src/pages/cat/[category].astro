@@ -34,7 +34,7 @@ if (!links || links.length === 0) {
 }
 ---
 
-<Layout title='Welcome to the Open Internet Treasure Map (OITM)'>
+<Layout Title='Welcome to the Open Internet Treasure Map (OITM)'>
 	<main>
 		<h1>{category}</h1>
 		{subcats.length ? <h2>Subcategories</h2> : null}
@@ -75,10 +75,10 @@ if (!links || links.length === 0) {
 				links.map((link) => (
 					<Link
 						client:load
-						link={link}
-						is_summary_page={false}
-						token={token}
-						user={user}
+						Link={link}
+						IsSummaryPage={false}
+						Token={token}
+						User={user}
 					/>
 				))
 			}

@@ -1,9 +1,9 @@
 ---
 interface Props {
-	title: string
+	Title: string
 }
 
-const { title } = Astro.props
+const { Title: title } = Astro.props
 let user = Astro.cookies.get('user')?.value
 ---
 

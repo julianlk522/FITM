@@ -15,14 +15,16 @@ if (!token || !user) {
 }
 ---
 
-<Layout title='Submit a New Link to OITM'>
+<Layout Title='Submit a New Link to OITM'>
 	<main>
 		<h1>Submit New Links</h1>
 		<h2>Rules:</h2>
-		<p>Anything NSFW needs to be tagged "NSFW" or will be removed.</p>
-		<p>That's it.</p>
+		<p>
+			Anything NSFW needs to be tagged with category "NSFW" or will be
+			removed.
+		</p>
 
-		<NewLinks client:load token={token} user={user} />
+		<NewLinks client:load Token={token} User={user} />
 	</main>
 </Layout>
 

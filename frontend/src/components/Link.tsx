@@ -4,14 +4,14 @@ import format_date from '../util/format_date';
 import './Link.css';
 
 interface Props {
-	link: LinkData
-    is_summary_page: boolean
-    token: string | undefined
-    user: string | undefined
+	Link: LinkData
+    IsSummaryPage: boolean
+    Token: string | undefined
+    User: string | undefined
 }
 
 export default function Link(props: Props) {
-    const {is_summary_page, token, user} = props
+    const {IsSummaryPage: is_summary_page, Token: token, User: user} = props
     const {
         ID: id,
         URL: url,
@@ -22,11 +22,11 @@ export default function Link(props: Props) {
         SummaryCount: summary_count,
         ImgURL: img_url,
         IsTagged: is_tagged,
-    } = props.link
+    } = props.Link
 
-    const [is_copied, set_is_copied] = useState(props.link.IsCopied)
-    const [is_liked, set_is_liked] = useState(props.link.IsLiked)
-    const [like_count, set_like_count] = useState(props.link.LikeCount)
+    const [is_copied, set_is_copied] = useState(props.Link.IsCopied)
+    const [is_liked, set_is_liked] = useState(props.Link.IsLiked)
+    const [like_count, set_like_count] = useState(props.Link.LikeCount)
 
     const split_cats = categories?.split(',')
     const categories_html = 

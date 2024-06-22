@@ -26,7 +26,7 @@ const links: LinkData[] = await get_links_resp.json()
 // [{URL: 'https://example.com', LikeCount: 100}, ...]
 ---
 
-<Layout title='Welcome to the Open Internet Treasure Map (OITM)'>
+<Layout Title='Welcome to the Open Internet Treasure Map (OITM)'>
 	<main>
 		<h1>
 			{`Top Links (${period.charAt(0).toUpperCase() + period.slice(1)})`}
@@ -47,10 +47,10 @@ const links: LinkData[] = await get_links_resp.json()
 					{links.map((link) => (
 						<Link
 							client:load
-							link={link}
-							is_summary_page={false}
-							token={token}
-							user={user}
+							Link={link}
+							IsSummaryPage={false}
+							Token={token}
+							User={user}
 						/>
 					))}
 				</ul>

@@ -43,15 +43,15 @@ const user: User = await user_resp.json()
 // {LoginName: 'bob', About: '...', PFP: '...', Created: '2022-01-01 00:00:00'}
 ---
 
-<Layout title=`${login_name}'s Treasure Map`>
+<Layout Title=`${login_name}'s Treasure Map`>
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
 		<ProfilePic
 			client:load
-			pfp={user.PFP ? user.PFP : undefined}
-			login_name={login_name}
-			signed_in_user={signed_in_user}
-			token={token}
+			PFP={user.PFP ? user.PFP : undefined}
+			LoginName={login_name}
+			SignedInUser={signed_in_user}
+			Token={token}
 		/>
 		<p>Created: {format_date(user.Created)}</p>
 		{
@@ -85,10 +85,10 @@ const user: User = await user_resp.json()
 						{tmap[s].map((link) => (
 							<Link
 								client:load
-								link={link}
-								is_summary_page={false}
-								token={token}
-								user={signed_in_user}
+								Link={link}
+								IsSummaryPage={false}
+								Token={token}
+								User={signed_in_user}
 							/>
 						))}
 					</section>

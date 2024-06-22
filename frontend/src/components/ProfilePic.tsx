@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'preact/hooks'
 
 interface Props {
-    login_name: string
-	pfp: string | undefined
-    signed_in_user: string | undefined
-    token: string | undefined
+    LoginName: string
+	PFP: string | undefined
+    SignedInUser: string | undefined
+    Token: string | undefined
 }
 
 export default function ProfilePic(props: Props) {
-    const {login_name, pfp, signed_in_user, token} = props
+    const {LoginName: login_name, PFP: pfp, SignedInUser: signed_in_user, Token: token} = props
     const [url, set_url] = useState<string | undefined>(undefined)
 
     const is_signed_in_user = login_name === signed_in_user

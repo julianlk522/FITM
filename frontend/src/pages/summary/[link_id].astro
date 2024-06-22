@@ -27,7 +27,7 @@ const summary_data: SummaryPage = await get_summaries_resp.json()
 const { Link: link, Summaries: summaries } = summary_data
 ---
 
-<Layout title=`Summaries for ${summary_data.Link.Summary}`>
+<Layout Title=`Summaries for ${summary_data.Link.Summary}`>
 	<script>
 		function handle_redirect() {
 			document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/; max-age=3600; SameSite=strict; Secure`
@@ -39,7 +39,7 @@ const { Link: link, Summaries: summaries } = summary_data
 	</script>
 	<main>
 		<h2>Link:</h2>
-		<Link client:load {link} is_summary_page={true} {token} {user} />
+		<Link client:load Link} IsSummaryPage={true} User} />
 		<h2>Summaries:</h2>
 		{
 			user ? (

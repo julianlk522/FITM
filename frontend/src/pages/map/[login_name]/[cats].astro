@@ -36,7 +36,7 @@ if (!used_sections.length) {
 }
 ---
 
-<Layout title=`${login_name}'s Treasure Map (Filtered)`>
+<Layout Title=`${login_name}'s Treasure Map (Filtered)`>
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
 		<p>
@@ -75,10 +75,10 @@ if (!used_sections.length) {
 						{tmap[s].map((link) => (
 							<Link
 								client:load
-								link={link}
-								is_summary_page={false}
-								token={token}
-								user={signed_in_user}
+								Link={link}
+								IsSummaryPage={false}
+								Token={token}
+								User={signed_in_user}
 							/>
 						))}
 					</section>

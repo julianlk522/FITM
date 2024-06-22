@@ -6,12 +6,12 @@ import format_date from '../util/format_date';
 import './EditTag.css';
 import TagCategory from './TagCategory';
 interface Props {
-    token: string | undefined
-	signed_in_user_tag: Tag | undefined
+    Token: string | undefined
+	UserTag: Tag | undefined
 }
 
 export default function EditTag(props: Props) {
-    const { token, signed_in_user_tag: tag } = props
+    const { Token: token, UserTag: tag } = props
     const initial_cats = tag ? tag.Categories.split(',') : []
 
     const [categories, set_categories] = useState<string[]>(initial_cats)
@@ -105,7 +105,7 @@ export default function EditTag(props: Props) {
                             class='invert'
                             height={20}
                             width={20}
-                            alt='Edit Your Tag'
+                            alt={editing ? 'Confirm Edits' : 'Edit Tag'}
                         />
                     </button>
                 </div>
