@@ -1,6 +1,7 @@
 ---
 import EditTag from '../../components/EditTag'
 import Link from '../../components/Link'
+import TagCategory from '../../components/TagCategory'
 import Layout from '../../layouts/Layout.astro'
 import type { TagPage } from '../../types'
 import format_date from '../../util/format_date'
@@ -53,8 +54,18 @@ const { Link: link, UserTag: user_tag, TopTags: top_tags } = tag_Data
 					<h2>Top Tags</h2>
 					<ol>
 						{top_tags.map((tag) => (
-							<li>
-								<p>Categories: {tag.Categories}</p>
+							<li class='tag'>
+								<ul id='categories_grid'>
+									{tag.Categories.split(',').map((tag) => {
+										return (
+											<TagCategory
+												Category={tag}
+												EditActivated={false}
+												Deleted={undefined}
+											/>
+										)
+									})}
+								</ul>
 								<p>
 									Submitted By:{' '}
 									<a href={`/user/${tag.SubmittedBy}`}>
@@ -75,4 +86,14 @@ const { Link: link, UserTag: user_tag, TopTags: top_tags } = tag_Data
 	</main>
 </Layout>
 
-<style></style>
+<style>
+	.tag {
+		margin-bottom: 50px;
+	}
+	#categories_grid {
+		display: grid;
+		grid-template-columns: repeat(10, 1fr);
+		gap: 10px;
+		padding-inline-start: 0px;
+	}
+</style>

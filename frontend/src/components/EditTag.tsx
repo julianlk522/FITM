@@ -112,7 +112,7 @@ export default function EditTag(props: Props) {
 
                 {error ? <p class='error'>{`Error: ${error}`}</p> : null}
 
-                <ol id='user_tags_grid'>
+                <ol id='categories_grid'>
                     {categories.map((cat) => (
                         <TagCategory
                         Category={cat}

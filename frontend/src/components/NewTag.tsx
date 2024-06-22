@@ -57,7 +57,7 @@ export default function NewTag(props: Props) {
             <input type='text' id='category' name='category' />
             <button onClick={(event) => add_category(event)}>Add Category</button>
 
-            <ol id='user_tags_grid'>
+            <ol id='categories_grid'>
                 {categories.map((cat) => (
                     <TagCategory
                     Category={cat}

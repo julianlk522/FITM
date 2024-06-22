@@ -1,7 +1,7 @@
 interface Props {
 	Category: string
     EditActivated: boolean
-    Deleted: Signal<string | undefined>
+    Deleted: Signal<string | undefined> | undefined
 }
 
 import type { Signal } from "@preact/signals"
@@ -12,6 +12,7 @@ export default function TagCategory(props: Props) {
     async function handle_delete(e: MouseEvent) {
         e.preventDefault()
 
+        if (!props.Deleted) return
         props.Deleted.value = category
     }
     return (

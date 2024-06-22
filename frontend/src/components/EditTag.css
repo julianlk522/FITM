@@ -3,8 +3,9 @@
     align-items: center;
     gap: 20px;
 }
-#user_tags_grid {
+#categories_grid {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
+    padding-inline-start: 0;
     gap: 10px;
 }
