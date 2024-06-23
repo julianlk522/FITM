@@ -44,7 +44,7 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	LEFT JOIN Summaries 
 	ON Summaries.link_id = links_id 
 	GROUP BY links_id 
-	ORDER BY like_count DESC, links_id ASC LIMIT %s;`, LIMIT)
+	ORDER BY like_count DESC, summary_count DESC, link_id DESC LIMIT %s;`, LIMIT)
 	rows, err := db.Query(get_link_likes_sql)
 	if err != nil {
 		log.Fatal(err)
@@ -116,7 +116,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	const LIMIT string = "20"
 	get_link_likes_sql += fmt.Sprintf(`) LEFT JOIN Summaries
 	ON Summaries.link_id = links_id
-	GROUP BY links_id ORDER BY like_count DESC, link_id ASC LIMIT %s;`, LIMIT)
+	GROUP BY links_id ORDER BY like_count DESC, summary_count DESC, link_id DESC LIMIT %s;`, LIMIT)
 
 	rows, err := db.Query(get_link_likes_sql)
 	if err != nil {
