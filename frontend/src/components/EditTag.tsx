@@ -85,7 +85,7 @@ export default function EditTag(props: Props) {
     }
 
     return (
-        tag ? (
+       
             <section>
                 <div id='user_tags_title_bar'>
                     <h2>Your Tag For This Link</h2>
@@ -135,9 +135,18 @@ export default function EditTag(props: Props) {
                         null
                 }
 
-                <p>(Last Updated: {format_date(tag.LastUpdated)})</p>
+                {tag 
+                    ? 
+                        <p>(Last Updated: {format_date(tag.LastUpdated)})</p> 
+                    : 
+                        editing
+                            ?
+                                null
+                            :
+                                <p>(Not tagged.)</p>
+                }  
             </section>
-        ) : null
+        
     )
     
 }
