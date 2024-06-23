@@ -6,12 +6,13 @@ import format_date from '../util/format_date';
 import './EditTag.css';
 import TagCategory from './TagCategory';
 interface Props {
+    LinkID: string
     Token: string | undefined
 	UserTag: Tag | undefined
 }
 
 export default function EditTag(props: Props) {
-    const { Token: token, UserTag: tag } = props
+    const { LinkID: link_id, Token: token, UserTag: tag } = props
     const initial_cats = tag ? tag.Categories.split(',') : []
 
     const [categories, set_categories] = useState<string[]>(initial_cats)
@@ -50,30 +51,53 @@ export default function EditTag(props: Props) {
 
         set_categories([...categories, category])
         set_error(undefined)
+
+        const cat_field = document.getElementById("category") as HTMLInputElement
+        cat_field.value = ""
         return
     }
 
-    async function confirm_edits() {
-        if (!token || !tag) {
-            return
+    async function confirm_changes() {
+        if (!token) {
+            return window.location.href = '/login'
         }
 
-        const edit_tag_resp = await fetch('http://127.0.0.1:8000/tags', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-                tag_id: tag.ID,
-                categories: categories.join(','),
-            }),
-        })
-        if (edit_tag_resp.status !== 200) {
-            console.error(edit_tag_resp)
+        let resp: Response
+
+        // new tag
+        if (!tag) {
+            resp = await fetch('http://127.0.0.1:8000/tags', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    link_id: link_id,
+                    categories: categories.join(','),
+                }),
+            })
+
+        // edit tag
+        } else {
+            resp = await fetch('http://127.0.0.1:8000/tags', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    tag_id: tag.ID,
+                    categories: categories.join(','),
+                }),
+            })
         }
 
-        const edit_tag_data = await edit_tag_resp.json()
+        if (resp.status !== 200 && resp.status !== 201) {
+            console.error(resp)
+        }
+
+        const edit_tag_data = await resp.json()
 
         if (is_error_response(edit_tag_data)) {
             set_error(edit_tag_data.error)
@@ -81,7 +105,6 @@ export default function EditTag(props: Props) {
         } else {
             window.location.reload()
         }
-        return
     }
 
     return (
@@ -96,7 +119,7 @@ export default function EditTag(props: Props) {
 
                             // update if changes detected, else skip
                             if (editing && (categories.length !== initial_cats.length || categories.some((c, i) => c !== initial_cats[i]))) {
-                                confirm_edits()
+                                confirm_changes()
                             }
                             set_editing((e) => !e)
                         }} class='img-btn'>

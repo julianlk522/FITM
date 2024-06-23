@@ -163,7 +163,7 @@ export default function Link(props: Props) {
             {categories 
                 ? 
                     <>
-                        <p>Categories: {categories_html}</p>
+                        <p>Global Categories: {categories_html}</p>
                         <a href={`/tag/${id}`}>
                             {is_tagged
                                 ?
@@ -174,7 +174,16 @@ export default function Link(props: Props) {
                         </a>
                     </>
                 : 
-                        <p>No categories. <a href={`/tag/${id}`}>Add tag</a></p>
+                        <p>No Global Categories.{' '} 
+                            <a href={`/tag/${id}`}>
+                                {is_tagged
+                                    ?
+                                        'Edit Tag'
+                                    :
+                                        'Add Tag'
+                                }
+                            </a>
+                        </p>
             
             }
 

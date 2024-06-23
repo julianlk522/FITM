@@ -46,7 +46,12 @@ const { Link: link, UserTag: user_tag, TopTags: top_tags } = tag_Data
 			Token={token}
 		/>
 
-		<EditTag client:load Token={token} UserTag={user_tag} />
+		<EditTag
+			client:load
+			LinkID={link_id}
+			Token={token}
+			UserTag={user_tag}
+		/>
 
 		{
 			top_tags ? (
