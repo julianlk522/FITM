@@ -36,12 +36,13 @@ export default function NewLinks(props: Props) {
         if (new_link_resp.statusText === "Unauthorized") {
             window.location.href = '/login'
         }
-        const new_link_data: LinkData | ErrorResponse = await new_link_resp.json()
+        let new_link_data: LinkData | ErrorResponse = await new_link_resp.json()
 
         if (is_error_response(new_link_data)) {
             set_error(new_link_data.error)
             return
         } else {
+            new_link_data.IsTagged = true
             set_submitted_links([...submitted_links, new_link_data])
             set_categories([])
             set_error(undefined)
@@ -81,7 +82,9 @@ export default function NewLinks(props: Props) {
                                 Link={link}
                                 Token={props.Token}
                                 User={props.User}
-                                IsSummaryPage={false} />
+                                IsSummaryPage={false}
+                                IsTagPage={false} 
+                            />
                         ))}
                     </ul>
                 </div>

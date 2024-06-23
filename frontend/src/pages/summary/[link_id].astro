@@ -39,7 +39,14 @@ const { Link: link, Summaries: summaries } = summary_data
 	</script>
 	<main>
 		<h2>Link:</h2>
-		<Link client:load Link} IsSummaryPage={true} User} />
+		<Link
+			client:load
+			Link={link}
+			IsSummaryPage={true}
+			IsTagPage={false}
+			Token={token}
+			User={user}
+		/>
 		<h2>Summaries:</h2>
 		{
 			user ? (

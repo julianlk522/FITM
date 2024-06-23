@@ -47,8 +47,9 @@ const links: LinkData[] = await get_links_resp.json()
 					{links.map((link) => (
 						<Link
 							client:load
-							Link={link}
 							IsSummaryPage={false}
+							IsTagPage={false}
+							Link={link}
 							Token={token}
 							User={user}
 						/>

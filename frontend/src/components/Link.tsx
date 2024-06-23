@@ -6,12 +6,13 @@ import './Link.css';
 interface Props {
 	Link: LinkData
     IsSummaryPage: boolean
+    IsTagPage: boolean
     Token: string | undefined
     User: string | undefined
 }
 
 export default function Link(props: Props) {
-    const {IsSummaryPage: is_summary_page, Token: token, User: user} = props
+    const {IsSummaryPage: is_summary_page, IsTagPage: is_tag_page, Token: token, User: user} = props
     const {
         ID: id,
         URL: url,
@@ -162,29 +163,23 @@ export default function Link(props: Props) {
             </p>
             {categories 
                 ? 
-                    <>
-                        <p>Global Categories: {categories_html}</p>
-                        <a href={`/tag/${id}`}>
-                            {is_tagged
-                                ?
-                                    'Edit Tag'
-                                :
-                                    'Add Tag'
-                            }
-                        </a>
-                    </>
+                    <p>Global Categories: {categories_html}</p>
                 : 
-                        <p>No Global Categories.{' '} 
-                            <a href={`/tag/${id}`}>
-                                {is_tagged
-                                    ?
-                                        'Edit Tag'
-                                    :
-                                        'Add Tag'
-                                }
-                            </a>
-                        </p>
-            
+                    <p>No Global Categories.</p>
+            }
+
+            {is_tag_page
+                ?
+                    null
+                :
+                    <a href={`/tag/${id}`}>
+                        {is_tagged
+                            ?
+                                'Edit Tag'
+                            :
+                                'Add Tag'
+                        }
+                    </a>
             }
 
             {is_summary_page 
