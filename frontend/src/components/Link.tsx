@@ -4,7 +4,8 @@ import format_date from '../util/format_date';
 import './Link.css';
 
 interface Props {
-	Link: LinkData
+    Link: LinkData
+    CategoriesFromUser?: string
     IsSummaryPage: boolean
     IsTagPage: boolean
     Token: string | undefined
@@ -12,7 +13,9 @@ interface Props {
 }
 
 export default function Link(props: Props) {
-    const {IsSummaryPage: is_summary_page, IsTagPage: is_tag_page, Token: token, User: user} = props
+    const {
+        CategoriesFromUser: categories_from_user, 
+        IsSummaryPage: is_summary_page, IsTagPage: is_tag_page, Token: token, User: user} = props
     const {
         ID: id,
         URL: url,
@@ -29,17 +32,31 @@ export default function Link(props: Props) {
     const [is_liked, set_is_liked] = useState(props.Link.IsLiked)
     const [like_count, set_like_count] = useState(props.Link.LikeCount)
 
+
     const split_cats = categories?.split(',')
     const categories_html = 
-    // tag1 ==> <a href='/cat/tag1'>tag1</a>
-    // tag1,tag2 ==> <a href='/cat/tag1'>tag1</a>, <a href='/cat/tag2'>tag2</a>
-    split_cats?.map((cat, i) => {
-        if (i === split_cats.length - 1) {
-            return <a href={`/cat/${cat}`}>{cat}</a>
-        } else {
-            return <span><a href={`/cat/${cat}`}>{cat}</a>, </span>
-        }
-    }) 
+    // depending on if tmap page, link to tmap subcategories page or global categories page
+    categories_from_user
+        ?
+            // tag1 ==> <a href='/map/user/cat/tag1'>tag1</a>
+            // tag1,tag2 ==> <a href='/map/user/tag1'>tag1</a>, <a href='/map/user/tag2'>tag2</a>
+            split_cats?.map((cat, i) => {
+                if (i === split_cats.length - 1) {
+                    return <a href={`/map/${categories_from_user}/${cat}`}>{cat}</a>
+                } else {
+                    return <span><a href={`/map/${categories_from_user}/${cat}`}>{cat}</a>, </span>
+                }
+            })
+        :
+            // tag1 ==> <a href='/cat/tag1'>tag1</a>
+            // tag1,tag2 ==> <a href='/cat/tag1'>tag1</a>, <a href='/cat/tag2'>tag2</a>
+            split_cats?.map((cat, i) => {
+                if (i === split_cats.length - 1) {
+                    return <a href={`/cat/${cat}`}>{cat}</a>
+                } else {
+                    return <span><a href={`/cat/${cat}`}>{cat}</a>, </span>
+                }
+            })
 
     async function handle_like() {
         if (!token) {
@@ -163,9 +180,14 @@ export default function Link(props: Props) {
             </p>
             {categories 
                 ? 
-                    <p>Global Categories: {categories_html}</p>
-                : 
-                    <p>No Global Categories.</p>
+                    categories_from_user
+                    ?
+                        <p>{categories_from_user}'s Categories: {categories_html}</p>
+                    : 
+                        <p>Global Categories: {categories_html}</p>
+                :
+                    <p>No categories.</p>
+                    
             }
 
             {is_tag_page

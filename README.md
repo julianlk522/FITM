@@ -2,8 +2,7 @@
 
 ## Todos:
 
--Update submit new link page to use TagCategory component and form a la EditTag component
--Treasure Map skip to each main section (sidebar)
+-Edit Link component to say Your Categories if on your tmap page
 -Improve profile pic upload
     -Crop to square
     -Shrink to 100x100
@@ -11,6 +10,7 @@
     -Home
     -Top Links 
     -User Treasure Map
+-Reorder tmap to submitted -> copied -> tagged
 -Search for existing tag cats while adding/editing
 -Separate tag categories into distinct rows in Tags table
     -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)

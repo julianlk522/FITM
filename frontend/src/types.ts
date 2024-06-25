@@ -23,10 +23,10 @@ type LinkData = {
 	SubmittedBy: string
 	SubmitDate: string
 	Categories: string | null
+	ImgURL: string | undefined
 	Summary: string | null
 	SummaryCount: number
 	LikeCount: number
-	ImgURL: string | undefined
 	IsLiked: boolean | undefined
 	IsTagged: boolean | undefined
 	IsCopied: boolean | undefined

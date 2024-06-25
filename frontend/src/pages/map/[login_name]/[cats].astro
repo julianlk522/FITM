@@ -46,41 +46,75 @@ if (!used_sections.length) {
 					: `Category Filter: ${cats_split[0]}`
 			}
 		</p>
-		{
-			tmap.Categories.length ? (
-				<section>
-					<h2>Top Subcategories</h2>
-					<ol>
-						{tmap.Categories.map((cat) => (
+		<section id='overview'>
+			<div>
+				{
+					tmap.Categories.length ? (
+						<div>
+							<h2>Top Subcategories</h2>
+							<ol>
+								{tmap.Categories.map((cat) => (
+									<li>
+										<a
+											href={`/map/${login_name}/${categories},${cat.Category}`}
+										>
+											{cat.Category}
+										</a>
+										<span>({cat.Count})</span>
+									</li>
+								))}
+							</ol>
+						</div>
+					) : (
+						<h2>No further subcategories.</h2>
+					)
+				}
+			</div>
+			<div>
+				<h2>Skip to Section</h2>
+				<ul id='skip_to_link_section'>
+					{
+						used_sections.map((s) => (
 							<li>
-								<a
-									href={`/map/${login_name}/${categories},${cat.Category}`}
-								>
-									{cat.Category}
-								</a>
-								<span>({cat.Count})</span>
+								<a href={`#${s}`}>{s}</a>
 							</li>
-						))}
-					</ol>
-				</section>
-			) : (
-				<h2>No further subcategories.</h2>
-			)
-		}
+						))
+					}
+				</ul>
+			</div>
+		</section>
+
 		{
 			used_sections.map((s) => {
 				return (
-					<section>
+					<section id={s} class='link_section'>
 						<h2>{s}</h2>
-						{tmap[s].map((link) => (
-							<Link
-								client:load
-								Link={link}
-								IsSummaryPage={false}
-								Token={token}
-								User={signed_in_user}
-							/>
-						))}
+						{tmap[s].map((link) => {
+							if (s === 'Submitted' || s === 'Tagged') {
+								return (
+									<Link
+										client:load
+										Link={link}
+										CategoriesFromUser={login_name}
+										IsSummaryPage={false}
+										IsTagPage={false}
+										Token={token}
+										User={signed_in_user}
+									/>
+								)
+							} else {
+								return (
+									<Link
+										client:load
+										Link={link}
+										IsSummaryPage={false}
+										IsTagPage={false}
+										Token={token}
+										User={signed_in_user}
+									/>
+								)
+							}
+						})}
 					</section>
 				)
 			})
@@ -88,4 +122,19 @@ if (!used_sections.length) {
 	</main>
 </Layout>
 
-<style></style>
+<style>
+	#overview {
+		display: flex;
+		gap: 50px;
+	}
+	#skip_to_link_section {
+		list-style: none;
+		padding: 0;
+	}
+	.link_section h2 {
+		position: sticky;
+		top: 0px;
+		padding: 10px 0;
+		background-color: #13151a;
+	}
+</style>
