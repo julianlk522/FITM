@@ -62,25 +62,39 @@ const user: User = await user_resp.json()
 				</>
 			) : null
 		}
-		<section>
-			<h2>Top Categories</h2>
-			<ol>
-				{
-					tmap.Categories.map((cat) => (
-						<li>
-							<a href={`/map/${login_name}/${cat.Category}`}>
-								{cat.Category}
-							</a>
-							<span>({cat.Count})</span>
-						</li>
-					))
-				}
-			</ol>
+		<section id='overview'>
+			<div>
+				<h2>Top Categories</h2>
+				<ol>
+					{
+						tmap.Categories.map((cat) => (
+							<li>
+								<a href={`/map/${login_name}/${cat.Category}`}>
+									{cat.Category}
+								</a>
+								<span>({cat.Count})</span>
+							</li>
+						))
+					}
+				</ol>
+			</div>
+			<div>
+				<h2>Skip to Section</h2>
+				<ul id='skip_to_link_section'>
+					{
+						used_sections.map((s) => (
+							<li>
+								<a href={`#${s}`}>{s}</a>
+							</li>
+						))
+					}
+				</ul>
+			</div>
 		</section>
 		{
 			used_sections.map((s) => {
 				return (
-					<section>
+					<section id={s} class='link_section'>
 						<h2>{s}</h2>
 						{tmap[s].map((link) => (
 							<Link
@@ -99,4 +113,19 @@ const user: User = await user_resp.json()
 	</main>
 </Layout>
 
-<style></style>
+<style>
+	#overview {
+		display: flex;
+		gap: 50px;
+	}
+	#skip_to_link_section {
+		list-style: none;
+		padding: 0;
+	}
+	.link_section h2 {
+		position: sticky;
+		top: 0px;
+		padding: 10px 0;
+		background-color: #13151a;
+	}
+</style>
