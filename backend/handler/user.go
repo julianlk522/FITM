@@ -317,17 +317,18 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check auth token
-	var req_user_id string
+	var req_user_id, req_login_name string
 	claims, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	} else if len(claims) > 0 {
 		req_user_id = claims["user_id"].(string)
+		req_login_name = claims["login_name"].(string)
 	}
 
 	// Prepare SQL to get submitted / tagged / copied links from User
-	// (Start with queries for signed-out user, append additional ones if needed)
+	// (Start with queries for signed-out user, append additional if needed)
 	base_fields := `SELECT 
 		Links.id as link_id, 
 		url, 
@@ -346,7 +347,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		(
 		SELECT categories, link_id as tag_link_id
 		FROM Tags
-		WHERE submitted_by = '%[1]s'
+		WHERE submitted_by = '%s'
 		)
 	ON link_id = tag_link_id
 	LEFT JOIN
@@ -364,11 +365,11 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		)
 	ON summary_link_id = link_id`, login_name)
 
-	submitted_where := fmt.Sprintf(` WHERE submitted_by = '%[1]s';`, login_name)
+	submitted_where := fmt.Sprintf(` WHERE submitted_by = '%s';`, login_name)
 
 	// Get tagged links submitted by other users, replacing global categories with user-assigned
 	tagged_from := submitted_from
-	tagged_where := fmt.Sprintf(` WHERE submitted_by != '%[1]s';`, login_name)
+	tagged_where := fmt.Sprintf(` WHERE submitted_by != '%s';`, login_name)
 
 	// Get copied links
 	copied_fields := strings.Replace(base_fields, "categories", `coalesce(global_cats,"") as categories`, 1)
@@ -379,7 +380,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		FROM 'Link Copies'
 		JOIN Users
 		ON Users.id = copier_id
-		WHERE Users.login_name = '%[1]s'
+		WHERE Users.login_name = '%s'
 		)
 	ON copy_link_id = link_id
 	LEFT JOIN
@@ -397,10 +398,11 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		)
 	ON summary_link_id = link_id`, login_name)
 
-	// Append additional queries for signed-in fields (IsLiked and IsCopied) if auth claims verified
+	// Append additional queries for signed-in fields (IsLiked, IsTagged, IsCopied) if auth claims verified
 	if req_user_id != "" {
 		added_fields := `, 
 		coalesce(is_liked,0) as is_liked, 
+		coalesce(is_tagged,0) as is_tagged,
 		coalesce(is_copied,0) as is_copied`
 
 		added_from := fmt.Sprintf(` LEFT JOIN
@@ -411,6 +413,14 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 			GROUP BY id
 			)
 		ON like_link_id2 = link_id 
+		LEFT JOIN 
+		(
+			SELECT id as tag_id, link_id as tlink_id, count(*) as is_tagged 
+			FROM Tags
+			WHERE Tags.submitted_by = '%[2]s'
+			GROUP BY tag_id
+		)
+		ON tlink_id = link_id
 		LEFT JOIN
 			(
 			SELECT id as copy_id, count(*) as is_copied, user_id as cuser_id, link_id as clink_id
@@ -418,7 +428,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 			WHERE cuser_id = '%[1]s'
 			GROUP BY copy_id
 			)
-		ON clink_id = link_id`, req_user_id)
+		ON clink_id = link_id`, req_user_id, req_login_name)
 
 		// Submitted
 		submitted_fields := base_fields + added_fields
@@ -433,7 +443,13 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		// Copied
 		copied_fields += added_fields
 		copied_from += added_from
-		copied_sql := copied_fields + copied_from
+		copied_where := fmt.Sprintf(` WHERE link_id NOT IN
+			(
+			SELECT link_id
+			FROM TAGS
+			WHERE submitted_by = '%s'
+			);`, login_name)
+		copied_sql := copied_fields + copied_from + copied_where
 
 		// Scan links
 		var submitted, tagged, copied *[]model.LinkSignedIn
@@ -445,12 +461,12 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 			defer rows.Close()
 			
 			switch sql {
-			case submitted_sql:
-				submitted = ScanTmapLinksSignedIn(db, rows)
-			case tagged_sql:
-				tagged = ScanTmapLinksSignedIn(db, rows)
-			case copied_sql:
-				copied = ScanTmapLinksSignedIn(db, rows)
+				case submitted_sql:
+					submitted = ScanTmapLinksSignedIn(db, rows)
+				case tagged_sql:
+					tagged = ScanTmapLinksSignedIn(db, rows)
+				case copied_sql:
+					copied = ScanTmapLinksSignedIn(db, rows)
 			}
 		}
 
@@ -531,13 +547,14 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check auth token
-	var req_user_id string
+	var req_user_id, req_login_name string
 	claims, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	} else if len(claims) > 0 {
 		req_user_id = claims["user_id"].(string)
+		req_login_name = claims["login_name"].(string)
 	}
 
 	// Prepare SQL to get submitted / tagged / copied links from User
@@ -561,7 +578,7 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 		(
 			SELECT categories, link_id as tag_link_id
 			FROM Tags
-			WHERE submitted_by = '%[1]s'
+			WHERE submitted_by = '%s'
 		)
 		ON link_id = tag_link_id
 		LEFT JOIN
@@ -579,7 +596,7 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 		)
 		ON summary_link_id = link_id`, login_name)
 	
-	submitted_where := fmt.Sprintf(` WHERE submitted_by = '%[1]s'`, login_name)
+	submitted_where := fmt.Sprintf(` WHERE submitted_by = '%s'`, login_name)
 
 	// Append category filters to submitted_where
 	cats_split := strings.Split(categories, ",")
@@ -589,7 +606,7 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 
 	// Get tagged links submitted by other users, replacing global categories with user-assigned
 	tagged_from := submitted_from
-	tagged_where := fmt.Sprintf(` WHERE submitted_by != '%[1]s'`, login_name)
+	tagged_where := fmt.Sprintf(` WHERE submitted_by != '%s'`, login_name)
 
 	// Append category filters to tagged_where
 	for _, cat := range cats_split {
@@ -605,7 +622,7 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 		FROM 'Link Copies'
 		JOIN Users
 		ON Users.id = copier_id
-		WHERE Users.login_name = '%[1]s'
+		WHERE Users.login_name = '%s'
 		)
 	ON copy_link_id = link_id
 	LEFT JOIN
@@ -627,11 +644,18 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 	for _, cat := range cats_split[1:] {
 		copied_where += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
 	}
+	copied_where += fmt.Sprintf(` AND link_id NOT IN
+	(
+		SELECT link_id
+		FROM TAGS
+		WHERE submitted_by = '%s'
+	);`, login_name)
 
-	// Append additional queries for IsLiked and IsCopied fields if auth claims verified
+	// Append additional queries for IsLiked, IsTagged, and IsCopied fields if auth claims verified
 	if req_user_id != "" {
 		added_fields := `, 
 		coalesce(is_liked,0) as is_liked, 
+		coalesce(is_tagged,0) as is_tagged,
 		coalesce(is_copied,0) as is_copied`
 
 		added_from := fmt.Sprintf(` LEFT JOIN
@@ -642,6 +666,14 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 			GROUP BY id
 			)
 		ON like_link_id2 = link_id 
+		LEFT JOIN 
+		(
+			SELECT id as tag_id, link_id as tlink_id, count(*) as is_tagged 
+			FROM Tags
+			WHERE Tags.submitted_by = '%[2]s'
+			GROUP BY tag_id
+		)
+		ON tlink_id = link_id
 		LEFT JOIN
 			(
 			SELECT id as copy_id, count(*) as is_copied, user_id as cuser_id, link_id as clink_id
@@ -649,7 +681,7 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 			WHERE cuser_id = '%[1]s'
 			GROUP BY copy_id
 			)
-		ON clink_id = link_id`, req_user_id)
+		ON clink_id = link_id`, req_user_id, req_login_name)
 
 		// Submitted
 		submitted_fields := base_fields + added_fields
@@ -736,10 +768,9 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 
 func ScanTmapLinksSignedIn (db *sql.DB, rows *sql.Rows) *[]model.LinkSignedIn {
 	var links = []model.LinkSignedIn{}
-
 	for rows.Next() {
 		i := model.LinkSignedIn{}
-		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL, &i.IsLiked, &i.IsCopied)
+		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL, &i.IsLiked, &i.IsTagged, &i.IsCopied)
 		if err != nil {
 			log.Fatal(err)
 		}
