@@ -2,7 +2,7 @@
 
 ## Todos:
 
--Edit Link component to say Your Categories if on your tmap page
+-Replace 'add tag' / 'add summary' links with buttons
 -Improve profile pic upload
     -Crop to square
     -Shrink to 100x100

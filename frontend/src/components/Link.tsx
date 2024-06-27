@@ -34,6 +34,12 @@ export default function Link(props: Props) {
 
 
     const split_cats = categories?.split(',')
+    const tag_attribution = 
+    categories && user && categories_from_user === user
+        ? 'Your Tag' 
+        : categories_from_user
+            ? `${categories_from_user}'s Tag`
+            : 'Global Tag'
     const categories_html = 
     // depending on if tmap page, link to tmap subcategories page or global categories page
     categories_from_user
@@ -180,13 +186,10 @@ export default function Link(props: Props) {
             </p>
             {categories 
                 ? 
-                    categories_from_user
-                    ?
-                        <p>{categories_from_user}'s Categories: {categories_html}</p>
-                    : 
-                        <p>Global Categories: {categories_html}</p>
+                    <p>{tag_attribution}: {categories_html}</p>
+                       
                 :
-                    <p>No categories.</p>
+                    <p>No tag. (fix this)</p>
                     
             }
 
