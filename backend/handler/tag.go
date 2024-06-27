@@ -82,7 +82,7 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get earliest tags and Lifespan-Overlap scores
-	rows, err := db.Query(`SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, categories, Tags.submitted_by, last_updated 
+	rows, err := db.Query(`SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) * 100 AS lifespan_overlap, categories, Tags.submitted_by, last_updated 
 		FROM Tags 
 		INNER JOIN Links 
 		ON Links.id = Tags.link_id 

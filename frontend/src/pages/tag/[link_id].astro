@@ -80,8 +80,8 @@ const { Link: link, UserTag: user_tag, TopTags: top_tags } = tag_Data
 								</p>
 								<p>{format_date(tag.LastUpdated)}</p>
 								<p>
-									Lifespan Overlap Score:{' '}
-									{tag.LifeSpanOverlap}
+									Lifespan Overlap:{' '}
+									{tag.LifeSpanOverlap.toFixed(2)}%
 								</p>
 							</li>
 						))}
