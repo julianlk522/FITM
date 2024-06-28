@@ -524,19 +524,23 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	// Create new summary if auto_summary successfully retrieves a title or description
-	if auto_summary != "" {
-		_, err = db.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, auto_summary, link_data.ID, req_user_id,link_data.SubmitDate)
-		if err != nil {
-			log.Fatal(err)
-		}	
-	}
-
+	// Get new link ID
 	var id int64
 	if id, err = res.LastInsertId(); err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 	}
 	link_data.ID = id
+
+	// Create new summary if auto_summary successfully retrieves a title or description
+	if auto_summary != "" {
+		_, err = db.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, auto_summary, link_data.ID, req_user_id,link_data.SubmitDate)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Summary Count == 1 after initial
+		link_data.SummaryCount = 1
+	}
 
 	// Create initial tag
 	_, err = db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_data.ID, link_data.Categories, req_login_name, link_data.SubmitDate)
