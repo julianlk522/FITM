@@ -28,7 +28,7 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 	
 	const LIMIT string = "20"
-	get_link_likes_sql := fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
+	get_links_sql := fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
 	FROM 
 		(
 		SELECT Links.id as links_id, url, submitted_by as link_author, Links.submit_date as sd, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url 
@@ -45,7 +45,7 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	ON Summaries.link_id = links_id 
 	GROUP BY links_id 
 	ORDER BY like_count DESC, summary_count DESC, link_id DESC LIMIT %s;`, LIMIT)
-	rows, err := db.Query(get_link_likes_sql)
+	rows, err := db.Query(get_links_sql)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,7 +67,7 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 		links := ScanLinksSignedIn(db, rows, req_user_id)
 		render.JSON(w, r, &links)
 
-	// User signed out: IsLiked and IsCopied not included		
+	// User signed out: IsLiked / IsCopied / IsTagged not included		
 	} else {
 		links := ScanLinksSignedOut(db, rows)
 		render.JSON(w, r, &links)
@@ -86,7 +86,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	get_link_likes_sql := `SELECT links_id as link_id, url, link_author as subitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
+	get_links_sql := `SELECT links_id as link_id, url, link_author as subitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
 	FROM
 		(
 		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date as sd, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
@@ -101,24 +101,24 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 
 	switch chi.URLParam(r, "period") {
 	case "day":
-		get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2`
+		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2`
 	case "week":
-		get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
+		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
 	case "month":
-		get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
+		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
 	case "year":
-		get_link_likes_sql += ` WHERE julianday('now') - julianday(submit_date) <= 366`
+		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 366`
 	default:
 		render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
 		return
 	}
 
 	const LIMIT string = "20"
-	get_link_likes_sql += fmt.Sprintf(`) LEFT JOIN Summaries
+	get_links_sql += fmt.Sprintf(`) LEFT JOIN Summaries
 	ON Summaries.link_id = links_id
 	GROUP BY links_id ORDER BY like_count DESC, summary_count DESC, link_id DESC LIMIT %s;`, LIMIT)
 
-	rows, err := db.Query(get_link_likes_sql)
+	rows, err := db.Query(get_links_sql)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -140,7 +140,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 		links := ScanLinksSignedIn(db, rows, req_user_id)
 		render.JSON(w, r, &links)
 
-	// User signed out: IsLiked and IsCopied not included		
+	// User signed out: IsLiked / IsCopied / IsTagged not included		
 	} else {
 		links := ScanLinksSignedOut(db, rows)
 		render.JSON(w, r, &links)
@@ -251,7 +251,7 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 		links := ScanLinksSignedIn(db, rows, req_user_id)
 		render.JSON(w, r, &links)
 
-	// User signed out: IsLiked and IsCopied not included		
+	// User signed out: IsLiked / IsCopied / IsTagged not included		
 	} else {
 		links := ScanLinksSignedOut(db, rows)
 		render.JSON(w, r, &links)
@@ -305,8 +305,6 @@ func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET TOP SUBCATEGORIES WITH GIVEN CATEGORY(IES)
-
-// todo: change from Tags (categories) to Links (global_cats) once there is more data to query
 func GetTopSubcategories(w http.ResponseWriter, r *http.Request) {
 
 	// Limit 20 for now
@@ -483,7 +481,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 	meta := MetaFromHTMLTokens(resp.Body)
 
-	// Get automatically-generated link summary from meta title or description
+	// Get automatically-generated link summary from meta description or title
 	var auto_summary string
 
 	if meta.OGDescription != "" {
@@ -499,7 +497,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	}
 	link_data.Summary = auto_summary
 
-	// Get og:image, if available, from meta for link preview
+	// Get og:image, if available, for link preview
 	var og_image string
 	if meta.OGImage != "" {
 
