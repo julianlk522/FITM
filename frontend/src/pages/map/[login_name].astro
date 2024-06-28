@@ -96,32 +96,34 @@ const user: User = await user_resp.json()
 				return (
 					<section id={s} class='link_section'>
 						<h2>{s}</h2>
-						{tmap[s].map((link) => {
-							if (s === 'Submitted' || s === 'Tagged') {
-								return (
-									<Link
-										client:load
-										Link={link}
-										CategoriesFromUser={login_name}
-										IsSummaryPage={false}
-										IsTagPage={false}
-										Token={token}
-										User={signed_in_user}
-									/>
-								)
-							} else {
-								return (
-									<Link
-										client:load
-										Link={link}
-										IsSummaryPage={false}
-										IsTagPage={false}
-										Token={token}
-										User={signed_in_user}
-									/>
-								)
-							}
-						})}
+						<ol>
+							{tmap[s].map((link) => {
+								if (s === 'Submitted' || s === 'Tagged') {
+									return (
+										<Link
+											client:load
+											Link={link}
+											CategoriesFromUser={login_name}
+											IsSummaryPage={false}
+											IsTagPage={false}
+											Token={token}
+											User={signed_in_user}
+										/>
+									)
+								} else {
+									return (
+										<Link
+											client:load
+											Link={link}
+											IsSummaryPage={false}
+											IsTagPage={false}
+											Token={token}
+											User={signed_in_user}
+										/>
+									)
+								}
+							})}
+						</ol>
 					</section>
 				)
 			})

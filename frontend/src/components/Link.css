@@ -11,6 +11,9 @@ p {
     border: 1px solid rgba(var(--accent), 25%);
     margin: 10px 0;
 }
+.link.summary-page {
+    list-style: none;
+}
 .tag-icon {
     margin-left: 10px;
     margin-bottom: -5px;

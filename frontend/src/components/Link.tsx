@@ -160,7 +160,7 @@ export default function Link(props: Props) {
     }
 
     return (
-        <li class='link'>
+        <li class={`link${is_summary_page ? ' summary-page' : ''}`}>
             {img_url
                 ? <div class="preview">
                         <img src={img_url} alt={summary ? summary : url} height={100} width={100} />

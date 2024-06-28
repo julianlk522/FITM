@@ -38,52 +38,56 @@ const { Link: link, Summaries: summaries } = summary_data
 			?.addEventListener('click', handle_redirect)
 	</script>
 	<main>
-		<h2>Link:</h2>
-		<Link
-			client:load
-			Link={link}
-			IsSummaryPage={true}
-			IsTagPage={false}
-			Token={token}
-			User={user}
-		/>
-		<h2>Summaries:</h2>
-		{
-			user ? (
-				<NewSummary client:load Token={token} LinkID={link_id} />
-			) : null
-		}
-		<ol>
+		<section>
+			<h2>Link:</h2>
+			<Link
+				client:load
+				Link={link}
+				IsSummaryPage={true}
+				IsTagPage={false}
+				Token={token}
+				User={user}
+			/>
+		</section>
+		<section>
+			<h2>Summaries:</h2>
 			{
-				summaries.length ? (
-					summaries.map((summary) => (
-						<Summary
-							client:load
-							Token={token}
-							User={user}
-							ID={summary.ID}
-							Text={summary.Text}
-							SubmittedBy={summary.SubmittedBy}
-							LastUpdated={summary.LastUpdated}
-							LikeCount={summary.LikeCount}
-							IsLiked={summary.IsLiked}
-						/>
-					))
-				) : (
-					<p>None yet.</p>
+				user ? (
+					<NewSummary client:load Token={token} LinkID={link_id} />
+				) : null
+			}
+			<ol>
+				{
+					summaries.length ? (
+						summaries.map((summary) => (
+							<Summary
+								client:load
+								Token={token}
+								User={user}
+								ID={summary.ID}
+								Text={summary.Text}
+								SubmittedBy={summary.SubmittedBy}
+								LastUpdated={summary.LastUpdated}
+								LikeCount={summary.LikeCount}
+								IsLiked={summary.IsLiked}
+							/>
+						))
+					) : (
+						<p>None yet.</p>
+					)
+				}
+			</ol>
+			{
+				user ? null : (
+					<span>
+						<a id='login_link' href='/login'>
+							Login
+						</a>{' '}
+						to add a summary.
+					</span>
 				)
 			}
-		</ol>
-		{
-			user ? null : (
-				<span>
-					<a id='login_link' href='/login'>
-						Login
-					</a>{' '}
-					to add a summary.
-				</span>
-			)
-		}
+		</section>
 	</main>
 </Layout>
 

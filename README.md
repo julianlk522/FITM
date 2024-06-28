@@ -2,7 +2,6 @@
 
 ## Todos:
 
--Replace 'add tag' / 'add summary' links with buttons
 -Improve profile pic upload
     -Crop to square
     -Shrink to 100x100
@@ -12,6 +11,7 @@
     -User Treasure Map
 -Reorder tmap to submitted -> copied -> tagged
 -Search for existing tag cats while adding/editing
+    -Fuzzysort?
 -Separate tag categories into distinct rows in Tags table
     -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)
 -Improve frontend look/semantic markup

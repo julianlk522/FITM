@@ -38,7 +38,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 			) : null
 		}
 		<h3>Popular Categories</h3>
-		<ul>
+		<ol id='popular'>
 			{
 				popular_cats.map((cat) => (
 					<li>
@@ -47,7 +47,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 					</li>
 				))
 			}
-		</ul>
+		</ol>
 		<h3>Top Links This Month</h3>
 		<div id='change-period'>
 			<p>Change period:</p>
@@ -59,7 +59,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 				))
 			}
 		</div>
-		<ul id='trending-links'>
+		<ol id='trending-links'>
 			{
 				links.map((link) => (
 					<Link
@@ -72,7 +72,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 					/>
 				))
 			}
-		</ul>
+		</ol>
 	</main>
 </Layout>
 
@@ -93,6 +93,12 @@ const other_periods = Periods.filter((other) => other !== 'month')
 		background: rgba(var(--accent-light), 5%);
 		padding: 3px;
 		text-align: center;
+	}
+	#popular {
+		display: flex;
+		flex-direction: column;
+		flex-wrap: wrap;
+		height: 150px;
 	}
 	#change-period {
 		font-size: 0.9rem;

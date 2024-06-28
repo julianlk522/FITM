@@ -43,7 +43,7 @@ const links: LinkData[] = await get_links_resp.json()
 		</div>
 		{
 			links.length ? (
-				<ul id='links'>
+				<ol id='links'>
 					{links.map((link) => (
 						<Link
 							client:load
@@ -54,7 +54,7 @@ const links: LinkData[] = await get_links_resp.json()
 							User={user}
 						/>
 					))}
-				</ul>
+				</ol>
 			) : (
 				<>
 					<p>No results</p>
