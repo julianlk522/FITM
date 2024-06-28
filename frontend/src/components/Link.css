@@ -9,7 +9,10 @@ p {
 }
 .link {
     border: 1px solid rgba(var(--accent), 25%);
-    margin: 10px 0;
+    margin: 50px 0 0;
+}
+astro-island:first-of-type li.link {
+    margin-top: 0;
 }
 .link.summary-page {
     list-style: none;

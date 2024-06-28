@@ -164,20 +164,25 @@ export default function Link(props: Props) {
             {img_url
                 ? <div class="preview">
                         <img src={img_url} alt={summary ? summary : url} height={100} width={100} />
-                        <a href={url}>
-                            <h2>
-                                {summary ? summary : url}
-                            </h2>
-                        </a>
+                        <div>
+                            <a href={url}>
+                                <h2>
+                                    {summary ? summary : url}
+                                </h2>
+                            </a>
+                            {summary ? <p class='url'>{url}</p> : null}
+                        </div>
                 </div>
-                : <a href={url}>
-                    <h2>
-                        {summary ? summary : url}
-                    </h2>
-                </a>
+                : <>
+                    <a href={url}>
+                        <h2>
+                            {summary ? summary : url}
+                        </h2>
+                    </a>
+                    
+                    {summary ? <p class='url'>{url}</p> : null}
+                </>
             }
-
-            {summary ? <p class='url'>{url}</p> : null}
             
             <p>
                 Submitted by <a href={`/map/${submitted_by}`}>{submitted_by}</a> on {
