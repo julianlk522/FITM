@@ -38,7 +38,7 @@ func (a *EditTagRequest) Bind(r *http.Request) error {
 		return errors.New("missing tag ID")
 	}
 	if a.Categories == "" {
-		return errors.New("missing categories")
+		return errors.New("missing tag category(ies)")
 	}
 
 	a.LastUpdated = time.Now().Format("2006-01-02 15:04:05")

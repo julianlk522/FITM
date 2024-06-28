@@ -30,7 +30,7 @@ func (a *NewLinkRequest) Bind(r *http.Request) error {
 	if a.NewLink.URL == "" {
 		return errors.New("missing url")
 	} else if a.NewLink.Categories == "" {
-		return errors.New("missing categories")
+		return errors.New("missing tag category(ies)")
 	}
 
 	a.SubmitDate = time.Now().Format("2006-01-02 15:04:05")
