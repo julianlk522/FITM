@@ -66,14 +66,14 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get new user ID
-	var id int64
+	var id sql.NullString
 	err = db.QueryRow("SELECT id FROM Users WHERE login_name = ?", signup_data.UserAuth.LoginName).Scan(&id)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// generate and return jwt containing user ID and login_name
-	token_data := map[string]interface{}{"user_id": id, "login_name": signup_data.LoginName}
+	token_data := map[string]interface{}{"user_id": id.String, "login_name": signup_data.LoginName}
 	token_auth := jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(24*time.Hour))
 	_, token, err := token_auth.Encode(token_data)
 	if err != nil {

@@ -20,7 +20,7 @@ import (
 var token_auth *jwtauth.JWTAuth
 
 func init() {
-	// new JWT for protected routes (1-day exiration)
+	// new JWT for protected/optional routes (1-day exiration)
 	token_auth = jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(24*time.Hour))
 	
 }

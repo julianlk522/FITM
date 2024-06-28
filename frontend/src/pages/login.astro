@@ -6,6 +6,55 @@ import Layout from '../layouts/Layout.astro'
 	<script>
 		import get_cookie from '../util/get_cookie'
 
+		async function handle_signup(event: SubmitEvent) {
+			event.preventDefault()
+			const form = event.target as HTMLFormElement
+			const formData = new FormData(form)
+			const login_name = formData.get('login_name')
+			const password = formData.get('password')
+
+			const signup_resp = await fetch('http://127.0.0.1:8000/signup', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					login_name,
+					password,
+				}),
+			})
+			const signup_data = await signup_resp.json()
+
+			if (signup_data.token) {
+				// set cookie
+				document.cookie = `token=${signup_data.token}; max-age=3600; SameSite=strict; Secure`
+
+				// redirect
+				// check if redirect_to is set
+				if (document.cookie.includes('redirect_to')) {
+					const redirect_to = get_cookie(
+						'redirect_to',
+						document.cookie
+					)
+
+					// clear cookie
+					document.cookie =
+						'redirect_to=; max-age=0; SameSite=strict; Secure'
+
+					// redirect
+					window.location.href = redirect_to
+
+					// else go to home
+				} else {
+					window.location.href = '/'
+				}
+			} else {
+				alert(signup_data.error)
+			}
+
+			return
+		}
+
 		async function handle_login(event: SubmitEvent) {
 			event.preventDefault()
 			const form = event.target as HTMLFormElement
@@ -56,28 +105,31 @@ import Layout from '../layouts/Layout.astro'
 		}
 
 		document
-			.getElementById('login_form')
+			.getElementById('signup')
+			?.addEventListener('submit', (e) => handle_signup(e))
+		document
+			.getElementById('login')
 			?.addEventListener('submit', (e) => handle_login(e))
 	</script>
 	<main>
 		<h2>Log In</h2>
-		<form id='login_form'>
+		<form id='login'>
 			<!-- TODO: add message if user redirected from trying to like a link, etc. -->
-			<label for='username'>Username</label>
-			<input type='text' id='login_name' name='login_name' />
+			<label for='login_name'>Name</label>
+			<input type='text' name='login_name' />
 			<br />
 			<label for='password'>Password</label>
-			<input type='password' id='password' name='password' />
+			<input type='password' name='password' />
 			<input type='submit' value='Submit' />
 		</form>
+
 		<h2>Sign Up</h2>
-		<!-- TODO: make sure this works -->
-		<form action='localhost:8000/signup'>
-			<label for='username'>Username</label>
-			<input type='text' id='login_name' name='login_name' />
+		<form id='signup'>
+			<label for='login_name'>Name</label>
+			<input type='text' name='login_name' />
 			<br />
 			<label for='password'>Password</label>
-			<input type='password' id='password' name='password' />
+			<input type='password' name='password' />
 			<input type='submit' value='Submit' />
 		</form>
 	</main>
