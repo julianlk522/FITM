@@ -19,11 +19,11 @@ let user = Astro.cookies.get('user')?.value
 	</head>
 	<nav>
 		<a href='/'>Home</a>
+		<a href='/about'>About</a>
 		{
 			user ? (
-			<a href=`/map/${user}` id="username">{user}</a>) : (<a href='/login'>Login</a>)
+			<a href=`/map/${user}` id="user-tmap-link">{user}</a>) : (<a href='/login' id="login-link">Login</a>)
 		}
-		<a href='/about'>About</a>
 	</nav>
 	<body>
 		<slot />
@@ -48,6 +48,14 @@ let user = Astro.cookies.get('user')?.value
 			font-family: system-ui, sans-serif;
 			background: #13151a;
 			background-size: 224px;
+		}
+		nav {
+			max-width: 1080px;
+			margin: 0 auto;
+		}
+		#user-tmap-link,
+		#login-link {
+			float: right;
 		}
 		main {
 			margin: auto;
