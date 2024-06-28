@@ -19,17 +19,30 @@ type HTMLMeta struct {
 
 func MetaFromHTMLTokens(resp io.Reader) (hm HTMLMeta) {
 	z := html.NewTokenizer(resp)
+	
+	title_tag := false
+	title_found := false
 
 	for {
-		tt := z.Next()
-		switch tt {
+		token_type := z.Next()
+		switch token_type {
 			case html.ErrorToken:
 				return
 			case html.SelfClosingTagToken, html.StartTagToken:
 				t := z.Token()
-				if t.Data == "meta" {
+				if t.Data == "title" {
+					title_tag = true
+				} else if t.Data == "meta" {
 					AssignTokenPropertyToHTMLMeta(t, &hm)
 				}
+			case html.TextToken:
+				if title_tag && !title_found {
+					t := z.Token()
+					hm.Title = t.Data
+
+					title_found = true
+				}
+				title_tag = false
 		}
 	}
 }
@@ -73,7 +86,7 @@ func AssignTokenPropertyToHTMLMeta(t html.Token, hm *HTMLMeta) {
 
 func ExtractMetaProperty(t html.Token, prop string) (content string, ok bool) {
 	for _, attr := range t.Attr {
-		if attr.Key == "property" && attr.Val == prop {
+		if (attr.Key == "property" || attr.Key == "name") && attr.Val == prop {
 			ok = true
 		}
 
