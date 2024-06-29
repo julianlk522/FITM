@@ -140,8 +140,8 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 // Todo: edit to search global categories instead
 func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {
 
-	// Limit 10 for now
-	const LIMIT int = 10
+	// Limit 15 for now
+	const LIMIT int = 15
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
@@ -189,7 +189,7 @@ func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(categories); i++ {
 		category_counts[i].Category = categories[i]
 
-		get_cat_count_sql := fmt.Sprintf(`select count(*) as count_with_cat from (select link_id from Tags where ',' || categories || ',' like '%%,%s,%%' group by Tags.id)`, categories[i])
+		get_cat_count_sql := fmt.Sprintf(`select count(*) as count_with_cat from (select id from Links where ',' || global_cats || ',' like '%%,%s,%%' group by id)`, categories[i])
 
 		var c sql.NullInt32
 		err = db.QueryRow(get_cat_count_sql).Scan(&c)
