@@ -21,7 +21,7 @@ export const onRequest = defineMiddleware((context, next) => {
                 
                 // set user cookie if verified
                 } else {
-
+                    
                     // @ts-ignore
                     context.cookies.set('user', decoded.login_name, {path: '/', maxAge: 3600, sameSite: 'strict', secure: true})
                 }

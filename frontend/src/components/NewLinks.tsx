@@ -75,7 +75,7 @@ export default function NewLinks(props: Props) {
             {submitted_links.length ? (
                 <div id='submitted'>
                     <h2>Submitted Links</h2>
-                    <ul>
+                    <ol>
                         {submitted_links.map((link) => (
                             <Link
                                 key={link.ID}
@@ -86,7 +86,7 @@ export default function NewLinks(props: Props) {
                                 IsTagPage={false} 
                             />
                         ))}
-                    </ul>
+                    </ol>
                 </div>
             ) : null}
         </section>

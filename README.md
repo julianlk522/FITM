@@ -2,18 +2,27 @@
 
 ## Todos:
 
+-Add scroll to top button on pages with link listings?
+-Reset tmap cat filters button
+-Add edit tmap about section
 -Improve profile pic upload
-    -Crop to square
-    -Shrink to 100x100
+    -Enforce square or at least ___ aspect ratio
 -Pagination
     -Home
     -Top Links 
     -User Treasure Map
 -Reorder tmap to submitted -> copied -> tagged
+-Perform action that prompted redirect (like or copy) after redirect_to login sequence completed
+-Way to prevent many tags from flooding global tag
+    -might not happen actually? would require many different cats which is not super likely i would not imagine
+-Rethink CalculateGlobalCategories algo
+    -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
+-Limit to ~15 categories / tag
+-Top global tag cats for period top links page
 -Search for existing tag cats while adding/editing
     -Fuzzysort?
--Separate tag categories into distinct rows in Tags table
-    -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)
+-Enforce consistent coding names
+    -e.g., Global Categores vs. Global Tag categories
 -Improve frontend look/semantic markup
     -A11y, responsive layouts for phones / tablets
     -Link articles
@@ -22,6 +31,8 @@
 -Remove repeat code wherever possible
     -GetJWTClaims
 -Some way to visualize how Global Cats are determined
+-Separate tag categories into distinct rows in Tags table
+    -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)
 
 ## Why?
 
