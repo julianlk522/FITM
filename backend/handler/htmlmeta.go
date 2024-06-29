@@ -30,19 +30,19 @@ func MetaFromHTMLTokens(resp io.Reader) (hm HTMLMeta) {
 				return
 			case html.SelfClosingTagToken, html.StartTagToken:
 				t := z.Token()
-				if t.Data == "title" {
+				if t.Data == "title" && !title_found {
 					title_tag = true
 				} else if t.Data == "meta" {
 					AssignTokenPropertyToHTMLMeta(t, &hm)
 				}
 			case html.TextToken:
-				if title_tag && !title_found {
+				if title_tag {
 					t := z.Token()
 					hm.Title = t.Data
 
+					title_tag = false
 					title_found = true
 				}
-				title_tag = false
 		}
 	}
 }
