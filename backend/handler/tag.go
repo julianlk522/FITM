@@ -337,11 +337,9 @@ func RecalculateGlobalCategories(db *sql.DB, link_id string) {
 	// (technically should affect all links that share 1+ categories but that's too complicated.) 
 	// (Plus, many links will not be seen enough to justify being updated constantly. Makes enough sense to only update a link's global cats when a new tag is added to that link.)
 
-	// Global category(ies) based on aggregated scores from all tags of the link, based on time between link creation and tag creation/last edit
 	category_scores := make(map[string]float32)
-
 	// Which tags have the earliest last_updated of this link's tags?
-	// (in other words, occupying the greatest % of the link's lifetime without revision)
+	// (in other words, occupying the greatest % of the link's lifespan without revision)
 	// What are the categories of those tags? (top 20)
 
 	rows, err := db.Query(`SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, categories 
@@ -365,37 +363,39 @@ func RecalculateGlobalCategories(db *sql.DB, link_id string) {
 		earliest_tags = append(earliest_tags, t)
 	}
 
-	// 50% Max category score from across all tags used as threshold for assignment to Global Categories
+	// 50% Max category score from across all tags used as threshold for assignment to Global Tag categories
 	var max_cat_score float32
 
-	// Row score limit determined by number of tags so total score is standardized
-	row_score_limit := 1 / float32(len(earliest_tags))
+	// Tag score limit determined by number of tags so combined scores always sum to 1
+	tag_score_limit := 1 / float32(len(earliest_tags))
 	for _, tag := range earliest_tags {
 
 		// convert to all lowercase
 		lc := strings.ToLower(tag.Categories)
 
-		// use square root of life span overlap in order to smooth out scores and allow brand-new tags to still have some influence
+		// take square root of lifespan overlap to smooth out scores
+		// (allow brand-new tags to still have some influence)
 		// e.g. sqrt(0.01) = 0.1
 		tag.LifeSpanOverlap = float32(math.Sqrt(float64(tag.LifeSpanOverlap)))
 
-		// split row effect among categories, if multiple
+		// add scores for each category if multiple
+		// Note: categories that appear multiple times across different tags will have multipled scores
+		// (more likely to affect Global Tag categories)
 		if strings.Contains(tag.Categories, ",") {
 			c := strings.Split(lc, ",")
-			split := float32(len(c))
 
-			// add scores for each category in this tag
-			// Note: categories which appear multiple times across different tags will have multipled scores, making them more likely to affect Global Categories.
 			for _, cat := range c {
-				category_scores[cat] += tag.LifeSpanOverlap * row_score_limit / split
+				category_scores[cat] += tag.LifeSpanOverlap * tag_score_limit
 
 				// update max score (to be used when assigning global categories)
 				if category_scores[cat] > max_cat_score {
 					max_cat_score = category_scores[cat]
 				}
 			}
+
+		// else add score for single category
 		} else {
-			category_scores[lc] += tag.LifeSpanOverlap * row_score_limit
+			category_scores[lc] += tag.LifeSpanOverlap * tag_score_limit
 
 			// update max score
 			if category_scores[lc] > max_cat_score {
@@ -404,14 +404,25 @@ func RecalculateGlobalCategories(db *sql.DB, link_id string) {
 		}
 	}
 
-	// Assign categories scoring 50%+ of max score to Global Categories
+	// Sort categories alphabetically
+	sorted_cats := make([]string, 0, len(category_scores))
+	for cat := range category_scores {
+		sorted_cats = append(sorted_cats, cat)
+	}
+	slices.Sort(sorted_cats)
+	
+	// Assign categories scoring 50%+ of max score to Global Tag
 	var global_cats string
-	for cat, score := range category_scores {
-		if score >= 0.5*max_cat_score {
+	for _, cat := range sorted_cats {
+		if category_scores[cat] >= 0.5*max_cat_score {
 			global_cats += cat + ","
 		}
 	}
-	global_cats = global_cats[:len(global_cats)-1]
+
+	// Remove trailing comma
+	if len(global_cats) > 0 {
+		global_cats = global_cats[:len(global_cats)-1]
+	}
 
 	// Update link
 	_, err = db.Exec("UPDATE Links SET global_cats = ? WHERE id = ?;", global_cats, link_id)
