@@ -14,7 +14,7 @@ p {
 astro-island:first-of-type li.link {
     margin-top: 0;
 }
-.link.summary-page {
+.link.single {
     list-style: none;
 }
 .tag-icon {

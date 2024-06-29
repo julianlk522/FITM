@@ -12,11 +12,12 @@ export default function NewSummary(props: Props) {
 
     const [error, set_error] = useState<string | undefined>(undefined)
 
+
     async function handle_submit(event: SubmitEvent, token: string | undefined) {
         event.preventDefault()
 
         if (!token) {
-            document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/; max-age=3600; SameSite=strict; Secure`
+            document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=3600; SameSite=strict; Secure`
             return (window.location.href = '/login')
         }
         const form = event.target as HTMLFormElement
@@ -35,7 +36,7 @@ export default function NewSummary(props: Props) {
             }),
         })
         if (new_summary_resp.statusText === "Unauthorized") {
-            document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/; max-age=3600; SameSite=strict; Secure`
+            document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=3600; SameSite=strict; Secure`
             window.location.href = '/login'
         }
         let new_summary_data = await new_summary_resp.json()
@@ -53,17 +54,18 @@ export default function NewSummary(props: Props) {
 
     return (
         <form onSubmit={async (e) => await handle_submit(e, token)}>
-            <h3>Enter New Summary Details</h3>
-            {error 
-                ? 
+            <h2>Add New Summary</h2>
+            {error
+                ?
                 <p class='error'>{`Error: ${error}`}</p>
                 : null
             }
-                <label for='summary'>Summary</label>
-                <input type='text' id='summary' name='summary' />
-                <button type='submit'>
-                    Submit
-                </button>
-            </form>
+        
+            <label for='summary'>Summary</label>
+            <input type='text' id='summary' name='summary' />
+            <button type='submit'>
+                Submit
+            </button>
+        </form>
     );
 }

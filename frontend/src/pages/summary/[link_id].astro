@@ -30,16 +30,16 @@ const { Link: link, Summaries: summaries } = summary_data
 <Layout Title=`Summaries for ${summary_data.Link.Summary}`>
 	<script>
 		function handle_redirect() {
-			document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/; max-age=3600; SameSite=strict; Secure`
+			document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=3600; SameSite=strict; Secure`
+			return (window.location.href = '/login')
 		}
 
 		document
-			.getElementById('login_link')
+			.getElementById('login-redirect-link')
 			?.addEventListener('click', handle_redirect)
 	</script>
 	<main>
 		<section>
-			<h2>Link:</h2>
 			<Link
 				client:load
 				Link={link}
@@ -50,12 +50,21 @@ const { Link: link, Summaries: summaries } = summary_data
 			/>
 		</section>
 		<section>
-			<h2>Summaries:</h2>
 			{
 				user ? (
 					<NewSummary client:load Token={token} LinkID={link_id} />
-				) : null
+				) : (
+					<p>
+						<a id='login-redirect-link' href='#'>
+							Login
+						</a>
+						<span> to like summaries or add your own.</span>
+					</p>
+				)
 			}
+		</section>
+		<section>
+			<h2>Top Summaries</h2>
 			<ol>
 				{
 					summaries.length ? (
@@ -77,16 +86,6 @@ const { Link: link, Summaries: summaries } = summary_data
 					)
 				}
 			</ol>
-			{
-				user ? null : (
-					<span>
-						<a id='login_link' href='/login'>
-							Login
-						</a>{' '}
-						to add a summary.
-					</span>
-				)
-			}
 		</section>
 	</main>
 </Layout>

@@ -10,7 +10,7 @@ const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
 if (!user) {
 	Astro.cookies.set('redirect_to', Astro.url.pathname, {
-		path: '/',
+		path: '/login',
 		maxAge: 3600,
 		sameSite: 'strict',
 		secure: true,

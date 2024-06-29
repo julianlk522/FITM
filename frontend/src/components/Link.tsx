@@ -66,7 +66,7 @@ export default function Link(props: Props) {
 
     async function handle_like() {
         if (!token) {
-            document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/; max-age=3600; SameSite=strict; Secure`
+            document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=3600; SameSite=strict; Secure`
             return window.location.href = '/login'
         }
 
@@ -116,7 +116,7 @@ export default function Link(props: Props) {
 
     async function handle_copy() {
         if (!token) {
-            document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/; max-age=3600; SameSite=strict; Secure`
+            document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=3600; SameSite=strict; Secure`
             return window.location.href = '/login'
         }
 
@@ -160,7 +160,7 @@ export default function Link(props: Props) {
     }
 
     return (
-        <li class={`link${is_summary_page ? ' summary-page' : ''}`}>
+        <li class={`link${is_summary_page || is_tag_page ? ' single' : ''}`}>
             {img_url
                 ? <div class="preview">
                         <img src={img_url} alt={summary ? summary : url} height={100} width={100} />
