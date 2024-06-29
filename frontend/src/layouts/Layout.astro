@@ -49,12 +49,12 @@ let user = Astro.cookies.get('user')?.value
 			background: #13151a;
 			background-size: 224px;
 		}
-		nav {
+		nav,
+		footer {
 			max-width: 1080px;
 			margin: 0 auto;
 		}
-		#user-tmap-link,
-		#login-link {
+		nav :is(#user-tmap-link, #login-link) {
 			float: right;
 		}
 		main {
