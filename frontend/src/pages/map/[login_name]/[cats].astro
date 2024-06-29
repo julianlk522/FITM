@@ -39,13 +39,21 @@ if (!used_sections.length) {
 <Layout Title=`${login_name}'s Treasure Map (Filtered)`>
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
-		<p>
-			{
-				cats_split.length > 1
-					? `Category Filters: ${cats_split.join(', ')}`
-					: `Category Filter: ${cats_split[0]}`
-			}
-		</p>
+		<h2 id='subtitle'>(Filtered)</h2>
+		{
+			cats_split.length > 1 ? (
+				<>
+					<h3>Category Filters: </h3>
+					<p>{cats_split.join(', ')}</p>
+				</>
+			) : (
+				<>
+					<h3>Category Filter: </h3>
+					<p>{cats_split[0]}</p>
+				</>
+			)
+		}
+		<p></p>
 		<section id='overview'>
 			<div>
 				{
@@ -89,32 +97,34 @@ if (!used_sections.length) {
 				return (
 					<section id={s} class='link_section'>
 						<h2>{s}</h2>
-						{tmap[s].map((link) => {
-							if (s === 'Submitted' || s === 'Tagged') {
-								return (
-									<Link
-										client:load
-										Link={link}
-										CategoriesFromUser={login_name}
-										IsSummaryPage={false}
-										IsTagPage={false}
-										Token={token}
-										User={signed_in_user}
-									/>
-								)
-							} else {
-								return (
-									<Link
-										client:load
-										Link={link}
-										IsSummaryPage={false}
-										IsTagPage={false}
-										Token={token}
-										User={signed_in_user}
-									/>
-								)
-							}
-						})}
+						<ol>
+							{tmap[s].map((link) => {
+								if (s === 'Submitted' || s === 'Tagged') {
+									return (
+										<Link
+											client:load
+											Link={link}
+											CategoriesFromUser={login_name}
+											IsSummaryPage={false}
+											IsTagPage={false}
+											Token={token}
+											User={signed_in_user}
+										/>
+									)
+								} else {
+									return (
+										<Link
+											client:load
+											Link={link}
+											IsSummaryPage={false}
+											IsTagPage={false}
+											Token={token}
+											User={signed_in_user}
+										/>
+									)
+								}
+							})}
+						</ol>
 					</section>
 				)
 			})
@@ -123,6 +133,14 @@ if (!used_sections.length) {
 </Layout>
 
 <style>
+	h1 {
+		margin-bottom: 10px;
+	}
+	#subtitle {
+		font-size: 1rem;
+		margin-bottom: 60px;
+		text-align: center;
+	}
 	#overview {
 		display: flex;
 		gap: 50px;
