@@ -40,20 +40,31 @@ if (!used_sections.length) {
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
 		<h2 id='subtitle'>(Filtered)</h2>
-		{
-			cats_split.length > 1 ? (
-				<>
-					<h3>Category Filters: </h3>
-					<p>{cats_split.join(', ')}</p>
-				</>
-			) : (
-				<>
-					<h3>Category Filter: </h3>
-					<p>{cats_split[0]}</p>
-				</>
-			)
-		}
-		<p></p>
+		<section id='filters'>
+			{
+				cats_split.length > 1 ? (
+					<>
+						<div>
+							<h3>Category Filters: </h3>
+							<p id='reset-category-filters'>
+								<a href={`/map/${login_name}`}>Reset</a>
+							</p>
+						</div>
+						<p>{cats_split.join(', ')}</p>
+					</>
+				) : (
+					<>
+						<div>
+							<h3>Category Filter: </h3>
+							<p id='reset-category-filters'>
+								<a href={`/map/${login_name}`}>Reset</a>
+							</p>
+						</div>
+						<p>{cats_split[0]}</p>
+					</>
+				)
+			}
+		</section>
 		<section id='overview'>
 			<div>
 				{
@@ -141,6 +152,11 @@ if (!used_sections.length) {
 		margin-bottom: 60px;
 		text-align: center;
 	}
+	#reset-category-filters {
+		margin: 0;
+		line-height: 0.5;
+	}
+	#filters,
 	#overview {
 		display: flex;
 		gap: 50px;
