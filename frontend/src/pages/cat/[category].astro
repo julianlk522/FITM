@@ -39,53 +39,72 @@ if (!links || links.length === 0) {
 <Layout Title='Welcome to the Open Internet Treasure Map (OITM)'>
 	<main>
 		<h1>{category}</h1>
-		{subcats.length ? <h2>Subcategories</h2> : null}
-		{
-			subcats.length ? (
-				<ul>
-					{subcats.map((subcat) => (
+		<section>
+			{
+				subcats.length ? (
+					<>
+						<h2>Subcategories</h2>
+						<ul>
+							{subcats.map((subcat) => (
+								<li>
+									<>
+										<strong>
+											<a
+												href={`/cat/${category},${subcat.Category}`}
+											>
+												{subcat.Category}
+											</a>
+										</strong>
+										<span>: ({subcat.Count})</span>
+									</>
+								</li>
+							))}
+						</ul>
+					</>
+				) : (
+					<p>No further subcategories</p>
+				)
+			}
+		</section>
+		<section>
+			<h2>Top Contributors</h2>
+			<ol>
+				{
+					top_contributors.map((contributor: CategoryContributor) => (
 						<li>
-							<a href={`/cat/${category},${subcat.Category}`}>
-								{subcat.Category}
-							</a>
-							: <span>({subcat.Count})</span>
+							<strong>
+								<a href={`/map/${contributor.LoginName}`}>
+									{contributor.LoginName}
+								</a>
+							</strong>
+							<span>: ({contributor.LinksSubmitted})</span>
 						</li>
-					))}
-				</ul>
-			) : (
-				<p>No further subcategories</p>
-			)
-		}
-		<h2>Top Contributors</h2>
-		<ol>
-			{
-				top_contributors.map((contributor: CategoryContributor) => (
-					<li>
-						<strong>
-							<a href={`/map/${contributor.LoginName}`}>
-								{contributor.LoginName}
-							</a>
-						</strong>
-						<span>: ({contributor.LinksSubmitted})</span>
-					</li>
-				))
-			}
-		</ol>
-		<h2>Top Links</h2>
-		<ol>
-			{
-				links.map((link) => (
-					<Link
-						client:load
-						Link={link}
-						IsSummaryPage={false}
-						Token={token}
-						User={user}
-					/>
-				))
-			}
-		</ol>
+					))
+				}
+			</ol>
+		</section>
+		<section>
+			<h2>Top Links</h2>
+			<ol>
+				{
+					links.map((link) => (
+						<Link
+							client:load
+							Link={link}
+							IsSummaryPage={false}
+							IsTagPage={false}
+							Token={token}
+							User={user}
+						/>
+					))
+				}
+			</ol>
+		</section>
 	</main>
 </Layout>
 
-<style></style>
+<style>
+	li strong:has(+ span) a {
+		display: inline-block;
+	}
+</style>

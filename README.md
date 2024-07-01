@@ -4,6 +4,7 @@
 
 -Add manual summary to new link page
 -Add scroll to top button on pages with link listings?
+    -todo: tmap, filtered tmap, top links for period
 -Add edit tmap about section
 -Improve profile pic upload
     -Enforce square or at least ___ aspect ratio
