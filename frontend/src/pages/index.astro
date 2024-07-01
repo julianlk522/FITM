@@ -26,6 +26,39 @@ const other_periods = Periods.filter((other) => other !== 'month')
 ---
 
 <Layout Title='Welcome to the Open Internet Treasure Map (OITM)'>
+	<script>
+		const scroll_up_btn = document.getElementById('scroll-up-btn')
+		const title_section = document.querySelector('section:has(h1)')
+
+		function assign_scroll_observer() {
+			if (!scroll_up_btn || !title_section) {
+				return
+			}
+			const observer = new IntersectionObserver((entries) => {
+				entries.forEach((entry) => {
+					if (!entry.isIntersecting) {
+						scroll_up_btn.style.display = 'flex'
+					} else {
+						scroll_up_btn.style.display = 'none'
+					}
+				})
+			})
+			observer.observe(title_section)
+		}
+
+		function assign_scroll_click_handler() {
+			if (!scroll_up_btn) {
+				return
+			}
+
+			scroll_up_btn.addEventListener('click', () => {
+				window.scrollTo({ top: 0 })
+			})
+		}
+
+		assign_scroll_observer()
+		assign_scroll_click_handler()
+	</script>
 	<main>
 		<section>
 			<img class='chest-backdrop' src='../../chest.svg' />
@@ -79,6 +112,20 @@ const other_periods = Periods.filter((other) => other !== 'month')
 				}
 			</ol>
 		</section>
+		<div id='scroll-up-btn'>
+			<svg
+				xmlns='http://www.w3.org/2000/svg'
+				width='24px'
+				height='24px'
+				viewBox='0 0 24 24'
+			>
+				<path
+					fill='currentColor'
+					d='M12.75 20a.75.75 0 0 1-1.5 0v-9.25H6a.75.75 0 0 1-.53-1.28l6-6a.75.75 0 0 1 1.06 0l6 6a.75.75 0 0 1-.53 1.28h-5.25z'
+				></path>
+			</svg>
+			<p>To Top</p>
+		</div>
 	</main>
 </Layout>
 
@@ -119,5 +166,27 @@ const other_periods = Periods.filter((other) => other !== 'month')
 	}
 	#top-links {
 		padding: 0;
+	}
+	#scroll-up-btn {
+		display: none;
+		flex-direction: column;
+		align-items: center;
+		position: fixed;
+		bottom: 10px;
+		right: max(10px, calc((100% - min(100%, 800px)) / 4 - 25px));
+	}
+	#scroll-up-btn svg {
+		width: 24px;
+		height: 24px;
+	}
+	#scroll-up-btn p {
+		font-size: 0.9rem;
+		margin: 0;
+	}
+	#scroll-up-btn:hover {
+		cursor: pointer;
+	}
+	#scroll-up-btn.visible {
+		display: flex;
 	}
 </style>
