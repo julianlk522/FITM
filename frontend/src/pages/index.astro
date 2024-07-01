@@ -27,52 +27,58 @@ const other_periods = Periods.filter((other) => other !== 'month')
 
 <Layout Title='Welcome to the Open Internet Treasure Map (OITM)'>
 	<main>
-		<img class='chest-backdrop' src='../../chest.svg' />
-		<h1>Welcome to OITM</h1>
-		<h2 class='subtitle'>a map of the web's treasures</h2>
-		{
-			user ? (
-				<p>
-					<a href={`/new`}>Submit new link</a>
-				</p>
-			) : null
-		}
-		<h3>Popular Categories</h3>
-		<ol id='popular'>
+		<section>
+			<img class='chest-backdrop' src='../../chest.svg' />
+			<h1>Welcome to OITM</h1>
+			<h2 class='subtitle'>a map of the web's treasures</h2>
 			{
-				popular_cats.map((cat) => (
-					<li>
-						<a href={`/cat/${cat.Category}`}>{cat.Category}</a>
-						<span>({cat.Count})</span>
-					</li>
-				))
+				user ? (
+					<p>
+						<a href={`/new`}>Submit new link</a>
+					</p>
+				) : null
 			}
-		</ol>
-		<h3>Top Links This Month</h3>
-		<div id='change-period'>
-			<p>Change period:</p>
-			{
-				other_periods.map((period) => (
-					<a class='period' href={`/top/${period}`}>
-						{period}
-					</a>
-				))
-			}
-		</div>
-		<ol id='trending-links'>
-			{
-				links.map((link) => (
-					<Link
-						client:load
-						Link={link}
-						IsSummaryPage={false}
-						IsTagPage={false}
-						Token={token}
-						User={user}
-					/>
-				))
-			}
-		</ol>
+		</section>
+		<section>
+			<h2>Popular Categories</h2>
+			<ol id='popular'>
+				{
+					popular_cats.map((cat) => (
+						<li>
+							<a href={`/cat/${cat.Category}`}>{cat.Category}</a>
+							<span>({cat.Count})</span>
+						</li>
+					))
+				}
+			</ol>
+		</section>
+		<section>
+			<h3>Top Links This Month</h3>
+			<div id='change-period'>
+				<p>Change period:</p>
+				{
+					other_periods.map((period) => (
+						<a class='period' href={`/top/${period}`}>
+							{period}
+						</a>
+					))
+				}
+			</div>
+			<ol id='top-links'>
+				{
+					links.map((link) => (
+						<Link
+							client:load
+							Link={link}
+							IsSummaryPage={false}
+							IsTagPage={false}
+							Token={token}
+							User={user}
+						/>
+					))
+				}
+			</ol>
+		</section>
 	</main>
 </Layout>
 
@@ -111,7 +117,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 	.period {
 		margin-left: 0.5rem;
 	}
-	#trending-links {
+	#top-links {
 		padding: 0;
 	}
 </style>

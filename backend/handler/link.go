@@ -477,7 +477,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract meta data
+	// Extract meta tag content
 	defer resp.Body.Close()
 	meta := MetaFromHTMLTokens(resp.Body)
 
@@ -827,7 +827,7 @@ func ScanLinksSignedIn(db *sql.DB, rows *sql.Rows, user_id string) *[]model.Link
 			log.Fatal(err)
 		}
 
-		// Add IsLiked and IsCopied
+		// Add IsLiked / IsCopied / IsTagged
 		var l sql.NullInt32
 		var t sql.NullInt32
 		var c sql.NullInt32

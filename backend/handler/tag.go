@@ -338,9 +338,9 @@ func RecalculateGlobalCategories(db *sql.DB, link_id string) {
 	// (Plus, many links will not be seen enough to justify being updated constantly. Makes enough sense to only update a link's global cats when a new tag is added to that link.)
 
 	category_scores := make(map[string]float32)
-	// Which tags have the earliest last_updated of this link's tags?
+	// Which tags have the earliest last_updated of this link's tags? (top 20)
 	// (in other words, occupying the greatest % of the link's lifespan without revision)
-	// What are the categories of those tags? (top 20)
+	// What are the categories of those tags?
 
 	rows, err := db.Query(`SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, categories 
 		FROM Tags 

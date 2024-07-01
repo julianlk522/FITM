@@ -481,7 +481,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		tmap.Categories = cat_counts
 		render.JSON(w, r, tmap)
 		
-	// User not signed in: omit isLiked and isCopied fields
+	// User not signed in: omit isLiked / isCopied / isTagged fields
 	} else {
 		get_submitted_sql := base_fields + submitted_from + submitted_where
 		get_tagged_sql := base_fields + tagged_from + tagged_where
@@ -728,7 +728,7 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 		tmap.Categories = cat_counts
 		render.JSON(w, r, tmap)
 		
-	// User not signed in: omit isLiked and isCopied fields
+	// User not signed in: omit isLiked / isCopied / isTagged fields
 	} else {
 		submitted_sql := base_fields + submitted_from + submitted_where
 		tagged_sql := base_fields + tagged_from + tagged_where

@@ -2,8 +2,8 @@
 
 ## Todos:
 
+-Add manual summary to new link page
 -Add scroll to top button on pages with link listings?
--Reset tmap cat filters button
 -Add edit tmap about section
 -Improve profile pic upload
     -Enforce square or at least ___ aspect ratio
@@ -18,6 +18,7 @@
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 -Limit to ~15 categories / tag
+-Edit summaries page / queries to not attribute auto summary to link author
 -Top global tag cats for period top links page
 -Search for existing tag cats while adding/editing
     -Fuzzysort?
@@ -31,6 +32,8 @@
 -Remove repeat code wherever possible
     -GetJWTClaims
 -Some way to visualize how Global Cats are determined
+-Merge GetProfile handler logic into GetTreasureMap handler
+    -(since it is only used on tmap page alongside link data)
 -Separate tag categories into distinct rows in Tags table
     -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)
 

@@ -1,5 +1,6 @@
 ---
 import Link from '../../../components/Link'
+import TagCategory from '../../../components/TagCategory'
 import Layout from '../../../layouts/Layout.astro'
 import type { TreasureMap } from '../../../types'
 import { tmap_sections } from '../../../types'
@@ -50,7 +51,17 @@ if (!used_sections.length) {
 								<a href={`/map/${login_name}`}>Reset</a>
 							</p>
 						</div>
-						<p>{cats_split.join(', ')}</p>
+						<ul id='categories-grid'>
+							{cats_split.map((cat) => {
+								return (
+									<TagCategory
+										Category={cat}
+										EditActivated={false}
+										Deleted={undefined}
+									/>
+								)
+							})}
+						</ul>
 					</>
 				) : (
 					<>
@@ -60,7 +71,13 @@ if (!used_sections.length) {
 								<a href={`/map/${login_name}`}>Reset</a>
 							</p>
 						</div>
-						<p>{cats_split[0]}</p>
+						<ul id='categories-grid'>
+							<TagCategory
+								Category={cats_split[0]}
+								EditActivated={false}
+								Deleted={undefined}
+							/>
+						</ul>
 					</>
 				)
 			}
@@ -154,7 +171,12 @@ if (!used_sections.length) {
 	}
 	#reset-category-filters {
 		margin: 0;
-		line-height: 0.5;
+	}
+	#categories-grid {
+		display: flex;
+		flex-wrap: wrap;
+		padding-inline-start: 0;
+		gap: 10px;
 	}
 	#filters,
 	#overview {

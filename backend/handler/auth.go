@@ -10,7 +10,8 @@ import (
 )
 
 // MODIFIED JWT VERIFIER
-// (requests with no token are allowed, but getting isLiked and isCopied on links requires a token)
+// (requests with no token are allowed, but getting isLiked / isCopied / isTagged on links requires a token)
+
 // From "github.com/go-chi/jwtauth/v5":
 // Verifier http middleware handler will verify a JWT string from a http request.
 //
@@ -64,7 +65,8 @@ func VerifyRequestOptional(ja *jwtauth.JWTAuth, r *http.Request, findTokenFns ..
 }
 
 // MODIFIED JWT AUTHENTICATOR
-// (requests with no token are allowed, but getting isLiked and isCopied on links requires a token)
+// (requests with no token are allowed, but getting isLiked / isCopied / isTagged on links requires a token)
+
 // From "github.com/go-chi/jwtauth/v5":
 // Authenticator is a default authentication middleware to enforce access from the
 // Verifier middleware request context values. The Authenticator sends a 401 Unauthorized
