@@ -21,6 +21,22 @@ export default function NewLinks(props: Props) {
         const form = event.target as HTMLFormElement
         const formData = new FormData(form)
         const url = formData.get('url')
+        const summary = formData.get('summary')
+
+        let resp_body: string
+
+        if (summary) {
+            resp_body = JSON.stringify({
+                url,
+                categories: categories.join(','),
+                summary
+            })
+        } else {
+            resp_body = JSON.stringify({
+                url,
+                categories: categories.join(','),
+            })
+        }
     
         const new_link_resp = await fetch('http://127.0.0.1:8000/links', {
             method: 'POST',
@@ -28,10 +44,7 @@ export default function NewLinks(props: Props) {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify({
-                url,
-                categories: categories.join(','),
-            }),
+            body: resp_body,
         })
         if (new_link_resp.statusText === "Unauthorized") {
             window.location.href = '/login'
@@ -46,6 +59,7 @@ export default function NewLinks(props: Props) {
             set_submitted_links([...submitted_links, new_link_data])
             set_categories([])
             set_error(undefined)
+            form.reset()
         }
     
         return
@@ -53,7 +67,7 @@ export default function NewLinks(props: Props) {
 
     return (
         <section>
-            <h2>Enter New Link Details</h2>
+            <h2>Link Details</h2>
             
             {error
                 ? 
@@ -65,6 +79,10 @@ export default function NewLinks(props: Props) {
             <form onSubmit={async (e) => await handle_submit(e)}>
                 <label for='url'>URL</label>
                 <input type='text' id='url' name='url' />
+                <br />
+
+                <label for='summary'>Summary (optional)</label>
+                <textarea id='summary' name='summary' rows={3} cols={50} />
                 <br />
 
                 <NewTag Categories={categories} SetCategories={set_categories} SetError={set_error} />

@@ -9,6 +9,7 @@ import (
 type NewLink struct {
 	URL string `json:"url"`
 	Categories string `json:"categories"`
+	Summary string `json:"summary:omitempty"`
 }
 
 type NewLinkRequest struct {

@@ -481,21 +481,21 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 	meta := MetaFromHTMLTokens(resp.Body)
 
-	// Get automatically-generated link summary from meta description or title
-	var auto_summary string
-
-	if meta.OGDescription != "" {
-		auto_summary = meta.OGDescription
-	} else if meta.Description != "" {
-		auto_summary = meta.Description
-	} else if meta.OGTitle != "" {
-		auto_summary = meta.OGTitle
-	} else if meta.Title != "" {
-		auto_summary = meta.Title
-	} else if meta.OGSiteName != "" {
-		auto_summary = meta.OGSiteName
+	// If summary not provided in request, get automatically generated summary from meta tag data
+	if link_data.Summary == "" {
+		switch {
+			case meta.OGDescription != "":
+				link_data.Summary = meta.OGDescription
+			case meta.Description != "":
+				link_data.Summary = meta.Description
+			case meta.OGTitle != "":
+				link_data.Summary = meta.OGTitle
+			case meta.Title != "":
+				link_data.Summary = meta.Title
+			case meta.OGSiteName != "":
+				link_data.Summary = meta.OGSiteName
+		}
 	}
-	link_data.Summary = auto_summary
 
 	// Get og:image, if available, for link preview
 	var og_image string
@@ -519,7 +519,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	link_data.Categories = strings.Join(split_categories, ",")
 
 	// Insert link
-	res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, link_data.Categories, auto_summary, og_image)
+	res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, link_data.Categories, link_data.Summary, og_image)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -531,9 +531,9 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	}
 	link_data.ID = id
 
-	// Create new summary if auto_summary successfully retrieves a title or description
-	if auto_summary != "" {
-		_, err = db.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, auto_summary, link_data.ID, req_user_id,link_data.SubmitDate)
+	// Create new summary if retrieved from request or auto_summary 
+	if link_data.Summary != "" {
+		_, err = db.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, link_data.Summary, link_data.ID, req_user_id,link_data.SubmitDate)
 		if err != nil {
 			log.Fatal(err)
 		}
