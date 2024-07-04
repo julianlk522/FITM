@@ -1,5 +1,6 @@
 ---
 import Link from '../../components/Link'
+import ScrollUp from '../../components/ScrollUp.astro'
 import Layout from '../../layouts/Layout.astro'
 import { Periods, type LinkData, type Period } from '../../types'
 
@@ -31,7 +32,7 @@ const links: LinkData[] = await get_links_resp.json()
 		<h1>
 			{`Top Links (${period.charAt(0).toUpperCase() + period.slice(1)})`}
 		</h1>
-		<div id='change-period'>
+		<section id='change-period'>
 			<p>Change time duration:</p>
 			{
 				other_periods.map((period) => (
@@ -40,32 +41,36 @@ const links: LinkData[] = await get_links_resp.json()
 					</a>
 				))
 			}
-		</div>
-		{
-			links.length ? (
-				<ol id='links'>
-					{links.map((link) => (
-						<Link
-							client:load
-							IsSummaryPage={false}
-							IsTagPage={false}
-							Link={link}
-							Token={token}
-							User={user}
-						/>
-					))}
-				</ol>
-			) : (
-				<>
-					<p>No results</p>
-					{user ? (
-						<p>
-							<a href={`/new`}>Add link</a>
-						</p>
-					) : null}
-				</>
-			)
-		}
+		</section>
+		<section>
+			{
+				links.length ? (
+					<ol id='links'>
+						{links.map((link) => (
+							<Link
+								client:load
+								IsSummaryPage={false}
+								IsTagPage={false}
+								Link={link}
+								Token={token}
+								User={user}
+							/>
+						))}
+					</ol>
+				) : (
+					<>
+						<p>No results</p>
+						{user ? (
+							<p>
+								<a href={`/new`}>Add link</a>
+							</p>
+						) : null}
+					</>
+				)
+			}
+		</section>
+
+		<ScrollUp />
 	</main>
 </Layout>
 

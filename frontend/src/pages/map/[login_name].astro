@@ -1,6 +1,7 @@
 ---
 import Link from '../../components/Link'
 import ProfilePic from '../../components/ProfilePic'
+import ScrollUp from '../../components/ScrollUp.astro'
 import Layout from '../../layouts/Layout.astro'
 import type { TreasureMap, User } from '../../types'
 import { tmap_sections } from '../../types'
@@ -128,6 +129,7 @@ const user: User = await user_resp.json()
 				)
 			})
 		}
+		<ScrollUp />
 	</main>
 </Layout>
 

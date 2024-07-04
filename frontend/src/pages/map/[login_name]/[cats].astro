@@ -1,5 +1,6 @@
 ---
 import Link from '../../../components/Link'
+import ScrollUp from '../../../components/ScrollUp.astro'
 import TagCategory from '../../../components/TagCategory'
 import Layout from '../../../layouts/Layout.astro'
 import type { TreasureMap } from '../../../types'
@@ -157,6 +158,8 @@ if (!used_sections.length) {
 				)
 			})
 		}
+
+		<ScrollUp />
 	</main>
 </Layout>
 
