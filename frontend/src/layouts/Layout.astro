@@ -100,6 +100,29 @@ let user = Astro.cookies.get('user')?.value
 		button.img-btn img.invert {
 			filter: invert(1);
 		}
+
+		#scroll-to-top {
+		display: none;
+		flex-direction: column;
+		align-items: center;
+		position: fixed;
+		bottom: 10px;
+		right: max(24px, calc((100% - min(100%, 1080px)) / 2));
+		}
+		#scroll-to-top svg {
+			width: 24px;
+			height: 24px;
+		}
+		#scroll-to-top p {
+			font-size: 0.9rem;
+			margin: 0;
+		}
+		#scroll-to-top:hover {
+			cursor: pointer;
+		}
+		#scroll-to-top.visible {
+			display: flex;
+		}
 	</style>
 
 

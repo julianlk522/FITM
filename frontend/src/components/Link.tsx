@@ -185,7 +185,7 @@ export default function Link(props: Props) {
             }
             
             <p>
-                Submitted by <a href={`/map/${submitted_by}`}>{submitted_by}</a> on {
+                Submitted by <strong><a href={`/map/${submitted_by}`}>{submitted_by}</a></strong> on {
                     format_date(submit_date)
                 }
             </p>

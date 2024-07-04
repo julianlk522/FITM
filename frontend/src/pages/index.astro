@@ -27,7 +27,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 
 <Layout Title='Welcome to the Open Internet Treasure Map (OITM)'>
 	<script>
-		const scroll_up_btn = document.getElementById('scroll-up-btn')
+		const scroll_up_btn = document.getElementById('scroll-to-top')
 		const title_section = document.querySelector('section:has(h1)')
 
 		function assign_scroll_observer() {
@@ -112,7 +112,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 				}
 			</ol>
 		</section>
-		<div id='scroll-up-btn'>
+		<div id='scroll-to-top'>
 			<svg
 				xmlns='http://www.w3.org/2000/svg'
 				width='24px'
@@ -166,27 +166,5 @@ const other_periods = Periods.filter((other) => other !== 'month')
 	}
 	#top-links {
 		padding: 0;
-	}
-	#scroll-up-btn {
-		display: none;
-		flex-direction: column;
-		align-items: center;
-		position: fixed;
-		bottom: 10px;
-		right: max(10px, calc((100% - min(100%, 800px)) / 4 - 25px));
-	}
-	#scroll-up-btn svg {
-		width: 24px;
-		height: 24px;
-	}
-	#scroll-up-btn p {
-		font-size: 0.9rem;
-		margin: 0;
-	}
-	#scroll-up-btn:hover {
-		cursor: pointer;
-	}
-	#scroll-up-btn.visible {
-		display: flex;
 	}
 </style>
