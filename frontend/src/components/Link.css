@@ -34,8 +34,9 @@ astro-island:first-of-type li.link {
     color: white;
 }
 .preview {
-    display: flex;
+    display: inline-flex;
     gap: 20px;
+    vertical-align: top;
 }
 .preview img {
     object-fit: cover;
@@ -44,4 +45,8 @@ astro-island:first-of-type li.link {
     font-size: 0.9rem;
     line-height: 0.5;
     margin-bottom: 20px
+}
+.url-anchor {
+    display: inline-block;
+    vertical-align: top;
 }
