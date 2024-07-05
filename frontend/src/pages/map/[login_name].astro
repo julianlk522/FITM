@@ -1,4 +1,5 @@
 ---
+import EditAbout from '../../components/EditAbout'
 import Link from '../../components/Link'
 import ProfilePic from '../../components/ProfilePic'
 import ScrollUp from '../../components/ScrollUp.astro'
@@ -14,6 +15,7 @@ if (!login_name) {
 
 const token = Astro.cookies.get('token')?.value
 const signed_in_user = Astro.cookies.get('user')?.value
+const is_signed_in_user = login_name === signed_in_user
 
 const tmap_resp = token
 	? await fetch(`http://127.0.0.1:8000/map/${login_name}`, {
@@ -42,11 +44,14 @@ if (user_resp.status > 399) {
 }
 const user: User = await user_resp.json()
 // {LoginName: 'bob', About: '...', PFP: '...', Created: '2022-01-01 00:00:00'}
+const display_about_section = user.About || is_signed_in_user
 ---
 
 <Layout Title=`${login_name}'s Treasure Map`>
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
+		<h2 class='subtitle'>Created: {format_date(user.Created)}</h2>
+
 		<ProfilePic
 			client:load
 			PFP={user.PFP ? user.PFP : undefined}
@@ -54,13 +59,13 @@ const user: User = await user_resp.json()
 			SignedInUser={signed_in_user}
 			Token={token}
 		/>
-		<p>Created: {format_date(user.Created)}</p>
+
 		{
-			user.About ? (
-				<>
-					<h2>About</h2>
-					<p>{user.About}</p>
-				</>
+			display_about_section ? (
+				<section>
+					<h2 id='about_title'>About</h2>
+					<EditAbout client:load token={token} initial={user.About} />
+				</section>
 			) : null
 		}
 		<section id='overview'>
@@ -134,6 +139,9 @@ const user: User = await user_resp.json()
 </Layout>
 
 <style>
+	#about_title {
+		display: inline;
+	}
 	#overview {
 		display: flex;
 		gap: 50px;
