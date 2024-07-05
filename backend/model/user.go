@@ -60,7 +60,11 @@ func (a *EditProfileRequest) Bind(r *http.Request) error {
 }
 
 type EditAboutRequest struct {
-	About string `json:"about,omitempty"`
+	About string `json:"about"`
+}
+
+func (a *EditAboutRequest) Bind(r *http.Request) error {
+	return nil
 }
 
 type EditPfpRequest struct {

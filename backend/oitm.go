@@ -89,6 +89,7 @@ func main() {
 
 		// USER ACCOUNTS
 		r.Patch("/users", handler.EditProfile)
+		r.Put("/users/about", handler.EditAbout)
 		r.Post("/pic", handler.UploadProfilePic)
 
 		// LINKS

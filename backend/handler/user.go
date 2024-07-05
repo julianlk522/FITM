@@ -157,7 +157,6 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 // EDIT PROFILE
 func EditProfile(w http.ResponseWriter, r *http.Request) {
 	edit_profile_data := &model.EditProfileRequest{}
-
 	if err := render.Bind(r, edit_profile_data); err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
@@ -184,8 +183,6 @@ func EditProfile(w http.ResponseWriter, r *http.Request) {
 
 	// About
 	if edit_profile_data.EditAboutRequest != nil {
-		// TODO replace hard-coded id with id corresponding
-		// to provided auth token
 		_, err = db.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_profile_data.EditAboutRequest.About, req_user_id)
 		if err != nil {
 			log.Fatal(err)
@@ -196,8 +193,6 @@ func EditProfile(w http.ResponseWriter, r *http.Request) {
 	
 	// Profile Pic
 	if edit_profile_data.EditPfpRequest != nil {
-		// TODO replace hard-coded id with id corresponding
-		// to provided auth token
 		_, err = db.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, edit_profile_data.EditPfpRequest.PFP, req_user_id)
 		if err != nil {
 			log.Fatal(err)
@@ -208,6 +203,40 @@ func EditProfile(w http.ResponseWriter, r *http.Request) {
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, return_json)
+}
+
+func EditAbout(w http.ResponseWriter, r *http.Request) {
+	edit_about_data := &model.EditAboutRequest{}
+	if err := render.Bind(r, edit_about_data); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	// Check auth token
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
+	}
+
+	db, err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// Update
+	_, err = db.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_about_data.About, req_user_id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, edit_about_data)
+
 }
 
 // GET PROFILE PICTURE
