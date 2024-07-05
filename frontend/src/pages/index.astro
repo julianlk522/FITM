@@ -31,7 +31,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 		<section>
 			<img class='chest-backdrop' src='../../chest.svg' />
 			<h1>Welcome to OITM</h1>
-			<h2 class='subtitle'>a map of the web's treasures</h2>
+			<h2 class='subtitle bg'>a map of the web's treasures</h2>
 			{
 				user ? (
 					<p>
@@ -94,13 +94,6 @@ const other_periods = Periods.filter((other) => other !== 'month')
 		height: auto;
 		opacity: 0.25;
 		z-index: -1;
-	}
-	.subtitle {
-		font-size: 1rem;
-		margin-bottom: 60px;
-		background: rgba(var(--accent-light), 5%);
-		padding: 3px;
-		text-align: center;
 	}
 	#popular {
 		display: flex;

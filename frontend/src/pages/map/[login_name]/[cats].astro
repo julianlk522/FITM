@@ -41,7 +41,7 @@ if (!used_sections.length) {
 <Layout Title=`${login_name}'s Treasure Map (Filtered)`>
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
-		<h2 id='subtitle'>(Filtered)</h2>
+		<h2 class='subtitle'>(Filtered)</h2>
 		<section id='filters'>
 			{
 				cats_split.length > 1 ? (
@@ -166,11 +166,6 @@ if (!used_sections.length) {
 <style>
 	h1 {
 		margin-bottom: 10px;
-	}
-	#subtitle {
-		font-size: 1rem;
-		margin-bottom: 60px;
-		text-align: center;
 	}
 	#reset-category-filters {
 		margin: 0;
