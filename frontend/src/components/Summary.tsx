@@ -23,6 +23,7 @@ export default function Summary(props: Props) {
 
 	async function handle_like() {
 		if (!token) {
+			document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=3600; SameSite=strict; Secure`
 			return (window.location.href = '/login')
 		}
 	
@@ -94,26 +95,17 @@ export default function Summary(props: Props) {
 	}
 	return (
 		<li class='summary'>
-			{text}
-			<p>Last Updated by <a href={`/map/${submitted_by}`}>{submitted_by}</a> on {
-                    format_date(last_updated)
-                }</p>
-			{user
-				?
-				user !== submitted_by
-					?
-						(
-							<button
-							onClick={handle_like}
-							class={`like-btn${is_liked ? ' liked' : ''}`}>{is_liked ? 'Unlike' : 'Like'} ({like_count})
-							</button>
-						)
-					:
-					<button onClick={handle_delete}>
-						Delete
+			"{text}"
+			<p><strong>Submitted by <a href={`/map/${submitted_by}`}>{submitted_by}</a></strong></p>
+			<p><strong>Last Update</strong>: {format_date(last_updated)}</p>
+			{user !== submitted_by ?
+				(
+					<button
+					onClick={handle_like}
+					class={`like-btn${is_liked ? ' liked' : ''}`}>{is_liked ? 'Unlike' : 'Like'} ({like_count})
 					</button>
-				: null
-			}
+				)
+			: <button onClick={handle_delete}>Delete</button>}
 		</li>
 	)
 }
