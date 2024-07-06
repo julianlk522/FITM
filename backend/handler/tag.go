@@ -225,6 +225,14 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 		req_login_name = claims["login_name"].(string)
 	}
 
+	// Check that tag has no more than 5 (for now) categories
+	// e.g., history,science,politics,funny,internet
+	cat_limit := 5
+	if strings.Count(tag_data.Categories, ",") > cat_limit {
+		render.Render(w, r, ErrInvalidRequest(errors.New("tag has too many categories")))
+		return
+	}
+
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
 		log.Fatal(err)

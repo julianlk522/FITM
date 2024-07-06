@@ -2,37 +2,46 @@
 
 ## Todos:
 
+### Features:
+
+-Perform action that prompted redirect (like or copy) after redirect_to login sequence completed
+-Reorder tmap to submitted -> copied -> tagged
+-Edit summaries page / queries to not attribute auto summary to link author
+    -Maybe have a hard-coded user named "Auto Summary" a la Auto Moderator from Reddit who auto summaries can be assigned to. That way they are preserved forever and it is a bit clearer
+    that they are auto summaries.
+-Top global tag cats for period top links page
 -Pagination
     -Home
     -Top Links 
     -User Treasure Map
--Reorder tmap to submitted -> copied -> tagged
--Perform action that prompted redirect (like or copy) after redirect_to login sequence completed
--Way to prevent many tags from flooding global tag
-    -might not happen actually? would require many different cats which is not super likely i would not imagine
--Rethink CalculateGlobalCategories algo
-    -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
--Limit to ~15 categories / tag
--Edit summaries page / queries to not attribute auto summary to link author
--Top global tag cats for period top links page
--Improve profile pic upload
-    -more file formats?
-    -maybe optimize min/max aspect ratios
--Search for existing tag cats while adding/editing
-    -Fuzzysort?
--Enforce consistent coding names
-    -e.g., Global Categores vs. Global Tag categories
 -Improve frontend look/semantic markup
     -A11y, responsive layouts for phones / tablets
     -Link articles
     -Proper color scheme
+
+### Code Quality:
+
+-Enforce consistent names
+    -e.g., Global Categores vs. Global Tag categories
 -Rebrand subcategories as category overlaps since that is a bit more accurate
--Tests
--Remove repeat code wherever possible
-    -GetJWTClaims
--Some way to visualize how Global Cats are determined
 -Merge GetProfile handler logic into GetTreasureMap handler
     -(since it is only used on tmap page alongside link data)
+-Remove repeat code wherever possible
+    -GetJWTClaims
+-Tests
+
+## To Maybe-Dos:
+
+-Search for existing tag cats while adding/editing
+    -Fuzzysort?
+-Way to prevent many tags from flooding global tag
+    -might not happen actually? would require many different cats which is not super likely i would not imagine
+-Rethink CalculateGlobalCategories algo
+    -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
+-Some way to visualize how Global Cats are determined
+-Improve profile pic upload
+    -more file formats?
+    -maybe optimize min/max aspect ratios
 -Separate tag categories into distinct rows in Tags table
     -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)
 

@@ -417,6 +417,13 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		link_data.SubmittedBy = req_login_name
 	}
 
+	// Check if more than 5 tag categories are submitted, Abort if so
+	cat_limit := 5
+	if strings.Count(link_data.NewLink.Categories, ",") > cat_limit {
+		render.Render(w, r, ErrInvalidRequest(fmt.Errorf("tag has too many categories (%d max)", cat_limit)))
+		return
+	}
+
     // Check if URL contains http or https protocol, update if needed
 	protocol_regex, err := regexp.Compile(`^(http(s?)\:\/\/)`)
 	if err != nil {
