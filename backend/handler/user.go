@@ -274,7 +274,7 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 
 	// Check that file is valid image
 	if !strings.Contains(handler.Header.Get("Content-Type"), "image") {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid file provided")))
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid file provided (accepted image formats: .jpg, .jpeg, .png, .webp)")))
 		return
 	}
 
@@ -290,7 +290,7 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 	ratio := float64(width) / float64(height)
 
 	if ratio > 2.0 || ratio < 0.5 {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid image provided")))
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid image aspect ratio (no more than 2:1, no less than 0.5:1)")))
 		return
 	}
 

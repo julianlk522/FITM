@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
+import './ProfilePic.css'
 
 interface Props {
     LoginName: string
@@ -10,6 +11,7 @@ interface Props {
 export default function ProfilePic(props: Props) {
     const {LoginName: login_name, PFP: pfp, SignedInUser: signed_in_user, Token: token} = props
     const [url, set_url] = useState<string | undefined>(undefined)
+    const [error, set_error] = useState<string | undefined>(undefined)
 
     const is_signed_in_user = login_name === signed_in_user
 
@@ -52,7 +54,8 @@ export default function ProfilePic(props: Props) {
             body: formData
         })
         if (new_pic_resp.status > 399) {
-            console.error(new_pic_resp)
+            const data = await new_pic_resp.json()
+            set_error(data.error)
             return
         }
 
@@ -61,27 +64,14 @@ export default function ProfilePic(props: Props) {
     }
     
 
-    return url
-        // user has profile pic
-        ? 
-            is_signed_in_user 
-                ?
-                    <>
-                        <img src={url} alt="profile pic" width='150' />
-                        <div>
-                            <label for="new_pic_upload">Upload New: </label>
-                            <input id='new_pic_upload' type="file" accept={"image/*"} onChange={handle_pic_change} />
-                        </div>
-                    </>
-                :
-                    <img src={url} alt="profile pic" width='150' />
-        // no profile pic
-        : 
-            is_signed_in_user
-                ? 
-                <div>
-                    <label for="new_pic_upload">Upload New: </label>
-                    <input id='new_pic_upload' type="file" accept={"image/*"} onChange={handle_pic_change} />
-                </div>
-                : null
+    return (
+        <>
+            {error ? <p class="error">{error}</p> : null}
+            {url ? <img src={url} alt="profile pic" width='150' /> : null}
+            {is_signed_in_user ? <form>
+                <label for="new_pic_upload">Upload New: </label>
+                <input id='new_pic_upload' type="file" accept={"image/*"} onChange={handle_pic_change} />
+            </form> : null}
+        </>
+    )
 }
