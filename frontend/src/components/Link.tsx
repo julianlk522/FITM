@@ -166,18 +166,18 @@ export default function Link(props: Props) {
                         <img src={img_url} alt={summary ? summary : url} height={100} width={100} />
                         <div>
                             <a href={url} class='url-anchor'>
-                                <h2>
+                                <h3>
                                     {summary ? summary : url}
-                                </h2>
+                                </h3>
                             </a>
                             {summary ? <p class='url'>{url}</p> : null}
                         </div>
                 </div>
                 : <>
                     <a href={url} class='url-anchor'>
-                        <h2>
+                        <h3>
                             {summary ? summary : url}
-                        </h2>
+                        </h3>
                     </a>
                     
                     {summary ? <p class='url'>{url}</p> : null}
