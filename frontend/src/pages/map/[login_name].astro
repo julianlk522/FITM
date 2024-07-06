@@ -64,7 +64,15 @@ const display_about_section = user.About || is_signed_in_user
 			display_about_section ? (
 				<section>
 					<h2 id='about_title'>About</h2>
-					<EditAbout client:load token={token} initial={user.About} />
+					{is_signed_in_user ? (
+						<EditAbout
+							client:load
+							token={token}
+							initial={user.About}
+						/>
+					) : (
+						<p>{user.About}</p>
+					)}
 				</section>
 			) : null
 		}

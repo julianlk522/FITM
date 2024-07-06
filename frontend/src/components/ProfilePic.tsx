@@ -79,8 +79,9 @@ export default function ProfilePic(props: Props) {
         : 
             is_signed_in_user
                 ? 
-                    <>
-                        {/* <input type="file" accept={"image/*"} onChange={handle_pic_change}>Upload profile pic</input> */}
-                    </>
+                <div>
+                    <label for="new_pic_upload">Upload New: </label>
+                    <input id='new_pic_upload' type="file" accept={"image/*"} onChange={handle_pic_change} />
+                </div>
                 : null
 }
