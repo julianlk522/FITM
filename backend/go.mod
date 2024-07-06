@@ -25,5 +25,6 @@ require (
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
+	golang.org/x/image v0.18.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
 )

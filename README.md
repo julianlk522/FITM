@@ -2,8 +2,6 @@
 
 ## Todos:
 
--Improve profile pic upload
-    -Enforce square or at least ___ aspect ratio
 -Pagination
     -Home
     -Top Links 
@@ -17,6 +15,9 @@
 -Limit to ~15 categories / tag
 -Edit summaries page / queries to not attribute auto summary to link author
 -Top global tag cats for period top links page
+-Improve profile pic upload
+    -more file formats?
+    -maybe optimize min/max aspect ratios
 -Search for existing tag cats while adding/editing
     -Fuzzysort?
 -Enforce consistent coding names
@@ -25,6 +26,7 @@
     -A11y, responsive layouts for phones / tablets
     -Link articles
     -Proper color scheme
+-Rebrand subcategories as category overlaps since that is a bit more accurate
 -Tests
 -Remove repeat code wherever possible
     -GetJWTClaims

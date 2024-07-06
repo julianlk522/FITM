@@ -4,6 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
 	"log"
 	"net/http"
@@ -12,6 +15,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	_ "golang.org/x/image/webp"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
@@ -273,6 +278,22 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check that image aspect ratio is no more than 2:1 and no less than 0.5:1
+	img, _, err := image.Decode(file)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	b := img.Bounds()
+	width, height := b.Max.X, b.Max.Y
+	ratio := float64(width) / float64(height)
+
+	if ratio > 2.0 || ratio < 0.5 {
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid image provided")))
+		return
+	}
+
 	// Get file extension
 	ext := filepath.Ext(handler.Filename)
 
@@ -288,11 +309,16 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 	}
 	defer dst.Close()
 
-	// Save to new file
+	// Restore img file cursor to start
+	file.Seek(0, 0)
+	
+	// Save to new file on disk
 	if _, err := io.Copy(dst, file); err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("could not copy profile pic into new file")))
 		return
 	}
+
+
 
 	// Get requesting user from auth token context
 	var req_user_id string
