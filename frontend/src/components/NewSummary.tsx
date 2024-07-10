@@ -16,6 +16,7 @@ export default function NewSummary(props: Props) {
     async function handle_submit(event: SubmitEvent, token: string | undefined) {
         event.preventDefault()
 
+        // there shouuld always be a token if you made it here but just in case...
         if (!token) {
             document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=3600; SameSite=strict; Secure`
             return (window.location.href = '/login')

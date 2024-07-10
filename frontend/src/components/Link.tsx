@@ -67,6 +67,7 @@ export default function Link(props: Props) {
     async function handle_like() {
         if (!token) {
             document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=3600; SameSite=strict; Secure`
+            document.cookie = `redirect_action=like link ${id}; path=${window.location.pathname}; max-age=3600; SameSite=strict; Secure`
             return window.location.href = '/login'
         }
 
@@ -117,7 +118,8 @@ export default function Link(props: Props) {
     async function handle_copy() {
         if (!token) {
             document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=3600; SameSite=strict; Secure`
-            return window.location.href = '/login'
+            document.cookie = `redirect_action=copy link ${id}; path=${window.location.pathname}; max-age=3600; SameSite=strict; Secure`
+            return (window.location.href = '/login')
         }
 
         if (!is_copied) {

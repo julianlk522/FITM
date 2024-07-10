@@ -4,11 +4,10 @@
 
 ### Features:
 
--Perform action that prompted redirect (like or copy) after redirect_to login sequence completed
--Reorder tmap to submitted -> copied -> tagged
 -Edit summaries page / queries to not attribute auto summary to link author
     -Maybe have a hard-coded user named "Auto Summary" a la Auto Moderator from Reddit who auto summaries can be assigned to. That way they are preserved forever and it is a bit clearer
     that they are auto summaries.
+-Reorder tmap to submitted -> copied -> tagged
 -Top global tag cats for period top links page
 -Pagination
     -Home
@@ -18,6 +17,8 @@
     -A11y, responsive layouts for phones / tablets
     -Link articles
     -Proper color scheme
+-Rethink CalculateGlobalCategories algo
+    -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 
 ### Code Quality:
 
@@ -29,15 +30,15 @@
 -Remove repeat code wherever possible
     -GetJWTClaims
 -Tests
+-Update JWT to use actual secret
 
 ## To Maybe-Dos:
 
+-Prevent user from copying their own link (backend)
 -Search for existing tag cats while adding/editing
     -Fuzzysort?
 -Way to prevent many tags from flooding global tag
     -might not happen actually? would require many different cats which is not super likely i would not imagine
--Rethink CalculateGlobalCategories algo
-    -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 -Some way to visualize how Global Cats are determined
 -Improve profile pic upload
     -more file formats?
