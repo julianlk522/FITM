@@ -35,7 +35,7 @@ const tmap: TreasureMap = await tmap_resp.json()
 
 const used_sections = tmap_sections.filter((s) => tmap[s].length)
 if (!used_sections.length) {
-	return Astro.redirect(`/map/${login_name}`)
+	return Astro.redirect(`/404`)
 }
 
 const user_resp = await fetch(`http://127.0.0.1:8000/users/${login_name}`)
