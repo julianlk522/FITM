@@ -4,8 +4,8 @@
 
 ### Features:
 
+-Filter by category(ies) AND period
 -Reorder tmap to submitted -> copied -> tagged
--Top global tag cats for period top links page
 -Pagination
     -Home
     -Top Links 
@@ -21,6 +21,7 @@
 
 -Enforce consistent names
     -e.g., Global Categores vs. Global Tag categories
+    -Popular Categories vs. Top Categories 
 -Rebrand subcategories as category overlaps since that is a bit more accurate
 -Merge GetProfile handler logic into GetTreasureMap handler
     -(since it is only used on tmap page alongside link data)
@@ -42,6 +43,7 @@
     -maybe optimize min/max aspect ratios
 -Separate tag categories into distinct rows in Tags table
     -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)
+    -would help optimize GetTopTagCategories / GetTopTagCategoriesByPeriod handlers since queries could all be done in sql (as of now requires splitting global_cats field in Go)
 
 ## Why?
 

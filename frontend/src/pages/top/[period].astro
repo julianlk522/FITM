@@ -2,7 +2,12 @@
 import Link from '../../components/Link'
 import ScrollUp from '../../components/ScrollUp.astro'
 import Layout from '../../layouts/Layout.astro'
-import { Periods, type LinkData, type Period } from '../../types'
+import {
+	Periods,
+	type CategoryCount,
+	type LinkData,
+	type Period,
+} from '../../types'
 
 // get auth token and user if user signed in
 const token = Astro.cookies.get('token')?.value
@@ -14,23 +19,35 @@ if (period && !Periods.includes(period)) {
 }
 const other_periods = Periods.filter((other) => other !== period)
 
-const api_url =
+const links_api_url =
 	period === 'all'
 		? 'http://127.0.0.1:8000/links'
 		: `http://127.0.0.1:8000/links/${period}`
 const get_links_resp = await (token
-	? fetch(api_url, {
+	? fetch(links_api_url, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
-	: fetch(api_url))
+	: fetch(links_api_url))
 const links: LinkData[] = await get_links_resp.json()
 // [{URL: 'https://example.com', LikeCount: 100}, ...]
+
+const cats_api_url =
+	period === 'all'
+		? 'http://127.0.0.1:8000/tags/popular/'
+		: `http://127.0.0.1:8000/tags/popular/${period}`
+const top_cats_resp = await (token
+	? fetch(cats_api_url, {
+			headers: { Authorization: `Bearer ${token}` },
+		})
+	: fetch(cats_api_url))
+// [{Category: 'umvc3', Count: 1}, ...]
+const top_cats: CategoryCount[] = await top_cats_resp.json()
 ---
 
 <Layout Title='Welcome to the Open Internet Treasure Map (OITM)'>
 	<main>
 		<h1>
-			{`Top Links (${period.charAt(0).toUpperCase() + period.slice(1)})`}
+			{`Top (${period.charAt(0).toUpperCase() + period.slice(1)})`}
 		</h1>
 		<section id='change-period'>
 			<p>Change time duration:</p>
@@ -43,6 +60,20 @@ const links: LinkData[] = await get_links_resp.json()
 			}
 		</section>
 		<section>
+			<h2>Categories</h2>
+			<ol id='top-categories'>
+				{
+					top_cats.map((cat) => (
+						<li>
+							<a href={`/cat/${cat.Category}`}>{cat.Category}</a>
+							<span>({cat.Count})</span>
+						</li>
+					))
+				}
+			</ol>
+		</section>
+		<section>
+			<h2>Links</h2>
 			{
 				links.length ? (
 					<ol id='links'>
@@ -82,6 +113,12 @@ const links: LinkData[] = await get_links_resp.json()
 		p {
 			margin-top: 0;
 		}
+	}
+	#top-categories {
+		display: flex;
+		flex-direction: column;
+		flex-wrap: wrap;
+		height: 160px;
 	}
 	.period {
 		margin-left: 0.5rem;
