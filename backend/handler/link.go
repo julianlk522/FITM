@@ -488,19 +488,42 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 	meta := MetaFromHTMLTokens(resp.Body)
 
-	// If summary not provided in request, get automatically generated summary from meta tag data
-	if link_data.Summary == "" {
+	// Get summary and summary author
+	// (Auto-generate from meta tags if summary not provided)
+	summary_author := ""
+
+	// User-submitted summary
+	if link_data.Summary != "" {
+		summary_author = req_user_id
+
+	// No user-submitted: use Auto Summary
+	} else {
+		auto_summary := ""
+
 		switch {
 			case meta.OGDescription != "":
-				link_data.Summary = meta.OGDescription
+				auto_summary = meta.OGDescription
 			case meta.Description != "":
-				link_data.Summary = meta.Description
+				auto_summary = meta.Description
 			case meta.OGTitle != "":
-				link_data.Summary = meta.OGTitle
+				auto_summary = meta.OGTitle
 			case meta.Title != "":
-				link_data.Summary = meta.Title
+				auto_summary = meta.Title
 			case meta.OGSiteName != "":
-				link_data.Summary = meta.OGSiteName
+				auto_summary = meta.OGSiteName
+		}
+
+		// Auto Summary successfully retrieved: assign to request
+		if auto_summary != "" {
+			link_data.Summary = auto_summary
+
+			// 15 is Auto Summary's user_id
+			// TODO: update with final
+			summary_author = "15"
+		
+		// Else no summary (sad!)
+		} else {
+			summary_author = ""
 		}
 	}
 
@@ -538,14 +561,13 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	}
 	link_data.ID = id
 
-	// Create new summary if retrieved from request or auto_summary 
+	// Create new summary if retrieved from request or auto_summary
 	if link_data.Summary != "" {
-		_, err = db.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, link_data.Summary, link_data.ID, req_user_id,link_data.SubmitDate)
+		_, err = db.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, link_data.Summary, link_data.ID, summary_author,link_data.SubmitDate)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		// Summary Count == 1 after initial
 		link_data.SummaryCount = 1
 	}
 
@@ -627,7 +649,7 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 
 	like_link_data := make(map[string]int64, 1)
 	like_link_data["ID"] = id
-	render.Status(r, http.StatusCreated)
+	render.Status(r, http.StatusOK)
 	render.JSON(w, r, like_link_data)
 }
 
@@ -720,7 +742,7 @@ func CopyLink(w http.ResponseWriter, r *http.Request) {
 		"ID": id,
 	}
 
-	render.Status(r, http.StatusCreated)
+	render.Status(r, http.StatusOK)
 	render.JSON(w, r, return_json)
 }
 

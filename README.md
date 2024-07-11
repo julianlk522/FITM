@@ -4,9 +4,6 @@
 
 ### Features:
 
--Edit summaries page / queries to not attribute auto summary to link author
-    -Maybe have a hard-coded user named "Auto Summary" a la Auto Moderator from Reddit who auto summaries can be assigned to. That way they are preserved forever and it is a bit clearer
-    that they are auto summaries.
 -Reorder tmap to submitted -> copied -> tagged
 -Top global tag cats for period top links page
 -Pagination
