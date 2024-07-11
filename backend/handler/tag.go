@@ -137,7 +137,6 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET MOST-USED TAG CATEGORIES
-// Todo: edit to search global categories instead
 func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {
 
 	// Limit 15 for now
@@ -154,6 +153,89 @@ func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {
 		FROM Links
 		WHERE global_cats != ""
 	`)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Split global categories for each link into individual categories
+	var categories []string
+	for rows.Next() {
+		var cat_field string
+		err = rows.Scan(&cat_field)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		cat_field = strings.ToLower(cat_field)
+
+		if strings.Contains(cat_field, ",") {
+			split := strings.Split(cat_field, ",")
+
+			for i := 0; i < len(split); i++ {
+				if !slices.Contains(categories, split[i]) {
+					categories = append(categories, split[i])
+				}
+			}
+		} else {
+			if !slices.Contains(categories, cat_field) {
+				categories = append(categories, cat_field)
+			}
+		}
+	}
+
+	// get counts for each category
+	var category_counts []model.CategoryCount = make([]model.CategoryCount, len(categories))
+	for i := 0; i < len(categories); i++ {
+		category_counts[i].Category = categories[i]
+
+		get_cat_count_sql := fmt.Sprintf(`select count(*) as count_with_cat from (select id from Links where ',' || global_cats || ',' like '%%,%s,%%' group by id)`, categories[i])
+
+		var c sql.NullInt32
+		err = db.QueryRow(get_cat_count_sql).Scan(&c)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		category_counts[i].Count = c.Int32
+	}
+
+	slices.SortFunc(category_counts, model.SortCategories)
+
+	// return top {LIMIT} categories and their counts
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, category_counts[0:LIMIT])
+}
+
+func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
+
+	// Limit 15 for now
+	const LIMIT int = 15
+
+	get_tag_cats_sql := `SELECT global_cats
+		FROM Links
+		WHERE global_cats != ""`
+
+	switch chi.URLParam(r, "period") {
+	case "day":
+		get_tag_cats_sql += ` AND julianday('now') - julianday(submit_date) <= 2`
+	case "week":
+		get_tag_cats_sql += ` AND julianday('now') - julianday(submit_date) <= 8`
+	case "month":
+		get_tag_cats_sql += ` AND julianday('now') - julianday(submit_date) <= 31`
+	case "year":
+		get_tag_cats_sql += ` AND julianday('now') - julianday(submit_date) <= 366`
+	default:
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
+		return
+	}
+
+	db, err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query(get_tag_cats_sql)
 	if err != nil {
 		log.Fatal(err)
 	}

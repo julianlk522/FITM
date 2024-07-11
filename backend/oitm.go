@@ -21,6 +21,7 @@ var token_auth *jwtauth.JWTAuth
 
 func init() {
 	// new JWT for protected/optional routes (1-day exiration)
+	// TODO: shorten expiration to idk, 6h
 	token_auth = jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(24*time.Hour))
 	
 }
@@ -42,10 +43,14 @@ func main() {
 		MaxAge: 300, // Maximum value not ignored by any of major browsers
 	  }))
 
+
+
 	// Home - check if server running
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Hello World!")
 	})
+
+
 
 	// PUBLIC
 	// USER ACCOUNTS
@@ -61,6 +66,9 @@ func main() {
 
 	// TAGS
 	r.Get("/tags/popular", handler.GetTopTagCategories)
+	r.Get("/tags/popular/{period}", handler.GetTopTagCategoriesByPeriod)
+
+
 
 	// OPTIONAL AUTHENTICATION
 	// (bearer token optional; used to get is_liked property for links)
@@ -80,6 +88,8 @@ func main() {
 		// SUMMARIES
 		r.Get("/summaries/{link_id}", handler.GetSummariesForLink)
 	})
+
+
 
 	// PROTECTED
 	// (bearer token required)
@@ -111,6 +121,8 @@ func main() {
 		r.Delete("/summaries/{summary_id}/like", handler.UnlikeSummary)
 
 	})
+
+
 
 	// Serve
 	// make sure this runs after all routes
