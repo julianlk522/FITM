@@ -4,6 +4,10 @@
 
 ### Features:
 
+-Edit category filters directly on top links by period/category(ies) page
+    -Add or remove one at a time
+-Middleware to alphabetize tag categories automatically
+    -e.g., http://localhost:4321/cat/shit,nerd => http://localhost:4321/cat/nerd,shit
 -Reorder tmap to submitted -> copied -> tagged
 -Pagination
     -Home
@@ -13,6 +17,8 @@
     -A11y, responsive layouts for phones / tablets
     -Link articles
     -Proper color scheme
+-Use traditional "?" URL params instead of routes
+    -/cat, /top, etc. get confusing
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 
@@ -27,12 +33,16 @@
 -Remove repeat code wherever possible
     -GetJWTClaims
     -GetTopLinksByCategories / GetTopLinksByPeriod
+-Follow patterns shown in https://github.com/jonnylangefeld/go-api
 -Tests
+    -https://github.com/ory/dockertest
 -Update JWT to use actual secret
+-Better logging
 
 ## To Maybe-Dos:
 
 -Prevent user from copying their own link (backend)
+-Show number of copies along with number of likes in frontend
 -Search for existing tag cats while adding/editing
     -Fuzzysort?
 -Way to prevent many tags from flooding global tag
