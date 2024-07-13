@@ -50,7 +50,7 @@ const top_cats: CategoryCount[] = await top_cats_resp.json()
 			{`Top (${period.charAt(0).toUpperCase() + period.slice(1)})`}
 		</h1>
 		<section id='change-period'>
-			<p>Change time duration:</p>
+			<p>Period Filter:</p>
 			{
 				other_periods.map((period) => (
 					<a class='period' href={`/top/${period}`}>
