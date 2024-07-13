@@ -4,7 +4,6 @@
 
 ### Features:
 
--Filter by category(ies) AND period
 -Reorder tmap to submitted -> copied -> tagged
 -Pagination
     -Home
@@ -27,6 +26,7 @@
     -(since it is only used on tmap page alongside link data)
 -Remove repeat code wherever possible
     -GetJWTClaims
+    -GetTopLinksByCategories / GetTopLinksByPeriod
 -Tests
 -Update JWT to use actual secret
 

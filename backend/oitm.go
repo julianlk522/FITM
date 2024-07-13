@@ -61,7 +61,9 @@ func main() {
 
 	// LINKS
 	r.Get("/links/cat/{categories}/users", handler.GetTopCategoryContributors)
-	r.Get("/links/subcat/{categories}", handler.GetTopSubcategories)
+	r.Get("/links/{period}/cat/{categories}/users", handler.GetTopCategoryContributorsByPeriod)
+	r.Get("/links/subcat/{categories}", handler.GetSubcategories)
+	r.Get("/links/{period}/subcat/{categories}", handler.GetSubcategoriesByPeriod)
 	r.Get("/links/{id}/likes", handler.GetLinkLikes)
 
 	// TAGS
@@ -83,7 +85,8 @@ func main() {
 		// LINKS
 		r.Get("/links", handler.GetTopLinks)
 		r.Get("/links/{period}", handler.GetTopLinksByPeriod)
-		r.Get("/links/cat/{categories}", handler.GetTopLinksByCategories)	
+		r.Get("/links/cat/{categories}", handler.GetTopLinksByCategories)
+		r.Get("/links/{period}/{categories}", handler.GetTopLinksByPeriodAndCategories)	
 
 		// SUMMARIES
 		r.Get("/summaries/{link_id}", handler.GetSummariesForLink)

@@ -80,12 +80,6 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 // (day, week, month)
 // (top 20 for now)
 func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
-	db ,err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
 	get_links_sql := `SELECT links_id as link_id, url, link_author as subitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
 	FROM
 		(
@@ -117,6 +111,12 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	get_links_sql += fmt.Sprintf(`) LEFT JOIN Summaries
 	ON Summaries.link_id = links_id
 	GROUP BY links_id ORDER BY like_count DESC, summary_count DESC, link_id DESC LIMIT %s;`, LIMIT)
+
+	db ,err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
 
 	rows, err := db.Query(get_links_sql)
 	if err != nil {
@@ -152,52 +152,13 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 // GET MOST-LIKED LINKS WITH GIVEN CATEGORY(IES)
 // (top 20 for now)
 func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
-	db ,err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	// get categories
 	categories_params := chi.URLParam(r, "categories")
-	var get_links_sql string
-
-	// multiple categories
-	if strings.Contains(categories_params, ",") {
-		categories := strings.Split(categories_params, ",")
-
-		// get link IDs
-		get_links_sql = fmt.Sprintf(`select id from Links where ',' || global_cats || ',' like '%%,%s,%%'`, categories[0])
-
-		for i := 1; i < len(categories); i++ {
-			get_links_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, categories[i])
-		}
-
-	// single category
-	} else {
-
-		// get link IDs
-		get_links_sql = fmt.Sprintf(`select id from Links where ',' || global_cats || ',' like '%%,%s,%%'`, categories_params)
-	}
-	get_links_sql += ` group by id`
-
-	rows, err := db.Query(get_links_sql)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-	
-	var link_ids []string
-	for rows.Next() {
-		var link_id string
-		err := rows.Scan(&link_id)
-		if err != nil {
-			log.Fatal(err)
-		}
-		link_ids = append(link_ids, link_id)
+	if categories_params == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no categories provided")))
+		return
 	}
 
-	// if no links found, return status message
+	link_ids := GetIDsOfLinksHavingCategories(categories_params)
 	if len(link_ids) == 0 {
 		render.JSON(w, r, []model.LinkSignedOut{})
 		render.Status(r, http.StatusOK)
@@ -205,14 +166,15 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get link data for each ID
-	db, err = sql.Open("sqlite3", "./db/oitm.db")
+	db, err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
+	// limit top 20 links for now
 	const LIMIT string = "20"
-	rows, err = db.Query(fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
+	rows, err := db.Query(fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
 	FROM
 		(
 		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date as sd, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
@@ -260,6 +222,141 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	render.Status(r, http.StatusOK)
 }
 
+func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
+	period_params, categories_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
+	if period_params == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no period provided")))
+		return
+	} else if categories_params == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no categories provided")))
+		return
+	}
+
+	link_ids := GetIDsOfLinksHavingCategories(categories_params)
+	if len(link_ids) == 0 {
+		render.JSON(w, r, []model.LinkSignedOut{})
+		render.Status(r, http.StatusOK)
+		return
+	}
+
+	get_links_sql := `SELECT links_id as link_id, url, link_author as subitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
+	FROM
+		(
+		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date as sd, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
+		FROM LINKS
+		LEFT JOIN 
+			(
+			SELECT link_id as likes_link_id, count(*) as like_count
+			FROM 'Link Likes'
+			GROUP BY likes_link_id
+			)
+		ON Links.id = likes_link_id`
+
+	switch period_params {
+	case "day":
+		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2`
+	case "week":
+		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
+	case "month":
+		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
+	case "year":
+		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 366`
+	default:
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
+		return
+	}
+
+	get_links_sql += fmt.Sprintf(` AND links_id IN (%s)`, strings.Join(link_ids, ","))
+
+	const LIMIT string = "20"
+	get_links_sql += fmt.Sprintf(`) LEFT JOIN Summaries
+	ON Summaries.link_id = links_id
+	GROUP BY links_id ORDER BY like_count DESC, summary_count DESC, link_id DESC LIMIT %s;`, LIMIT)
+
+	db ,err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query(get_links_sql)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	// Check auth token
+	var req_user_id string
+	claims, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(claims) > 0 {
+		req_user_id = claims["user_id"].(string)
+	}
+	
+	// Scan links
+	// User signed in
+	if req_user_id != "" {
+		links := ScanLinksSignedIn(db, rows, req_user_id)
+		render.JSON(w, r, &links)
+
+	// User signed out: IsLiked / IsCopied / IsTagged not included		
+	} else {
+		links := ScanLinksSignedOut(db, rows)
+		render.JSON(w, r, &links)
+	}
+
+	render.Status(r, http.StatusOK)
+}
+
+func GetIDsOfLinksHavingCategories(categories string) []string {
+	var get_links_sql string
+
+	// multiple categories
+	if strings.Contains(categories, ",") {
+		categories := strings.Split(categories, ",")
+
+		// get link IDs
+		get_links_sql = fmt.Sprintf(`select id from Links where ',' || global_cats || ',' like '%%,%s,%%'`, categories[0])
+
+		for i := 1; i < len(categories); i++ {
+			get_links_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, categories[i])
+		}
+
+	// single category
+	} else {
+
+		// get link IDs
+		get_links_sql = fmt.Sprintf(`select id from Links where ',' || global_cats || ',' like '%%,%s,%%'`, categories)
+	}
+	get_links_sql += ` group by id`
+
+	db ,err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query(get_links_sql)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	
+	var link_ids []string
+	for rows.Next() {
+		var link_id string
+		err := rows.Scan(&link_id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		link_ids = append(link_ids, link_id)
+	}
+
+	return link_ids
+}
+
 // GET TOP CONTRIBUTORS FOR GIVEN CATEGORY(IES)
 // (determined by number of links submitted having ALL given categories in global_cats)
 func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
@@ -304,11 +401,40 @@ func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, contributors)
 }
 
-// GET TOP SUBCATEGORIES WITH GIVEN CATEGORY(IES)
-func GetTopSubcategories(w http.ResponseWriter, r *http.Request) {
+func GetTopCategoryContributorsByPeriod(w http.ResponseWriter, r *http.Request) {
+	period_params, categories_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
+	if period_params == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no period provided")))
+		return
+	} else if categories_params == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no categories provided")))
+		return
+	}
+	categories := strings.Split(categories_params, ",")
 
-	// Limit 20 for now
-	const LIMIT int = 20
+	get_links_sql := `SELECT count(*), submitted_by
+		FROM Links`
+	
+	switch period_params {
+		case "day":
+			get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2`
+		case "week":
+			get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
+		case "month":
+			get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
+		case "year":
+			get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 366`
+		default:
+			render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
+			return
+	}
+	for _, cat := range categories {
+		get_links_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, cat)
+	}
+
+	// Limit 5
+	const LIMIT string = "5"
+	get_links_sql += fmt.Sprintf(` GROUP BY submitted_by ORDER BY count(*) DESC LIMIT %s;`, LIMIT)
 
 	db ,err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
@@ -316,21 +442,50 @@ func GetTopSubcategories(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// get categories
-	search_cats_params := chi.URLParam(r, "categories")
-
-	// TODO: replace with middleware that converts all URLs to lowercase
-	search_cats_params = strings.ToLower(search_cats_params)
-	search_cats := strings.Split(search_cats_params, ",")
-	
-	// get subcategories
-	get_links_sql := fmt.Sprintf(`select categories from Tags where ',' || categories || ',' like '%%,%s,%%'`, search_cats[0])
-	for i := 1; i < len(search_cats); i++ {
-		get_links_sql += fmt.Sprintf(` AND ',' || categories || ',' like '%%,%s,%%'`, search_cats[i])
-	}
-	get_links_sql += ` group by categories;`
-
 	rows, err := db.Query(get_links_sql)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	contributors := []model.CategoryContributor{}
+	for rows.Next() {
+		contributor := model.CategoryContributor{Categories: categories_params}
+		err := rows.Scan(&contributor.LinksSubmitted, &contributor.LoginName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		contributors = append(contributors, contributor)
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, contributors)
+}
+
+// GET TOP SUBCATEGORIES WITH GIVEN CATEGORY(IES)
+func GetSubcategories(w http.ResponseWriter, r *http.Request) {
+	categories_params := chi.URLParam(r, "categories")
+	if categories_params == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no categories provided")))
+		return
+	}
+	// TODO: replace with middleware that converts all URLs to lowercase
+	categories_params = strings.ToLower(categories_params)
+	search_cats := strings.Split(categories_params, ",")
+	
+	get_subcats_sql := fmt.Sprintf(`select global_cats from Links where ',' || global_cats || ',' like '%%,%s,%%'`, search_cats[0])
+	for i := 1; i < len(search_cats); i++ {
+		get_subcats_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, search_cats[i])
+	}
+	get_subcats_sql += ` group by global_cats;`
+
+	db ,err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query(get_subcats_sql)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -347,28 +502,27 @@ func GetTopSubcategories(w http.ResponseWriter, r *http.Request) {
 		cats := strings.Split(row_cats, ",")
 		for i := 0; i < len(cats); i++ {
 			cat_lc := strings.ToLower(cats[i])
+
+			// append to subcats if new and not in search_cats 
 			if !slices.Contains(search_cats, cat_lc) && !slices.Contains(subcats, cat_lc) {
 				subcats = append(subcats, cat_lc)
 			}
 		}
 	}
-
-	// if no links found, return status message
 	if len(subcats) == 0 {
 		render.JSON(w, r, []string{})
 		render.Status(r, http.StatusOK)
 		return
 	}
 
-	// get total links for each subcategory
 	subcats_with_counts := make([]model.CategoryCount, len(subcats))
 	for i := 0; i < len(subcats); i++ {
 		subcats_with_counts[i].Category = subcats[i]
 
-		get_link_counts_sql := fmt.Sprintf(`select count(*) as link_count from Tags where ',' || categories || ',' like '%%,%s,%%'`, subcats[i])
+		get_link_counts_sql := fmt.Sprintf(`SELECT count(*) as link_count FROM Links WHERE ',' || global_cats || ',' like '%%,%s,%%'`, subcats[i])
 
 		for j := 0; j < len(search_cats); j++ {
-			get_link_counts_sql += fmt.Sprintf(` AND ',' || categories || ',' like '%%,%s,%%'`, search_cats[j])
+			get_link_counts_sql += fmt.Sprintf(` AND ',' || global_cats || ',' LIKE '%%,%s,%%'`, search_cats[j])
 		}
 		get_link_counts_sql += `;`
 
@@ -378,16 +532,127 @@ func GetTopSubcategories(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// sort by count
-	slices.SortFunc(subcats_with_counts, model.SortCategories)
-
-	// limit to top {LIMIT} categories
-	if len(subcats_with_counts) > LIMIT {
-		subcats_with_counts = subcats_with_counts[0:LIMIT]
-	}
+	SortAndLimitCategoryCounts(&subcats_with_counts)
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, subcats_with_counts)
+}
+
+func GetSubcategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
+	period_params, search_cats_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
+	if search_cats_params == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no categories provided")))
+		return
+	} else if period_params == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no period provided")))
+		return
+	}
+	// TODO: replace with middleware that converts all URLs to lowercase
+	search_cats_params = strings.ToLower(search_cats_params)
+	search_cats := strings.Split(search_cats_params, ",")
+
+	get_subcats_sql := `SELECT global_cats FROM Links`
+	switch period_params {
+	case "day":
+		get_subcats_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2`
+	case "week":
+		get_subcats_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
+	case "month":
+		get_subcats_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
+	case "year":
+		get_subcats_sql += ` WHERE julianday('now') - julianday(submit_date) <= 366`
+	default:
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
+		return
+	}
+	for _, cat := range search_cats {
+		get_subcats_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, cat)
+	}
+	get_subcats_sql += ` group by global_cats;`
+
+	db ,err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query(get_subcats_sql)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	
+	var subcats []string
+	for rows.Next() {
+		var row_cats string
+		err := rows.Scan(&row_cats)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		cats := strings.Split(row_cats, ",")
+		for i := 0; i < len(cats); i++ {
+			cat_lc := strings.ToLower(cats[i])
+
+			// append to subcats if new and not in search_cats 
+			if !slices.Contains(search_cats, cat_lc) && !slices.Contains(subcats, cat_lc) {
+				subcats = append(subcats, cat_lc)
+			}
+		}
+	}
+	if len(subcats) == 0 {
+		render.JSON(w, r, []string{})
+		render.Status(r, http.StatusOK)
+		return
+	}
+
+	subcats_with_counts := make([]model.CategoryCount, len(subcats))
+	for i := 0; i < len(subcats); i++ {
+		subcats_with_counts[i].Category = subcats[i]
+
+		get_link_counts_sql := `SELECT count(*) as link_count FROM Links`
+		switch period_params {
+		case "day":
+			get_link_counts_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2`
+		case "week":
+			get_link_counts_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
+		case "month":
+			get_link_counts_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
+		case "year":
+			get_link_counts_sql += ` WHERE julianday('now') - julianday(submit_date) <= 366`
+		default:
+			render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
+			return
+		}
+		get_link_counts_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, subcats[i])
+		for _, cat := range search_cats {
+			get_link_counts_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, cat)
+		}
+		get_link_counts_sql += `;`
+
+		err := db.QueryRow(get_link_counts_sql).Scan(&subcats_with_counts[i].Count)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	SortAndLimitCategoryCounts(&subcats_with_counts)
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, subcats_with_counts)
+}
+
+func SortAndLimitCategoryCounts(cats_with_counts *[]model.CategoryCount) {
+	// sort by count
+	slices.SortFunc(*cats_with_counts, model.SortCategories)
+
+	
+	// limit to top {LIMIT} categories
+	// 20 for now
+	const LIMIT int = 20
+	if len(*cats_with_counts) > LIMIT {
+		*cats_with_counts = (*cats_with_counts)[:LIMIT]
+	}
 }
 
 // ADD NEW LINK

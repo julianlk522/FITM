@@ -65,7 +65,9 @@ const top_cats: CategoryCount[] = await top_cats_resp.json()
 				{
 					top_cats.map((cat) => (
 						<li>
-							<a href={`/cat/${cat.Category}`}>{cat.Category}</a>
+							<a href={`/top/${period}/${cat.Category}`}>
+								{cat.Category}
+							</a>
 							<span>({cat.Count})</span>
 						</li>
 					))
