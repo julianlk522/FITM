@@ -51,7 +51,7 @@ const { Link: link, Summaries: summaries } = summary_data
 		</section>
 		<section>
 			{
-				user ? (
+				user && token ? (
 					<NewSummary client:load Token={token} LinkID={link_id} />
 				) : (
 					<p>

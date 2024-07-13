@@ -3,7 +3,7 @@ import { is_error_response } from "../types";
 import './NewSummary.css';
 
 interface Props {
-    Token: string | undefined
+    Token: string
 	LinkID: string
 }
 
@@ -13,14 +13,9 @@ export default function NewSummary(props: Props) {
     const [error, set_error] = useState<string | undefined>(undefined)
 
 
-    async function handle_submit(event: SubmitEvent, token: string | undefined) {
+    async function handle_submit(event: SubmitEvent, token: string) {
         event.preventDefault()
 
-        // there shouuld always be a token if you made it here but just in case...
-        if (!token) {
-            document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=3600; SameSite=strict; Secure`
-            return (window.location.href = '/login')
-        }
         const form = event.target as HTMLFormElement
         const formData = new FormData(form)
         const summary = formData.get('summary')

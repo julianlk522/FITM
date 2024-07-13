@@ -33,7 +33,7 @@ const links: LinkData[] = await get_links_resp.json()
 
 const cats_api_url =
 	period === 'all'
-		? 'http://127.0.0.1:8000/tags/popular/'
+		? 'http://127.0.0.1:8000/tags/popular'
 		: `http://127.0.0.1:8000/tags/popular/${period}`
 const top_cats_resp = await (token
 	? fetch(cats_api_url, {
