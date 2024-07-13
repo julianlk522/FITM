@@ -271,7 +271,18 @@ func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(categories); i++ {
 		category_counts[i].Category = categories[i]
 
-		get_cat_count_sql := fmt.Sprintf(`select count(*) as count_with_cat from (select id from Links where ',' || global_cats || ',' like '%%,%s,%%' group by id)`, categories[i])
+		get_cat_count_sql := fmt.Sprintf(`select count(*) as count_with_cat from (select id, submit_date from Links where ',' || global_cats || ',' like '%%,%s,%%' group by id)`, categories[i])
+
+		switch chi.URLParam(r, "period") {
+			case "day":
+				get_cat_count_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2`
+			case "week":
+				get_cat_count_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
+			case "month":
+				get_cat_count_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
+			case "year":
+				get_cat_count_sql += ` WHERE julianday('now') - julianday(submit_date) <= 366`
+		}
 
 		var c sql.NullInt32
 		err = db.QueryRow(get_cat_count_sql).Scan(&c)
