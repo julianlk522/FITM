@@ -44,38 +44,37 @@ if (user_resp.status > 399) {
 }
 const user: User = await user_resp.json()
 // {LoginName: 'bob', About: '...', PFP: '...', Created: '2022-01-01 00:00:00'}
-const display_about_section = user.About || is_signed_in_user
+const display_about = user.About || is_signed_in_user
 ---
 
 <Layout Title=`${login_name}'s Treasure Map`>
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
 		<h2 class='subtitle'>Created: {format_date(user.Created)}</h2>
+		<figure id='profile'>
+			<ProfilePic
+				client:load
+				PFP={user.PFP ? user.PFP : undefined}
+				LoginName={login_name}
+				SignedInUser={signed_in_user}
+				Token={token}
+			/>
 
-		<ProfilePic
-			client:load
-			PFP={user.PFP ? user.PFP : undefined}
-			LoginName={login_name}
-			SignedInUser={signed_in_user}
-			Token={token}
-		/>
-
-		{
-			display_about_section ? (
-				<section>
-					<h2 id='about_title'>About</h2>
-					{is_signed_in_user ? (
+			{
+				display_about ? (
+					is_signed_in_user ? (
 						<EditAbout
 							client:load
 							token={token}
 							initial={user.About}
 						/>
 					) : (
-						<p>{user.About}</p>
-					)}
-				</section>
-			) : null
-		}
+						<figcaption>{user.About}</figcaption>
+					)
+				) : null
+			}
+		</figure>
+
 		<section id='overview'>
 			<div>
 				<h2>Top Categories</h2>
@@ -147,8 +146,16 @@ const display_about_section = user.About || is_signed_in_user
 </Layout>
 
 <style>
-	#about_title {
+	#profile {
+		text-align: center;
+
+		figcaption {
+			margin-top: 0.5rem;
+		}
+	}
+	#about {
 		display: inline;
+		margin-top: 20px;
 	}
 	#overview {
 		display: flex;

@@ -8,13 +8,13 @@ import { Periods, type CategoryCount, type LinkData } from '../types'
 const token = Astro.cookies.get('token')?.value
 const user: string | undefined = Astro.cookies.get('user')?.value
 
-const popular_cats_resp = await (token
+const top_cats_resp = await (token
 	? fetch('http://127.0.0.1:8000/tags/popular', {
 			headers: { Authorization: `Bearer ${token}` },
 		})
 	: fetch('http://127.0.0.1:8000/tags/popular'))
 // [{Category: 'umvc3', Count: 1}, ...]
-const popular_cats: CategoryCount[] = await popular_cats_resp.json()
+const top_cats: CategoryCount[] = await top_cats_resp.json()
 
 const get_links_resp = await (token
 	? fetch('http://127.0.0.1:8000/links/month', {
@@ -41,10 +41,10 @@ const other_periods = Periods.filter((other) => other !== 'month')
 			}
 		</section>
 		<section>
-			<h2>Popular Categories</h2>
-			<ol id='popular'>
+			<h2>Top Categories</h2>
+			<ol id='top-cats'>
 				{
-					popular_cats.map((cat) => (
+					top_cats.map((cat) => (
 						<li>
 							<a href={`/cat/${cat.Category}`}>{cat.Category}</a>
 							<span>({cat.Count})</span>
@@ -54,17 +54,16 @@ const other_periods = Periods.filter((other) => other !== 'month')
 			</ol>
 		</section>
 		<section>
-			<h3>Top Links This Month</h3>
-			<div id='change-period'>
-				<p>Change period:</p>
+			<h2>Top Links This Month</h2>
+			<ol id='change-period'>
 				{
 					other_periods.map((period) => (
-						<a class='period' href={`/top/${period}`}>
-							{period}
-						</a>
+						<li class='period'>
+							<a href={`/top/${period}`}>{period}</a>
+						</li>
 					))
 				}
-			</div>
+			</ol>
 			<ol id='top-links'>
 				{
 					links.map((link) => (
@@ -95,22 +94,22 @@ const other_periods = Periods.filter((other) => other !== 'month')
 		opacity: 0.25;
 		z-index: -1;
 	}
-	#popular {
+	#top-cats {
 		display: flex;
 		flex-direction: column;
 		flex-wrap: wrap;
 		height: 160px;
 	}
 	#change-period {
-		font-size: 0.9rem;
 		display: flex;
-
-		p {
-			margin-top: 0;
-		}
+		list-style: none;
+		margin-top: 0;
 	}
 	.period {
-		margin-left: 0.5rem;
+		margin-right: 0.5rem;
+	}
+	.period:last-of-type {
+		margin-right: 0;
 	}
 	#top-links {
 		padding: 0;

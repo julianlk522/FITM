@@ -9,14 +9,20 @@ import type {
 } from '../../../types'
 import { Periods } from '../../../types'
 
-const { category } = Astro.params
 const { period } = Astro.params as { period: Period }
-if (period && !Periods.includes(period)) {
+if (!period || !Periods.includes(period)) {
 	return Astro.redirect('/404')
-} else if (period === 'all') {
-	return Astro.redirect(`/cat/${category}`)
 }
 const other_periods = Periods.filter((other) => other !== period)
+
+const { category } = Astro.params
+if (!category) {
+	return Astro.redirect(`/top/${period}`)
+}
+
+if (category && period === 'all') {
+	return Astro.redirect(`/cat/${category}`)
+}
 
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
@@ -29,12 +35,10 @@ const get_links_resp = await (token
 const links: LinkData[] = await get_links_resp.json()
 // [{URL: 'https://example.com', LikeCount: 100}, ...]
 
-let subcats: CategoryCount[]
-let top_contributors: CategoryContributor[]
+let subcats: CategoryCount[] = []
+let top_contributors: CategoryContributor[] = []
 
-if (!links || links.length === 0) {
-	return Astro.redirect('/404')
-} else {
+if (links.length) {
 	// r.Get("/links/{period}/subcat/{categories}", handler.GetSubcategoriesByPeriod)
 	const subcats_resp = await fetch(
 		`http://127.0.0.1:8000/links/${period}/subcat/${category}`
@@ -42,7 +46,6 @@ if (!links || links.length === 0) {
 	subcats = await subcats_resp.json()
 	// [{Category: 'flowers', Count: 2}, ...]
 
-	// r.Get("/links/{period}/cat/{categories}/users", handler.GetTopCategoryContributorsByPeriod)
 	const top_contributors_resp = await fetch(
 		`http://127.0.0.1:8000/links/${period}/cat/${category}/users`
 	)
@@ -55,92 +58,101 @@ if (!links || links.length === 0) {
 	<main>
 		<h1>{category} ({period.charAt(0).toUpperCase() + period.slice(1)})</h1>
 		<section id='search-filters'>
+			<h2>Filters</h2>
 			<div>
-				<p>Period Filter:</p>
+				<p>Period:</p>
 				{
 					other_periods.map((period) => (
-						<a href={`/top/${period}/${category}`}>
-							{period ? period : 'all'}
+						<a
+							href={
+								period === 'all'
+									? `/cat/${category}`
+									: `/top/${period}/${category}`
+							}
+						>
+							{period}
 						</a>
 					))
 				}
-				<a href=`/cat/${category}`>Remove</a>
 			</div>
 			<div>
-				<p>Category Filter:</p>
+				<p>{category.includes(',') ? 'Categories:' : 'Category:'}</p>
 				<a href=`/top/${period}`>Remove</a>
 			</div>
 		</section>
-		<section>
-			{
-				subcats.length ? (
-					<>
+		{
+			links.length ? (
+				<>
+					<section>
 						<h2>Subcategories</h2>
-						<ul>
-							{subcats.map((subcat) => (
-								<li>
-									<>
+						{subcats.length ? (
+							<ul>
+								{subcats.map((subcat) => (
+									<li>
 										<strong>
 											<a
-												href={`/top/${period}/${category},${subcat.Category}`}
+												href={`/top/${period}/${category + ',' + subcat.Category}`}
 											>
 												{subcat.Category}
 											</a>
 										</strong>
 										<span>: ({subcat.Count})</span>
-									</>
-								</li>
+									</li>
+								))}
+							</ul>
+						) : (
+							<p>No further subcategories</p>
+						)}
+					</section>
+					<section>
+						<h2>Top Contributors</h2>
+						<ol>
+							{top_contributors.map(
+								(contributor: CategoryContributor) => (
+									<li>
+										<strong>
+											<a
+												href={`/map/${contributor.LoginName}`}
+											>
+												{contributor.LoginName}
+											</a>
+										</strong>
+										<span>
+											: ({contributor.LinksSubmitted})
+										</span>
+									</li>
+								)
+							)}
+						</ol>
+					</section>
+					<section>
+						<h2>Top Links</h2>
+						<ol>
+							{links.map((link) => (
+								<Link
+									client:load
+									Link={link}
+									IsSummaryPage={false}
+									IsTagPage={false}
+									Token={token}
+									User={user}
+								/>
 							))}
-						</ul>
-					</>
-				) : (
-					<p>No further subcategories</p>
-				)
-			}
-		</section>
-		<section>
-			<h2>Top Contributors</h2>
-			<ol>
-				{
-					top_contributors.map((contributor: CategoryContributor) => (
-						<li>
-							<strong>
-								<a href={`/map/${contributor.LoginName}`}>
-									{contributor.LoginName}
-								</a>
-							</strong>
-							<span>: ({contributor.LinksSubmitted})</span>
-						</li>
-					))
-				}
-			</ol>
-		</section>
-		<section>
-			<h2>Top Links</h2>
-			<ol>
-				{
-					links.map((link) => (
-						<Link
-							client:load
-							Link={link}
-							IsSummaryPage={false}
-							IsTagPage={false}
-							Token={token}
-							User={user}
-						/>
-					))
-				}
-			</ol>
-		</section>
+						</ol>
+					</section>
+				</>
+			) : (
+				<p>No links found</p>
+			)
+		}
 	</main>
 </Layout>
 
 <style>
 	#search-filters {
-		font-size: 0.9rem;
-
 		div {
 			display: flex;
+			align-items: center;
 		}
 
 		p {

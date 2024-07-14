@@ -2,8 +2,11 @@
 import Link from '../../components/Link'
 import Layout from '../../layouts/Layout.astro'
 import type { CategoryContributor, CategoryCount, LinkData } from '../../types'
+import { Periods } from '../../types'
 
 const { category } = Astro.params
+
+const other_periods = Periods.filter((other) => other !== 'all')
 
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
@@ -39,6 +42,18 @@ if (!links || links.length === 0) {
 <Layout Title='Welcome to the Open Internet Treasure Map (OITM)'>
 	<main>
 		<h1>{category}</h1>
+		<section id='search-filters'>
+			<h2>Filter Period</h2>
+			<div>
+				{
+					other_periods.map((period) => (
+						<a class='period' href={`/top/${period}`}>
+							{period ? period : 'all'}
+						</a>
+					))
+				}
+			</div>
+		</section>
 		<section>
 			{
 				subcats.length ? (
@@ -47,16 +62,14 @@ if (!links || links.length === 0) {
 						<ul>
 							{subcats.map((subcat) => (
 								<li>
-									<>
-										<strong>
-											<a
-												href={`/cat/${category},${subcat.Category}`}
-											>
-												{subcat.Category}
-											</a>
-										</strong>
-										<span>: ({subcat.Count})</span>
-									</>
+									<strong>
+										<a
+											href={`/cat/${category},${subcat.Category}`}
+										>
+											{subcat.Category}
+										</a>
+									</strong>
+									<span>: ({subcat.Count})</span>
 								</li>
 							))}
 						</ul>
@@ -104,6 +117,24 @@ if (!links || links.length === 0) {
 </Layout>
 
 <style>
+	#search-filters {
+		div {
+			display: flex;
+			align-items: center;
+		}
+
+		p {
+			margin-top: 0;
+		}
+
+		.period {
+			margin-left: 0.5rem;
+		}
+
+		.period:first-of-type {
+			margin-left: 0;
+		}
+	}
 	li strong:has(+ span) a {
 		display: inline-block;
 	}

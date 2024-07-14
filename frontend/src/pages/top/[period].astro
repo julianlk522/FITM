@@ -31,17 +31,22 @@ const get_links_resp = await (token
 const links: LinkData[] = await get_links_resp.json()
 // [{URL: 'https://example.com', LikeCount: 100}, ...]
 
-const cats_api_url =
-	period === 'all'
-		? 'http://127.0.0.1:8000/tags/popular'
-		: `http://127.0.0.1:8000/tags/popular/${period}`
-const top_cats_resp = await (token
-	? fetch(cats_api_url, {
-			headers: { Authorization: `Bearer ${token}` },
-		})
-	: fetch(cats_api_url))
-// [{Category: 'umvc3', Count: 1}, ...]
-const top_cats: CategoryCount[] = await top_cats_resp.json()
+let top_cats: CategoryCount[] = []
+
+if (links.length) {
+	const cats_api_url =
+		period === 'all'
+			? 'http://127.0.0.1:8000/tags/popular'
+			: `http://127.0.0.1:8000/tags/popular/${period}`
+
+	const top_cats_resp = await (token
+		? fetch(cats_api_url, {
+				headers: { Authorization: `Bearer ${token}` },
+			})
+		: fetch(cats_api_url))
+	// [{Category: 'umvc3', Count: 1}, ...]
+	top_cats = await top_cats_resp.json()
+}
 ---
 
 <Layout Title='Welcome to the Open Internet Treasure Map (OITM)'>
@@ -49,71 +54,91 @@ const top_cats: CategoryCount[] = await top_cats_resp.json()
 		<h1>
 			{`Top (${period.charAt(0).toUpperCase() + period.slice(1)})`}
 		</h1>
-		<section id='change-period'>
-			<p>Period Filter:</p>
-			{
-				other_periods.map((period) => (
-					<a class='period' href={`/top/${period}`}>
-						{period ? period : 'all'}
-					</a>
-				))
-			}
-		</section>
-		<section>
-			<h2>Categories</h2>
-			<ol id='top-categories'>
+		<section id='search-filters'>
+			<h2>Filter Period</h2>
+			<div>
 				{
-					top_cats.map((cat) => (
-						<li>
-							<a href={`/top/${period}/${cat.Category}`}>
-								{cat.Category}
-							</a>
-							<span>({cat.Count})</span>
-						</li>
+					other_periods.map((period) => (
+						<a class='period' href={`/top/${period}`}>
+							{period ? period : 'all'}
+						</a>
 					))
 				}
-			</ol>
-		</section>
-		<section>
-			<h2>Links</h2>
-			{
-				links.length ? (
-					<ol id='links'>
-						{links.map((link) => (
-							<Link
-								client:load
-								IsSummaryPage={false}
-								IsTagPage={false}
-								Link={link}
-								Token={token}
-								User={user}
-							/>
-						))}
-					</ol>
-				) : (
-					<>
-						<p>No results</p>
-						{user ? (
-							<p>
-								<a href={`/new`}>Add link</a>
-							</p>
-						) : null}
-					</>
-				)
-			}
+			</div>
 		</section>
 
-		<ScrollUp />
+		{
+			links.length ? (
+				<>
+					<section>
+						<h2>Categories</h2>
+						<ol id='top-categories'>
+							{top_cats.map((cat) => (
+								<li>
+									<a
+										href={
+											period === 'all'
+												? `/cat/${cat.Category}`
+												: `/top/${period}/${cat.Category}`
+										}
+									>
+										{cat.Category}
+									</a>
+									<span>({cat.Count})</span>
+								</li>
+							))}
+						</ol>
+					</section>
+
+					<section>
+						<h2>Links</h2>
+						<ol id='links'>
+							{links.map((link) => (
+								<Link
+									client:load
+									IsSummaryPage={false}
+									IsTagPage={false}
+									Link={link}
+									Token={token}
+									User={user}
+								/>
+							))}
+						</ol>
+					</section>
+
+					<ScrollUp />
+				</>
+			) : (
+				<>
+					<h3>No results</h3>
+					{user ? (
+						<p>
+							<a href={`/new`}>Add link</a>
+						</p>
+					) : null}
+				</>
+			)
+		}
 	</main>
 </Layout>
 
 <style>
-	#change-period {
-		font-size: 0.9rem;
-		display: flex;
+	#search-filters {
+		div {
+			display: flex;
+			align-items: center;
+		}
 
 		p {
 			margin-top: 0;
+		}
+
+		.period {
+			margin-left: 0.5rem;
+		}
+
+		.period:first-of-type {
+			margin-left: 0;
 		}
 	}
 	#top-categories {
@@ -121,9 +146,6 @@ const top_cats: CategoryCount[] = await top_cats_resp.json()
 		flex-direction: column;
 		flex-wrap: wrap;
 		height: 160px;
-	}
-	.period {
-		margin-left: 0.5rem;
 	}
 	#links {
 		padding: 0;

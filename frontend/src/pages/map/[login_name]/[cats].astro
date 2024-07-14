@@ -43,67 +43,53 @@ if (!used_sections.length) {
 		<h1>{login_name}'s Treasure Map</h1>
 		<h2 class='subtitle'>(Filtered)</h2>
 		<section id='filters'>
-			{
-				cats_split.length > 1 ? (
-					<>
-						<div>
-							<h3>Category Filters: </h3>
-							<p id='reset-category-filters'>
-								<a href={`/map/${login_name}`}>Reset</a>
-							</p>
-						</div>
-						<ul id='categories-grid'>
-							{cats_split.map((cat) => {
-								return (
-									<TagCategory
-										Category={cat}
-										EditActivated={false}
-										Deleted={undefined}
-									/>
-								)
-							})}
-						</ul>
-					</>
-				) : (
-					<>
-						<div>
-							<h3>Category Filter: </h3>
-							<p id='reset-category-filters'>
-								<a href={`/map/${login_name}`}>Reset</a>
-							</p>
-						</div>
-						<ul id='categories-grid'>
-							<TagCategory
-								Category={cats_split[0]}
-								EditActivated={false}
-								Deleted={undefined}
-							/>
-						</ul>
-					</>
-				)
-			}
+			<div>
+				<h2>Filter Category(ies)</h2>
+				<p id='reset-category-filters'>
+					<a href={`/map/${login_name}`}>Reset</a>
+				</p>
+			</div>
+			<ul id='categories-grid'>
+				{
+					cats_split.length > 1 ? (
+						cats_split.map((cat) => {
+							return (
+								<TagCategory
+									Category={cat}
+									EditActivated={false}
+									Deleted={undefined}
+								/>
+							)
+						})
+					) : (
+						<TagCategory
+							Category={cats_split[0]}
+							EditActivated={false}
+							Deleted={undefined}
+						/>
+					)
+				}
+			</ul>
 		</section>
 		<section id='overview'>
 			<div>
+				<h2>Subcategories</h2>
 				{
 					tmap.Categories.length ? (
-						<div>
-							<h2>Top Subcategories</h2>
-							<ol>
-								{tmap.Categories.map((cat) => (
-									<li>
-										<a
-											href={`/map/${login_name}/${categories},${cat.Category}`}
-										>
-											{cat.Category}
-										</a>
-										<span>({cat.Count})</span>
-									</li>
-								))}
-							</ol>
-						</div>
+						<ol>
+							{tmap.Categories.map((cat) => (
+								<li>
+									<a
+										href={`/map/${login_name}/${categories},${cat.Category}`}
+									>
+										{cat.Category}
+									</a>
+									<span>({cat.Count})</span>
+								</li>
+							))}
+						</ol>
 					) : (
-						<h2>No further subcategories.</h2>
+						<p>No further subcategories.</p>
 					)
 				}
 			</div>
@@ -173,6 +159,7 @@ if (!used_sections.length) {
 	#categories-grid {
 		display: flex;
 		flex-wrap: wrap;
+		align-content: flex-start;
 		padding-inline-start: 0;
 		gap: 10px;
 	}
@@ -180,6 +167,9 @@ if (!used_sections.length) {
 	#overview {
 		display: flex;
 		gap: 50px;
+	}
+	:is(#filters, #overview) > * {
+		width: 50%;
 	}
 	#skip_to_link_section {
 		list-style: none;
