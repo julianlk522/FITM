@@ -77,6 +77,11 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 // (day, week, month)
 // (top 20 for now)
 func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
+	period_params := chi.URLParam(r, "period")
+	if period_params == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no period provided")))
+		return
+	}
 	get_links_sql := `SELECT links_id as link_id, url, link_author as subitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
 	FROM
 		(
@@ -90,19 +95,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 			)
 		ON Links.id = likes_link_id`
 
-	switch chi.URLParam(r, "period") {
-	case "day":
-		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2`
-	case "week":
-		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
-	case "month":
-		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
-	case "year":
-		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 366`
-	default:
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
-		return
-	}
+	AppendPeriodClause(&get_links_sql, period_params)
 
 	const LIMIT string = "20"
 	get_links_sql += fmt.Sprintf(`) LEFT JOIN Summaries
@@ -121,7 +114,6 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	// Check auth token
 	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
@@ -191,7 +183,6 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	// Check auth token
 	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
@@ -243,20 +234,7 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 			)
 		ON Links.id = likes_link_id`
 
-	switch period_params {
-	case "day":
-		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2`
-	case "week":
-		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
-	case "month":
-		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
-	case "year":
-		get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 366`
-	default:
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
-		return
-	}
-
+	AppendPeriodClause(&get_links_sql, period_params)
 	get_links_sql += fmt.Sprintf(` AND links_id IN (%s)`, strings.Join(link_ids, ","))
 
 	const LIMIT string = "20"
@@ -276,7 +254,6 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	// Check auth token
 	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
@@ -402,20 +379,7 @@ func GetTopCategoryContributorsByPeriod(w http.ResponseWriter, r *http.Request) 
 
 	get_links_sql := `SELECT count(*), submitted_by
 		FROM Links`
-	
-	switch period_params {
-		case "day":
-			get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2`
-		case "week":
-			get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
-		case "month":
-			get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
-		case "year":
-			get_links_sql += ` WHERE julianday('now') - julianday(submit_date) <= 366`
-		default:
-			render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
-			return
-	}
+	AppendPeriodClause(&get_links_sql, period_params)
 	for _, cat := range categories {
 		get_links_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, cat)
 	}
@@ -527,8 +491,8 @@ func GetSubcategories(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetSubcategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
-	period_params, search_cats_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
-	if search_cats_params == "" {
+	period_params, categories_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
+	if categories_params == "" {
 		render.Render(w, r, ErrInvalidRequest(errors.New("no categories provided")))
 		return
 	} else if period_params == "" {
@@ -536,23 +500,11 @@ func GetSubcategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// TODO: replace with middleware that converts all URLs to lowercase
-	search_cats_params = strings.ToLower(search_cats_params)
-	search_cats := strings.Split(search_cats_params, ",")
+	categories_params = strings.ToLower(categories_params)
+	search_cats := strings.Split(categories_params, ",")
 
 	get_subcats_sql := `SELECT global_cats FROM Links`
-	switch period_params {
-	case "day":
-		get_subcats_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2`
-	case "week":
-		get_subcats_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
-	case "month":
-		get_subcats_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
-	case "year":
-		get_subcats_sql += ` WHERE julianday('now') - julianday(submit_date) <= 366`
-	default:
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
-		return
-	}
+	AppendPeriodClause(&get_subcats_sql, period_params)
 	for _, cat := range search_cats {
 		get_subcats_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, cat)
 	}
@@ -599,19 +551,7 @@ func GetSubcategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 		subcats_with_counts[i].Category = subcats[i]
 
 		get_link_counts_sql := `SELECT count(*) as link_count FROM Links`
-		switch period_params {
-		case "day":
-			get_link_counts_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2`
-		case "week":
-			get_link_counts_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
-		case "month":
-			get_link_counts_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
-		case "year":
-			get_link_counts_sql += ` WHERE julianday('now') - julianday(submit_date) <= 366`
-		default:
-			render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
-			return
-		}
+		AppendPeriodClause(&get_link_counts_sql, period_params)
 		get_link_counts_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, subcats[i])
 		for _, cat := range search_cats {
 			get_link_counts_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, cat)
@@ -656,8 +596,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	defer db.Close()
-
-	// Check auth token
+	
 	req_user_id, req_login_name, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))

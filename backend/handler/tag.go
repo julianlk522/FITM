@@ -206,27 +206,16 @@ func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
-
-	// Limit 15 for now
-	const LIMIT int = 15
-
-	get_tag_cats_sql := `SELECT global_cats
-		FROM Links
-		WHERE global_cats != ""`
-
-	switch chi.URLParam(r, "period") {
-	case "day":
-		get_tag_cats_sql += ` AND julianday('now') - julianday(submit_date) <= 2`
-	case "week":
-		get_tag_cats_sql += ` AND julianday('now') - julianday(submit_date) <= 8`
-	case "month":
-		get_tag_cats_sql += ` AND julianday('now') - julianday(submit_date) <= 31`
-	case "year":
-		get_tag_cats_sql += ` AND julianday('now') - julianday(submit_date) <= 366`
-	default:
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid period")))
+	period_params := chi.URLParam(r, "period")
+	if period_params == "" {
+		render.Render(w, r, ErrInvalidRequest(errors.New("no period provided")))
 		return
 	}
+
+	get_tag_cats_sql := `SELECT global_cats
+		FROM Links`
+	AppendPeriodClause(&get_tag_cats_sql, period_params)
+	get_tag_cats_sql += ` AND global_cats != "";`
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
@@ -271,17 +260,7 @@ func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 		category_counts[i].Category = categories[i]
 
 		get_cat_count_sql := fmt.Sprintf(`select count(*) as count_with_cat from (select id, submit_date from Links where ',' || global_cats || ',' like '%%,%s,%%' group by id)`, categories[i])
-
-		switch chi.URLParam(r, "period") {
-			case "day":
-				get_cat_count_sql += ` WHERE julianday('now') - julianday(submit_date) <= 2`
-			case "week":
-				get_cat_count_sql += ` WHERE julianday('now') - julianday(submit_date) <= 8`
-			case "month":
-				get_cat_count_sql += ` WHERE julianday('now') - julianday(submit_date) <= 31`
-			case "year":
-				get_cat_count_sql += ` WHERE julianday('now') - julianday(submit_date) <= 366`
-		}
+		AppendPeriodClause(&get_cat_count_sql, period_params)
 
 		var c sql.NullInt32
 		err = db.QueryRow(get_cat_count_sql).Scan(&c)
@@ -295,6 +274,8 @@ func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 	slices.SortFunc(category_counts, model.SortCategories)
 
 	// Limit to top {LIMIT} categories
+	// (15 for now)
+	const LIMIT int = 15
 	if len(category_counts) > LIMIT {
 		category_counts = category_counts[0:LIMIT]
 	}
