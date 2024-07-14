@@ -201,9 +201,14 @@ func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {
 
 	slices.SortFunc(category_counts, model.SortCategories)
 
+	// Limit to top {LIMIT} categories
+	if len(category_counts) > LIMIT {
+		category_counts = category_counts[0:LIMIT]
+	}
+
 	// return top {LIMIT} categories and their counts
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, category_counts[0:LIMIT])
+	render.JSON(w, r, category_counts)
 }
 
 func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
@@ -295,9 +300,14 @@ func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 
 	slices.SortFunc(category_counts, model.SortCategories)
 
+	// Limit to top {LIMIT} categories
+	if len(category_counts) > LIMIT {
+		category_counts = category_counts[0:LIMIT]
+	}
+
 	// return top {LIMIT} categories and their counts
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, category_counts[0:LIMIT])
+	render.JSON(w, r, category_counts)
 }
 
 // ADD NEW TAG
