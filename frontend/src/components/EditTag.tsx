@@ -125,7 +125,6 @@ export default function EditTag(props: Props) {
                         }} class='img-btn'>
                         <img
                             src={editing ? '../../../check2-circle.svg' : '../../../bi-feather.svg'}
-                            class='invert'
                             height={20}
                             width={20}
                             alt={editing ? 'Confirm Edits' : 'Edit Tag'}

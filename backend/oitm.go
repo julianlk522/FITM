@@ -28,6 +28,12 @@ func init() {
 
 func main() {	
 	r := chi.NewRouter()
+	defer func() {
+		if err := http.ListenAndServe("localhost:8000", r); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
 	r.Use(middleware.Logger)
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
@@ -124,12 +130,4 @@ func main() {
 		r.Delete("/summaries/{summary_id}/like", handler.UnlikeSummary)
 
 	})
-
-
-
-	// Serve
-	// make sure this runs after all routes
-	if err := http.ListenAndServe("localhost:8000", r); err != nil {
-		log.Fatal(err)
-	}
 }
