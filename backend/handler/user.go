@@ -173,14 +173,10 @@ func EditProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 	
-	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 
 	// Update profile
@@ -217,14 +213,10 @@ func EditAbout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -318,16 +310,10 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
-
-	// Get requesting user from auth token context
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 
 	// Update db with new pic name
@@ -371,17 +357,11 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_user_id, req_login_name string
-	claims, err := GetJWTClaims(r)
+	req_user_id, req_login_name, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
-		req_login_name = claims["login_name"].(string)
 	}
-
 	// Prepare SQL to get submitted / tagged / copied links from User
 	// (Start with queries for signed-out user, append additional if needed)
 	base_fields := `SELECT 
@@ -601,15 +581,10 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_user_id, req_login_name string
-	claims, err := GetJWTClaims(r)
+	req_user_id, req_login_name, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
-		req_login_name = claims["login_name"].(string)
 	}
 
 	// Prepare SQL to get submitted / tagged / copied links from User

@@ -36,14 +36,10 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 
 	// authenticated
@@ -213,14 +209,10 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -281,14 +273,10 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 	
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -351,14 +339,10 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 	
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -415,14 +399,10 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 	
 	db, err := sql.Open("sqlite3", "./db/oitm.db")

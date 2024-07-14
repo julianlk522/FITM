@@ -91,21 +91,22 @@ func AuthenticatorOptional(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler 
 	}
 }
 
-// Retrieve signed-in user login_name and user_id from JWT claims if they are passed in request context
-func GetJWTClaims(r *http.Request) (map[string]interface{}, error) {
+// Retrieve signed-in user id and login_name from JWT claims if they are passed in request context
+func GetJWTClaims(r *http.Request) (string, string, error) {
+
+	// claims = {"user_id":"1234","login_name":"johndoe"}
 	_, claims, err := jwtauth.FromContext(r.Context())
 	if len(claims) == 0 {
-		return nil, nil
+		return "", "", nil
 	} else if err != nil {
-		return nil, err
+		return "", "", err
 	}
 	
-	// claims = {"user_id":"1234","login_name":"johndoe"}
-	req_login_name, ok := claims["login_name"]
-	req_user_id, ok2 := claims["user_id"]
+	req_user_id, ok := claims["user_id"]
+	req_login_name, ok2 := claims["login_name"]
 	if !ok || !ok2 {
-		return nil, errors.New("invalid auth token")
+		return "", "", errors.New("invalid auth token")
 	}
 	
-	return map[string]interface{}{"login_name": req_login_name, "user_id": req_user_id}, nil
+	return req_user_id.(string), req_login_name.(string), nil
 }

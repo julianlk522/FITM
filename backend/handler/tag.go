@@ -23,16 +23,10 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_user_id string
-	var req_login_name string
-	claims, err := GetJWTClaims(r)
+	req_user_id, req_login_name, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
-		req_login_name = claims["login_name"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -318,14 +312,10 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_login_name string
-	claims, err := GetJWTClaims(r)
+	_, req_login_name, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_login_name = claims["login_name"].(string)
 	}
 
 	// Check that tag has no more than 5 (for now) categories
@@ -387,14 +377,10 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_login_name string
-	claims, err := GetJWTClaims(r)
+	_, req_login_name, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_login_name = claims["login_name"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")

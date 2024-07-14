@@ -4,10 +4,10 @@
 
 ### Features:
 
--Edit category filters directly on top links by period/category(ies) page
-    -Add or remove one at a time
+-Fix top category contributors (/cat/{categories}) sorting backwards
 -Middleware to alphabetize tag categories automatically
     -e.g., http://localhost:4321/cat/shit,nerd => http://localhost:4321/cat/nerd,shit
+    -/top/{period}/{cat}, /cat/{cat}
 -Reorder tmap to submitted -> copied -> tagged
 -Pagination
     -Home
@@ -18,6 +18,7 @@
     -Link articles
     -Proper color scheme
 -Use traditional "?" URL params instead of routes
+    -one single link results page spanning all of /cat/{categories}, /top/{period}, /top/{period}/{categories} depending on URL params passed
     -/cat, /top, etc. get confusing
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
@@ -31,7 +32,6 @@
 -Merge GetProfile handler logic into GetTreasureMap handler
     -(since it is only used on tmap page alongside link data)
 -Remove repeat code wherever possible
-    -GetJWTClaims
     -GetTopLinksByCategories / GetTopLinksByPeriod
 -Follow patterns shown in https://github.com/jonnylangefeld/go-api
 -Tests
@@ -43,6 +43,8 @@
 
 -Prevent user from copying their own link (backend)
 -Show number of copies along with number of likes in frontend
+-Edit category filters directly on top links by period/category(ies) page
+    -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads
 -Search for existing tag cats while adding/editing
     -Fuzzysort?
 -Way to prevent many tags from flooding global tag

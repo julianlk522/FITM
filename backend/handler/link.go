@@ -50,15 +50,12 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	defer rows.Close()
-
+			
 	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 
 	// Scan links
@@ -125,13 +122,10 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 	
 	// Scan links
@@ -198,13 +192,10 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 
 	// Scan links
@@ -286,13 +277,10 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 	
 	// Scan links
@@ -670,17 +658,12 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// Check auth token
-	var req_user_id, req_login_name string
-	claims, err := GetJWTClaims(r)
+	req_user_id, req_login_name, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
-		req_login_name = claims["login_name"].(string)
-
-		link_data.SubmittedBy = req_login_name
 	}
+	link_data.SubmittedBy = req_login_name
 
 	// Check if more than 5 tag categories are submitted, Abort if so
 	cat_limit := 5
@@ -854,14 +837,10 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -926,14 +905,10 @@ func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -968,14 +943,10 @@ func CopyLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
@@ -1019,14 +990,10 @@ func UncopyLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check auth token
-	var req_user_id string
-	claims, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if len(claims) > 0 {
-		req_user_id = claims["user_id"].(string)
 	}
 
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
