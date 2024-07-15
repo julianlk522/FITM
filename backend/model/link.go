@@ -40,6 +40,8 @@ func (a *NewLinkRequest) Bind(r *http.Request) error {
 	return nil
 }
 
+
+
 type LinkSignedOut struct {
 	ID int64
 	URL string
@@ -70,6 +72,8 @@ func (l LinkSignedOut) GetCategories() string {
 func (l LinkSignedIn) GetCategories() string {
 	return l.Categories
 }
+
+
 
 type CustomLinkCategories struct {
 	LinkID int64

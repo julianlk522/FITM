@@ -18,6 +18,9 @@ import (
 	"oitm/model"
 )
 
+const LINKS_PAGE_LIMIT int = 20
+const CATEGORY_CONTRIBUTORS_LIMIT int = 5
+
 // GET OVERALL MOST-LIKED LINKS
 // (top 20 for now)
 func GetTopLinks(w http.ResponseWriter, r *http.Request) {
@@ -27,25 +30,8 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 	
-	const LIMIT string = "20"
-	get_links_sql := fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
-	FROM 
-		(
-		SELECT Links.id as links_id, url, submitted_by as link_author, Links.submit_date as sd, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url 
-		FROM LINKS 
-		LEFT JOIN 
-			(
-			SELECT link_id as likes_link_id, count(*) as like_count 
-			FROM 'Link Likes'
-			GROUP BY likes_link_id
-			) 
-		ON Links.id = likes_link_id
-		) 
-	LEFT JOIN Summaries 
-	ON Summaries.link_id = links_id 
-	GROUP BY links_id 
-	ORDER BY like_count DESC, summary_count DESC, link_id DESC LIMIT %s;`, LIMIT)
-	rows, err := db.Query(get_links_sql)
+	get_links_sql := model.NewGetLinksSQL().AddLimit(LINKS_PAGE_LIMIT)
+	rows, err := db.Query(get_links_sql.Text)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -82,25 +68,11 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, ErrInvalidRequest(errors.New("no period provided")))
 		return
 	}
-	get_links_sql := `SELECT links_id as link_id, url, link_author as subitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
-	FROM
-		(
-		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date as sd, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
-		FROM LINKS
-		LEFT JOIN 
-			(
-			SELECT link_id as likes_link_id, count(*) as like_count
-			FROM 'Link Likes'
-			GROUP BY likes_link_id
-			)
-		ON Links.id = likes_link_id`
-
-	AppendPeriodClause(&get_links_sql, period_params)
-
-	const LIMIT string = "20"
-	get_links_sql += fmt.Sprintf(`) LEFT JOIN Summaries
-	ON Summaries.link_id = links_id
-	GROUP BY links_id ORDER BY like_count DESC, summary_count DESC, link_id DESC LIMIT %s;`, LIMIT)
+	get_links_sql := model.NewGetLinksSQL().AddPeriod(period_params).AddLimit(LINKS_PAGE_LIMIT)
+	if get_links_sql.Error != nil {
+		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
+		return
+	}
 
 	db ,err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
@@ -108,7 +80,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query(get_links_sql)
+	rows, err := db.Query(get_links_sql.Text)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -144,6 +116,7 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// get link data for each ID
 	link_ids := GetIDsOfLinksHavingCategories(categories_params)
 	if len(link_ids) == 0 {
 		render.JSON(w, r, []model.LinkSignedOut{})
@@ -151,37 +124,23 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get link data for each ID
 	db, err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
-	// limit top 20 links for now
-	const LIMIT string = "20"
-	rows, err := db.Query(fmt.Sprintf(`SELECT links_id as link_id, url, link_author as submitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
-	FROM
-		(
-		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date as sd, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
-		FROM LINKS
-		LEFT JOIN 
-			(
-			SELECT link_id as likes_link_id, count(*) as like_count
-			FROM 'Link Likes' 
-			GROUP BY likes_link_id
-			)
-		ON Links.id = likes_link_id 
-		WHERE links_id IN (%s)
-		)
-	LEFT JOIN Summaries
-	ON Summaries.link_id = links_id
-	GROUP BY link_id
-	ORDER BY like_count DESC, link_id ASC 
-	LIMIT %s;`, strings.Join(link_ids, ","), LIMIT))
+	get_links_sql := model.NewGetLinksSQL().FromLinkIDs(link_ids).AddLimit(LINKS_PAGE_LIMIT)
+	if get_links_sql.Error != nil {
+		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
+		return
+	}
+
+	rows, err := db.Query(get_links_sql.Text)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer rows.Close()
 
 	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
@@ -221,26 +180,11 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	get_links_sql := `SELECT links_id as link_id, url, link_author as subitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
-	FROM
-		(
-		SELECT Links.id as links_id, url, submitted_by as link_author, submit_date as sd, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url
-		FROM LINKS
-		LEFT JOIN 
-			(
-			SELECT link_id as likes_link_id, count(*) as like_count
-			FROM 'Link Likes'
-			GROUP BY likes_link_id
-			)
-		ON Links.id = likes_link_id`
-
-	AppendPeriodClause(&get_links_sql, period_params)
-	get_links_sql += fmt.Sprintf(` AND links_id IN (%s)`, strings.Join(link_ids, ","))
-
-	const LIMIT string = "20"
-	get_links_sql += fmt.Sprintf(`) LEFT JOIN Summaries
-	ON Summaries.link_id = links_id
-	GROUP BY links_id ORDER BY like_count DESC, summary_count DESC, link_id DESC LIMIT %s;`, LIMIT)
+	get_links_sql := model.NewGetLinksSQL().FromLinkIDs(link_ids).AddPeriod(period_params).AddLimit(LINKS_PAGE_LIMIT)
+	if get_links_sql.Error != nil {
+		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
+		return
+	}
 
 	db ,err := sql.Open("sqlite3", "./db/oitm.db")
 	if err != nil {
@@ -248,7 +192,7 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query(get_links_sql)
+	rows, err := db.Query(get_links_sql.Text)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -325,17 +269,6 @@ func GetIDsOfLinksHavingCategories(categories string) []string {
 // GET TOP CONTRIBUTORS FOR GIVEN CATEGORY(IES)
 // (determined by number of links submitted having ALL given categories in global_cats)
 func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
-
-	// Limit 5
-	const LIMIT string = "5"
-
-	db ,err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	// get categories
 	categories_params := chi.URLParam(r, "categories")
 	categories := strings.Split(categories_params, ",")
 	get_links_sql := fmt.Sprintf(`select count(*), submitted_by from Links where ',' || global_cats || ',' like '%%,%s,%%'`, categories[0])
@@ -344,7 +277,13 @@ func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
 			get_links_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, categories[i])
 		}
 
-	get_links_sql += fmt.Sprintf(` GROUP BY submitted_by ORDER BY count(*) DESC LIMIT %s;`, LIMIT)
+	get_links_sql += fmt.Sprintf(` GROUP BY submitted_by ORDER BY count(*) DESC LIMIT %d;`, CATEGORY_CONTRIBUTORS_LIMIT)
+
+	db ,err := sql.Open("sqlite3", "./db/oitm.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
 
 	rows, err := db.Query(get_links_sql)
 	if err != nil {
@@ -596,7 +535,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	
+
 	req_user_id, req_login_name, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
