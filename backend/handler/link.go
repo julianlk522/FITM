@@ -20,19 +20,17 @@ import (
 
 func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	get_links_sql := query.NewGetTopLinks().Limit(LINKS_PAGE_LIMIT)
-	rows, err := DBClient.Query(get_links_sql.Text)
-	if err != nil {
-		log.Fatal(err)
+	if get_links_sql.Error != nil {
+		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
+		return
 	}
-	defer rows.Close()
-			
-	req_user_id, _, err := GetJWTClaims(r)
+
+	links, err := _ScanLinks(get_links_sql, r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-
-	_RenderLinks(rows, req_user_id, w, r)
+	_RenderLinks(links, w, r)
 }
 
 func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
@@ -48,20 +46,12 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := DBClient.Query(get_links_sql.Text)
-	if err != nil {
-		fmt.Println("oops")
-		log.Fatal(err)
-	}
-	defer rows.Close()
-
-	req_user_id, _, err := GetJWTClaims(r)
+	links, err := _ScanLinks(get_links_sql, r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-	
-	_RenderLinks(rows, req_user_id, w, r)
+	_RenderLinks(links, w, r)
 }
 
 func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
@@ -76,8 +66,7 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	} else if len(link_ids) == 0 {
-		render.JSON(w, r, []model.LinkSignedOut{})
-		render.Status(r, http.StatusOK)
+		_RenderZeroLinks(w, r)
 		return
 	}
 
@@ -86,20 +75,13 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
 		return
 	}
-	
-	rows, err := DBClient.Query(get_links_sql.Text)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
 
-	req_user_id, _, err := GetJWTClaims(r)
+	links, err := _ScanLinks(get_links_sql, r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-
-	_RenderLinks(rows, req_user_id, w, r)
+	_RenderLinks(links, w, r)
 }
 
 func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
@@ -117,8 +99,7 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	} else if len(link_ids) == 0 {
-		render.JSON(w, r, []model.LinkSignedOut{})
-		render.Status(r, http.StatusOK)
+		_RenderZeroLinks(w, r)
 		return
 	}
 
@@ -127,94 +108,94 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
 		return
 	}
-
-	rows, err := DBClient.Query(get_links_sql.Text)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-
-	req_user_id, _, err := GetJWTClaims(r)
+	
+	links, err := _ScanLinks(get_links_sql, r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-	
-	_RenderLinks(rows, req_user_id, w, r)
+	_RenderLinks(links, w, r)
 }
 
-func _RenderLinks(rows *sql.Rows, req_user_id string, w http.ResponseWriter, r *http.Request) {
+func _ScanLinks(get_links_sql *query.GetTopLinks, r *http.Request) (*[]model.Link, error) {
+	req_user_id, _, err := GetJWTClaims(r)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := DBClient.Query(get_links_sql.Text)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var links []model.Link
 
 	// Auth: Add IsLiked / IsCopied / IsTagged to links
 	if req_user_id != "" {
-		links := _ScanLinksWithAuth(rows, req_user_id)
-		render.JSON(w, r, &links)
+		for rows.Next() {
+
+			// Note: I found it impossible to reduce this repeated code without upsetting the compiler... may come back after learning more
+			i := model.LinkSignedIn{}
+			if err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL); err != nil {
+				return nil, err
+			}
+	
+			// Add IsLiked / IsCopied / IsTagged
+			var l sql.NullInt32
+			var t sql.NullInt32
+			var c sql.NullInt32
+	
+			
+			err := DBClient.QueryRow(fmt.Sprintf(`SELECT
+			(
+				SELECT count(*) FROM 'Link Likes'
+				WHERE link_id = '%[1]d' AND user_id = '%[2]s'
+			) as is_liked,
+			(
+				SELECT count(*) FROM Tags
+				JOIN Users
+				ON Users.login_name = Tags.submitted_by
+				WHERE link_id = '%[1]d' AND Users.id = '%[2]s'
+			) AS is_tagged,
+			(
+				SELECT count(*) FROM 'Link Copies'
+				WHERE link_id = '%[1]d' AND user_id = '%[2]s'
+			) as is_copied;`, i.ID, req_user_id)).Scan(&l,&t, &c)
+			if err != nil {
+				return nil, err
+			}
+	
+			i.IsLiked = l.Int32 > 0
+			i.IsTagged = t.Int32 > 0
+			i.IsCopied = c.Int32 > 0
+	
+			links = append(links, i)
+		}
 
 	// No auth
 	} else {
-		links := _ScanLinks(rows)
-		render.JSON(w, r, &links)
+		for rows.Next() {
+			i := model.LinkSignedOut{}
+			if err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL); err != nil {
+				log.Fatal(err)
+			}
+	
+			links = append(links, i)
+		}
 	}
 
+	return &links, err
+}
+
+func _RenderLinks(links *[]model.Link, w http.ResponseWriter, r *http.Request) {
+	render.JSON(w, r, &links)
 	render.Status(r, http.StatusOK)
 }
 
-func _ScanLinks(rows *sql.Rows) *[]model.LinkSignedOut {
-	var links = []model.LinkSignedOut{}
-
-	for rows.Next() {
-		i := model.LinkSignedOut{}
-		if err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL); err != nil {
-			log.Fatal(err)
-		}
-
-		links = append(links, i)
-	}
-
-	return &links
-}
-
-func _ScanLinksWithAuth(rows *sql.Rows, user_id string) *[]model.LinkSignedIn {
-	var links = []model.LinkSignedIn{}
-
-	for rows.Next() {
-		i := model.LinkSignedIn{}
-		if err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL); err != nil {
-			log.Fatal(err)
-		}
-
-		// Add IsLiked / IsCopied / IsTagged
-		var l sql.NullInt32
-		var t sql.NullInt32
-		var c sql.NullInt32
-
-		
-		err := DBClient.QueryRow(fmt.Sprintf(`SELECT
-		(
-			SELECT count(*) FROM 'Link Likes'
-			WHERE link_id = '%[1]d' AND user_id = '%[2]s'
-		) as is_liked,
-		(
-			SELECT count(*) FROM Tags
-			JOIN Users
-			ON Users.login_name = Tags.submitted_by
-			WHERE link_id = '%[1]d' AND Users.id = '%[2]s'
-		) AS is_tagged,
-		(
-			SELECT count(*) FROM 'Link Copies'
-			WHERE link_id = '%[1]d' AND user_id = '%[2]s'
-		) as is_copied;`, i.ID, user_id)).Scan(&l,&t, &c)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		i.IsLiked = l.Int32 > 0
-		i.IsTagged = t.Int32 > 0
-		i.IsCopied = c.Int32 > 0
-
-		links = append(links, i)
-	}
-	return &links
+func _RenderZeroLinks(w http.ResponseWriter, r *http.Request) {
+	render.JSON(w, r, []model.Link{})
+	render.Status(r, http.StatusOK)
 }
 
 func _GetIDsOfLinksHavingCategories(categories_str string) (link_ids []string, err error) {
@@ -324,7 +305,12 @@ func GetSubcategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_RenderSubcategories(get_subcats_sql, categories, w, r)
+	subcats := _ScanSubcategories(get_subcats_sql, categories)
+	if len(subcats) == 0 {
+		_RenderZeroSubcategories(w, r)
+		return
+	}
+	_RenderSubcategories(subcats, categories, w, r)
 }
 
 func GetSubcategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
@@ -344,27 +330,13 @@ func GetSubcategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, ErrInvalidRequest(get_subcats_sql.Error))
 		return
 	}
-	
-	_RenderSubcategories(get_subcats_sql, categories, w, r)
-}
 
-func _RenderSubcategories(get_subcats_sql *query.GetSubcategories, categories []string, w http.ResponseWriter, r *http.Request) {
 	subcats := _ScanSubcategories(get_subcats_sql, categories)
 	if len(subcats) == 0 {
 		_RenderZeroSubcategories(w, r)
 		return
 	}
-
-	subcats_with_counts, err := _GetSubcategoryCounts(subcats, categories)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
-		return
-	}
-
-	_SortAndLimitCategoryCounts(subcats_with_counts)
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, subcats_with_counts)
+	_RenderSubcategories(subcats, categories, w, r)
 }
 
 func _ScanSubcategories(get_subcats_sql *query.GetSubcategories, search_categories []string) []string {
@@ -397,6 +369,19 @@ func _ScanSubcategories(get_subcats_sql *query.GetSubcategories, search_categori
 func _RenderZeroSubcategories(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, []model.CategoryCount{})
 	render.Status(r, http.StatusOK)
+}
+
+func _RenderSubcategories(subcats []string, categories []string, w http.ResponseWriter, r *http.Request) {
+	with_counts, err := _GetSubcategoryCounts(subcats, categories)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	_SortAndLimitCategoryCounts(with_counts)
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, with_counts)
 }
 
 func _GetSubcategoryCounts(subcats []string, categories []string) (*[]model.CategoryCount, error) {

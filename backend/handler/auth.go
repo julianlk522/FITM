@@ -67,6 +67,7 @@ func AuthenticatorOptional(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler 
 
 // Retrieve JWT claims if they are passed in request context
 // claims = {"user_id":"1234","login_name":"johndoe"}
+// TODO: remove and replace repeated logic if claims can simply be passed to request context and retrieved from it directly in handlers
 func GetJWTClaims(r *http.Request) (string, string, error) {
 	_, claims, err := jwtauth.FromContext(r.Context())
 	if len(claims) == 0 {
