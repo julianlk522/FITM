@@ -18,21 +18,14 @@ import (
 func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 	link_id := chi.URLParam(r, "link_id")
 	if link_id == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no link id found")))
+		render.Render(w, r, ErrInvalidRequest(ErrNoLinkID))
 		return
 	}
 
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
 	// Check if link exists, Abort if invalid link ID provided
 	var l sql.NullString
-	err = db.QueryRow("SELECT id FROM Links WHERE id = ?;", link_id).Scan(&l)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no link found with given ID")))
+	if err := DBClient.QueryRow("SELECT id FROM Links WHERE id = ?;", link_id).Scan(&l); err != nil {
+		render.Render(w, r, ErrInvalidRequest(ErrNoLinkWithID))
 		return
 	}
 
@@ -72,7 +65,7 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 			)
 		ON copy_link_id = link_id`, link_id, req_user_id)
 		var link model.LinkSignedIn
-		err = db.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.IsLiked, &link.IsCopied, &link.ImgURL)
+		err = DBClient.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.IsLiked, &link.IsCopied, &link.ImgURL)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				render.Status(r, http.StatusNotFound)
@@ -107,7 +100,7 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 		LEFT JOIN 'Summary Likes' as sl
 		ON sl.summary_id = sumid 
 		GROUP BY sumid;`, link_id, req_user_id)
-		rows, err := db.Query(get_summaries_sql)
+		rows, err := DBClient.Query(get_summaries_sql)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -146,7 +139,7 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 			LEFT JOIN 'Link Likes' 
 			ON 'Link Likes'.link_id = links_id`, link_id)
 		var link model.LinkSignedOut
-		err = db.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.ImgURL)
+		err = DBClient.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.ImgURL)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				render.Status(r, http.StatusNotFound)
@@ -173,7 +166,7 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 		LEFT JOIN 'Summary Likes' 
 		ON 'Summary Likes'.summary_id = sumid 
 		GROUP BY sumid;`, link_id)
-		rows, err := db.Query(get_summaries_sql)
+		rows, err := DBClient.Query(get_summaries_sql)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -215,15 +208,10 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
+	
 	// Check if link exists, Abort if not
 	var s sql.NullString
-	err = db.QueryRow("SELECT id FROM Links WHERE id = ?", summary_data.LinkID).Scan(&s)
+	err = DBClient.QueryRow("SELECT id FROM Links WHERE id = ?", summary_data.LinkID).Scan(&s)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("link not found")))
 		return
@@ -231,18 +219,18 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 
 	// Check if user already submitted a summary to this link, Update existing summary if so
 	var sid sql.NullString
-	err = db.QueryRow("SELECT id FROM Summaries WHERE link_id = ? AND submitted_by = ?", summary_data.LinkID, req_user_id).Scan(&sid)
+	err = DBClient.QueryRow("SELECT id FROM Summaries WHERE link_id = ? AND submitted_by = ?", summary_data.LinkID, req_user_id).Scan(&sid)
 	if err == nil {
 
 		// Update
-		_, err = db.Exec(`UPDATE Summaries SET text = ?, last_updated = ?
+		_, err = DBClient.Exec(`UPDATE Summaries SET text = ?, last_updated = ?
 		WHERE id = ?`, summary_data.Text, summary_data.LastUpdated, sid.String)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// Remove Summary Likes
-		_, err = db.Exec(`DELETE FROM 'Summary Likes' WHERE summary_id = ?`, sid.String)
+		_, err = DBClient.Exec(`DELETE FROM 'Summary Likes' WHERE summary_id = ?`, sid.String)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -251,7 +239,7 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 
 	// Else create new summary
 	} else {
-		_, err = db.Exec(`INSERT INTO Summaries VALUES (?,?,?,?,?)`, nil, summary_data.Text, summary_data.LinkID, req_user_id, summary_data.LastUpdated)
+		_, err = DBClient.Exec(`INSERT INTO Summaries VALUES (?,?,?,?,?)`, nil, summary_data.Text, summary_data.LinkID, req_user_id, summary_data.LastUpdated)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -260,7 +248,7 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Recalculate global_summary
-	RecalculateGlobalSummary(summary_data.LinkID, db)
+	_RecalculateGlobalSummary(summary_data.LinkID, DBClient)
 
 	render.JSON(w, r, summary_data)
 }
@@ -279,19 +267,14 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
 	// Check that summary exists and submitted by user, Abort if not
 	var u sql.NullInt64
 	req_user_id_int64, err := strconv.ParseInt(req_user_id, 10, 64)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = db.QueryRow("SELECT submitted_by FROM Summaries WHERE id = ?", delete_data.SummaryID).Scan(&u)
+
+	err = DBClient.QueryRow("SELECT submitted_by FROM Summaries WHERE id = ?", delete_data.SummaryID).Scan(&u)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
 		return
@@ -303,14 +286,14 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 	// Get link ID
 	var lid sql.NullString
 	get_lid_sql := fmt.Sprintf(`SELECT link_id FROM Summaries WHERE id = '%s'`, delete_data.SummaryID)
-	err = db.QueryRow(get_lid_sql).Scan(&lid)
+	err = DBClient.QueryRow(get_lid_sql).Scan(&lid)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Check that summary is not only summary for its link, Abort if so
 	var c sql.NullInt32
-	err = db.QueryRow("SELECT COUNT(id) FROM Summaries WHERE link_id = ?", lid.String).Scan(&c)
+	err = DBClient.QueryRow("SELECT COUNT(id) FROM Summaries WHERE link_id = ?", lid.String).Scan(&c)
 	if err != nil {
 		log.Fatal(err)
 	} else if c.Int32 == 1 {
@@ -319,13 +302,13 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Delete Summary
-	_, err = db.Exec(`DELETE FROM Summaries WHERE id = ?`, delete_data.SummaryID)
+	_, err = DBClient.Exec(`DELETE FROM Summaries WHERE id = ?`, delete_data.SummaryID)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Recalculate global_summary
-	RecalculateGlobalSummary(lid.String, db)
+	_RecalculateGlobalSummary(lid.String, DBClient)
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "deleted"})
@@ -345,16 +328,11 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
+	
 	// Check if summary exists, Abort if not
 	// Also save link_id for recalculating global_summary later
 	var s, lid sql.NullString
-	err = db.QueryRow("SELECT id, link_id FROM Summaries WHERE id = ?", summary_id).Scan(&s, &lid)
+	err = DBClient.QueryRow("SELECT id, link_id FROM Summaries WHERE id = ?", summary_id).Scan(&s, &lid)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
 		return
@@ -362,7 +340,7 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 
 	// Check if summary submitted by same user, Abort if so
 	var u sql.NullInt64
-	err = db.QueryRow("SELECT submitted_by FROM Summaries WHERE id = ?", summary_id).Scan(&u)
+	err = DBClient.QueryRow("SELECT submitted_by FROM Summaries WHERE id = ?", summary_id).Scan(&u)
 	if err != nil {
 		log.Fatal(err)
 	} else if uid64, err := strconv.ParseInt(req_user_id, 10, 64); err == nil && u.Int64 == uid64 {
@@ -372,20 +350,20 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 
 	// Check if user already liked summary, Abort if so
 	var slid sql.NullString
-	err = db.QueryRow("SELECT id FROM 'Summary Likes' WHERE summary_id = ? AND user_id = ?", summary_id, req_user_id).Scan(&slid)
+	err = DBClient.QueryRow("SELECT id FROM 'Summary Likes' WHERE summary_id = ? AND user_id = ?", summary_id, req_user_id).Scan(&slid)
 	if err == nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("already liked")))
 		return
 	}
 
 	// Add like
-	_, err = db.Exec(`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, nil, req_user_id, summary_id)
+	_, err = DBClient.Exec(`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, nil, req_user_id, summary_id)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Recalculate global_summary
-	RecalculateGlobalSummary(lid.String, db)
+	_RecalculateGlobalSummary(lid.String, DBClient)
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "liked"})
@@ -405,15 +383,10 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
+	
 	// Check that user has liked summary with given ID, Abort if not
 	var slid sql.NullString
-	err = db.QueryRow("SELECT id FROM 'Summary Likes' WHERE summary_id = ? AND user_id = ?", summary_id, req_user_id).Scan(&slid)
+	err = DBClient.QueryRow("SELECT id FROM 'Summary Likes' WHERE summary_id = ? AND user_id = ?", summary_id, req_user_id).Scan(&slid)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("not liked")))
 		return
@@ -422,25 +395,25 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 	// Get link ID before deleting
 	var lid sql.NullString
 	get_lid_sql := fmt.Sprintf(`SELECT link_id FROM Summaries WHERE Summaries.id = (SELECT summary_id FROM 'Summary Likes' WHERE 'Summary Likes'.id = '%s');`, slid.String)
-	err = db.QueryRow(get_lid_sql).Scan(&lid)
+	err = DBClient.QueryRow(get_lid_sql).Scan(&lid)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Delete Summary Like
-	_, err = db.Exec(`DELETE FROM 'Summary Likes' WHERE id = ?`, slid.String)
+	_, err = DBClient.Exec(`DELETE FROM 'Summary Likes' WHERE id = ?`, slid.String)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Recalculate global_summary
-	RecalculateGlobalSummary(lid.String, db)
+	_RecalculateGlobalSummary(lid.String, DBClient)
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "deleted"})
 }
 
-func RecalculateGlobalSummary(link_id string, db *sql.DB) {
+func _RecalculateGlobalSummary(link_id string, db *sql.DB) {
 
 	// (Summary with the most upvotes is the global summary)
 	get_summary_like_counts_sql := fmt.Sprintf(`SELECT text

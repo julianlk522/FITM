@@ -13,6 +13,7 @@ import (
 	"github.com/go-chi/render"
 	"golang.org/x/exp/slices"
 
+	query "oitm/db/query"
 	"oitm/model"
 )
 
@@ -29,16 +30,10 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
+	
 	// Check if link exists, Abort if invalid link ID provided
 	var l sql.NullString
-	err = db.QueryRow("SELECT id FROM Links WHERE id = ?;", link_id).Scan(&l)
-	if err != nil {
+	if err = DBClient.QueryRow("SELECT id FROM Links WHERE id = ?;", link_id).Scan(&l); err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("no link found with given ID")))
 		return
 	}
@@ -70,13 +65,13 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 		)
 	ON copy_link_id = link_id`, link_id, req_user_id)
 	var link model.LinkSignedIn
-	err = db.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.IsLiked, &link.IsCopied, &link.ImgURL)
+	err = DBClient.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.IsLiked, &link.IsCopied, &link.ImgURL)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Get earliest tags and Lifespan-Overlap scores
-	rows, err := db.Query(`SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) * 100 AS lifespan_overlap, categories, Tags.submitted_by, last_updated 
+	rows, err := DBClient.Query(`SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) * 100 AS lifespan_overlap, categories, Tags.submitted_by, last_updated 
 		FROM Tags 
 		INNER JOIN Links 
 		ON Links.id = Tags.link_id 
@@ -99,7 +94,7 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 
 	// Get user-submitted tag if user has submitted one
 	var user_tag_id, user_tag_cats, user_tag_last_updated sql.NullString
-	err = db.QueryRow("SELECT id, categories, last_updated FROM 'Tags' WHERE link_id = ? AND submitted_by = ?;", link_id, req_login_name).Scan(&user_tag_id, &user_tag_cats, &user_tag_last_updated)
+	err = DBClient.QueryRow("SELECT id, categories, last_updated FROM 'Tags' WHERE link_id = ? AND submitted_by = ?;", link_id, req_login_name).Scan(&user_tag_id, &user_tag_cats, &user_tag_last_updated)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Fatal(err)
@@ -131,19 +126,10 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET MOST-USED TAG CATEGORIES
-func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {
-
-	// Limit 15 for now
-	const LIMIT int = 15
-
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
+func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {	
 
 	// Get all global categories
-	rows, err := db.Query(`SELECT global_cats
+	rows, err := DBClient.Query(`SELECT global_cats
 		FROM Links
 		WHERE global_cats != ""
 	`)
@@ -182,10 +168,10 @@ func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(categories); i++ {
 		category_counts[i].Category = categories[i]
 
-		get_cat_count_sql := fmt.Sprintf(`select count(*) as count_with_cat from (select id from Links where ',' || global_cats || ',' like '%%,%s,%%' group by id)`, categories[i])
+		get_cat_count_sql := fmt.Sprintf(`select count(*) as count_with_cat from (%s);`, query.NewGetLinkIDs(categories[i]).Text)
 
 		var c sql.NullInt32
-		err = db.QueryRow(get_cat_count_sql).Scan(&c)
+		err = DBClient.QueryRow(get_cat_count_sql).Scan(&c)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -196,8 +182,8 @@ func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {
 	slices.SortFunc(category_counts, model.SortCategories)
 
 	// Limit to top {LIMIT} categories
-	if len(category_counts) > LIMIT {
-		category_counts = category_counts[0:LIMIT]
+	if len(category_counts) > TOP_TAG_CATEGORIES_LIMIT {
+		category_counts = category_counts[0:TOP_TAG_CATEGORIES_LIMIT]
 	}
 
 	// return top {LIMIT} categories and their counts
@@ -212,18 +198,11 @@ func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	get_tag_cats_sql := `SELECT global_cats
-		FROM Links`
-	AppendPeriodClause(&get_tag_cats_sql, period_params)
+	get_tag_cats_sql := query.WithPeriodClause(`SELECT global_cats FROM Links`, period_params)
 	get_tag_cats_sql += ` AND global_cats != "";`
 
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	rows, err := db.Query(get_tag_cats_sql)
+	
+	rows, err := DBClient.Query(get_tag_cats_sql)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -259,11 +238,10 @@ func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(categories); i++ {
 		category_counts[i].Category = categories[i]
 
-		get_cat_count_sql := fmt.Sprintf(`select count(*) as count_with_cat from (select id, submit_date from Links where ',' || global_cats || ',' like '%%,%s,%%' group by id)`, categories[i])
-		AppendPeriodClause(&get_cat_count_sql, period_params)
+		get_cat_count_sql := query.WithPeriodClause(fmt.Sprintf(`select count(*) as count_with_cat from (select id, submit_date from Links where ',' || global_cats || ',' like '%%,%s,%%' group by id)`, categories[i]), period_params)
 
 		var c sql.NullInt32
-		err = db.QueryRow(get_cat_count_sql).Scan(&c)
+		err = DBClient.QueryRow(get_cat_count_sql).Scan(&c)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -307,22 +285,17 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
+	
 	// Check if link exists, Abort if invalid link ID provided
 	var s sql.NullString
-	err = db.QueryRow("SELECT id FROM Links WHERE id = ?;", tag_data.LinkID).Scan(&s)
+	err = DBClient.QueryRow("SELECT id FROM Links WHERE id = ?;", tag_data.LinkID).Scan(&s)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link id provided")))
 		return
 	}
 
 	// Check if duplicate (same link ID, submitted by), Abort if so
-	err = db.QueryRow("SELECT id FROM Tags WHERE link_id = ? AND submitted_by = ?;", tag_data.LinkID, req_login_name).Scan(&s)
+	err = DBClient.QueryRow("SELECT id FROM Tags WHERE link_id = ? AND submitted_by = ?;", tag_data.LinkID, req_login_name).Scan(&s)
 	if err == nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("duplicate tag")))
 		return
@@ -332,13 +305,13 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 	tag_data.Categories = strings.ToLower(tag_data.Categories)
 
 	// Insert new tag
-	res, err := db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, tag_data.LinkID, tag_data.Categories, req_login_name, tag_data.LastUpdated)
+	res, err := DBClient.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, tag_data.LinkID, tag_data.Categories, req_login_name, tag_data.LastUpdated)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Recalculate global categories for this link
-	RecalculateGlobalCategories(db, tag_data.LinkID)
+	_RecalculateGlobalCategories(DBClient, tag_data.LinkID)
 
 	var id int64
 	if id, err = res.LastInsertId(); err != nil {
@@ -364,15 +337,10 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
+	
 	// Check if tag doesn't exist or submitted by a different user, Abort if either
 	var t sql.NullString
-	err = db.QueryRow("SELECT submitted_by FROM Tags WHERE id = ?;", edit_tag_data.ID).Scan(&t)
+	err = DBClient.QueryRow("SELECT submitted_by FROM Tags WHERE id = ?;", edit_tag_data.ID).Scan(&t)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("tag not found")))
 		return
@@ -386,7 +354,7 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 	slices.Sort(split_categories)
 	edit_tag_data.Categories = strings.Join(split_categories, ",")
 
-	_, err = db.Exec(`UPDATE Tags 
+	_, err = DBClient.Exec(`UPDATE Tags 
 	SET categories = ?, last_updated = ? 
 	WHERE id = ?;`, 
 	edit_tag_data.Categories, edit_tag_data.LastUpdated, edit_tag_data.ID)
@@ -396,14 +364,14 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 
 	// Get link ID from tag ID
 	var lid sql.NullString
-	err = db.QueryRow("SELECT link_id FROM Tags WHERE id = ?;", edit_tag_data.ID).Scan(&lid)
+	err = DBClient.QueryRow("SELECT link_id FROM Tags WHERE id = ?;", edit_tag_data.ID).Scan(&lid)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("invalid tag id provided")))
 		return
 	}
 
 	// Recalculate global categories for this link
-	RecalculateGlobalCategories(db, lid.String)
+	_RecalculateGlobalCategories(DBClient, lid.String)
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, edit_tag_data)
@@ -411,7 +379,7 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 }
 
 // Recalculate global categories for a link whose tags changed
-func RecalculateGlobalCategories(db *sql.DB, link_id string) {
+func _RecalculateGlobalCategories(db *sql.DB, link_id string) {
 	// (technically should affect all links that share 1+ categories but that's too complicated.) 
 	// (Plus, many links will not be seen enough to justify being updated constantly. Makes enough sense to only update a link's global cats when a new tag is added to that link.)
 

@@ -8,80 +8,49 @@ import (
 	"net/http"
 
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"golang.org/x/exp/slices"
 
+	query "oitm/db/query"
 	"oitm/model"
 )
 
-const LINKS_PAGE_LIMIT int = 20
-const CATEGORY_CONTRIBUTORS_LIMIT int = 5
-
-// GET OVERALL MOST-LIKED LINKS
-// (top 20 for now)
 func GetTopLinks(w http.ResponseWriter, r *http.Request) {
-	db ,err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-	
-	get_links_sql := model.NewGetLinksSQL().AddLimit(LINKS_PAGE_LIMIT)
-	rows, err := db.Query(get_links_sql.Text)
+	get_links_sql := query.NewGetTopLinks().Limit(LINKS_PAGE_LIMIT)
+	rows, err := DBClient.Query(get_links_sql.Text)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 			
-	// Check auth token
 	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
 
-	// Scan links
-	// User signed in
-	if req_user_id != "" {
-		links := ScanLinksSignedIn(db, rows, req_user_id)
-		render.JSON(w, r, &links)
-
-	// User signed out: IsLiked / IsCopied / IsTagged not included		
-	} else {
-		links := ScanLinksSignedOut(db, rows)
-		render.JSON(w, r, &links)
-	}
-
-	render.Status(r, http.StatusOK)
+	_RenderLinks(rows, req_user_id, w, r)
 }
 
-// GET MOST-LIKED LINKS DURING PERIOD
-// (day, week, month)
-// (top 20 for now)
 func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	period_params := chi.URLParam(r, "period")
 	if period_params == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no period provided")))
+		render.Render(w, r, ErrInvalidRequest(ErrNoPeriod))
 		return
 	}
-	get_links_sql := model.NewGetLinksSQL().AddPeriod(period_params).AddLimit(LINKS_PAGE_LIMIT)
+	
+	get_links_sql := query.NewGetTopLinks().DuringPeriod(period_params).Limit(LINKS_PAGE_LIMIT)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
 		return
 	}
 
-	db ,err := sql.Open("sqlite3", "./db/oitm.db")
+	rows, err := DBClient.Query(get_links_sql.Text)
 	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	rows, err := db.Query(get_links_sql.Text)
-	if err != nil {
+		fmt.Println("oops")
 		log.Fatal(err)
 	}
 	defer rows.Close()
@@ -92,51 +61,33 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	// Scan links
-	// User signed in
-	if req_user_id != "" {
-		links := ScanLinksSignedIn(db, rows, req_user_id)
-		render.JSON(w, r, &links)
-
-	// User signed out: IsLiked / IsCopied / IsTagged not included		
-	} else {
-		links := ScanLinksSignedOut(db, rows)
-		render.JSON(w, r, &links)
-	}
-
-	render.Status(r, http.StatusOK)
+	_RenderLinks(rows, req_user_id, w, r)
 }
 
-// GET MOST-LIKED LINKS WITH GIVEN CATEGORY(IES)
-// (top 20 for now)
 func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	categories_params := chi.URLParam(r, "categories")
 	if categories_params == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no categories provided")))
+		render.Render(w, r, ErrInvalidRequest(ErrNoCategories))
 		return
 	}
 
-	// get link data for each ID
-	link_ids := GetIDsOfLinksHavingCategories(categories_params)
-	if len(link_ids) == 0 {
+	link_ids, err := _GetIDsOfLinksHavingCategories(categories_params)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(link_ids) == 0 {
 		render.JSON(w, r, []model.LinkSignedOut{})
 		render.Status(r, http.StatusOK)
 		return
 	}
 
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	get_links_sql := model.NewGetLinksSQL().FromLinkIDs(link_ids).AddLimit(LINKS_PAGE_LIMIT)
+	get_links_sql := query.NewGetTopLinks().FromLinkIDs(link_ids).Limit(LINKS_PAGE_LIMIT)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
 		return
 	}
-
-	rows, err := db.Query(get_links_sql.Text)
+	
+	rows, err := DBClient.Query(get_links_sql.Text)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -148,51 +99,36 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Scan links
-	// User signed in
-	if req_user_id != "" {
-		links := ScanLinksSignedIn(db, rows, req_user_id)
-		render.JSON(w, r, &links)
-
-	// User signed out: IsLiked / IsCopied / IsTagged not included		
-	} else {
-		links := ScanLinksSignedOut(db, rows)
-		render.JSON(w, r, &links)
-	}
-
-	render.Status(r, http.StatusOK)
+	_RenderLinks(rows, req_user_id, w, r)
 }
 
 func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 	period_params, categories_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
 	if period_params == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no period provided")))
+		render.Render(w, r, ErrInvalidRequest(ErrNoPeriod))
 		return
 	} else if categories_params == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no categories provided")))
+		render.Render(w, r, ErrInvalidRequest(ErrNoCategories))
 		return
 	}
 
-	link_ids := GetIDsOfLinksHavingCategories(categories_params)
-	if len(link_ids) == 0 {
+	link_ids, err := _GetIDsOfLinksHavingCategories(categories_params)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if len(link_ids) == 0 {
 		render.JSON(w, r, []model.LinkSignedOut{})
 		render.Status(r, http.StatusOK)
 		return
 	}
 
-	get_links_sql := model.NewGetLinksSQL().FromLinkIDs(link_ids).AddPeriod(period_params).AddLimit(LINKS_PAGE_LIMIT)
+	get_links_sql := query.NewGetTopLinks().FromLinkIDs(link_ids).DuringPeriod(period_params).Limit(LINKS_PAGE_LIMIT)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
 		return
 	}
 
-	db ,err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	rows, err := db.Query(get_links_sql.Text)
+	rows, err := DBClient.Query(get_links_sql.Text)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -204,749 +140,31 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	// Scan links
-	// User signed in
+	_RenderLinks(rows, req_user_id, w, r)
+}
+
+func _RenderLinks(rows *sql.Rows, req_user_id string, w http.ResponseWriter, r *http.Request) {
+
+	// Auth: Add IsLiked / IsCopied / IsTagged to links
 	if req_user_id != "" {
-		links := ScanLinksSignedIn(db, rows, req_user_id)
+		links := _ScanLinksWithAuth(rows, req_user_id)
 		render.JSON(w, r, &links)
 
-	// User signed out: IsLiked / IsCopied / IsTagged not included		
+	// No auth
 	} else {
-		links := ScanLinksSignedOut(db, rows)
+		links := _ScanLinks(rows)
 		render.JSON(w, r, &links)
 	}
 
 	render.Status(r, http.StatusOK)
 }
 
-func GetIDsOfLinksHavingCategories(categories string) []string {
-	var get_links_sql string
-
-	// multiple categories
-	if strings.Contains(categories, ",") {
-		categories := strings.Split(categories, ",")
-
-		// get link IDs
-		get_links_sql = fmt.Sprintf(`select id from Links where ',' || global_cats || ',' like '%%,%s,%%'`, categories[0])
-
-		for i := 1; i < len(categories); i++ {
-			get_links_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, categories[i])
-		}
-
-	// single category
-	} else {
-
-		// get link IDs
-		get_links_sql = fmt.Sprintf(`select id from Links where ',' || global_cats || ',' like '%%,%s,%%'`, categories)
-	}
-	get_links_sql += ` group by id`
-
-	db ,err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	rows, err := db.Query(get_links_sql)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-	
-	var link_ids []string
-	for rows.Next() {
-		var link_id string
-		err := rows.Scan(&link_id)
-		if err != nil {
-			log.Fatal(err)
-		}
-		link_ids = append(link_ids, link_id)
-	}
-
-	return link_ids
-}
-
-// GET TOP CONTRIBUTORS FOR GIVEN CATEGORY(IES)
-// (determined by number of links submitted having ALL given categories in global_cats)
-func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
-	categories_params := chi.URLParam(r, "categories")
-	categories := strings.Split(categories_params, ",")
-	get_links_sql := fmt.Sprintf(`select count(*), submitted_by from Links where ',' || global_cats || ',' like '%%,%s,%%'`, categories[0])
-
-		for i := 1; i < len(categories); i++ {
-			get_links_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, categories[i])
-		}
-
-	get_links_sql += fmt.Sprintf(` GROUP BY submitted_by ORDER BY count(*) DESC LIMIT %d;`, CATEGORY_CONTRIBUTORS_LIMIT)
-
-	db ,err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	rows, err := db.Query(get_links_sql)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-
-	contributors := []model.CategoryContributor{}
-	for rows.Next() {
-		contributor := model.CategoryContributor{Categories: categories_params}
-		err := rows.Scan(&contributor.LinksSubmitted, &contributor.LoginName)
-		if err != nil {
-			log.Fatal(err)
-		}
-		contributors = append(contributors, contributor)
-	}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, contributors)
-}
-
-func GetTopCategoryContributorsByPeriod(w http.ResponseWriter, r *http.Request) {
-	period_params, categories_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
-	if period_params == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no period provided")))
-		return
-	} else if categories_params == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no categories provided")))
-		return
-	}
-	categories := strings.Split(categories_params, ",")
-
-	get_links_sql := `SELECT count(*), submitted_by
-		FROM Links`
-	AppendPeriodClause(&get_links_sql, period_params)
-	for _, cat := range categories {
-		get_links_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, cat)
-	}
-
-	// Limit 5
-	const LIMIT string = "5"
-	get_links_sql += fmt.Sprintf(` GROUP BY submitted_by ORDER BY count(*) DESC LIMIT %s;`, LIMIT)
-
-	db ,err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	rows, err := db.Query(get_links_sql)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-
-	contributors := []model.CategoryContributor{}
-	for rows.Next() {
-		contributor := model.CategoryContributor{Categories: categories_params}
-		err := rows.Scan(&contributor.LinksSubmitted, &contributor.LoginName)
-		if err != nil {
-			log.Fatal(err)
-		}
-		contributors = append(contributors, contributor)
-	}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, contributors)
-}
-
-// GET TOP SUBCATEGORIES WITH GIVEN CATEGORY(IES)
-func GetSubcategories(w http.ResponseWriter, r *http.Request) {
-	categories_params := chi.URLParam(r, "categories")
-	if categories_params == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no categories provided")))
-		return
-	}
-	// TODO: replace with middleware that converts all URLs to lowercase
-	categories_params = strings.ToLower(categories_params)
-	search_cats := strings.Split(categories_params, ",")
-	
-	get_subcats_sql := fmt.Sprintf(`select global_cats from Links where ',' || global_cats || ',' like '%%,%s,%%'`, search_cats[0])
-	for i := 1; i < len(search_cats); i++ {
-		get_subcats_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, search_cats[i])
-	}
-	get_subcats_sql += ` group by global_cats;`
-
-	db ,err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	rows, err := db.Query(get_subcats_sql)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-	
-	var subcats []string
-	for rows.Next() {
-		var row_cats string
-		err := rows.Scan(&row_cats)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		cats := strings.Split(row_cats, ",")
-		for i := 0; i < len(cats); i++ {
-			cat_lc := strings.ToLower(cats[i])
-
-			// append to subcats if new and not in search_cats 
-			if !slices.Contains(search_cats, cat_lc) && !slices.Contains(subcats, cat_lc) {
-				subcats = append(subcats, cat_lc)
-			}
-		}
-	}
-	if len(subcats) == 0 {
-		render.JSON(w, r, []string{})
-		render.Status(r, http.StatusOK)
-		return
-	}
-
-	subcats_with_counts := make([]model.CategoryCount, len(subcats))
-	for i := 0; i < len(subcats); i++ {
-		subcats_with_counts[i].Category = subcats[i]
-
-		get_link_counts_sql := fmt.Sprintf(`SELECT count(*) as link_count FROM Links WHERE ',' || global_cats || ',' like '%%,%s,%%'`, subcats[i])
-
-		for j := 0; j < len(search_cats); j++ {
-			get_link_counts_sql += fmt.Sprintf(` AND ',' || global_cats || ',' LIKE '%%,%s,%%'`, search_cats[j])
-		}
-		get_link_counts_sql += `;`
-
-		err := db.QueryRow(get_link_counts_sql).Scan(&subcats_with_counts[i].Count)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	SortAndLimitCategoryCounts(&subcats_with_counts)
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, subcats_with_counts)
-}
-
-func GetSubcategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
-	period_params, categories_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
-	if categories_params == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no categories provided")))
-		return
-	} else if period_params == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no period provided")))
-		return
-	}
-	// TODO: replace with middleware that converts all URLs to lowercase
-	categories_params = strings.ToLower(categories_params)
-	search_cats := strings.Split(categories_params, ",")
-
-	get_subcats_sql := `SELECT global_cats FROM Links`
-	AppendPeriodClause(&get_subcats_sql, period_params)
-	for _, cat := range search_cats {
-		get_subcats_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, cat)
-	}
-	get_subcats_sql += ` group by global_cats;`
-
-	db ,err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	rows, err := db.Query(get_subcats_sql)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-	
-	var subcats []string
-	for rows.Next() {
-		var row_cats string
-		err := rows.Scan(&row_cats)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		cats := strings.Split(row_cats, ",")
-		for i := 0; i < len(cats); i++ {
-			cat_lc := strings.ToLower(cats[i])
-
-			// append to subcats if new and not in search_cats 
-			if !slices.Contains(search_cats, cat_lc) && !slices.Contains(subcats, cat_lc) {
-				subcats = append(subcats, cat_lc)
-			}
-		}
-	}
-	if len(subcats) == 0 {
-		render.JSON(w, r, []string{})
-		render.Status(r, http.StatusOK)
-		return
-	}
-
-	subcats_with_counts := make([]model.CategoryCount, len(subcats))
-	for i := 0; i < len(subcats); i++ {
-		subcats_with_counts[i].Category = subcats[i]
-
-		get_link_counts_sql := `SELECT count(*) as link_count FROM Links`
-		AppendPeriodClause(&get_link_counts_sql, period_params)
-		get_link_counts_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, subcats[i])
-		for _, cat := range search_cats {
-			get_link_counts_sql += fmt.Sprintf(` AND ',' || global_cats || ',' like '%%,%s,%%'`, cat)
-		}
-		get_link_counts_sql += `;`
-
-		err := db.QueryRow(get_link_counts_sql).Scan(&subcats_with_counts[i].Count)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	SortAndLimitCategoryCounts(&subcats_with_counts)
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, subcats_with_counts)
-}
-
-func SortAndLimitCategoryCounts(cats_with_counts *[]model.CategoryCount) {
-	// sort by count
-	slices.SortFunc(*cats_with_counts, model.SortCategories)
-
-	
-	// limit to top {LIMIT} categories
-	// 20 for now
-	const LIMIT int = 20
-	if len(*cats_with_counts) > LIMIT {
-		*cats_with_counts = (*cats_with_counts)[:LIMIT]
-	}
-}
-
-// ADD NEW LINK
-func AddLink(w http.ResponseWriter, r *http.Request) {
-	link_data := &model.NewLinkRequest{}
-	if err := render.Bind(r, link_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
-		return
-	}
-
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	req_user_id, req_login_name, err := GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
-		return
-	}
-	link_data.SubmittedBy = req_login_name
-
-	// Check if more than 5 tag categories are submitted, Abort if so
-	cat_limit := 5
-	if strings.Count(link_data.NewLink.Categories, ",") > cat_limit {
-		render.Render(w, r, ErrInvalidRequest(fmt.Errorf("tag has too many categories (%d max)", cat_limit)))
-		return
-	}
-
-    // Check if URL contains http or https protocol, update if needed
-	protocol_regex, err := regexp.Compile(`^(http(s?)\:\/\/)`)
-	if err != nil {
-		log.Fatal(err)
-	}
-	
-	var resp *http.Response
-
-	// Protocol not specified, try https then http
-	if !protocol_regex.MatchString(link_data.NewLink.URL) {
-		found := false
-
-		// check https
-		link_data.URL = "https://" + link_data.NewLink.URL
-		resp, err = http.Get(link_data.URL)
-		if err == nil {
-			if resp.StatusCode > 299 && resp.StatusCode < 400 {
-				render.Render(w, r, ErrInvalidRequest(errors.New("invalid link destination: redirect detected")))
-				return
-			} else {
-				found = true
-			}
-		}
-
-		// Check http if https not found
-		if !found {
-			link_data.URL = "http://" + link_data.NewLink.URL
-			resp, err = http.Get(link_data.URL)
-			if resp.StatusCode > 299 && resp.StatusCode < 400 {
-				render.Render(w, r, ErrInvalidRequest(errors.New("invalid link destination: redirect detected")))
-				return
-			} else if err != nil {
-				render.Render(w, r, ErrInvalidRequest(errors.New("invalid link: " + link_data.URL)))
-				return
-			}
-		}
-
-	// Protocol specified, check URL as-is
-	} else {
-		resp, err = http.Get(link_data.NewLink.URL)
-		if err != nil || resp.StatusCode == 404 {
-			render.Render(w, r, ErrInvalidRequest(errors.New("invalid link: " + link_data.URL)))
-			return
-		} else if resp.StatusCode > 299 && resp.StatusCode < 400 {
-			render.Render(w, r, ErrInvalidRequest(errors.New("invalid link destination: redirect detected")))
-			return
-		}	
-	}
-
-	// Get full URL after any redirects e.g., to wwww.
-	link_data.URL = resp.Request.URL.String()
-
-	// Check if link already exists, Abort if attempting duplicate
-	var s sql.NullString
-	err = db.QueryRow("SELECT url FROM Links WHERE url = ?", link_data.URL).Scan(&s)
-	if err == nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("link already exists")))
-		return
-	}
-
-	// Extract meta tag content
-	defer resp.Body.Close()
-	meta := MetaFromHTMLTokens(resp.Body)
-
-	// Get summary and summary author
-	// (Auto-generate from meta tags if summary not provided)
-	summary_author := ""
-
-	// User-submitted summary
-	if link_data.Summary != "" {
-		summary_author = req_user_id
-
-	// No user-submitted: use Auto Summary
-	} else {
-		auto_summary := ""
-
-		switch {
-			case meta.OGDescription != "":
-				auto_summary = meta.OGDescription
-			case meta.Description != "":
-				auto_summary = meta.Description
-			case meta.OGTitle != "":
-				auto_summary = meta.OGTitle
-			case meta.Title != "":
-				auto_summary = meta.Title
-			case meta.OGSiteName != "":
-				auto_summary = meta.OGSiteName
-		}
-
-		// Auto Summary successfully retrieved: assign to request
-		if auto_summary != "" {
-			link_data.Summary = auto_summary
-
-			// 15 is Auto Summary's user_id
-			// TODO: update with final
-			summary_author = "15"
-		
-		// Else no summary (sad!)
-		} else {
-			summary_author = ""
-		}
-	}
-
-	// Get og:image, if available, for link preview
-	var og_image string
-	if meta.OGImage != "" {
-
-		// check that image link is valid
-		resp, err := http.Get(meta.OGImage)
-		if err != nil || resp.StatusCode == 404 || (resp.StatusCode > 299 && resp.StatusCode < 400) {
-
-			// use no image if link is invalid
-			og_image = ""
-		} else {
-			og_image = meta.OGImage
-		}
-	}
-	link_data.ImgURL = og_image
-
-	// Sort categories alphabetically
-	split_categories := strings.Split(link_data.NewLink.Categories, ",")
-	slices.Sort(split_categories)
-	link_data.Categories = strings.Join(split_categories, ",")
-
-	// Insert link
-	res, err := db.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, link_data.Categories, link_data.Summary, og_image)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Get new link ID
-	var id int64
-	if id, err = res.LastInsertId(); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
-	}
-	link_data.ID = id
-
-	// Create new summary if retrieved from request or auto_summary
-	if link_data.Summary != "" {
-		_, err = db.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, link_data.Summary, link_data.ID, summary_author,link_data.SubmitDate)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		link_data.SummaryCount = 1
-	}
-
-	// Create initial tag
-	_, err = db.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_data.ID, link_data.Categories, req_login_name, link_data.SubmitDate)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, link_data)
-}
-
-// LIKE LINK
-func LikeLink(w http.ResponseWriter, r *http.Request) {
-	link_id := chi.URLParam(r, "link_id")
-	if link_id == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link ID provided")))
-		return
-	}
-
-	req_user_id, _, err := GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
-		return
-	}
-
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	// Check if link doesn't exist or if link submitted by same user, Abort if either
-	var link_submitted_by_name sql.NullString
-	err = db.QueryRow("SELECT submitted_by FROM Links WHERE id = ?;", link_id).Scan(&link_submitted_by_name)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link ID")))
-		return
-	}
-
-	var link_submitted_by_id sql.NullInt64
-	err = db.QueryRow("SELECT id FROM Users WHERE login_name = ?;",link_submitted_by_name.String).Scan(&link_submitted_by_id)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	req_user_id_int64, err := strconv.ParseInt(req_user_id, 10, 64)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if link_submitted_by_id.Int64 == req_user_id_int64 {
-		render.Render(w, r, ErrInvalidRequest(errors.New("cannot like your own link")))
-		return
-	}
-
-	// Check if user already liked this link, Abort if already liked
-	var l sql.NullString
-	err = db.QueryRow("SELECT id FROM 'Link Likes' WHERE link_id = ? AND user_id = ?;", link_id, req_user_id).Scan(&l)
-	if err == nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("already liked")))
-		return
-	}
-
-	res, err := db.Exec("INSERT INTO 'Link Likes' VALUES(?,?,?);", nil, req_user_id, link_id)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var id int64
-	if id, err = res.LastInsertId(); err != nil {
-		log.Fatal(err)
-	}
-
-	like_link_data := make(map[string]int64, 1)
-	like_link_data["ID"] = id
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, like_link_data)
-}
-
-// UN-LIKE LINK
-func UnlikeLink(w http.ResponseWriter, r *http.Request) {
-	link_id := chi.URLParam(r, "link_id")
-	if link_id == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link ID provided")))
-		return
-	}
-
-	req_user_id, _, err := GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
-		return
-	}
-
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	// Check if link like submitted by requesting user exists, Abort if not
-	var like_id sql.NullString
-	err = db.QueryRow("SELECT id FROM 'Link Likes' WHERE user_id = ? AND link_id = ?;", req_user_id, link_id).Scan(&like_id)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("link like not found")))
-		return
-	}
-
-	// Delete like
-	_, err = db.Exec("DELETE FROM 'Link Likes' WHERE id = ?;", like_id)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]string{"message": "deleted"})
-}
-
-// COPY LINK TO USER'S TREASURE MAP
-func CopyLink(w http.ResponseWriter, r *http.Request) {
-	link_id := chi.URLParam(r, "link_id")
-	if link_id == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no link ID provided")))
-		return
-	}
-
-	req_user_id, _, err := GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
-		return
-	}
-
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	// Check if link already in map, Abort if attempting duplicate
-	var l sql.NullString
-	err = db.QueryRow("SELECT id FROM 'Link Copies' WHERE link_id = ? AND user_id = ?;", link_id, req_user_id).Scan(&l)
-	if err == nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("link already in map")))
-		return
-	}
-
-	res, err := db.Exec("INSERT INTO 'Link Copies' VALUES(?,?,?);", nil, link_id, req_user_id)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Get ID of new link copy
-	var id int64
-	if id, err = res.LastInsertId(); err != nil {
-		log.Fatal(err)
-	}
-
-	return_json := map[string]int64{
-		"ID": id,
-	}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, return_json)
-}
-
-// UN-COPY LINK
-func UncopyLink(w http.ResponseWriter, r *http.Request) {
-	link_id := chi.URLParam(r, "link_id")
-	if link_id == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no link ID provided")))
-		return
-	}
-
-	req_user_id, _, err := GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
-		return
-	}
-
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	// Check if link copy exists and was submitted by same user, Abort if either unsatisfied
-	var cid sql.NullString
-	err = db.QueryRow("SELECT id FROM 'Link Copies' WHERE link_id = ? AND user_id = ?;", link_id, req_user_id).Scan(&cid)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("link copy does not exist")))
-		return
-	}
-
-	// Delete
-	_, err = db.Exec("DELETE FROM 'Link Copies' WHERE id = ?;", cid.String)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return_json := map[string]string{
-		"message": "deleted",
-	}
-
-	render.JSON(w, r, return_json)
-	render.Status(r, http.StatusNoContent)
-}
-
-// GET LINK LIKES
-// (not currently used - probably delete later)
-func GetLinkLikes(w http.ResponseWriter, r *http.Request) {
-	link_id := chi.URLParam(r, "id")
-	if link_id == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link id provided")))
-		return
-	}
-
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer db.Close()
-
-	// Check if link exists, Abort if invalid link ID provided
-	var s sql.NullString
-	err = db.QueryRow("SELECT id FROM Links WHERE id = ?;", link_id).Scan(&s)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no link found with given ID")))
-		return
-	}
-
-	// Get like count
-	var c int64
-	err = db.QueryRow("SELECT COUNT(id) as count FROM 'Link Likes' WHERE link_id = ?;", link_id).Scan(&c)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
-		return
-	}
-
-	return_json := map[string]int64{"likes": c}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, return_json)
-}
-
-func ScanLinksSignedOut(db *sql.DB, rows *sql.Rows) *[]model.LinkSignedOut {
+func _ScanLinks(rows *sql.Rows) *[]model.LinkSignedOut {
 	var links = []model.LinkSignedOut{}
 
 	for rows.Next() {
 		i := model.LinkSignedOut{}
-		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
-		if err != nil {
+		if err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL); err != nil {
 			log.Fatal(err)
 		}
 
@@ -956,13 +174,12 @@ func ScanLinksSignedOut(db *sql.DB, rows *sql.Rows) *[]model.LinkSignedOut {
 	return &links
 }
 
-func ScanLinksSignedIn(db *sql.DB, rows *sql.Rows, user_id string) *[]model.LinkSignedIn {
+func _ScanLinksWithAuth(rows *sql.Rows, user_id string) *[]model.LinkSignedIn {
 	var links = []model.LinkSignedIn{}
 
 	for rows.Next() {
 		i := model.LinkSignedIn{}
-		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
-		if err != nil {
+		if err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL); err != nil {
 			log.Fatal(err)
 		}
 
@@ -971,7 +188,8 @@ func ScanLinksSignedIn(db *sql.DB, rows *sql.Rows, user_id string) *[]model.Link
 		var t sql.NullInt32
 		var c sql.NullInt32
 
-		err = db.QueryRow(fmt.Sprintf(`SELECT
+		
+		err := DBClient.QueryRow(fmt.Sprintf(`SELECT
 		(
 			SELECT count(*) FROM 'Link Likes'
 			WHERE link_id = '%[1]d' AND user_id = '%[2]s'
@@ -997,4 +215,557 @@ func ScanLinksSignedIn(db *sql.DB, rows *sql.Rows, user_id string) *[]model.Link
 		links = append(links, i)
 	}
 	return &links
+}
+
+func _GetIDsOfLinksHavingCategories(categories_str string) (link_ids []string, err error) {
+	get_link_ids_sql := query.NewGetLinkIDs(categories_str)
+	if get_link_ids_sql.Error != nil {
+		err = get_link_ids_sql.Error
+	}
+
+	rows, err := DBClient.Query(get_link_ids_sql.Text)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	
+	for rows.Next() {
+		var lid string
+		if err := rows.Scan(&lid); err != nil {
+			log.Fatal(err)
+		}
+
+		link_ids = append(link_ids, lid)
+	}
+
+	return link_ids, err
+}
+
+func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
+	categories_params := chi.URLParam(r, "categories")
+	if categories_params == "" {
+		render.Render(w, r, ErrInvalidRequest(ErrNoCategories))
+		return
+	}
+	categories := strings.Split(categories_params, ",")
+
+	get_contributors_sql := query.NewGetCategoryContributors(categories).Limit(CATEGORY_CONTRIBUTORS_LIMIT)
+	if get_contributors_sql.Error != nil {
+		render.Render(w, r, ErrInvalidRequest(get_contributors_sql.Error))
+		return
+	}
+	
+	contributors := _ScanCategoryContributors(get_contributors_sql, categories_params)
+	_RenderCategoryContributors(contributors, w, r)
+}
+
+func GetTopCategoryContributorsByPeriod(w http.ResponseWriter, r *http.Request) {
+	period_params, categories_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
+	if period_params == "" {
+		render.Render(w, r, ErrInvalidRequest(ErrNoPeriod))
+		return
+	} else if categories_params == "" {
+		render.Render(w, r, ErrInvalidRequest(ErrNoCategories))
+		return
+	}
+	
+	categories := strings.Split(categories_params, ",")
+	get_contributors_sql := query.NewGetCategoryContributors(categories).DuringPeriod(period_params).Limit(CATEGORY_CONTRIBUTORS_LIMIT)
+	if get_contributors_sql.Error != nil {
+		render.Render(w, r, ErrInvalidRequest(get_contributors_sql.Error))
+		return
+	}
+
+	contributors := _ScanCategoryContributors(get_contributors_sql, categories_params)
+	_RenderCategoryContributors(contributors, w, r)
+}
+
+func _ScanCategoryContributors(get_contributors_sql *query.GetCategoryContributors, categories_str string) *[]model.CategoryContributor {
+	rows, err := DBClient.Query(get_contributors_sql.Text)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	contributors := []model.CategoryContributor{}
+	for rows.Next() {
+		contributor := model.CategoryContributor{Categories: categories_str}
+		err := rows.Scan(&contributor.LinksSubmitted, &contributor.LoginName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		contributors = append(contributors, contributor)
+	}
+
+	return &contributors
+}
+
+func _RenderCategoryContributors(contributors *[]model.CategoryContributor, w http.ResponseWriter, r *http.Request) {
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, contributors)
+}
+
+func GetSubcategories(w http.ResponseWriter, r *http.Request) {
+	categories_params := chi.URLParam(r, "categories")
+	if categories_params == "" {
+		render.Render(w, r, ErrInvalidRequest(ErrNoCategories))
+		return
+	}
+
+	// TODO: replace with middleware that converts all URLs to lowercase
+	// maybe encode uppercase chars another way?
+	// TODO: figure out how other sites do that
+	categories_params = strings.ToLower(categories_params)
+	categories := strings.Split(categories_params, ",")
+	
+	get_subcats_sql := query.NewGetSubcategories(categories)
+	if get_subcats_sql.Error != nil {
+		render.Render(w, r, ErrInvalidRequest(get_subcats_sql.Error))
+		return
+	}
+
+	_RenderSubcategories(get_subcats_sql, categories, w, r)
+}
+
+func GetSubcategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
+	period_params, categories_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
+	if period_params == "" {
+		render.Render(w, r, ErrInvalidRequest(ErrNoPeriod))
+		return
+	} else if categories_params == "" {
+		render.Render(w, r, ErrInvalidRequest(ErrNoCategories))
+		return
+	}
+	categories_params = strings.ToLower(categories_params)
+	categories := strings.Split(categories_params, ",")
+
+	get_subcats_sql := query.NewGetSubcategories(categories).DuringPeriod(period_params)
+	if get_subcats_sql.Error != nil {
+		render.Render(w, r, ErrInvalidRequest(get_subcats_sql.Error))
+		return
+	}
+	
+	_RenderSubcategories(get_subcats_sql, categories, w, r)
+}
+
+func _RenderSubcategories(get_subcats_sql *query.GetSubcategories, categories []string, w http.ResponseWriter, r *http.Request) {
+	subcats := _ScanSubcategories(get_subcats_sql, categories)
+	if len(subcats) == 0 {
+		_RenderZeroSubcategories(w, r)
+		return
+	}
+
+	subcats_with_counts, err := _GetSubcategoryCounts(subcats, categories)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	_SortAndLimitCategoryCounts(subcats_with_counts)
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, subcats_with_counts)
+}
+
+func _ScanSubcategories(get_subcats_sql *query.GetSubcategories, search_categories []string) []string {
+	rows, err := DBClient.Query(get_subcats_sql.Text)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var subcats []string
+	for rows.Next() {
+		var row_cats string
+		if err := rows.Scan(&row_cats); err != nil {
+			log.Fatal(err)
+		}
+
+		cats := strings.Split(row_cats, ",")
+		for i := 0; i < len(cats); i++ {
+			cat_lc := strings.ToLower(cats[i])
+
+			if !slices.Contains(search_categories, cat_lc) && !slices.Contains(subcats, cat_lc) {
+				subcats = append(subcats, cat_lc)
+			}
+		}
+	}
+	
+	return subcats
+}
+
+func _RenderZeroSubcategories(w http.ResponseWriter, r *http.Request) {
+	render.JSON(w, r, []model.CategoryCount{})
+	render.Status(r, http.StatusOK)
+}
+
+func _GetSubcategoryCounts(subcats []string, categories []string) (*[]model.CategoryCount, error) {
+	subcats_with_counts := make([]model.CategoryCount, len(subcats))
+	for i := 0; i < len(subcats); i++ {
+		subcats_with_counts[i].Category = subcats[i]
+		
+		all_cats := append(categories, subcats[i])
+		get_link_count_sql := query.NewGetLinkCount(all_cats)
+		if get_link_count_sql.Error != nil {
+			return nil, get_link_count_sql.Error
+		}
+
+		if err := DBClient.QueryRow(get_link_count_sql.Text).Scan(&subcats_with_counts[i].Count); err != nil {
+			return nil, err
+		}
+	}
+
+	return &subcats_with_counts, nil
+}
+
+func _SortAndLimitCategoryCounts(cats_with_counts *[]model.CategoryCount) {
+	slices.SortFunc(*cats_with_counts, model.SortCategories)
+
+	if len(*cats_with_counts) > CATEGORY_COUNT_LIMIT {
+		*cats_with_counts = (*cats_with_counts)[:CATEGORY_COUNT_LIMIT]
+	}
+}
+
+func AddLink(w http.ResponseWriter, r *http.Request) {
+	link_data := &model.NewLinkRequest{}
+	if err := render.Bind(r, link_data); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	if strings.Count(link_data.NewLink.Categories, ",") > NEW_TAG_CATEGORY_LIMIT {
+		render.Render(w, r, ErrInvalidRequest(fmt.Errorf("too many tag categories (%d max)", NEW_TAG_CATEGORY_LIMIT)))
+		return
+	}
+
+    resp, err := _ResolveURL(link_data)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	if _URLAlreadySaved(link_data.URL) {
+		render.Render(w, r, ErrInvalidRequest(fmt.Errorf("duplicate URL: %s", link_data.URL)))
+		return
+	}
+
+	req_user_id, req_login_name, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+	link_data.SubmittedBy = req_login_name
+
+	_AssignMetadata(link_data, req_user_id, resp)
+	_AssignSortedCategories(link_data, link_data.NewLink.Categories)
+
+	res, err := DBClient.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, link_data.Categories, link_data.Summary, link_data.ImgURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := _AssignID(link_data, res); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	if link_data.Summary != "" {
+		_, err = DBClient.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, link_data.Summary, link_data.ID, link_data.SummaryAuthor, link_data.SubmitDate)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		link_data.SummaryCount = 1
+	}
+
+	_, err = DBClient.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_data.ID, link_data.Categories, req_login_name, link_data.SubmitDate)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	render.Status(r, http.StatusCreated)
+	render.JSON(w, r, link_data)
+}
+
+func _ResolveURL(link_data *model.NewLinkRequest) (*http.Response, error) {	
+	has_protocol_regex, err := regexp.Compile(`^(http(s?)\:\/\/)`)
+	if err != nil {
+		return nil, err
+	}
+	
+	var resp *http.Response
+	var ErrRedirect error = errors.New("invalid link destination: redirect detected")
+
+	// Protocol specified: check as-is
+	if has_protocol_regex.MatchString(link_data.NewLink.URL) {
+		resp, err = http.Get(link_data.NewLink.URL)
+		if _IsRedirect(resp.StatusCode) {
+			return nil, ErrRedirect
+		} else if err != nil || resp.StatusCode == 404 {
+			return nil, _InvalidURLError(link_data.URL)
+		}
+		
+	// Protocol not specified: try https then http
+	} else {
+	
+		// https
+		link_data.URL = "https://" + link_data.NewLink.URL
+		resp, err = http.Get(link_data.URL)
+		if err != nil {
+
+			// http
+			link_data.URL = "http://" + link_data.NewLink.URL
+			resp, err = http.Get(link_data.URL)
+			if _IsRedirect(resp.StatusCode) {
+				return nil, ErrRedirect
+			} else if err != nil {
+				return nil, _InvalidURLError(link_data.URL)
+			}
+
+		} else if _IsRedirect(resp.StatusCode) {
+			return nil, ErrRedirect
+		}
+	}
+	
+	// Valid URL: save after any redirects e.g., to wwww.
+	link_data.URL = resp.Request.URL.String()
+
+	return resp, nil
+}
+
+func _IsRedirect(status_code int) bool {
+	return status_code > 299 && status_code < 400
+}
+
+func _InvalidURLError(url string) error {
+	return fmt.Errorf("invalid URL: %s", url)
+}
+
+func _URLAlreadySaved(url string) bool {
+	var u sql.NullString
+
+	err := DBClient.QueryRow("SELECT url FROM Links WHERE url = ?", url).Scan(&u)
+	return err == nil && u.Valid
+}
+
+func _AssignMetadata(link_data *model.NewLinkRequest, req_user_id string, resp *http.Response) {
+	defer resp.Body.Close()
+
+	meta := MetaFromHTMLTokens(resp.Body)
+
+	if link_data.Summary != "" {
+		link_data.SummaryAuthor = req_user_id
+
+	// Auto Summary
+	} else {
+		switch {
+			case meta.OGDescription != "":
+				link_data.Summary = meta.OGDescription
+			case meta.Description != "":
+				link_data.Summary = meta.Description
+			case meta.OGTitle != "":
+				link_data.Summary = meta.OGTitle
+			case meta.Title != "":
+				link_data.Summary = meta.Title
+			case meta.OGSiteName != "":
+				link_data.Summary = meta.OGSiteName
+		}
+
+		if link_data.Summary != "" {
+
+			// 15 is Auto Summary's user_id
+			// TODO: update with final
+			link_data.SummaryAuthor = "15"
+		}
+	}
+
+	if meta.OGImage != "" {
+		resp, err := http.Get(meta.OGImage)
+		if err == nil && resp.StatusCode != 404 && !_IsRedirect(resp.StatusCode) {
+			link_data.ImgURL = meta.OGImage
+		}
+	}
+}
+
+func _AssignSortedCategories(link *model.NewLinkRequest, categories_str string) {
+	split_categories := strings.Split(categories_str, ",")
+	slices.Sort(split_categories)
+
+	link.Categories = strings.Join(split_categories, ",")
+}
+
+func _AssignID(link *model.NewLinkRequest, res sql.Result) error {
+	id, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	link.ID = id
+	return nil
+}
+
+// LIKE LINK
+func LikeLink(w http.ResponseWriter, r *http.Request) {
+	link_id := chi.URLParam(r, "link_id")
+	if link_id == "" {
+		render.Render(w, r, ErrInvalidRequest(ErrInvalidLinkID))
+		return
+	}
+
+	req_user_id, req_login_name, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	if _UserSubmittedLink(req_login_name, link_id) {
+		render.Render(w, r, ErrInvalidRequest(errors.New("cannot like your own link")))
+		return
+	}
+
+	if _UserHasLikedLink(req_user_id, link_id) {
+		render.Render(w, r, ErrInvalidRequest(errors.New("already liked")))
+		return
+	}
+
+	res, err := DBClient.Exec("INSERT INTO 'Link Likes' VALUES(?,?,?);", nil, req_user_id, link_id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var id int64
+	if id, err = res.LastInsertId(); err != nil {
+		log.Fatal(err)
+	}
+
+	like_link_data := make(map[string]int64, 1)
+	like_link_data["ID"] = id
+	
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, like_link_data)
+}
+
+// UN-LIKE LINK
+func UnlikeLink(w http.ResponseWriter, r *http.Request) {
+	link_id := chi.URLParam(r, "link_id")
+	if link_id == "" {
+		render.Render(w, r, ErrInvalidRequest(ErrInvalidLinkID))
+		return
+	}
+
+	req_user_id, _, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	if !_UserHasLikedLink(req_user_id, link_id) {
+		render.Render(w, r, ErrInvalidRequest(errors.New("link like not found")))
+		return
+	}
+
+	_, err = DBClient.Exec("DELETE FROM 'Link Likes' WHERE user_id = ? AND link_id = ?;", req_user_id, link_id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, map[string]string{"message": "deleted"})
+}
+
+func _UserSubmittedLink(login_name string, link_id string) bool {
+	var link_submitted_by sql.NullString
+	err := DBClient.QueryRow("SELECT submitted_by FROM Links WHERE id = ?;", link_id).Scan(&link_submitted_by)
+
+	if err != nil {
+		return false
+	}
+
+	return link_submitted_by.String == login_name
+}
+
+func _UserHasLikedLink(user_id string, link_id string) bool {
+	var l sql.NullString
+	err := DBClient.QueryRow("SELECT id FROM 'Link Likes' WHERE user_id = ? AND link_id = ?;",user_id, link_id).Scan(&l)
+
+	return err == nil && l.Valid
+}
+
+// COPY LINK TO USER'S TREASURE MAP
+func CopyLink(w http.ResponseWriter, r *http.Request) {
+	link_id := chi.URLParam(r, "link_id")
+	if link_id == "" {
+		render.Render(w, r, ErrInvalidRequest(ErrNoLinkID))
+		return
+	}
+
+	req_user_id, _, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	already_copied := _UserHasCopiedLink(req_user_id, link_id)
+	if already_copied {
+		render.Render(w, r, ErrInvalidRequest(errors.New("link already copied to treasure map")))
+		return
+	}
+
+	res, err := DBClient.Exec("INSERT INTO 'Link Copies' VALUES(?,?,?);", nil, link_id, req_user_id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var id int64
+	if id, err = res.LastInsertId(); err != nil {
+		log.Fatal(err)
+	}
+
+	return_json := map[string]int64{
+		"ID": id,
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, return_json)
+}
+
+// UN-COPY LINK
+func UncopyLink(w http.ResponseWriter, r *http.Request) {
+	link_id := chi.URLParam(r, "link_id")
+	if link_id == "" {
+		render.Render(w, r, ErrInvalidRequest(ErrNoLinkID))
+		return
+	}
+
+	req_user_id, _, err := GetJWTClaims(r)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	already_copied := _UserHasCopiedLink(req_user_id, link_id)
+	if !already_copied {
+		render.Render(w, r, ErrInvalidRequest(errors.New("link copy does not exist")))
+		return
+	}
+
+	// Delete
+	_, err = DBClient.Exec("DELETE FROM 'Link Copies' WHERE user_id = ? AND link_id = ?;", req_user_id, link_id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return_json := map[string]string{
+		"message": "deleted",
+	}
+
+	render.JSON(w, r, return_json)
+	render.Status(r, http.StatusNoContent)
+}
+
+func _UserHasCopiedLink(user_id string, link_id string) bool {
+	var l sql.NullString
+	err := DBClient.QueryRow("SELECT id FROM 'Link Copies' WHERE user_id = ? AND link_id = ?;", user_id, link_id).Scan(&l)
+
+	return err == nil && l.Valid
 }

@@ -26,6 +26,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"golang.org/x/crypto/bcrypt"
 
+	"oitm/db"
 	"oitm/model"
 )
 
@@ -45,16 +46,11 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
+	
 	// Check if user already exists, Abort if so
 	var s sql.NullString
-	err = db.QueryRow("SELECT login_name FROM Users WHERE login_name = ?", signup_data.UserAuth.LoginName).Scan(&s)
-	if err == nil {
+	db_client := db.Client
+	if err := db_client.QueryRow("SELECT login_name FROM Users WHERE login_name = ?", signup_data.UserAuth.LoginName).Scan(&s); err == nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("login name taken")))
 		return
 	}
@@ -65,14 +61,14 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	_, err = db.Exec(`INSERT INTO users VALUES (?,?,?,?,?,?)`, nil, signup_data.UserAuth.LoginName, pw_hash, nil, nil, signup_data.Created)
+	_, err = db_client.Exec(`INSERT INTO users VALUES (?,?,?,?,?,?)`, nil, signup_data.UserAuth.LoginName, pw_hash, nil, nil, signup_data.Created)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// get new user ID
 	var id sql.NullString
-	err = db.QueryRow("SELECT id FROM Users WHERE login_name = ?", signup_data.UserAuth.LoginName).Scan(&id)
+	err = db_client.QueryRow("SELECT id FROM Users WHERE login_name = ?", signup_data.UserAuth.LoginName).Scan(&id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -99,24 +95,18 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
+	
 	// Attempt to collect user ID and hashed password, 
 	// Abort if user not found
 	var id, p sql.NullString
-	err = db.QueryRow("SELECT id, password FROM Users WHERE login_name = ?", login_data.LoginName).Scan(&id, &p)
-	if err != nil {
+	db_client := db.Client
+	if err := db_client.QueryRow("SELECT id, password FROM Users WHERE login_name = ?", login_data.LoginName).Scan(&id, &p); err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("no user found with given login name")))
 		return
 	}
 
 	// compare password hashes
-	err = bcrypt.CompareHashAndPassword([]byte(p.String), []byte(login_data.UserAuth.Password))
-	if err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(p.String), []byte(login_data.UserAuth.Password)); err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("incorrect password")))
 		return
 	}
@@ -142,14 +132,10 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
+	
 	var u model.User
-	err = db.QueryRow(`SELECT login_name, coalesce(about,"") as about, coalesce(pfp,"") as pfp, coalesce(created,"") as created FROM Users WHERE login_name = ?;`, login_name).Scan(&u.LoginName, &u.About, &u.PFP, &u.Created)
+	db_client := db.Client
+	err := db_client.QueryRow(`SELECT login_name, coalesce(about,"") as about, coalesce(pfp,"") as pfp, coalesce(created,"") as created FROM Users WHERE login_name = ?;`, login_name).Scan(&u.LoginName, &u.About, &u.PFP, &u.Created)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("user not found")))
 		return
@@ -167,12 +153,6 @@ func EditProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-	
 	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
@@ -181,10 +161,11 @@ func EditProfile(w http.ResponseWriter, r *http.Request) {
 
 	// Update profile
 	return_json := map[string]interface{}{}
-
+	
 	// About
+	db_client := db.Client
 	if edit_profile_data.EditAboutRequest != nil {
-		_, err = db.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_profile_data.EditAboutRequest.About, req_user_id)
+		_, err = db_client.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_profile_data.EditAboutRequest.About, req_user_id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -194,7 +175,7 @@ func EditProfile(w http.ResponseWriter, r *http.Request) {
 	
 	// Profile Pic
 	if edit_profile_data.EditPfpRequest != nil {
-		_, err = db.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, edit_profile_data.EditPfpRequest.PFP, req_user_id)
+		_, err = db_client.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, edit_profile_data.EditPfpRequest.PFP, req_user_id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -219,14 +200,10 @@ func EditAbout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
+	
 	// Update
-	_, err = db.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_about_data.About, req_user_id)
+	db_client := db.Client
+	_, err = db_client.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_about_data.About, req_user_id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -317,13 +294,8 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update db with new pic name
-	db, err := sql.Open("sqlite3", "./db/oitm.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-	
-	_, err = db.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, new_name, req_user_id)
+	db_client := db.Client
+	_, err = db_client.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, new_name, req_user_id)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("could not save new profile pic")))
 		return

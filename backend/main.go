@@ -23,10 +23,9 @@ func init() {
 	// new JWT for protected/optional routes (1-day exiration)
 	// TODO: shorten expiration to idk, 6h
 	token_auth = jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(24*time.Hour))
-	
 }
 
-func main() {	
+func main() {
 	r := chi.NewRouter()
 	defer func() {
 		if err := http.ListenAndServe("localhost:8000", r); err != nil {
@@ -70,7 +69,6 @@ func main() {
 	r.Get("/links/{period}/cat/{categories}/users", handler.GetTopCategoryContributorsByPeriod)
 	r.Get("/links/subcat/{categories}", handler.GetSubcategories)
 	r.Get("/links/{period}/subcat/{categories}", handler.GetSubcategoriesByPeriod)
-	r.Get("/links/{id}/likes", handler.GetLinkLikes)
 
 	// TAGS
 	r.Get("/tags/popular", handler.GetTopTagCategories)

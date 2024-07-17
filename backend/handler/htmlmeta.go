@@ -47,40 +47,29 @@ func MetaFromHTMLTokens(resp io.Reader) (hm HTMLMeta) {
 	}
 }
 
+var meta_properties = []string{"description", "og:title", "og:description", "og:image", "og:author", "og:publisher", "og:site_name"}
+
 func AssignTokenPropertyToHTMLMeta(t html.Token, hm *HTMLMeta) {
-	desc, ok := ExtractMetaProperty(t, "description")
-	if ok {
-		hm.Description = desc
-	}
-
-	ogTitle, ok := ExtractMetaProperty(t, "og:title")
-	if ok {
-		hm.OGTitle = ogTitle
-	}
-
-	ogDesc, ok := ExtractMetaProperty(t, "og:description")
-	if ok {
-		hm.OGDescription = ogDesc
-	}
-
-	ogImage, ok := ExtractMetaProperty(t, "og:image")
-	if ok {
-		hm.OGImage = ogImage
-	}
-
-	ogAuthor, ok := ExtractMetaProperty(t, "og:author")
-	if ok {
-		hm.OGAuthor = ogAuthor
-	}
-
-	ogPublisher, ok := ExtractMetaProperty(t, "og:publisher")
-	if ok {
-		hm.OGPublisher = ogPublisher
-	}
-
-	ogSiteName, ok := ExtractMetaProperty(t, "og:site_name")
-	if ok {
-		hm.OGSiteName = ogSiteName
+	for _, prop := range meta_properties {
+		m, ok := ExtractMetaProperty(t, prop)
+		if ok {
+			switch prop {
+				case "description":
+					hm.Description = m
+				case "og:title":
+					hm.OGTitle = m
+				case "og:description":
+					hm.OGDescription = m
+				case "og:image":
+					hm.OGImage = m
+				case "og:author":
+					hm.OGAuthor = m
+				case "og:publisher":
+					hm.OGPublisher = m
+				case "og:site_name":
+					hm.OGSiteName = m
+			}
+		}
 	}
 }
 

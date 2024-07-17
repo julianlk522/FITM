@@ -18,6 +18,7 @@ type NewLinkRequest struct {
 	SubmittedBy string
 	SubmitDate string
 	Summary string
+	SummaryAuthor string
 	SummaryCount int
 	LikeCount int64
 	ImgURL string

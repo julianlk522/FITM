@@ -11,23 +11,6 @@ import (
 
 // MODIFIED JWT VERIFIER
 // (requests with no token are allowed, but getting isLiked / isCopied / isTagged on links requires a token)
-
-// From "github.com/go-chi/jwtauth/v5":
-// Verifier http middleware handler will verify a JWT string from a http request.
-//
-// Verifier will search for a JWT token in a http request, in the order:
-//  1. 'Authorization: BEARER T' request header
-//  2. Cookie 'jwt' value
-//
-// The first JWT string that is found as a query parameter, authorization header
-// or cookie header is then decoded by the `jwt-go` library and a *jwt.Token
-// object is set on the request context. In the case of a signature decoding error
-// the Verifier will also set the error on the request context.
-//
-// The Verifier always calls the next http handler in sequence, which can either
-// be the generic `jwtauth.Authenticator` middleware or your own custom handler
-// which checks the request context jwt token and error to prepare a custom
-// http response.
 func VerifierOptional(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler {
 	return VerifyOptional(ja, jwtauth.TokenFromHeader, jwtauth.TokenFromCookie)
 }
@@ -47,17 +30,14 @@ func VerifyOptional(ja *jwtauth.JWTAuth, findTokenFns ...func(r *http.Request) s
 func VerifyRequestOptional(ja *jwtauth.JWTAuth, r *http.Request, findTokenFns ...func(r *http.Request) string) (jwt.Token, error) {
 	var tokenString string
 
-	// Extract token string from the request by calling token find functions in
-	// the order they where provided. Further extraction stops if a function
-	// returns a non-empty string.
 	for _, fn := range findTokenFns {
 		tokenString = fn(r)
 		if tokenString != "" {
 			break
 		}
 	}
+
 	if tokenString == "" {
-		// return nil, jwtauth.ErrNoTokenFound
 		return nil, nil
 	}
 
@@ -66,12 +46,6 @@ func VerifyRequestOptional(ja *jwtauth.JWTAuth, r *http.Request, findTokenFns ..
 
 // MODIFIED JWT AUTHENTICATOR
 // (requests with no token are allowed, but getting isLiked / isCopied / isTagged on links requires a token)
-
-// From "github.com/go-chi/jwtauth/v5":
-// Authenticator is a default authentication middleware to enforce access from the
-// Verifier middleware request context values. The Authenticator sends a 401 Unauthorized
-// response for any unverified tokens and passes the good ones through. It's just fine
-// until you decide to write something similar and customize your client response.
 func AuthenticatorOptional(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		hfn := func(w http.ResponseWriter, r *http.Request) {
@@ -91,10 +65,9 @@ func AuthenticatorOptional(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler 
 	}
 }
 
-// Retrieve signed-in user id and login_name from JWT claims if they are passed in request context
+// Retrieve JWT claims if they are passed in request context
+// claims = {"user_id":"1234","login_name":"johndoe"}
 func GetJWTClaims(r *http.Request) (string, string, error) {
-
-	// claims = {"user_id":"1234","login_name":"johndoe"}
 	_, claims, err := jwtauth.FromContext(r.Context())
 	if len(claims) == 0 {
 		return "", "", nil
