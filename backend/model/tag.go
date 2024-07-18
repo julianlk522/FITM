@@ -83,5 +83,5 @@ type EarlyTagPublic struct {
 type TagPage struct {
 	Link *LinkSignedIn
 	UserTag *Tag
-	TopTags *[]EarlyTagPublic
+	EarliestTags *[]EarlyTagPublic
 }

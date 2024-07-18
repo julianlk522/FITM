@@ -48,7 +48,7 @@ type EarlyTag = Tag & {LifeSpanOverlap: number}
 type TagPage = {
 	Link: LinkData
 	UserTag: Tag | undefined
-	TopTags: EarlyTag[]
+	EarliestTags: EarlyTag[]
 }
 
 // CATEGORY

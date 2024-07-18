@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"strings"
@@ -20,7 +19,17 @@ import (
 func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 	link_id := chi.URLParam(r, "link_id")
 	if link_id == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no link id found")))
+		render.Render(w, r, ErrInvalidRequest(ErrNoLinkID))
+		return
+	}
+
+	link_exists, err := _LinkExists(link_id)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+	if !link_exists {
+		render.Render(w, r, ErrInvalidRequest(ErrNoLinkWithID))
 		return
 	}
 
@@ -30,165 +39,115 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
-	// Check if link exists, Abort if invalid link ID provided
-	var l sql.NullString
-	if err = DBClient.QueryRow("SELECT id FROM Links WHERE id = ?;", link_id).Scan(&l); err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no link found with given ID")))
+	get_link_sql := query.NewGetTagPageLink(link_id, req_user_id)
+	if get_link_sql.Error != nil {
+		render.Render(w, r, ErrInvalidRequest(get_link_sql.Error))
 		return
 	}
 
-	// Get link
-	get_link_sql := fmt.Sprintf(`SELECT links_id as link_id, url, submitted_by, submit_date, coalesce(categories,"") as categories, summary, COUNT('Link Likes'.id) as like_count, coalesce(is_liked,0) as is_liked, coalesce(is_copied,0) as is_copied, img_url
-	FROM
-		(
-		SELECT id as links_id, url, submitted_by, submit_date, global_cats as categories, global_summary as summary, coalesce(img_url,"") as img_url
-		FROM Links
-		WHERE id = '%[1]s'
-		)
-	LEFT JOIN 'Link Likes'
-	ON 'Link Likes'.link_id = links_id
-	LEFT JOIN
-		(
-		SELECT id as like_id, count(*) as is_liked, user_id as luser_id, link_id as like_link_id2
-		FROM 'Link Likes'
-		WHERE luser_id = '%[2]s'
-		GROUP BY like_id
-		)
-	ON like_link_id2 = link_id
-	LEFT JOIN
-		(
-		SELECT id as copy_id, count(*) as is_copied, user_id as cuser_id, link_id as copy_link_id
-		FROM 'Link Copies'
-		WHERE cuser_id = '%[2]s'
-		GROUP BY copy_id
-		)
-	ON copy_link_id = link_id`, link_id, req_user_id)
-	var link model.LinkSignedIn
-	err = DBClient.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.IsLiked, &link.IsCopied, &link.ImgURL)
+	link, err := _ScanTagPageLink(get_link_sql)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
 	}
 
-	// Get earliest tags and Lifespan-Overlap scores
-	rows, err := DBClient.Query(`SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) * 100 AS lifespan_overlap, categories, Tags.submitted_by, last_updated 
-		FROM Tags 
-		INNER JOIN Links 
-		ON Links.id = Tags.link_id 
-		WHERE link_id = ? 
-		ORDER BY lifespan_overlap DESC 
-		LIMIT 20;`, link_id)
+	user_tag, err := _GetUserTagForLink(req_login_name, link_id)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	earliest_tags_sql := query.NewGetEarliestTags(link_id)
+	if earliest_tags_sql.Error != nil {
+		render.Render(w, r, ErrInvalidRequest(earliest_tags_sql.Error))
+		return
+	}
+
+	earliest_tags, err := _ScanEarliestTags(earliest_tags_sql)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	tag_page := model.TagPage{
+		Link: link,
+		UserTag: user_tag,
+		EarliestTags: earliest_tags,
+	}
+	render.JSON(w, r, tag_page)
+}
+
+func _ScanTagPageLink(get_link_sql *query.GetTagPageLink) (*model.LinkSignedIn, error) {
+	var link = &model.LinkSignedIn{}
+
+	err := DBClient.QueryRow(get_link_sql.Text).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.ImgURL, &link.IsLiked, &link.IsCopied)
+	if err != nil {
+		return nil, err
+	}
+
+	return link, nil
+}
+
+func _GetUserTagForLink(login_name string, link_id string) (*model.Tag, error) {
+	var id, cats, last_updated sql.NullString
+
+	err := DBClient.QueryRow("SELECT id, categories, last_updated FROM 'Tags' WHERE submitted_by = ? AND link_id = ?;", login_name, link_id).Scan(&id, &cats, &last_updated)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &model.Tag{
+		ID: id.String,
+		Categories: cats.String,
+		LastUpdated: last_updated.String,
+		LinkID: link_id,
+		SubmittedBy: login_name,
+	}, nil
+}
+
+func _ScanEarliestTags(earliest_cats_sql *query.GetEarliestTags) (*[]model.EarlyTagPublic, error) {
+	rows, err := DBClient.Query(earliest_cats_sql.Text)
+	if err != nil {
+		return nil, err
 	}
 
 	earliest_tags := []model.EarlyTagPublic{}
+
 	for rows.Next() {
 		var tag model.EarlyTagPublic
 		err = rows.Scan(&tag.LifeSpanOverlap, &tag.Categories, &tag.SubmittedBy, &tag.LastUpdated)
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		earliest_tags = append(earliest_tags, tag)
 	}
 
-	// Get user-submitted tag if user has submitted one
-	var user_tag_id, user_tag_cats, user_tag_last_updated sql.NullString
-	err = DBClient.QueryRow("SELECT id, categories, last_updated FROM 'Tags' WHERE link_id = ? AND submitted_by = ?;", link_id, req_login_name).Scan(&user_tag_id, &user_tag_cats, &user_tag_last_updated)
-	if err != nil {
-		if err != sql.ErrNoRows {
-			log.Fatal(err)
-		}
-
-		tag_page := model.TagPage{
-			Link: &link,
-			UserTag: nil,
-			TopTags: &earliest_tags,
-		}
-		render.JSON(w, r, tag_page)
-
-	} else if user_tag_cats.Valid {
-		user_tag := model.Tag{
-			ID: user_tag_id.String,
-			Categories: user_tag_cats.String,
-			LastUpdated: user_tag_last_updated.String,
-			LinkID: link_id,
-			SubmittedBy: req_login_name,
-		}
-
-		tag_page := model.TagPage{
-			Link: &link,
-			UserTag: &user_tag,
-			TopTags: &earliest_tags,
-		}
-		render.JSON(w, r, tag_page)
-	}
+	return &earliest_tags, nil
 }
 
 // GET MOST-USED TAG CATEGORIES
 func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {	
+	get_global_cats_sql := query.NewGetAllGlobalCategories()
+	if get_global_cats_sql.Error != nil {
+		render.Render(w, r, ErrInvalidRequest(get_global_cats_sql.Error))
+		return
+	}
 
-	// Get all global categories
-	rows, err := DBClient.Query(`SELECT global_cats
-		FROM Links
-		WHERE global_cats != ""
-	`)
+	categories, err := _ScanGlobalCategories(get_global_cats_sql)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
 	}
 
-	// Split global categories for each link into individual categories
-	var categories []string
-	for rows.Next() {
-		var cat_field string
-		err = rows.Scan(&cat_field)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		cat_field = strings.ToLower(cat_field)
-
-		if strings.Contains(cat_field, ",") {
-			split := strings.Split(cat_field, ",")
-
-			for i := 0; i < len(split); i++ {
-				if !slices.Contains(categories, split[i]) {
-					categories = append(categories, split[i])
-				}
-			}
-		} else {
-			if !slices.Contains(categories, cat_field) {
-				categories = append(categories, cat_field)
-			}
-		}
+	counts, err := _GetCategoryCounts(categories)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
 	}
-
-	// get counts for each category
-	var category_counts []model.CategoryCount = make([]model.CategoryCount, len(categories))
-	for i := 0; i < len(categories); i++ {
-		category_counts[i].Category = categories[i]
-
-		get_cat_count_sql := fmt.Sprintf(`select count(*) as count_with_cat from (%s);`, query.NewGetLinkIDs(categories[i]).Text)
-
-		var c sql.NullInt32
-		err = DBClient.QueryRow(get_cat_count_sql).Scan(&c)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		category_counts[i].Count = c.Int32
-	}
-
-	slices.SortFunc(category_counts, model.SortCategories)
-
-	// Limit to top {LIMIT} categories
-	if len(category_counts) > TOP_TAG_CATEGORIES_LIMIT {
-		category_counts = category_counts[0:TOP_TAG_CATEGORIES_LIMIT]
-	}
-
-	// return top {LIMIT} categories and their counts
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, category_counts)
+	_RenderCategoryCounts(counts, w, r)
 }
 
 func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
@@ -198,67 +157,90 @@ func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	get_tag_cats_sql := query.WithPeriodClause(`SELECT global_cats FROM Links`, period_params)
-	get_tag_cats_sql += ` AND global_cats != "";`
-
-	
-	rows, err := DBClient.Query(get_tag_cats_sql)
-	if err != nil {
-		log.Fatal(err)
+	get_global_cats_sql := query.NewGetAllGlobalCategories().FromPeriod(period_params)
+	if get_global_cats_sql.Error != nil {
+		render.Render(w, r, ErrInvalidRequest(get_global_cats_sql.Error))
+		return
 	}
 
-	// Split global categories for each link into individual categories
+	categories, err := _ScanGlobalCategories(get_global_cats_sql)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	counts, err := _GetCategoryCounts(categories)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+	_RenderCategoryCounts(counts, w, r)
+}
+
+func _ScanGlobalCategories(get_global_cats_sql *query.GetAllGlobalCategories) (*[]string, error) {
+	rows, err := DBClient.Query(get_global_cats_sql.Text)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	
 	var categories []string
+
 	for rows.Next() {
-		var cat_field string
-		err = rows.Scan(&cat_field)
+		var cats_field string
+		err = rows.Scan(&cats_field)
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
+		
+		cats_field = strings.ToLower(cats_field)
+		
+		// Split each row into individual categories if multiple
+		if strings.Contains(cats_field, ",") {
+			split_cats := strings.Split(cats_field, ",")
 
-		cat_field = strings.ToLower(cat_field)
-
-		if strings.Contains(cat_field, ",") {
-			split := strings.Split(cat_field, ",")
-
-			for i := 0; i < len(split); i++ {
-				if !slices.Contains(categories, split[i]) {
-					categories = append(categories, split[i])
+			for _, cat := range(split_cats) {
+				if !slices.Contains(categories, cat) {
+					categories = append(categories, cat)
 				}
 			}
+
+		// Single row category
 		} else {
-			if !slices.Contains(categories, cat_field) {
-				categories = append(categories, cat_field)
+			if !slices.Contains(categories, cats_field) {
+				categories = append(categories, cats_field)
 			}
 		}
 	}
 
-	// get counts for each category
-	var category_counts []model.CategoryCount = make([]model.CategoryCount, len(categories))
-	for i := 0; i < len(categories); i++ {
-		category_counts[i].Category = categories[i]
+	return &categories, nil
+}
 
-		get_cat_count_sql := query.WithPeriodClause(fmt.Sprintf(`select count(*) as count_with_cat from (select id, submit_date from Links where ',' || global_cats || ',' like '%%,%s,%%' group by id)`, categories[i]), period_params)
+func _GetCategoryCounts(categories *[]string) (*[]model.CategoryCount, error) {
+	num_cats := len(*categories)
+	var category_counts []model.CategoryCount = make([]model.CategoryCount, num_cats)
+
+	for i := 0; i < num_cats; i++ {
+		category_counts[i].Category = (*categories)[i]
+
+		get_cat_count_sql := fmt.Sprintf(`SELECT count(*) as count_with_cat FROM (%s);`, query.NewGetLinkIDs((*categories)[i]).Text)
 
 		var c sql.NullInt32
-		err = DBClient.QueryRow(get_cat_count_sql).Scan(&c)
+		err := DBClient.QueryRow(get_cat_count_sql).Scan(&c)
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 
 		category_counts[i].Count = c.Int32
 	}
 
-	slices.SortFunc(category_counts, model.SortCategories)
+	_SortAndLimitCategoryCounts(&category_counts)
 
-	// Limit to top {LIMIT} categories
-	// (15 for now)
-	const LIMIT int = 15
-	if len(category_counts) > LIMIT {
-		category_counts = category_counts[0:LIMIT]
-	}
+	return &category_counts, nil
 
-	// return top {LIMIT} categories and their counts
+}
+
+func _RenderCategoryCounts(category_counts *[]model.CategoryCount, w http.ResponseWriter, r *http.Request, ) {
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, category_counts)
 }
@@ -271,56 +253,78 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if strings.Count(tag_data.Categories, ",") > NEW_TAG_CATEGORY_LIMIT {
+		render.Render(w, r, ErrInvalidRequest(ErrTooManyCategories))
+		return
+	}
+	
+	link_exists, err := _LinkExists(tag_data.LinkID)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if !link_exists {
+		render.Render(w, r, ErrInvalidRequest(ErrNoLinkWithID))
+		return
+	}
+
 	_, req_login_name, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
 
-	// Check that tag has no more than 5 (for now) categories
-	// e.g., history,science,politics,funny,internet
-	cat_limit := 5
-	if strings.Count(tag_data.Categories, ",") > cat_limit {
-		render.Render(w, r, ErrInvalidRequest(errors.New("tag has too many categories")))
-		return
-	}
-
-	
-	// Check if link exists, Abort if invalid link ID provided
-	var s sql.NullString
-	err = DBClient.QueryRow("SELECT id FROM Links WHERE id = ?;", tag_data.LinkID).Scan(&s)
+	duplicate, err := _UserHasSubmittedTagToLink(req_login_name, tag_data.LinkID)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid link id provided")))
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if duplicate {
+		render.Render(w, r, ErrInvalidRequest(ErrDuplicateTag))
 		return
 	}
-
-	// Check if duplicate (same link ID, submitted by), Abort if so
-	err = DBClient.QueryRow("SELECT id FROM Tags WHERE link_id = ? AND submitted_by = ?;", tag_data.LinkID, req_login_name).Scan(&s)
-	if err == nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("duplicate tag")))
-		return
-	}
-
-	// Convert tag categories to lowercase
+	
 	tag_data.Categories = strings.ToLower(tag_data.Categories)
-
-	// Insert new tag
 	res, err := DBClient.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, tag_data.LinkID, tag_data.Categories, req_login_name, tag_data.LastUpdated)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
 	}
 
-	// Recalculate global categories for this link
-	_RecalculateGlobalCategories(DBClient, tag_data.LinkID)
-
-	var id int64
-	if id, err = res.LastInsertId(); err != nil {
-		log.Fatal(err)
+	if err = _RecalculateGlobalCategories(tag_data.LinkID); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
 	}
-	tag_data.ID = id
+
+	if err := _AssignNewTagIDToRequest(res, tag_data); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
 
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, tag_data)
+}
+
+func _UserHasSubmittedTagToLink(login_name string, link_id string) (bool, error) {
+	var t sql.NullString
+	err := DBClient.QueryRow("SELECT id FROM Tags WHERE submitted_by = ? AND link_id = ?;", login_name, link_id).Scan(&t)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+
+}
+
+func _AssignNewTagIDToRequest(res sql.Result, request *model.NewTagRequest) error {
+	id, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	request.ID = id
+	return nil
 }
 
 // EDIT TAG
@@ -336,143 +340,161 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-
 	
-	// Check if tag doesn't exist or submitted by a different user, Abort if either
-	var t sql.NullString
-	err = DBClient.QueryRow("SELECT submitted_by FROM Tags WHERE id = ?;", edit_tag_data.ID).Scan(&t)
+	owns_tag, err := _UserHasSubmittedTag(req_login_name, edit_tag_data.ID)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("tag not found")))
+		render.Render(w, r, ErrInvalidRequest(ErrNoTagWithID))
 		return
-	} else if t.String != req_login_name {
-		render.Render(w, r, ErrInvalidRequest(errors.New("cannot edit another user's tag")))
+	} else if !owns_tag {
+		render.Render(w, r, ErrInvalidRequest(ErrDoesntOwnTag))
 		return
 	}
 
-	// Sort categories alphabetically
-	split_categories := strings.Split(edit_tag_data.Categories, ",")
-	slices.Sort(split_categories)
-	edit_tag_data.Categories = strings.Join(split_categories, ",")
+	edit_tag_data.Categories = _AlphabetizeCategories(edit_tag_data.Categories)
 
 	_, err = DBClient.Exec(`UPDATE Tags 
 	SET categories = ?, last_updated = ? 
 	WHERE id = ?;`, 
 	edit_tag_data.Categories, edit_tag_data.LastUpdated, edit_tag_data.ID)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Get link ID from tag ID
-	var lid sql.NullString
-	err = DBClient.QueryRow("SELECT link_id FROM Tags WHERE id = ?;", edit_tag_data.ID).Scan(&lid)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid tag id provided")))
+		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
 
-	// Recalculate global categories for this link
-	_RecalculateGlobalCategories(DBClient, lid.String)
+	link_id, err := _GetLinkIDFromTagID(edit_tag_data.ID)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if err = _RecalculateGlobalCategories(link_id); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, edit_tag_data)
 
 }
 
-// Recalculate global categories for a link whose tags changed
-func _RecalculateGlobalCategories(db *sql.DB, link_id string) {
-	// (technically should affect all links that share 1+ categories but that's too complicated.) 
-	// (Plus, many links will not be seen enough to justify being updated constantly. Makes enough sense to only update a link's global cats when a new tag is added to that link.)
-
-	category_scores := make(map[string]float32)
-	// Which tags have the earliest last_updated of this link's tags? (top 20)
-	// (in other words, occupying the greatest % of the link's lifespan without revision)
-	// What are the categories of those tags?
-
-	rows, err := db.Query(`SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, categories 
-		FROM Tags 
-		INNER JOIN Links 
-		ON Links.id = Tags.link_id 
-		WHERE link_id = ? 
-		ORDER BY lifespan_overlap DESC 
-		LIMIT 20;`, link_id)
+func _UserHasSubmittedTag(login_name string, tag_id string) (bool, error) {
+	var t sql.NullString
+	err := DBClient.QueryRow("SELECT id FROM Tags WHERE submitted_by = ? AND id = ?;", login_name, tag_id).Scan(&t)
 	if err != nil {
-		log.Fatal(err)
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
 	}
+
+	return true, nil
+
+}
+
+func _AlphabetizeCategories(categories string) string {
+	split_categories := strings.Split(categories, ",")
+	slices.Sort(split_categories)
+
+	return strings.Join(split_categories, ",")
+}
+
+func _GetLinkIDFromTagID(tag_id string) (string, error) {
+	var link_id sql.NullString
+	err := DBClient.QueryRow("SELECT link_id FROM Tags WHERE id = ?;", tag_id).Scan(&link_id)
+	if err != nil {
+		return "", err
+	}
+
+	return link_id.String, nil
+}
+
+// Recalculate global categories for a link whose tags changed
+// (technically should affect all links that share 1+ categories but that's too complicated) 
+// (many links will also not be seen enough to justify being updated constantly. makes enough sense to only update a link's global cats when a new tag is added to that link.)
+func _RecalculateGlobalCategories(link_id string) error {
+	get_overlap_scores_sql := query.NewGetTopOverlapScores(link_id).Limit(TOP_OVERLAP_SCORES_LIMIT)
+	if get_overlap_scores_sql.Error != nil {
+		return get_overlap_scores_sql.Error
+	}
+
+	rows, err := DBClient.Query(get_overlap_scores_sql.Text)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
 
 	earliest_tags := []model.EarlyTag{}
 	for rows.Next() {
 		var t model.EarlyTag
 		err = rows.Scan(&t.LifeSpanOverlap, &t.Categories)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		earliest_tags = append(earliest_tags, t)
 	}
 
-	// 50% Max category score from across all tags used as threshold for assignment to Global Tag categories
-	var max_cat_score float32
+	overlap_scores := make(map[string]float32)
 
-	// Tag score limit determined by number of tags so combined scores always sum to 1
-	tag_score_limit := 1 / float32(len(earliest_tags))
+	max_row_score := 1 / float32(len(earliest_tags))
+	var max_score float32
+
 	for _, tag := range earliest_tags {
-
-		// convert to all lowercase
-		lc := strings.ToLower(tag.Categories)
-
-		// take square root of lifespan overlap to smooth out scores
-		// (allow brand-new tags to still have some influence)
-		// e.g. sqrt(0.01) = 0.1
+		
+		// square root lifespan overlap to smooth out scores
+		// (allows brand-new tags to still have some influence)
 		tag.LifeSpanOverlap = float32(math.Sqrt(float64(tag.LifeSpanOverlap)))
+		
+		cat_field_lc := strings.ToLower(tag.Categories)
 
-		// add scores for each category if multiple
-		// Note: categories that appear multiple times across different tags will have multipled scores
-		// (more likely to affect Global Tag categories)
-		if strings.Contains(tag.Categories, ",") {
-			c := strings.Split(lc, ",")
+		if strings.Contains(cat_field_lc, ",") {
+			cats := strings.Split(cat_field_lc, ",")
+			for _, cat := range cats {
+				overlap_scores[cat] += tag.LifeSpanOverlap * max_row_score
 
-			for _, cat := range c {
-				category_scores[cat] += tag.LifeSpanOverlap * tag_score_limit
-
-				// update max score (to be used when assigning global categories)
-				if category_scores[cat] > max_cat_score {
-					max_cat_score = category_scores[cat]
+				if overlap_scores[cat] > max_score {
+					max_score = overlap_scores[cat]
 				}
 			}
 
-		// else add score for single category
+		// single category
 		} else {
-			category_scores[lc] += tag.LifeSpanOverlap * tag_score_limit
+			overlap_scores[cat_field_lc] += tag.LifeSpanOverlap * max_row_score
 
-			// update max score
-			if category_scores[lc] > max_cat_score {
-				max_cat_score = category_scores[lc]
+			if overlap_scores[cat_field_lc] > max_score {
+				max_score = overlap_scores[cat_field_lc]
 			}
 		}
 	}
 
-	// Sort categories alphabetically
-	sorted_cats := make([]string, 0, len(category_scores))
-	for cat := range category_scores {
-		sorted_cats = append(sorted_cats, cat)
-	}
-	slices.Sort(sorted_cats)
+	// Alphabetize so global categories are assigned in order
+	alphabetized_cats := _AlphabetizeOverlapScoreCategories(overlap_scores)
 	
-	// Assign categories scoring 50%+ of max score to Global Tag
 	var global_cats string
-	for _, cat := range sorted_cats {
-		if category_scores[cat] >= 0.5*max_cat_score {
+
+	// Assign to global cats if >= 50% of max category score
+	for _, cat := range alphabetized_cats {
+		if overlap_scores[cat] >= max_score * 0.5 {
 			global_cats += cat + ","
 		}
 	}
 
-	// Remove trailing comma
-	if len(global_cats) > 0 {
+	if len(global_cats) > 0 && strings.HasSuffix(global_cats, ",") {
 		global_cats = global_cats[:len(global_cats)-1]
 	}
 
-	// Update link
-	_, err = db.Exec("UPDATE Links SET global_cats = ? WHERE id = ?;", global_cats, link_id)
+	_, err = DBClient.Exec("UPDATE Links SET global_cats = ? WHERE id = ?;", global_cats, link_id)
 	if err != nil {
-		log.Fatal(err)
+		return err
+
 	}
+
+	return nil
+}
+
+func _AlphabetizeOverlapScoreCategories(scores map[string]float32) []string {
+	cats := make([]string, 0, len(scores))
+	for cat := range scores {
+		cats = append(cats, cat)
+	}
+	slices.Sort(cats)
+
+	return cats
 }

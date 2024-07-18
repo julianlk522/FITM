@@ -406,8 +406,8 @@ func _GetSubcategoryCounts(subcats []string, categories []string) (*[]model.Cate
 func _SortAndLimitCategoryCounts(cats_with_counts *[]model.CategoryCount) {
 	slices.SortFunc(*cats_with_counts, model.SortCategories)
 
-	if len(*cats_with_counts) > CATEGORY_COUNT_LIMIT {
-		*cats_with_counts = (*cats_with_counts)[:CATEGORY_COUNT_LIMIT]
+	if len(*cats_with_counts) > CATEGORY_PAGE_LIMIT {
+		*cats_with_counts = (*cats_with_counts)[:CATEGORY_PAGE_LIMIT]
 	}
 }
 
@@ -419,7 +419,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if strings.Count(link_data.NewLink.Categories, ",") > NEW_TAG_CATEGORY_LIMIT {
-		render.Render(w, r, ErrInvalidRequest(fmt.Errorf("too many tag categories (%d max)", NEW_TAG_CATEGORY_LIMIT)))
+		render.Render(w, r, ErrInvalidRequest(ErrTooManyCategories))
 		return
 	}
 
@@ -446,10 +446,17 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	res, err := DBClient.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, link_data.Categories, link_data.Summary, link_data.ImgURL)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
 	}
 
-	if err := _AssignID(link_data, res); err != nil {
+	if err := _AssignNewLinkIDToRequest(res, link_data); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	_, err = DBClient.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_data.ID, link_data.Categories, req_login_name, link_data.SubmitDate)
+	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
@@ -457,15 +464,11 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	if link_data.Summary != "" {
 		_, err = DBClient.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, link_data.Summary, link_data.ID, link_data.SummaryAuthor, link_data.SubmitDate)
 		if err != nil {
-			log.Fatal(err)
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
 		}
 
 		link_data.SummaryCount = 1
-	}
-
-	_, err = DBClient.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_data.ID, link_data.Categories, req_login_name, link_data.SubmitDate)
-	if err != nil {
-		log.Fatal(err)
 	}
 
 	render.Status(r, http.StatusCreated)
@@ -579,13 +582,13 @@ func _AssignSortedCategories(link *model.NewLinkRequest, categories_str string) 
 	link.Categories = strings.Join(split_categories, ",")
 }
 
-func _AssignID(link *model.NewLinkRequest, res sql.Result) error {
+func _AssignNewLinkIDToRequest(res sql.Result, request *model.NewLinkRequest) error {
 	id, err := res.LastInsertId()
 	if err != nil {
 		return err
 	}
 
-	link.ID = id
+	request.ID = id
 	return nil
 }
 
@@ -593,7 +596,7 @@ func _AssignID(link *model.NewLinkRequest, res sql.Result) error {
 func LikeLink(w http.ResponseWriter, r *http.Request) {
 	link_id := chi.URLParam(r, "link_id")
 	if link_id == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrInvalidLinkID))
+		render.Render(w, r, ErrInvalidRequest(ErrNoLinkID))
 		return
 	}
 
@@ -634,7 +637,7 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 	link_id := chi.URLParam(r, "link_id")
 	if link_id == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrInvalidLinkID))
+		render.Render(w, r, ErrInvalidRequest(ErrNoLinkID))
 		return
 	}
 
