@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 
+	query "oitm/db/query"
 	"oitm/model"
 )
 
@@ -22,9 +23,12 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if link exists, Abort if invalid link ID provided
-	var l sql.NullString
-	if err := DBClient.QueryRow("SELECT id FROM Links WHERE id = ?;", link_id).Scan(&l); err != nil {
+	link_exists, err := _LinkExists(link_id)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+	if !link_exists {
 		render.Render(w, r, ErrInvalidRequest(ErrNoLinkWithID))
 		return
 	}
@@ -35,163 +39,119 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// authenticated
 	if req_user_id != "" {
-
-		// Get link
-		get_link_sql := fmt.Sprintf(`SELECT links_id as link_id, url, submitted_by, submit_date, coalesce(categories,"") as categories, summary, COUNT('Link Likes'.id) as like_count, coalesce(is_liked,0) as is_liked, coalesce(is_copied,0) as is_copied, img_url
-		FROM
-			(
-			SELECT id as links_id, url, submitted_by, submit_date, global_cats as categories, global_summary as summary, coalesce(img_url,"") as img_url
-			FROM Links
-			WHERE id = '%[1]s'
-			)
-		LEFT JOIN 'Link Likes'
-		ON 'Link Likes'.link_id = links_id
-		LEFT JOIN
-			(
-			SELECT id as like_id, count(*) as is_liked, user_id as luser_id, link_id as like_link_id2
-			FROM 'Link Likes'
-			WHERE luser_id = '%[2]s'
-			GROUP BY like_id
-			)
-		ON like_link_id2 = link_id
-		LEFT JOIN
-			(
-			SELECT id as copy_id, count(*) as is_copied, user_id as cuser_id, link_id as copy_link_id
-			FROM 'Link Copies'
-			WHERE cuser_id = '%[2]s'
-			GROUP BY copy_id
-			)
-		ON copy_link_id = link_id`, link_id, req_user_id)
-		var link model.LinkSignedIn
-		err = DBClient.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.IsLiked, &link.IsCopied, &link.ImgURL)
+		summary_page, err := _GetSummaryPageSignedIn(link_id, req_user_id)
 		if err != nil {
-			if err == sql.ErrNoRows {
-				render.Status(r, http.StatusNotFound)
-				render.JSON(w, r, ErrResponse{Err: errors.New("link not found")})
-			} else {
-				log.Fatal(err)
-			}
-		}
-
-		// Get summaries and like counts
-		get_summaries_sql := fmt.Sprintf(`SELECT sumid, text, sb, last_updated, coalesce(count(sl.id),0) as like_count, coalesce(is_liked,0) as is_liked
-		FROM 
-			(
-			SELECT sumid, text, Users.login_name as sb, last_updated
-			FROM 
-				(
-				SELECT id as sumid, text, submitted_by, last_updated
-				FROM Summaries 
-				WHERE link_id = '%s'
-				) 
-			JOIN Users 
-			ON Users.id = submitted_by
-			)
-		LEFT JOIN
-			(
-			SELECT id, count(*) as is_liked, user_id, summary_id as slsumid
-			FROM 'Summary Likes'
-			WHERE user_id = '%s'
-			GROUP BY id
-			)
-		ON slsumid = sumid
-		LEFT JOIN 'Summary Likes' as sl
-		ON sl.summary_id = sumid 
-		GROUP BY sumid;`, link_id, req_user_id)
-		rows, err := DBClient.Query(get_summaries_sql)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer rows.Close()
-
-		summaries := []model.SummarySignedIn{}
-		for rows.Next() {
-			i := model.SummarySignedIn{}
-			err := rows.Scan(&i.ID, &i.Text, &i.SubmittedBy, &i.LastUpdated, &i.LikeCount, &i.IsLiked)
-			if err != nil {
-				log.Fatal(err)
-			}
-			summaries = append(summaries, i)
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		summary_page := model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn]{
-			Link: link,
-			Summaries: summaries,
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
 		}
 
 		render.JSON(w, r, summary_page)
-
-	// unathenticated
 	} else {
-
-		// Get link
-		get_link_sql := fmt.Sprintf(`SELECT links_id as link_id, url, submitted_by, submit_date, coalesce(categories,"") as categories, summary, COUNT('Link Likes'.id) as like_count, img_url 
-			FROM 
-				(
-				SELECT id as links_id, url, submitted_by, submit_date, global_cats as categories, global_summary as summary, coalesce(img_url,"") as img_url 
-					FROM Links WHERE id = '%s'
-				) 
-			LEFT JOIN 'Link Likes' 
-			ON 'Link Likes'.link_id = links_id`, link_id)
-		var link model.LinkSignedOut
-		err = DBClient.QueryRow(get_link_sql).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.ImgURL)
+		summary_page, err := _GetSummaryPage(link_id)
 		if err != nil {
-			if err == sql.ErrNoRows {
-				render.Status(r, http.StatusNotFound)
-				render.JSON(w, r, ErrResponse{Err: errors.New("link not found")})
-			} else {
-				log.Fatal(err)
-			}
-		}
-
-		// Get summaries and like counts
-		get_summaries_sql := fmt.Sprintf(`SELECT sumid, text, sb as submitted_by, last_updated, coalesce(count('Summary Likes'.id),0) as like_count 
-		FROM 
-			(
-			SELECT sumid, text, Users.login_name as sb, last_updated
-			FROM 
-				(
-				SELECT id as sumid, text, submitted_by, last_updated
-				FROM Summaries 
-				WHERE link_id = '%s'
-				) 
-			JOIN Users 
-			ON Users.id = submitted_by
-			) 
-		LEFT JOIN 'Summary Likes' 
-		ON 'Summary Likes'.summary_id = sumid 
-		GROUP BY sumid;`, link_id)
-		rows, err := DBClient.Query(get_summaries_sql)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer rows.Close()
-
-		summaries := []model.SummarySignedOut{}
-		for rows.Next() {
-			i := model.SummarySignedOut{}
-			err := rows.Scan(&i.ID, &i.Text, &i.SubmittedBy, &i.LastUpdated, &i.LikeCount)
-			if err != nil {
-				log.Fatal(err)
-			}
-			summaries = append(summaries, i)
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		summary_page := model.SummaryPage[model.SummarySignedOut, model.LinkSignedOut]{
-			Link: link,
-			Summaries: summaries,
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
 		}
 
 		render.JSON(w, r, summary_page)
 	}
+
+	
+}
+
+func _GetSummaryPageSignedIn(link_id string, req_user_id string) (*model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn], error) {
+
+	// add Isliked / IsCopied to link query
+	get_link_sql := query.NewGetLink(link_id).ForSignedInUser(req_user_id)
+	if get_link_sql.Error != nil {
+		return nil, get_link_sql.Error
+	}
+
+	var link model.LinkSignedIn
+	err := DBClient.QueryRow(get_link_sql.Text).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.ImgURL, &link.IsLiked, &link.IsCopied)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNoLinkWithID
+		} else {
+			return nil, err
+		}
+	}
+
+	// add IsLiked to summary query
+	get_summaries_sql := query.NewGetSummaries(link_id).ForSignedInUser(req_user_id)
+	if get_summaries_sql.Error != nil {
+		return nil, get_summaries_sql.Error
+	}
+
+	rows, err := DBClient.Query(get_summaries_sql.Text)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	summaries := []model.SummarySignedIn{}
+	for rows.Next() {
+		i := model.SummarySignedIn{}
+		err := rows.Scan(&i.ID, &i.Text, &i.SubmittedBy, &i.LastUpdated, &i.LikeCount, &i.IsLiked)
+		if err != nil {
+			return nil, err
+		}
+		summaries = append(summaries, i)
+	}
+
+	summary_page := model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn]{
+		Link: link,
+		Summaries: summaries,
+	}
+	return &summary_page, nil
+
+}
+
+func _GetSummaryPage(link_id string) (*model.SummaryPage[model.SummarySignedOut, model.LinkSignedOut], error) {
+	get_link_sql := query.NewGetLink(link_id)
+	if get_link_sql.Error != nil {
+		return nil, get_link_sql.Error
+
+	}
+
+	var link model.LinkSignedOut
+	err := DBClient.QueryRow(get_link_sql.Text).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.ImgURL)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNoLinkWithID
+		} else {
+			return nil, err
+		}
+	}
+
+	get_summaries_sql := query.NewGetSummaries(link_id)
+	if get_summaries_sql.Error != nil {
+		return nil, get_summaries_sql.Error
+	}
+
+	rows, err := DBClient.Query(get_summaries_sql.Text)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	summaries := []model.SummarySignedOut{}
+	for rows.Next() {
+		i := model.SummarySignedOut{}
+		err := rows.Scan(&i.ID, &i.Text, &i.SubmittedBy, &i.LastUpdated, &i.LikeCount)
+		if err != nil {
+			return nil, err
+		}
+		summaries = append(summaries, i)
+	}
+
+	summary_page := model.SummaryPage[model.SummarySignedOut, model.LinkSignedOut]{
+		Link: link,
+		Summaries: summaries,
+	}
+
+	return &summary_page, nil
 }
 
 // ADD SUMMARY OR REPLACE EXISTING
@@ -208,49 +168,75 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
-	// Check if link exists, Abort if not
-	var s sql.NullString
-	err = DBClient.QueryRow("SELECT id FROM Links WHERE id = ?", summary_data.LinkID).Scan(&s)
+	link_exists, err := _LinkExists(summary_data.LinkID)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("link not found")))
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+	if !link_exists {
+		render.Render(w, r, ErrInvalidRequest(ErrNoLinkWithID))
 		return
 	}
 
-	// Check if user already submitted a summary to this link, Update existing summary if so
-	var sid sql.NullString
-	err = DBClient.QueryRow("SELECT id FROM Summaries WHERE link_id = ? AND submitted_by = ?", summary_data.LinkID, req_user_id).Scan(&sid)
-	if err == nil {
+	summary_id, err := _GetSummaryIDForLink(req_user_id, summary_data.LinkID)
+	if err != nil {
+		if err == sql.ErrNoRows {
 
-		// Update
-		_, err = DBClient.Exec(`UPDATE Summaries SET text = ?, last_updated = ?
-		WHERE id = ?`, summary_data.Text, summary_data.LastUpdated, sid.String)
-		if err != nil {
-			log.Fatal(err)
+			// Create new summary
+			_, err = DBClient.Exec(`INSERT INTO Summaries VALUES (?,?,?,?,?)`, nil, summary_data.Text, summary_data.LinkID, req_user_id, summary_data.LastUpdated)
+			if err != nil {
+				render.Render(w, r, ErrInvalidRequest(err))
+				return
+			}
+
+		} else {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
 		}
 
-		// Remove Summary Likes
-		_, err = DBClient.Exec(`DELETE FROM 'Summary Likes' WHERE summary_id = ?`, sid.String)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		render.Status(r, http.StatusOK)
-
-	// Else create new summary
 	} else {
-		_, err = DBClient.Exec(`INSERT INTO Summaries VALUES (?,?,?,?,?)`, nil, summary_data.Text, summary_data.LinkID, req_user_id, summary_data.LastUpdated)
+
+		// Update summary if already submitted
+		_, err = DBClient.Exec(`UPDATE Summaries SET text = ?, last_updated = ?
+		WHERE submitted_by = ? AND link_id = ?`, summary_data.Text, summary_data.LastUpdated, req_user_id, summary_data.LinkID)
 		if err != nil {
-			log.Fatal(err)
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
 		}
 
-		render.Status(r, http.StatusCreated)
+		// Reset Summary Likes
+		_, err = DBClient.Exec(`DELETE FROM 'Summary Likes' WHERE summary_id = ?`, summary_id)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
 	}
 
-	// Recalculate global_summary
-	_RecalculateGlobalSummary(summary_data.LinkID, DBClient)
+	_RecalculateGlobalSummary(summary_data.LinkID)
 
+	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, summary_data)
+}
+
+func _LinkExists(link_id string) (bool, error) {
+	var l sql.NullString
+	err := DBClient.QueryRow("SELECT id FROM Links WHERE id = ?", link_id).Scan(&l)
+	if err != nil {
+		return false, err
+	}
+
+	return l.Valid, nil
+}
+
+func _GetSummaryIDForLink(user_id string, link_id string) (string, error) {
+	var summary_id sql.NullString
+	err := DBClient.QueryRow("SELECT id FROM Summaries WHERE submitted_by = ? AND link_id = ?", user_id, link_id).Scan(&summary_id)
+
+	if err != nil {
+		return "", err
+	}
+
+	return summary_id.String, nil
 }
 
 // DELETE SUMMARY
@@ -260,65 +246,76 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-
+	
 	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-	
-	// Check that summary exists and submitted by user, Abort if not
-	var u sql.NullInt64
-	req_user_id_int64, err := strconv.ParseInt(req_user_id, 10, 64)
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	err = DBClient.QueryRow("SELECT submitted_by FROM Summaries WHERE id = ?", delete_data.SummaryID).Scan(&u)
+	owns_summary, err := _SummarySubmittedByUser(delete_data.SummaryID, req_user_id)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
+		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	} else if u.Int64 != req_user_id_int64 {
+	} else if !owns_summary {
 		render.Render(w, r, ErrInvalidRequest(errors.New("not your summary")))
 		return
 	}
 		
-	// Get link ID
-	var lid sql.NullString
-	get_lid_sql := fmt.Sprintf(`SELECT link_id FROM Summaries WHERE id = '%s'`, delete_data.SummaryID)
-	err = DBClient.QueryRow(get_lid_sql).Scan(&lid)
+	link_id, err := _GetLinkIDFromSummaryID(delete_data.SummaryID)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
 	}
 
-	// Check that summary is not only summary for its link, Abort if so
-	var c sql.NullInt32
-	err = DBClient.QueryRow("SELECT COUNT(id) FROM Summaries WHERE link_id = ?", lid.String).Scan(&c)
+	is_last_summary_for_link, err := _LinkHasOneSummaryLeft(link_id)
 	if err != nil {
-		log.Fatal(err)
-	} else if c.Int32 == 1 {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+	if is_last_summary_for_link {
 		render.Render(w, r, ErrInvalidRequest(errors.New("last summary for link, cannot delete")))
 		return
 	}
 
-	// Delete Summary
 	_, err = DBClient.Exec(`DELETE FROM Summaries WHERE id = ?`, delete_data.SummaryID)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
 	}
 
-	// Recalculate global_summary
-	_RecalculateGlobalSummary(lid.String, DBClient)
+	_RecalculateGlobalSummary(link_id)
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "deleted"})
+}
+
+func _GetLinkIDFromSummaryID(summary_id string) (string, error) {
+	var lid sql.NullString
+	get_lid_sql := fmt.Sprintf(`SELECT link_id FROM Summaries WHERE id = '%s'`, summary_id)
+	err := DBClient.QueryRow(get_lid_sql).Scan(&lid)
+	if err != nil {
+		return "", err
+	}
+
+	return lid.String, nil
+}
+
+func _LinkHasOneSummaryLeft(link_id string) (bool, error) {
+	var c sql.NullInt32
+	err := DBClient.QueryRow("SELECT COUNT(id) FROM Summaries WHERE link_id = ?", link_id).Scan(&c)
+	if err != nil {
+		return false, err
+	}
+
+	return c.Int32 == 1, nil
 }
 
 // LIKE SUMMARY
 func LikeSummary(w http.ResponseWriter, r *http.Request) {
 	summary_id := chi.URLParam(r, "summary_id")
 	if summary_id == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no summary ID provided")))
+		render.Render(w, r, ErrInvalidRequest(ErrNoSummaryID))
 		return
 	}
 
@@ -328,52 +325,59 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	
-	// Check if summary exists, Abort if not
-	// Also save link_id for recalculating global_summary later
-	var s, lid sql.NullString
-	err = DBClient.QueryRow("SELECT id, link_id FROM Summaries WHERE id = ?", summary_id).Scan(&s, &lid)
+	var link_id sql.NullString
+	err = DBClient.QueryRow("SELECT link_id FROM Summaries WHERE id = ?", summary_id).Scan(&link_id)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("summary not found")))
+		render.Render(w, r, ErrInvalidRequest(ErrNoSummaryWithID))
 		return
 	}
 
-	// Check if summary submitted by same user, Abort if so
-	var u sql.NullInt64
-	err = DBClient.QueryRow("SELECT submitted_by FROM Summaries WHERE id = ?", summary_id).Scan(&u)
+	owns_summary, err := _SummarySubmittedByUser(summary_id, req_user_id)
 	if err != nil {
-		log.Fatal(err)
-	} else if uid64, err := strconv.ParseInt(req_user_id, 10, 64); err == nil && u.Int64 == uid64 {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if owns_summary {
 		render.Render(w, r, ErrInvalidRequest(errors.New("cannot like your own summary")))
 		return
 	}
 
-	// Check if user already liked summary, Abort if so
-	var slid sql.NullString
-	err = DBClient.QueryRow("SELECT id FROM 'Summary Likes' WHERE summary_id = ? AND user_id = ?", summary_id, req_user_id).Scan(&slid)
-	if err == nil {
+	already_liked, err := _UserHasLikedSummary(req_user_id, summary_id)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if already_liked {
 		render.Render(w, r, ErrInvalidRequest(errors.New("already liked")))
 		return
 	}
 
-	// Add like
 	_, err = DBClient.Exec(`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, nil, req_user_id, summary_id)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
 	}
 
-	// Recalculate global_summary
-	_RecalculateGlobalSummary(lid.String, DBClient)
+	_RecalculateGlobalSummary(link_id.String)
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "liked"})
+}
+
+func _SummarySubmittedByUser(summary_id string, user_id string) (bool, error) {
+	var submitted_by sql.NullInt64
+	err := DBClient.QueryRow("SELECT submitted_by FROM Summaries WHERE id = ?", summary_id).Scan(&submitted_by)
+
+	if err != nil {
+		return false, err
+	}
+
+	return strconv.FormatInt(submitted_by.Int64, 10) == user_id, nil
 }
 
 // UNLIKE SUMMARY
 func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 	summary_id := chi.URLParam(r, "summary_id")
 	if summary_id == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no summary ID provided")))
+		render.Render(w, r, ErrInvalidRequest(ErrNoSummaryID))
 		return
 	}
 
@@ -383,37 +387,50 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	
-	// Check that user has liked summary with given ID, Abort if not
-	var slid sql.NullString
-	err = DBClient.QueryRow("SELECT id FROM 'Summary Likes' WHERE summary_id = ? AND user_id = ?", summary_id, req_user_id).Scan(&slid)
+	already_liked, err := _UserHasLikedSummary(req_user_id, summary_id)
 	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if !already_liked {
 		render.Render(w, r, ErrInvalidRequest(errors.New("not liked")))
 		return
 	}
 
-	// Get link ID before deleting
-	var lid sql.NullString
-	get_lid_sql := fmt.Sprintf(`SELECT link_id FROM Summaries WHERE Summaries.id = (SELECT summary_id FROM 'Summary Likes' WHERE 'Summary Likes'.id = '%s');`, slid.String)
-	err = DBClient.QueryRow(get_lid_sql).Scan(&lid)
+	// Get link ID (needed to update global summary after unlike)
+	var link_id sql.NullString
+	err = DBClient.QueryRow("SELECT link_id FROM Summaries WHERE id = ?", summary_id).Scan(&link_id)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(ErrNoSummaryWithID))
+		return
 	}
 
-	// Delete Summary Like
-	_, err = DBClient.Exec(`DELETE FROM 'Summary Likes' WHERE id = ?`, slid.String)
+	_, err = DBClient.Exec(`DELETE FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?`, req_user_id, summary_id)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(ErrNoSummaryWithID))
+		return
 	}
 
 	// Recalculate global_summary
-	_RecalculateGlobalSummary(lid.String, DBClient)
+	_RecalculateGlobalSummary(link_id.String)
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "deleted"})
 }
 
-func _RecalculateGlobalSummary(link_id string, db *sql.DB) {
+func _UserHasLikedSummary(user_id string, summary_id string) (bool, error) {
+	var summary_like_id sql.NullString
+	err := DBClient.QueryRow("SELECT id FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?", user_id, summary_id).Scan(&summary_like_id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return summary_like_id.Valid, nil
+}
+
+func _RecalculateGlobalSummary(link_id string) {
 
 	// (Summary with the most upvotes is the global summary)
 	get_summary_like_counts_sql := fmt.Sprintf(`SELECT text
@@ -431,13 +448,13 @@ func _RecalculateGlobalSummary(link_id string, db *sql.DB) {
 	LIMIT 1
 	`, link_id)
 	var top_summary_text string
-	err := db.QueryRow(get_summary_like_counts_sql).Scan(&top_summary_text)
+	err := DBClient.QueryRow(get_summary_like_counts_sql).Scan(&top_summary_text)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Update global_summary
-	_, err = db.Exec(`UPDATE Links SET global_summary = ? WHERE id = ?`, top_summary_text, link_id)
+	_, err = DBClient.Exec(`UPDATE Links SET global_summary = ? WHERE id = ?`, top_summary_text, link_id)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -15,6 +15,8 @@ var (
 	ErrNoLinkID error = errors.New("no link ID provided")
 	ErrInvalidLinkID error = errors.New("invalid link ID provided")
 	ErrNoLinkWithID error = errors.New("no link found with given ID")
+	ErrNoSummaryID error = errors.New("no summary ID provided")
+	ErrNoSummaryWithID error = errors.New("no summary found with given ID")
 )
 
 const (

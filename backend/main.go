@@ -77,7 +77,7 @@ func main() {
 
 
 	// OPTIONAL AUTHENTICATION
-	// (bearer token optional; used to get is_liked property for links)
+	// (bearer token used optionally to get IsLiked / IsCopied / IsTagged for links)
 	r.Group(func(r chi.Router) {
 		r.Use(handler.VerifierOptional(token_auth))
 		r.Use(handler.AuthenticatorOptional(token_auth))
