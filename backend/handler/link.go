@@ -129,7 +129,7 @@ func _ScanLinks(get_links_sql *query.GetTopLinks, r *http.Request) (*[]model.Lin
 	}
 	defer rows.Close()
 
-	var links []model.Link
+	links := []model.Link{}
 
 	// Auth: Add IsLiked / IsCopied / IsTagged to links
 	if req_user_id != "" {
