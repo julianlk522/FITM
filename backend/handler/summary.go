@@ -48,7 +48,7 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 
 		render.JSON(w, r, summary_page)
 	} else {
-		summary_page, err := _GetSummaryPage(link_id)
+		summary_page, err := _GetSummaryPageSignedOut(link_id)
 		if err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
@@ -57,13 +57,13 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, summary_page)
 	}
 
-	
+	render.Status(r, http.StatusOK)
 }
 
 func _GetSummaryPageSignedIn(link_id string, req_user_id string) (*model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn], error) {
 
 	// add Isliked / IsCopied to link query
-	get_link_sql := query.NewGetLink(link_id).ForSignedInUser(req_user_id)
+	get_link_sql := query.NewGetSummaryPageLink(link_id).ForSignedInUser(req_user_id)
 	if get_link_sql.Error != nil {
 		return nil, get_link_sql.Error
 	}
@@ -100,16 +100,16 @@ func _GetSummaryPageSignedIn(link_id string, req_user_id string) (*model.Summary
 		summaries = append(summaries, i)
 	}
 
-	summary_page := model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn]{
+	summary_page := model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn] {
 		Link: link,
 		Summaries: summaries,
 	}
-	return &summary_page, nil
 
+	return &summary_page, nil
 }
 
-func _GetSummaryPage(link_id string) (*model.SummaryPage[model.SummarySignedOut, model.LinkSignedOut], error) {
-	get_link_sql := query.NewGetLink(link_id)
+func _GetSummaryPageSignedOut(link_id string) (*model.SummaryPage[model.SummarySignedOut, model.LinkSignedOut], error) {
+	get_link_sql := query.NewGetSummaryPageLink(link_id)
 	if get_link_sql.Error != nil {
 		return nil, get_link_sql.Error
 
@@ -285,9 +285,7 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_RecalculateGlobalSummary(link_id)
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]string{"message": "deleted"})
+	_RenderDeleted(w, r)
 }
 
 func _GetLinkIDFromSummaryID(summary_id string) (string, error) {
@@ -410,11 +408,8 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Recalculate global_summary
 	_RecalculateGlobalSummary(link_id.String)
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]string{"message": "deleted"})
+	_RenderDeleted(w, r)
 }
 
 func _UserHasLikedSummary(user_id string, summary_id string) (bool, error) {
@@ -458,4 +453,9 @@ func _RecalculateGlobalSummary(link_id string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func _RenderDeleted(w http.ResponseWriter, r *http.Request) {
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, map[string]string{"message": "deleted"})
 }

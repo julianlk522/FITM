@@ -6,24 +6,24 @@ import (
 )
 
 // SUMMARIES FOR LINK
-type GetLink struct {
+type GetSummaryPageLink struct {
 	Query
 }
 
-const GET_LINK_BASE_FIELDS = `SELECT links_id as link_id, url, submitted_by, submit_date, coalesce(categories,"") as categories, summary, COUNT('Link Likes'.id) as like_count, img_url`
+const GET_SUMMARY_PAGE_LINK_BASE_FIELDS = `SELECT links_id as link_id, url, submitted_by, submit_date, coalesce(categories,"") as categories, summary, COUNT('Link Likes'.id) as like_count, img_url`
 
-const GET_LINK_BASE = GET_LINK_BASE_FIELDS + ` 
+const GET_SUMMARY_PAGE_LINK_BASE = GET_SUMMARY_PAGE_LINK_BASE_FIELDS + ` 
 FROM 
 	(
 	SELECT id as links_id, url, submitted_by, submit_date, global_cats as categories, global_summary as summary, coalesce(img_url,"") as img_url 
 		FROM Links`
 
-func NewGetLink(ID string) *GetLink {
-	new := &GetLink{Query: Query{Text: GET_LINK_BASE}}
+func NewGetSummaryPageLink(ID string) *GetSummaryPageLink {
+	new := &GetSummaryPageLink{Query: Query{Text: GET_SUMMARY_PAGE_LINK_BASE}}
 	return new._FromID(ID)
 }
 
-func (l *GetLink) _FromID(ID string) *GetLink {
+func (l *GetSummaryPageLink) _FromID(ID string) *GetSummaryPageLink {
 	l.Text += fmt.Sprintf(` WHERE id = '%s'
 	) 
 LEFT JOIN 'Link Likes' 
@@ -32,8 +32,8 @@ ON 'Link Likes'.link_id = links_id;`, ID)
 	return l
 }
 
-func (l *GetLink) ForSignedInUser(user_id string ) *GetLink {
-	l.Text = strings.Replace(l.Text, GET_LINK_BASE_FIELDS, GET_LINK_BASE_FIELDS + ", COALESCE(is_liked,0) as is_liked, COALESCE(is_copied,0) as is_copied", 1)
+func (l *GetSummaryPageLink) ForSignedInUser(user_id string ) *GetSummaryPageLink {
+	l.Text = strings.Replace(l.Text, GET_SUMMARY_PAGE_LINK_BASE_FIELDS, GET_SUMMARY_PAGE_LINK_BASE_FIELDS + ", COALESCE(is_liked,0) as is_liked, COALESCE(is_copied,0) as is_copied", 1)
 
 	l.Text = strings.Replace(l.Text, ";",
 	fmt.Sprintf(` 

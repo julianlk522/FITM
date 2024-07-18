@@ -69,7 +69,7 @@ type SummarySignedIn struct {
 	IsLiked bool
 }
 
-type SummaryPage[T SummarySignedIn | SummarySignedOut, L LinkSignedIn | LinkSignedOut ] struct {
+type SummaryPage[S SummarySignedIn | SummarySignedOut, L LinkSignedIn | LinkSignedOut ] struct {
 	Link L
-	Summaries []T
+	Summaries []S
 }
