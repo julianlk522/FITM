@@ -1,4 +1,4 @@
-package handler
+package db
 
 import (
 	"errors"
@@ -26,12 +26,4 @@ func GetPeriodClause(period string) (clause string, err error) {
 	}
 
 	return fmt.Sprintf("julianday('now') - julianday(submit_date) < %d", days), nil
-}
-
-func WithPeriodClause(sql string, period string) (string) {
-	clause, err := GetPeriodClause(period)
-	if err != nil {
-		return sql
-	}
-	return sql + fmt.Sprintf(" WHERE %s", clause)
 }

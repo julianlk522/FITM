@@ -159,7 +159,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 	FROM Users 
 	WHERE login_name = ?;`, login_name).Scan(&u.LoginName, &u.About, &u.PFP, &u.Created)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(ErrUserNotFound))
+		render.Render(w, r, ErrInvalidRequest(ErrNoUserWithLoginName))
 		return
 	}
 
@@ -296,7 +296,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	} else if !user_exists {
-		render.Render(w, r, ErrInvalidRequest(ErrUserNotFound))
+		render.Render(w, r, ErrInvalidRequest(ErrNoUserWithLoginName))
 		return
 	}
 
@@ -348,7 +348,7 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}else if !user_exists {
-		render.Render(w, r, ErrInvalidRequest(ErrUserNotFound))
+		render.Render(w, r, ErrInvalidRequest(ErrNoUserWithLoginName))
 		return
 	}
 

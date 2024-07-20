@@ -33,11 +33,9 @@ var (
 	ErrNoLinkWithID error = errors.New("no link found with given ID")
 	ErrNoSummaryWithID error = errors.New("no summary found with given ID")
 	ErrNoTagWithID error = errors.New("no tag found with given ID")
+	ErrNoUserWithLoginName error = errors.New("no user found with given login name")
 
 	ErrTooManyCategories error = fmt.Errorf("too many tag categories (%d max)", NEW_TAG_CATEGORY_LIMIT)
 	ErrDuplicateTag error = errors.New("duplicate tag")
 	ErrDoesntOwnTag error = errors.New("cannot edit another user's tag")
-
-	ErrUserNotFound error = errors.New("user not found")
-
 )
