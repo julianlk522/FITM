@@ -6,6 +6,13 @@ import (
 	"time"
 )
 
+type User struct {
+	LoginName string
+	About string
+	PFP string
+	Created string
+}
+
 // AUTH
 type UserAuth struct {
 	LoginName string `json:"login_name"`
@@ -47,18 +54,6 @@ func (a *LogInRequest) Bind(r *http.Request) error {
 }
 
 // EDIT PROFILE
-type EditProfileRequest struct {
-	*EditAboutRequest
-	*EditPfpRequest
-}
-
-func (a *EditProfileRequest) Bind(r *http.Request) error {
-	if a.EditAboutRequest == nil && a.EditPfpRequest == nil {
-		return errors.New("no data provided")
-	}
-	return nil
-}
-
 type EditAboutRequest struct {
 	About string `json:"about"`
 }
@@ -77,12 +72,4 @@ type TreasureMap[T LinkSignedIn | LinkSignedOut] struct {
 	Tagged *[]T
 	Copied *[]T
 	Categories *[]CategoryCount
-}
-
-// GENERAL
-type User struct {
-	LoginName string
-	About string
-	PFP string
-	Created string
 }

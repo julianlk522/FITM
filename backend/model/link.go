@@ -62,6 +62,7 @@ type LinkSignedIn struct {
 	IsCopied bool
 }
 
+// TODO: refactor now that GetCategories is not being used
 type Link interface {
 	GetCategories() string
 }
@@ -73,8 +74,6 @@ func (l LinkSignedOut) GetCategories() string {
 func (l LinkSignedIn) GetCategories() string {
 	return l.Categories
 }
-
-
 
 type CustomLinkCategories struct {
 	LinkID int64

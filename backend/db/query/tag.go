@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// SUMMARIES FOR LINK
+// Tags for Link
 type GetTagPageLink struct {
 	Query
 }
@@ -53,7 +53,7 @@ func (l *GetTagPageLink) _ForSignedInUser(user_id string ) *GetTagPageLink {
 }
 
 
-
+// Earliest Tags for Link
 type GetEarliestTags struct {
 	Query
 }
@@ -83,7 +83,7 @@ func (t *GetEarliestTags) Limit(limit int) *GetEarliestTags {
 }
 
 
-
+// All Global Categories
 type GetAllGlobalCategories struct {
 	Query
 }
@@ -110,7 +110,7 @@ func (t *GetAllGlobalCategories) FromPeriod(period string) *GetAllGlobalCategori
 }
 
 
-
+// Top Tags (Overlap Scores)
 type GetTopOverlapScores struct {
 	Query
 }

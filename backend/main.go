@@ -105,9 +105,8 @@ func main() {
 		r.Use(jwtauth.Authenticator(token_auth))
 
 		// USER ACCOUNTS
-		r.Patch("/users", handler.EditProfile)
 		r.Put("/users/about", handler.EditAbout)
-		r.Post("/pic", handler.UploadProfilePic)
+		r.Post("/pic", handler.UploadNewProfilePic)
 
 		// LINKS
 		r.Post("/links", handler.AddLink)

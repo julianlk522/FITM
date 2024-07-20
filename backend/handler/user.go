@@ -3,7 +3,6 @@ package handler
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
@@ -26,7 +25,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"golang.org/x/crypto/bcrypt"
 
-	"oitm/db"
+	query "oitm/db/query"
 	"oitm/model"
 )
 
@@ -46,44 +45,36 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
-	// Check if user already exists, Abort if so
-	var s sql.NullString
-	db_client := db.Client
-	if err := db_client.QueryRow("SELECT login_name FROM Users WHERE login_name = ?", signup_data.UserAuth.LoginName).Scan(&s); err == nil {
+	if _LoginNameTaken(signup_data.UserAuth.LoginName) {
 		render.Render(w, r, ErrInvalidRequest(errors.New("login name taken")))
 		return
 	}
 
-	// Hash password
 	pw_hash, err := bcrypt.GenerateFromPassword([]byte(signup_data.UserAuth.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	_, err = db_client.Exec(`INSERT INTO users VALUES (?,?,?,?,?,?)`, nil, signup_data.UserAuth.LoginName, pw_hash, nil, nil, signup_data.Created)
+	_, err = DBClient.Exec(`INSERT INTO users VALUES (?,?,?,?,?,?)`, nil, signup_data.UserAuth.LoginName, pw_hash, nil, nil, signup_data.Created)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// get new user ID
-	var id sql.NullString
-	err = db_client.QueryRow("SELECT id FROM Users WHERE login_name = ?", signup_data.UserAuth.LoginName).Scan(&id)
+	token, err := _GetJWTFromLoginName(signup_data.UserAuth.LoginName)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
 	}
 
-	// generate and return jwt containing user ID and login_name
-	token_data := map[string]interface{}{"user_id": id.String, "login_name": signup_data.LoginName}
-	token_auth := jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(24*time.Hour))
-	_, token, err := token_auth.Encode(token_data)
-	if err != nil {
-		log.Fatal(err)
-	}
+	_RenderJWT(token, w, r)
+}
 
-	return_json := map[string]string{"token": token}
-	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, return_json)
+func _LoginNameTaken(login_name string) bool {
+	var s sql.NullString
+	if err := DBClient.QueryRow("SELECT login_name FROM Users WHERE login_name = ?", login_name).Scan(&s); err == nil {
+		return true
+	}
+	return false
 }
 
 // LOG IN
@@ -95,30 +86,60 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
-	// Attempt to collect user ID and hashed password, 
-	// Abort if user not found
-	var id, p sql.NullString
-	db_client := db.Client
-	if err := db_client.QueryRow("SELECT id, password FROM Users WHERE login_name = ?", login_data.LoginName).Scan(&id, &p); err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no user found with given login name")))
-		return
-	}
-
-	// compare password hashes
-	if err := bcrypt.CompareHashAndPassword([]byte(p.String), []byte(login_data.UserAuth.Password)); err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("incorrect password")))
-		return
-	}
-
-	// generate and return jwt containing user ID and login_name
-	token_data := map[string]interface{}{"user_id": id.String, "login_name": login_data.LoginName}
-	token_auth := jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(24*time.Hour))
-	_, token, err := token_auth.Encode(token_data)
+	is_authenticated, err := _AuthenticateUser(login_data.LoginName, login_data.Password)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if !is_authenticated {
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid login")))
+		return
 	}
 
+	token, err := _GetJWTFromLoginName(login_data.UserAuth.LoginName)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	_RenderJWT(token, w, r)
+}
+
+func _AuthenticateUser(login_name string, password string) (bool, error) {
+	var id, p sql.NullString
+	if err := DBClient.QueryRow("SELECT id, password FROM Users WHERE login_name = ?", login_name).Scan(&id, &p); err != nil {
+		if err == sql.ErrNoRows {
+			return false, errors.New("user not found")
+		}
+		return false, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(p.String), []byte(password)); err != nil {
+		return false, errors.New("incorrect password")
+	}
+
+	return true, nil
+}
+
+func _GetJWTFromLoginName(login_name string) (string, error) {
+	var id sql.NullString
+	err := DBClient.QueryRow("SELECT id FROM Users WHERE login_name = ?", login_name).Scan(&id)
+	if err != nil {
+		return "", err
+	}
+
+	claims := map[string]interface{}{"user_id": id.String, "login_name": login_name}
+
+	// TODO: change jwt secret
+	auth := jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(24*time.Hour))
+	_, token, err := auth.Encode(claims)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func _RenderJWT(token string, w http.ResponseWriter, r *http.Request) {
 	return_json := map[string]string{"token": token}
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, return_json)
@@ -128,63 +149,22 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 func GetProfile(w http.ResponseWriter, r *http.Request) {
 	login_name := chi.URLParam(r, "login_name")
 	if login_name == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid login name provided")))
+		render.Render(w, r, ErrInvalidRequest(ErrNoLoginName))
 		return
 	}
 
-	
 	var u model.User
-	db_client := db.Client
-	err := db_client.QueryRow(`SELECT login_name, coalesce(about,"") as about, coalesce(pfp,"") as pfp, coalesce(created,"") as created FROM Users WHERE login_name = ?;`, login_name).Scan(&u.LoginName, &u.About, &u.PFP, &u.Created)
+	err := DBClient.QueryRow(`
+	SELECT login_name, COALESCE(about,"") as about, COALESCE(pfp,"") as pfp, COALESCE(created,"") as created 
+	FROM Users 
+	WHERE login_name = ?;`, login_name).Scan(&u.LoginName, &u.About, &u.PFP, &u.Created)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("user not found")))
+		render.Render(w, r, ErrInvalidRequest(ErrUserNotFound))
 		return
 	}
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, u)
-}
-
-// EDIT PROFILE
-func EditProfile(w http.ResponseWriter, r *http.Request) {
-	edit_profile_data := &model.EditProfileRequest{}
-	if err := render.Bind(r, edit_profile_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
-		return
-	}
-
-	req_user_id, _, err := GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
-		return
-	}
-
-	// Update profile
-	return_json := map[string]interface{}{}
-	
-	// About
-	db_client := db.Client
-	if edit_profile_data.EditAboutRequest != nil {
-		_, err = db_client.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_profile_data.EditAboutRequest.About, req_user_id)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		return_json["about"] = edit_profile_data.EditAboutRequest.About
-	}
-	
-	// Profile Pic
-	if edit_profile_data.EditPfpRequest != nil {
-		_, err = db_client.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, edit_profile_data.EditPfpRequest.PFP, req_user_id)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		return_json["pfp"] = edit_profile_data.EditPfpRequest.PFP
-	}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, return_json)
 }
 
 func EditAbout(w http.ResponseWriter, r *http.Request) {
@@ -199,18 +179,14 @@ func EditAbout(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-
 	
-	// Update
-	db_client := db.Client
-	_, err = db_client.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_about_data.About, req_user_id)
+	_, err = DBClient.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_about_data.About, req_user_id)
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, edit_about_data)
-
 }
 
 // GET PROFILE PICTURE
@@ -219,7 +195,6 @@ func GetProfilePic(w http.ResponseWriter, r *http.Request) {
 	var file_name string = chi.URLParam(r, "file_name")
 	path := pic_dir + "/" + file_name
 	
-	// Error if pic not found at path
 	if _, err := os.Stat(path); err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("profile pic not found")))
 		return
@@ -230,9 +205,9 @@ func GetProfilePic(w http.ResponseWriter, r *http.Request) {
 }
 
 // UPLOAD NEW PROFILE PICTURE
-func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
+func UploadNewProfilePic(w http.ResponseWriter, r *http.Request) {
 
-	// Get file up to 10MB
+	// Get file (up to 10MB)
 	r.ParseMultipartForm( 10 << 20 )
 	file, handler, err := r.FormFile("pic")
     if err != nil {
@@ -241,36 +216,28 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
     }
     defer file.Close()
 
-	// Check that file is valid image
+	// Valid image
 	if !strings.Contains(handler.Header.Get("Content-Type"), "image") {
 		render.Render(w, r, ErrInvalidRequest(errors.New("invalid file provided (accepted image formats: .jpg, .jpeg, .png, .webp)")))
 		return
 	}
 
-	// Check that image aspect ratio is no more than 2:1 and no less than 0.5:1
 	img, _, err := image.Decode(file)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-
-	b := img.Bounds()
-	width, height := b.Max.X, b.Max.Y
-	ratio := float64(width) / float64(height)
-
-	if ratio > 2.0 || ratio < 0.5 {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid image aspect ratio (no more than 2:1, no less than 0.5:1)")))
+	
+	// Aspect ratio is no more than 2:1 and no less than 0.5:1
+	if !_HasAcceptableAspectRatio(img) {
+		render.Render(w, r, ErrInvalidRequest(errors.New("profile pic aspect ratio must be no more than 2:1 and no less than 0.5:1")))
 		return
 	}
 
-	// Get file extension
-	ext := filepath.Ext(handler.Filename)
+	extension := filepath.Ext(handler.Filename)
+	unique_name := uuid.New().String() + extension
+	full_path := pic_dir + "/" + unique_name
 
-	// Generate unique file name
-	new_name := uuid.New().String() + ext
-	full_path := pic_dir + "/" + new_name
-
-	// Create new file
 	dst, err := os.Create(full_path)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("could not create new file")))
@@ -281,9 +248,9 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 	// Restore img file cursor to start
 	file.Seek(0, 0)
 	
-	// Save to new file on disk
+	// Save to new file
 	if _, err := io.Copy(dst, file); err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("could not copy profile pic into new file")))
+		render.Render(w, r, ErrInvalidRequest(errors.New("could not copy profile pic to new file")))
 		return
 	}
 
@@ -293,39 +260,43 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update db with new pic name
-	db_client := db.Client
-	_, err = db_client.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, new_name, req_user_id)
+	_, err = DBClient.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, unique_name, req_user_id)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(errors.New("could not save new profile pic")))
 		return
 	}
 
-	// Return saved file
 	http.ServeFile(w, r, full_path)
 }
 
+func _HasAcceptableAspectRatio(img image.Image) bool {
+	b := img.Bounds()
+	width, height := b.Max.X, b.Max.Y
+	ratio := float64(width) / float64(height)
+
+	if ratio > 2.0 || ratio < 0.5 {
+		return false
+	}
+
+	return true
+}
+
 // GET USER TREASURE MAP
-// (includes links tagged by and copied by user, plus category sum counts)
-// (all links submitted by a user will have a tag from that user, so includes all user's submitted links)
+// (includes tagged / copied links and category sum counts)
+// (and all links submitted by user, since submission requires tag)
 func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	var login_name string = chi.URLParam(r, "login_name")
 	if login_name == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no user provided")))
+		render.Render(w, r, ErrInvalidRequest(ErrNoLoginName))
 		return
 	}
 
-	db ,err := sql.Open("sqlite3", "./db/oitm.db")
+	user_exists, err := _UserExists(login_name)
 	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	// check that user exists
-	var u sql.NullString
-	err = db.QueryRow("SELECT login_name FROM Users WHERE login_name = ?;", login_name).Scan(&u)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("user not found")))
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	} else if !user_exists {
+		render.Render(w, r, ErrInvalidRequest(ErrUserNotFound))
 		return
 	}
 
@@ -334,194 +305,27 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-	// Prepare SQL to get submitted / tagged / copied links from User
-	// (Start with queries for signed-out user, append additional if needed)
-	base_fields := `SELECT 
-		Links.id as link_id, 
-		url, 
-		submitted_by as login_name, 
-		submit_date, 
-		categories, 
-		coalesce(global_summary,"") as summary, 
-		coalesce(summary_count,0) as summary_count, 
-		coalesce(like_count,0) as like_count, 
-		coalesce(img_url,"") as img_url
-	`
 
-	// Get submitted links, replacing global categories with user-assigned
-	submitted_from := fmt.Sprintf(` FROM Links
-	JOIN
-		(
-		SELECT categories, link_id as tag_link_id
-		FROM Tags
-		WHERE submitted_by = '%s'
-		)
-	ON link_id = tag_link_id
-	LEFT JOIN
-		(
-		SELECT count(*) as like_count, link_id as like_link_id
-		FROM 'Link Likes'
-		GROUP BY link_id
-		)
-	ON like_link_id = link_id
-	LEFT JOIN
-		(
-		SELECT count(*) as summary_count, link_id as summary_link_id
-		FROM Summaries
-		GROUP BY link_id
-		)
-	ON summary_link_id = link_id`, login_name)
+	submitted_sql := query.NewGetTmapSubmitted(req_user_id, req_login_name).ForUser(login_name)
+	tagged_sql := query.NewGetTmapTagged(req_user_id, req_login_name).ForUser(login_name)
+	copied_sql := query.NewGetTmapCopied(req_user_id, req_login_name).ForUser(login_name)
 
-	submitted_where := fmt.Sprintf(` WHERE submitted_by = '%s';`, login_name)
-
-	// Get tagged links submitted by other users, replacing global categories with user-assigned
-	tagged_from := submitted_from
-	tagged_where := fmt.Sprintf(` WHERE submitted_by != '%s';`, login_name)
-
-	// Get copied links
-	copied_fields := strings.Replace(base_fields, "categories", `coalesce(global_cats,"") as categories`, 1)
-	copied_from := fmt.Sprintf(` FROM Links
-	JOIN
-		(
-		SELECT link_id as copy_link_id, user_id as copier_id
-		FROM 'Link Copies'
-		JOIN Users
-		ON Users.id = copier_id
-		WHERE Users.login_name = '%s'
-		)
-	ON copy_link_id = link_id
-	LEFT JOIN
-		(
-		SELECT count(*) as like_count, link_id as like_link_id
-		FROM 'Link Likes'
-		GROUP BY link_id
-		)
-	ON like_link_id = link_id
-	LEFT JOIN
-		(
-		SELECT count(*) as summary_count, link_id as summary_link_id
-		FROM Summaries
-		GROUP BY link_id
-		)
-	ON summary_link_id = link_id`, login_name)
-
-	// Append additional queries for signed-in fields (IsLiked, IsTagged, IsCopied) if auth claims verified
-	if req_user_id != "" {
-		added_fields := `, 
-		coalesce(is_liked,0) as is_liked, 
-		coalesce(is_tagged,0) as is_tagged,
-		coalesce(is_copied,0) as is_copied`
-
-		added_from := fmt.Sprintf(` LEFT JOIN
-			(
-			SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
-			FROM 'Link Likes'
-			WHERE user_id = '%[1]s'
-			GROUP BY id
-			)
-		ON like_link_id2 = link_id 
-		LEFT JOIN 
-		(
-			SELECT id as tag_id, link_id as tlink_id, count(*) as is_tagged 
-			FROM Tags
-			WHERE Tags.submitted_by = '%[2]s'
-			GROUP BY tag_id
-		)
-		ON tlink_id = link_id
-		LEFT JOIN
-			(
-			SELECT id as copy_id, count(*) as is_copied, user_id as cuser_id, link_id as clink_id
-			FROM 'Link Copies'
-			WHERE cuser_id = '%[1]s'
-			GROUP BY copy_id
-			)
-		ON clink_id = link_id`, req_user_id, req_login_name)
-
-		// Submitted
-		submitted_fields := base_fields + added_fields
-		submitted_from += added_from
-		submitted_sql := submitted_fields + submitted_from + submitted_where
-
-		// Tagged
-		tagged_fields := base_fields + added_fields
-		tagged_from += added_from
-		tagged_sql := tagged_fields + tagged_from + tagged_where
-
-		// Copied
-		copied_fields += added_fields
-		copied_from += added_from
-		copied_where := fmt.Sprintf(` WHERE link_id NOT IN
-			(
-			SELECT link_id
-			FROM TAGS
-			WHERE submitted_by = '%s'
-			);`, login_name)
-		copied_sql := copied_fields + copied_from + copied_where
-
-		// Scan links
-		var submitted, tagged, copied *[]model.LinkSignedIn
-		for _, sql := range []string{submitted_sql, tagged_sql, copied_sql} {
-			rows, err := db.Query(sql)
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer rows.Close()
-			
-			switch sql {
-				case submitted_sql:
-					submitted = ScanTmapLinksSignedIn(db, rows)
-				case tagged_sql:
-					tagged = ScanTmapLinksSignedIn(db, rows)
-				case copied_sql:
-					copied = ScanTmapLinksSignedIn(db, rows)
-			}
+	// Requesting user signed in: get IsLiked / IsCopied / IsTagged for each link
+	if req_user_id != "" {	
+		tmap, err := _BuildTmap[model.LinkSignedIn](submitted_sql.Query, tagged_sql.Query, copied_sql.Query)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
 		}
-
-		// Add links to tmap
-		tmap := model.TreasureMap[model.LinkSignedIn]{Submitted: submitted, Tagged: tagged, Copied: copied}
-
-		// Get category counts
-		all_links := slices.Concat(*submitted, *tagged, *copied)
-		cat_counts := GetTmapCategoryCounts(&all_links, nil)
-
-		// combine links and categories in response
-		tmap.Categories = cat_counts
 		render.JSON(w, r, tmap)
 		
-	// User not signed in: omit isLiked / isCopied / isTagged fields
+	// No auth
 	} else {
-		get_submitted_sql := base_fields + submitted_from + submitted_where
-		get_tagged_sql := base_fields + tagged_from + tagged_where
-		get_copied_sql := copied_fields + copied_from
-
-		// Scan links
-		var submitted, tagged, copied *[]model.LinkSignedOut
-		for _, sql := range []string{get_submitted_sql, get_tagged_sql, get_copied_sql} {
-			rows, err := db.Query(sql)
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer rows.Close()
-			
-			switch sql {
-			case get_submitted_sql:
-				submitted = ScanTmapLinksSignedOut(db, rows)
-			case get_tagged_sql:
-				tagged = ScanTmapLinksSignedOut(db, rows)
-			case get_copied_sql:
-				copied = ScanTmapLinksSignedOut(db, rows)
-			}
+		tmap, err := _BuildTmap[model.LinkSignedOut](submitted_sql.Query, tagged_sql.Query, copied_sql.Query)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
 		}
-
-		// Add links to tmap
-		tmap := model.TreasureMap[model.LinkSignedOut]{Submitted: submitted, Tagged: tagged, Copied: copied}
-
-		// Get category counts
-		all_links := slices.Concat(*submitted, *tagged, *copied)
-		cat_counts := GetTmapCategoryCounts(&all_links, nil)
-
-		// Add categories to tmap
-		tmap.Categories = cat_counts
 		render.JSON(w, r, tmap)
 	}
 }
@@ -529,27 +333,22 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 	var login_name string = chi.URLParam(r, "login_name")
 	if login_name == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no user provided")))
+		render.Render(w, r, ErrInvalidRequest(ErrNoLoginName))
 		return
 	}
 
 	var categories string = chi.URLParam(r, "categories")
 	if categories == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no categories provided")))
+		render.Render(w, r, ErrInvalidRequest(ErrNoCategories))
 		return
 	}
 
-	db ,err := sql.Open("sqlite3", "./db/oitm.db")
+	user_exists, err := _UserExists(login_name)
 	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	// check that user exists
-	var u sql.NullString
-	err = db.QueryRow("SELECT login_name FROM Users WHERE login_name = ?;", login_name).Scan(&u)
-	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("user not found")))
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}else if !user_exists {
+		render.Render(w, r, ErrInvalidRequest(ErrUserNotFound))
 		return
 	}
 
@@ -559,299 +358,163 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Prepare SQL to get submitted / tagged / copied links from User
-	// (Start with queries for signed-out user, append additional ones if needed)
+	split_cats := strings.Split(categories, ",")
 
-	base_fields := `SELECT 
-		Links.id as link_id, 
-		url, 
-		submitted_by as login_name, 
-		submit_date, 
-		categories, 
-		coalesce(global_summary,"") as summary, 
-		coalesce(summary_count,0) as summary_count, 
-		coalesce(like_count,0) as like_count, 
-		coalesce(img_url,"") as img_url
-	`
+	submitted_sql := query.NewGetTmapSubmitted(req_user_id, req_login_name).FromCategories(split_cats).ForUser(login_name)
+	tagged_sql := query.NewGetTmapTagged(req_user_id, req_login_name).FromCategories(split_cats).ForUser(login_name)
+	copied_sql := query.NewGetTmapCopied(req_user_id, req_login_name).FromCategories(split_cats).ForUser(login_name)
 
-	// Get submitted links, replacing global categories with user-assigned
-	submitted_from := fmt.Sprintf(` FROM Links
-		JOIN
-		(
-			SELECT categories, link_id as tag_link_id
-			FROM Tags
-			WHERE submitted_by = '%s'
-		)
-		ON link_id = tag_link_id
-		LEFT JOIN
-		(
-			SELECT count(*) as like_count, link_id as like_link_id
-			FROM 'Link Likes'
-			GROUP BY link_id
-		)
-		ON like_link_id = link_id
-		LEFT JOIN
-		(
-			SELECT count(*) as summary_count, link_id as summary_link_id
-			FROM Summaries
-			GROUP BY link_id
-		)
-		ON summary_link_id = link_id`, login_name)
-	
-	submitted_where := fmt.Sprintf(` WHERE submitted_by = '%s'`, login_name)
-
-	// Append category filters to submitted_where
-	cats_split := strings.Split(categories, ",")
-	for _, cat := range cats_split {
-		submitted_where += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
-	}
-
-	// Get tagged links submitted by other users, replacing global categories with user-assigned
-	tagged_from := submitted_from
-	tagged_where := fmt.Sprintf(` WHERE submitted_by != '%s'`, login_name)
-
-	// Append category filters to tagged_where
-	for _, cat := range cats_split {
-		tagged_where += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
-	}
-
-	// Get copied links
-	copied_fields := strings.Replace(base_fields, "categories", `coalesce(global_cats,"") as categories`, 1)
-	copied_from := fmt.Sprintf(` FROM Links
-	JOIN
-		(
-		SELECT link_id as copy_link_id, user_id as copier_id
-		FROM 'Link Copies'
-		JOIN Users
-		ON Users.id = copier_id
-		WHERE Users.login_name = '%s'
-		)
-	ON copy_link_id = link_id
-	LEFT JOIN
-		(
-		SELECT count(*) as like_count, link_id as like_link_id
-		FROM 'Link Likes'
-		GROUP BY link_id
-		)
-	ON like_link_id = link_id
-	LEFT JOIN
-		(
-		SELECT count(*) as summary_count, link_id as summary_link_id
-		FROM Summaries
-		GROUP BY link_id
-		)
-	ON summary_link_id = link_id`, login_name)
-
-	copied_where := fmt.Sprintf(` WHERE ',' || categories || ',' LIKE '%%,%s,%%'`, cats_split[0])
-	for _, cat := range cats_split[1:] {
-		copied_where += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
-	}
-	copied_where += fmt.Sprintf(` AND link_id NOT IN
-	(
-		SELECT link_id
-		FROM TAGS
-		WHERE submitted_by = '%s'
-	);`, login_name)
-
-	// Append additional queries for IsLiked, IsTagged, and IsCopied fields if auth claims verified
-	if req_user_id != "" {
-		added_fields := `, 
-		coalesce(is_liked,0) as is_liked, 
-		coalesce(is_tagged,0) as is_tagged,
-		coalesce(is_copied,0) as is_copied`
-
-		added_from := fmt.Sprintf(` LEFT JOIN
-			(
-			SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
-			FROM 'Link Likes'
-			WHERE user_id = '%[1]s'
-			GROUP BY id
-			)
-		ON like_link_id2 = link_id 
-		LEFT JOIN 
-		(
-			SELECT id as tag_id, link_id as tlink_id, count(*) as is_tagged 
-			FROM Tags
-			WHERE Tags.submitted_by = '%[2]s'
-			GROUP BY tag_id
-		)
-		ON tlink_id = link_id
-		LEFT JOIN
-			(
-			SELECT id as copy_id, count(*) as is_copied, user_id as cuser_id, link_id as clink_id
-			FROM 'Link Copies'
-			WHERE cuser_id = '%[1]s'
-			GROUP BY copy_id
-			)
-		ON clink_id = link_id`, req_user_id, req_login_name)
-
-		// Submitted
-		submitted_fields := base_fields + added_fields
-		submitted_from += added_from
-		submitted_sql := submitted_fields + submitted_from + submitted_where
-
-		// Tagged
-		tagged_fields := base_fields + added_fields
-		tagged_from += added_from
-		tagged_sql := tagged_fields + tagged_from + tagged_where
-
-		// Copied
-		copied_fields += added_fields
-		copied_from += added_from
-		copied_sql := copied_fields + copied_from + copied_where
-
-		// Scan links
-		var submitted, tagged, copied *[]model.LinkSignedIn
-		for _, sql := range []string{submitted_sql, tagged_sql, copied_sql} {
-			rows, err := db.Query(sql)
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer rows.Close()
-			
-			switch sql {
-			case submitted_sql:
-				submitted = ScanTmapLinksSignedIn(db, rows)
-			case tagged_sql:
-				tagged = ScanTmapLinksSignedIn(db, rows)
-			case copied_sql:
-				copied = ScanTmapLinksSignedIn(db, rows)
-			}
+	// Requesting user signed in: get IsLiked / IsCopied / IsTagged for each link
+	if req_user_id != "" {	
+		tmap, err := _BuildTmap[model.LinkSignedIn](submitted_sql.Query, tagged_sql.Query, copied_sql.Query)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
 		}
-
-		// Add links to tmap
-		tmap := model.TreasureMap[model.LinkSignedIn]{Submitted: submitted, Tagged: tagged, Copied: copied}
-
-		// Get subcategory counts
-		all_links := slices.Concat(*submitted, *tagged, *copied)
-		cat_counts := GetTmapCategoryCounts(&all_links, cats_split)
-
-		// Add subcategories to tmap
-		tmap.Categories = cat_counts
 		render.JSON(w, r, tmap)
 		
-	// User not signed in: omit isLiked / isCopied / isTagged fields
+	// No auth
 	} else {
-		submitted_sql := base_fields + submitted_from + submitted_where
-		tagged_sql := base_fields + tagged_from + tagged_where
-		copied_sql := copied_fields + copied_from + copied_where
-
-		// Scan links
-		var submitted, tagged, copied *[]model.LinkSignedOut
-		for _, sql := range []string{submitted_sql, tagged_sql, copied_sql} {
-			rows, err := db.Query(sql)
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer rows.Close()
-			
-			switch sql {
-			case submitted_sql:
-				submitted = ScanTmapLinksSignedOut(db, rows)
-			case tagged_sql:
-				tagged = ScanTmapLinksSignedOut(db, rows)
-			case copied_sql:
-				copied = ScanTmapLinksSignedOut(db, rows)
-			}
+		tmap, err := _BuildTmap[model.LinkSignedOut](submitted_sql.Query, tagged_sql.Query, copied_sql.Query)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
 		}
-
-		// Add links to tmap
-		tmap := model.TreasureMap[model.LinkSignedOut]{Submitted: submitted, Tagged: tagged, Copied: copied}
-
-		// Get subcategory counts
-		all_links := slices.Concat(*submitted, *tagged, *copied)
-		cat_counts := GetTmapCategoryCounts(&all_links, cats_split)
-
-		// Add subcategories to tmap
-		tmap.Categories = cat_counts
 		render.JSON(w, r, tmap)
 	}
 }
 
-func ScanTmapLinksSignedIn (db *sql.DB, rows *sql.Rows) *[]model.LinkSignedIn {
-	var links = []model.LinkSignedIn{}
-	for rows.Next() {
-		i := model.LinkSignedIn{}
-		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL, &i.IsLiked, &i.IsTagged, &i.IsCopied)
-		if err != nil {
-			log.Fatal(err)
-		}
-		links = append(links, i)
+func _UserExists(login_name string) (bool, error) {
+	var u sql.NullString
+	err := DBClient.QueryRow("SELECT id FROM Users WHERE login_name = ?;", login_name).Scan(&u)
+	if err == sql.ErrNoRows {
+		return false, nil
+	} else if err != nil {
+		return false, err
 	}
 
-	return &links
+	return true, nil
 }
 
-func ScanTmapLinksSignedOut (db *sql.DB, rows *sql.Rows) *[]model.LinkSignedOut {	
-	var links = []model.LinkSignedOut{}
+func _BuildTmap[T model.LinkSignedIn | model.LinkSignedOut](get_submitted, get_tagged, get_copied query.Query) (*model.TreasureMap[T], error) {
+	submitted, err := _ScanTmapLinks[T](get_submitted)
+	if err != nil {
+		return nil, err
+	}
+	tagged, err := _ScanTmapLinks[T](get_tagged)
+	if err != nil {
+		return nil, err
+	}
+	copied, err := _ScanTmapLinks[T](get_copied)
+	if err != nil {
+		return nil, err
+	}
+	tmap := model.TreasureMap[T]{Submitted: submitted, Tagged: tagged, Copied: copied}
 
-	for rows.Next() {
-		i := model.LinkSignedOut{}
-		err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
-		if err != nil {
-			log.Fatal(err)
-		}
-		links = append(links, i)
+	all_links := slices.Concat(*submitted, *tagged, *copied)
+	cat_counts := GetTmapCategoryCounts(&all_links, nil)
+	tmap.Categories = cat_counts
+
+	return &tmap, nil
+}
+
+func _ScanTmapLinks[T model.LinkSignedIn | model.LinkSignedOut](sql query.Query) (*[]T, error) {
+	rows, err := DBClient.Query(sql.Text)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var links interface{}
+
+	switch any(new(T)).(type) {
+		case *model.LinkSignedIn:
+			var signed_in_links = []model.LinkSignedIn{}
+
+			for rows.Next() {
+				i := model.LinkSignedIn{}
+				err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL, &i.IsLiked, &i.IsTagged, &i.IsCopied)
+				if err != nil {
+					return nil, err
+				}
+				signed_in_links = append(signed_in_links, i)
+			}
+
+			links = &signed_in_links
+
+		case *model.LinkSignedOut:
+			var signed_out_links = []model.LinkSignedOut{}
+
+			for rows.Next() {
+				i := model.LinkSignedOut{}
+				err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
+				if err != nil {
+					return nil, err
+				}
+				signed_out_links = append(signed_out_links, i)
+			}
+
+			links = &signed_out_links
 	}
 
-	return &links
+	return links.(*[]T), nil	
 }
 
 // Get counts of each category found in links
 // Omit any categories passed via omitted_cats
 // (omit used to retrieve subcategories by passing directly searched categories)
-func GetTmapCategoryCounts[T model.Link] (links *[]T, omitted_cats []string) *[]model.CategoryCount {
-	cat_counts := []model.CategoryCount{}
-	cats_found := []string{}
-	var cat_found bool
+// TODO: refactor to make this clearer
+func GetTmapCategoryCounts[T model.LinkSignedIn | model.LinkSignedOut] (links *[]T, omitted_cats []string) *[]model.CategoryCount {
+	counts := []model.CategoryCount{}
+	found_cats := []string{}
+	var found bool
 
-	// for each link in links
 	for _, link := range *links {
+		var categories string
+		switch l := any(link).(type) {
+			case model.LinkSignedIn:
+				categories = l.Categories
+			case model.LinkSignedOut:
+				categories = l.Categories
+		}
 
-		// for each category in categories (comma-separated string)
-		for _, cat := range strings.Split(link.GetCategories(), ",") {
-
-			// skip if category is in omitted_cats
+		for _, cat := range strings.Split(categories, ",") {
 			if omitted_cats != nil && slices.Contains(omitted_cats, cat) {
 				continue
 			}
 
-			// check if category is already in cat_counts
-			cat_found = false
-			for _, fc := range cats_found {
+			found = false
+			for _, found_cat := range found_cats {
+				if cat == found_cat {
+					found = true
 
-				// if found
-				if fc == cat {
-					cat_found = true
-
-					// find slice with category and increment count
-					for i, count := range cat_counts {
+					for i, count := range counts {
 						if count.Category == cat {
-							cat_counts[i].Count++
+							counts[i].Count++
 							break
 						}
 					}
 				}
 			}
 
-			// add new category to cat_counts with fresh count if not found
-			if !cat_found {
-				cat_counts = append(cat_counts, model.CategoryCount{Category: cat, Count: 1})
+			if !found {
+				counts = append(counts, model.CategoryCount{Category: cat, Count: 1})
 
 				// add to found categories
-				cats_found = append(cats_found, cat)
+				found_cats = append(found_cats, cat)
 			}
 		}
 	}
 
-	// sort categories by count
-	slices.SortFunc(cat_counts, model.SortCategories)
+	_SortAndLimitTmapCategoryCounts(&counts)
 
-	// limit to top 5 categories for now
-	CATEGORY_LIMIT := 5
-	if len(cat_counts) > CATEGORY_LIMIT {
-		cat_counts = cat_counts[:CATEGORY_LIMIT]
+	return &counts
+}
+
+func _SortAndLimitTmapCategoryCounts(counts *[]model.CategoryCount) {
+	slices.SortFunc(*counts, model.SortCategories)
+
+	if len(*counts) > TMAP_CATEGORY_COUNT_LIMIT {
+		*counts = (*counts)[:TMAP_CATEGORY_COUNT_LIMIT]
 	}
-
-	return &cat_counts
 }

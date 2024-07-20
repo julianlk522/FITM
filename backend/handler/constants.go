@@ -17,6 +17,8 @@ const (
 	TAGS_PAGE_LIMIT int = 20
 	NEW_TAG_CATEGORY_LIMIT int = 5
 	TOP_OVERLAP_SCORES_LIMIT int = 20
+
+	TMAP_CATEGORY_COUNT_LIMIT int = 5
 )
 
 var (
@@ -26,6 +28,7 @@ var (
 	ErrNoCategories error = errors.New("no categories provided")
 	ErrNoLinkID error = errors.New("no link ID provided")
 	ErrNoSummaryID error = errors.New("no summary ID provided")
+	ErrNoLoginName error = errors.New("no login name provided")
 
 	ErrNoLinkWithID error = errors.New("no link found with given ID")
 	ErrNoSummaryWithID error = errors.New("no summary found with given ID")
@@ -34,4 +37,7 @@ var (
 	ErrTooManyCategories error = fmt.Errorf("too many tag categories (%d max)", NEW_TAG_CATEGORY_LIMIT)
 	ErrDuplicateTag error = errors.New("duplicate tag")
 	ErrDoesntOwnTag error = errors.New("cannot edit another user's tag")
+
+	ErrUserNotFound error = errors.New("user not found")
+
 )
