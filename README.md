@@ -4,7 +4,6 @@
 
 ### Features:
 
--Fix pfp upload and about section layout, currently pretty jank
 -Fix broken tmap subcategories (including original category)
 -Middleware to alphabetize tag categories automatically
     -e.g., http://localhost:4321/cat/shit,nerd => http://localhost:4321/cat/nerd,shit
@@ -15,7 +14,6 @@
     -User Treasure Map
 -Improve frontend look/semantic markup
     -A11y, responsive layouts for phones / tablets
-    -Link articles
     -Proper color scheme
 -Use traditional "?" URL params instead of routes
     -one single link results page spanning all of /cat/{categories}, /top/{period}, /top/{period}/{categories} depending on URL params passed
@@ -26,7 +24,7 @@
 ### Code Quality:
 
 -Enforce consistent names
-    -e.g., Global Categores vs. Global Tag categories
+    -e.g., Global Categories vs. Global Tag categories
     -Popular Categories vs. Top Categories 
 -Rebrand subcategories as category overlaps since that is a bit more accurate
 -Merge GetProfile handler logic into GetTreasureMap handler
@@ -40,7 +38,6 @@
 
 ## To Maybe-Dos:
 
--Prevent user from copying their own link (backend)
 -Show number of copies along with number of likes in frontend
 -Edit category filters directly on top links by period/category(ies) page
     -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads

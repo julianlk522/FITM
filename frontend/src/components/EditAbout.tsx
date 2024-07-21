@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { is_error_response } from '../types';
+import './EditAbout.css';
 
 interface Props {
     initial: string
@@ -47,18 +48,7 @@ export default function EditAbout(props: Props) {
     }
 
     return (
-        <>
-            <button 
-                onClick={() => set_editing((prev) => !prev)}
-                class='img-btn'>
-                <img
-                    src='../../../edit_about.svg'
-                    height={24}
-                    width={24}
-                    alt='Toggle About Section edit mode'
-                />
-            </button>
-
+        <div id='edit-about'>
             {editing ?
             <form onSubmit={(event) => update_about(event)}>
                 <label for='about'>About</label>
@@ -74,10 +64,21 @@ export default function EditAbout(props: Props) {
                     />
                 </button>
             </form>
-            : initial ? <p>{initial}</p> : null
+            : initial ? <figcaption>{initial}</figcaption> : null
             }
 
+            <button 
+                onClick={() => set_editing((prev) => !prev)}
+                class='img-btn'>
+                <img
+                    src='../../../edit_about.svg'
+                    height={24}
+                    width={24}
+                    alt='Toggle About Section edit mode'
+                />
+            </button>
+
             {error ? <p class='error'>{error}</p> : null}
-        </>
+        </div>
     )
 }

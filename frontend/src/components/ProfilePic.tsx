@@ -67,10 +67,20 @@ export default function ProfilePic(props: Props) {
     return (
         <>
             {error ? <p class="error">{error}</p> : null}
-            {url ? <img src={url} alt={`${login_name}'s profile picture`} width='150' /> : null}
+            {url ? <img src={url} id='pfp' alt={`${login_name}'s profile picture`} width='150' /> : null}
             {is_signed_in_user ? <form>
-                <label for="new_pic_upload">Upload New: </label>
-                <input id='new_pic_upload' type="file" accept={"image/*"} onChange={handle_pic_change} />
+                <label id='new-pic-upload-label' for="new-pic-upload">
+                    Upload New
+                    <button id='upload-btn' class='img-btn' type='submit' value='Submit'>
+                    <img
+                        src='../../../upload-pfp.svg'
+                        height={24}
+                        width={24}
+                        alt='Upload New Profile Picture'
+                    />
+                </button>
+                </label>
+                <input id='new-pic-upload' type="file" accept={"image/*"} hidden onChange={handle_pic_change} />
             </form> : null}
         </>
     )
