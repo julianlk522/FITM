@@ -182,6 +182,17 @@ func NewGetCategoryContributors(categories []string) *GetCategoryContributors {
 	return new
 }
 
+func (c *GetCategoryContributors) _FromCategories(categories []string) *GetCategoryContributors {
+	c.Text += fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[0])
+	for i := 1; i < len(categories); i++ {
+		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[i])
+	}
+	
+	c.Text +=" GROUP BY submitted_by ORDER BY count(*) DESC, submitted_by ASC;"
+
+	return c
+}
+
 func (c *GetCategoryContributors) DuringPeriod(period string) (*GetCategoryContributors) {
 	clause , err := GetPeriodClause(period)
 	if err != nil {
@@ -197,16 +208,6 @@ func (c *GetCategoryContributors) Limit(limit int) *GetCategoryContributors {
 	return c
 }
 
-func (c *GetCategoryContributors) _FromCategories(categories []string) *GetCategoryContributors {
-	c.Text += fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[0])
-	for i := 1; i < len(categories); i++ {
-		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[i])
-	}
-	
-	c.Text +=" GROUP BY submitted_by ORDER BY count(*) DESC;"
-
-	return c
-}
 
 func (c *GetCategoryContributors) _Where(clause string) *GetCategoryContributors {
 

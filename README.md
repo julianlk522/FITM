@@ -4,7 +4,6 @@
 
 ### Features:
 
--Fix top category contributors (/cat/{categories}) sorting backwards
 -Middleware to alphabetize tag categories automatically
     -e.g., http://localhost:4321/cat/shit,nerd => http://localhost:4321/cat/nerd,shit
     -/top/{period}/{cat}, /cat/{cat}
@@ -32,7 +31,6 @@
 -Merge GetProfile handler logic into GetTreasureMap handler
     -(since it is only used on tmap page alongside link data)
 -Remove repeat code wherever possible
-    -GetTopLinksByCategories / GetTopLinksByPeriod
 -Follow patterns shown in https://github.com/jonnylangefeld/go-api
 -Tests
     -https://github.com/ory/dockertest
@@ -61,7 +59,7 @@
 
 Because there's a lot of good shit on the internet that's hard to be aware of and, to a lesser extent, hard to find even when you know about it.
 
-Search engines help somewhat, but they are biased in favor of results who optimize endlessly for SEO features (which are pretty irrelevant with regard to content quality, and gaming SEO buries a lot of barebones but high-quality stuff) or who pay to be promoted. These conditions funnel engagement mainly to big businesses rather than new and varied creators, and especially to businesses who specialize in farming the engagement at the expense of the internet visitor. Internet users deserve a portal that provides them an unbiased, direct view into the web's useful contents. 
+Internet users deserve a portal that provides them an unbiased, direct view into the web's useful contents. 
 
 ## What would be better than the status quo?
 
@@ -74,33 +72,6 @@ Links are tagged with various categories to best organize and produce relevant r
 e.g., Vim Adventures could be tagged with 'programming', 'learning games', 'typing games', 'keyboard ergonometry', etc.
 
 Users can like listed links to boost them, so in theory the most univerally appreciated resources are easiest to find.
-
-## What will each user have / be able to do?
-
-Have:
--Tree of user's submitted links + copied links
--User profile/summary screen with avatar, stats
-
-Can:
--Create an account (user/pass or OAUTH/provider)
--Log in (same options as above)
--Change profile settings
-
--Add (and tag) new links
--Like existing links
--Copy existing links to user's own tree
--Like link summary
--Submit alternative link summary
--Browse global link tree
--Browse other user trees
-
-## How is the global tree ("treasure map"?) derived from numerous varying, individual trees?
-
-Tags are aggregated across all users in the form of weighted scores. Weights are calculated based on 1) commonness of the topic and 2) amount of information provided by each user.
-
-e.g., user A who has a scant individual tree and who contributes/edits a link related to a popular topic (News - Political) will not greatly influence the likelihood of their chosen tags appearing on links in the global tree. OTOH, user B who contributes/edits heavily and submits tags on niche topics (Programming - OpenGL - Learning Resources) will have a significant influence on the likelihood of those tags being set in the global tree.
-
-Since a tag's weight is partially dependent on time since creation, tags need to be globally re-evaluated at a regular interval (maybe every morning).
 
 ## Stack:
 
