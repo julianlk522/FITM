@@ -12,6 +12,7 @@ const BASE_FIELDS = `SELECT
 	submitted_by as login_name, 
 	submit_date, 
 	categories, 
+	0 as cats_from_user,
 	COALESCE(global_summary,"") as summary, 
 	COALESCE(summary_count,0) as summary_count, 
 	COALESCE(like_count,0) as like_count, 
@@ -116,6 +117,84 @@ func (q *GetTmapSubmitted) ForUser(login_name string) *GetTmapSubmitted {
 
 
 
+// Copied links submitted by other users (global categories replaced with user-assigned if user has tagged)
+type GetTmapCopied struct {
+	Query
+}
+
+func NewGetTmapCopied(req_user_id string, req_login_name string) *GetTmapCopied {
+	var sql string
+
+	if req_user_id != "" {
+		req_user_auth_from := strings.Replace(AUTH_FROM, "REQ_LOGIN_NAME", req_login_name, 1)
+		sql = COPIED_FIELDS + AUTH_FIELDS + COPIED_FROM + req_user_auth_from + COPIED_WHERE
+
+		sql = strings.ReplaceAll(sql, "REQ_USER_ID", req_user_id)
+	} else {
+		sql = COPIED_FIELDS + COPIED_FROM + COPIED_WHERE
+	}	
+
+	return &GetTmapCopied{Query: Query{Text: sql}}
+}
+
+var COPIED_FIELDS = strings.Replace(strings.Replace(BASE_FIELDS, "categories", `COALESCE(categories,global_cats) as categories`, 1), "0 as cats_from_user", `COALESCE(cats_from_user,0) as cats_from_user`, 1)
+
+const COPIED_FROM = ` FROM Links
+JOIN
+	(
+	SELECT link_id as copy_link_id, user_id as copier_id
+	FROM 'Link Copies'
+	JOIN Users
+	ON Users.id = copier_id
+	WHERE Users.login_name = 'LOGIN_NAME'
+	)
+ON copy_link_id = link_id
+LEFT JOIN
+	(
+	SELECT categories, categories IS NOT NULL as cats_from_user, link_id as tag_link_id
+	FROM Tags
+	WHERE submitted_by = 'LOGIN_NAME'
+	)
+ON link_id = tag_link_id
+LEFT JOIN
+	(
+	SELECT count(*) as like_count, link_id as like_link_id
+	FROM 'Link Likes'
+	GROUP BY link_id
+	)
+ON like_link_id = link_id
+LEFT JOIN
+	(
+	SELECT count(*) as summary_count, link_id as summary_link_id
+	FROM Summaries
+	GROUP BY link_id
+	)
+ON summary_link_id = link_id`
+
+const COPIED_WHERE = ` 
+WHERE submitted_by != 'LOGIN_NAME'`
+
+func (q *GetTmapCopied) FromCategories(categories []string) *GetTmapCopied {
+	var cat_clause string
+
+	for _, cat := range categories {
+		cat_clause += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
+	}
+
+	q.Text += cat_clause
+
+	return q
+}
+
+func (q *GetTmapCopied) ForUser(login_name string) *GetTmapCopied {
+	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
+	q.Text += ";"
+
+	return q
+}
+
+
+
 // Tagged links submitted by other users (global categories replaced with user-assigned)
 type GetTmapTagged struct {
 	Query
@@ -137,7 +216,15 @@ func NewGetTmapTagged(req_user_id string, req_login_name string) *GetTmapTagged 
 }	
 
 const TAGGED_FROM = SUBMITTED_FROM
-const TAGGED_WHERE = ` WHERE submitted_by != 'LOGIN_NAME'`
+const TAGGED_WHERE = ` WHERE submitted_by != 'LOGIN_NAME'
+	AND link_id NOT IN
+		(
+		SELECT link_id
+		FROM 'Link Copies'
+		JOIN Users
+		ON Users.id = 'Link Copies'.user_id
+		WHERE Users.login_name = 'LOGIN_NAME'
+		)`
 
 func (q *GetTmapTagged) FromCategories(categories []string) *GetTmapTagged {
 	var and_clause string
@@ -151,81 +238,6 @@ func (q *GetTmapTagged) FromCategories(categories []string) *GetTmapTagged {
 }
 
 func (q *GetTmapTagged) ForUser(login_name string) *GetTmapTagged {
-	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
-	q.Text += ";"
-
-	return q
-}
-
-
-
-// Copied links submitted by other users
-type GetTmapCopied struct {
-	Query
-}
-
-func NewGetTmapCopied(req_user_id string, req_login_name string) *GetTmapCopied {
-	var sql string
-
-	if req_user_id != "" {
-		req_user_auth_from := strings.Replace(AUTH_FROM, "REQ_LOGIN_NAME", req_login_name, 1)
-		sql = COPIED_FIELDS + AUTH_FIELDS + COPIED_FROM + req_user_auth_from + COPIED_WHERE
-
-		sql = strings.ReplaceAll(sql, "REQ_USER_ID", req_user_id)
-	} else {
-		sql = COPIED_FIELDS + COPIED_FROM + COPIED_WHERE
-	}	
-
-	return &GetTmapCopied{Query: Query{Text: sql}}
-}
-
-var COPIED_FIELDS = strings.Replace(BASE_FIELDS, "categories", `COALESCE(global_cats,"") as categories`, 1)
-
-const COPIED_FROM = ` FROM Links
-JOIN
-	(
-	SELECT link_id as copy_link_id, user_id as copier_id
-	FROM 'Link Copies'
-	JOIN Users
-	ON Users.id = copier_id
-	WHERE Users.login_name = 'LOGIN_NAME'
-	)
-ON copy_link_id = link_id
-LEFT JOIN
-	(
-	SELECT count(*) as like_count, link_id as like_link_id
-	FROM 'Link Likes'
-	GROUP BY link_id
-	)
-ON like_link_id = link_id
-LEFT JOIN
-	(
-	SELECT count(*) as summary_count, link_id as summary_link_id
-	FROM Summaries
-	GROUP BY link_id
-	)
-ON summary_link_id = link_id`
-
-const COPIED_WHERE = ` WHERE link_id NOT IN
-	(
-	SELECT link_id
-	FROM TAGS
-	WHERE submitted_by = 'LOGIN_NAME'
-	)`
-
-func (q *GetTmapCopied) FromCategories(categories []string) *GetTmapCopied {
-	var cat_clause string
-
-	for _, cat := range categories {
-		cat_clause += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
-	}
-
-	q.Text += cat_clause
-
-	return q
-}
-
-func (q *GetTmapCopied) ForUser(login_name string) *GetTmapCopied {
 	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
 	q.Text += ";"
 

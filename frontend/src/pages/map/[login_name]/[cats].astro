@@ -29,8 +29,8 @@ if (tmap_resp.status > 399) {
 }
 const tmap: TreasureMap = await tmap_resp.json()
 // Submitted: [{URL: 'https://example.com', LikeCount: 100}, ...],
-// Tagged: [{URL: 'https://example.com', LikeCount: 2}, ...],
 // Copied: [{URL: 'https://example.com', LikeCount: 1}, ...]
+// Tagged: [{URL: 'https://example.com', LikeCount: 2}, ...],
 // CategoryCounts: [{Category: 'umvc3', Count: 1}, ...],
 const used_sections = tmap_sections.filter((s) => tmap[s].length)
 if (!used_sections.length) {
@@ -131,6 +131,11 @@ if (!used_sections.length) {
 										<Link
 											client:load
 											Link={link}
+											CategoriesFromUser={
+												link.CategoriesFromUser
+													? login_name
+													: undefined
+											}
 											IsSummaryPage={false}
 											IsTagPage={false}
 											Token={token}

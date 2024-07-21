@@ -47,7 +47,7 @@ if (!links || links.length === 0) {
 			<div>
 				{
 					other_periods.map((period) => (
-						<a class='period' href={`/top/${period}`}>
+						<a class='period' href={`/top/${period}/${category}`}>
 							{period ? period : 'all'}
 						</a>
 					))
@@ -69,7 +69,7 @@ if (!links || links.length === 0) {
 											{subcat.Category}
 										</a>
 									</strong>
-									<span>: ({subcat.Count})</span>
+									<span> ({subcat.Count})</span>
 								</li>
 							))}
 						</ul>
@@ -90,7 +90,7 @@ if (!links || links.length === 0) {
 									{contributor.LoginName}
 								</a>
 							</strong>
-							<span>: ({contributor.LinksSubmitted})</span>
+							<span> ({contributor.LinksSubmitted})</span>
 						</li>
 					))
 				}

@@ -75,6 +75,16 @@ func (l LinkSignedIn) GetCategories() string {
 	return l.Categories
 }
 
+type TmapLinkSignedOut struct {
+	LinkSignedOut
+	CategoriesFromUser bool
+}
+
+type TmapLinkSignedIn struct {
+	LinkSignedIn
+	CategoriesFromUser bool
+}
+
 type CustomLinkCategories struct {
 	LinkID int64
 	Categories string

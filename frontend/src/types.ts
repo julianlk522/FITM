@@ -79,14 +79,16 @@ type SummaryPage = {
 }
 
 // TREASURE MAP
+type TmapLink = LinkData & { CategoriesFromUser: boolean | undefined }
+
 type TreasureMap = {
-	Submitted: LinkData[]
-	Tagged: LinkData[]
-	Copied: LinkData[]
+	Submitted: TmapLink[]
+	Copied: TmapLink[]
+	Tagged: TmapLink[]
 	Categories: CategoryCount[]
 }
 
-const tmap_sections = ['Submitted', 'Tagged', 'Copied'] as const
+const tmap_sections = ['Submitted', 'Copied', 'Tagged'] as const
 
 export { Periods, is_error_response, tmap_sections }
 export type { CategoryContributor, CategoryCount, ErrorResponse, LinkData, Period, Summary, SummaryPage, Tag, TagPage, TreasureMap, User }

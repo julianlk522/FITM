@@ -4,10 +4,11 @@
 
 ### Features:
 
+-Fix pfp upload and about section layout, currently pretty jank
+-Fix broken tmap subcategories (including original category)
 -Middleware to alphabetize tag categories automatically
     -e.g., http://localhost:4321/cat/shit,nerd => http://localhost:4321/cat/nerd,shit
     -/top/{period}/{cat}, /cat/{cat}
--Reorder tmap to submitted -> copied -> tagged
 -Pagination
     -Home
     -Top Links 
