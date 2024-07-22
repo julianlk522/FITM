@@ -300,19 +300,15 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, req_login_name, err := GetJWTClaims(r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
 
-	submitted_sql := query.NewGetTmapSubmitted(req_user_id, req_login_name).ForUser(login_name)
-	tagged_sql := query.NewGetTmapTagged(req_user_id, req_login_name).ForUser(login_name)
-	copied_sql := query.NewGetTmapCopied(req_user_id, req_login_name).ForUser(login_name)
-
 	// Requesting user signed in: get IsLiked / IsCopied / IsTagged for each link
 	if req_user_id != "" {	
-		tmap, err := _BuildTmap[model.TmapLinkSignedIn](submitted_sql.Query, tagged_sql.Query, copied_sql.Query)
+		tmap, err := _BuildTmap[model.TmapLinkSignedIn](login_name, r)
 		if err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
@@ -321,7 +317,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		
 	// No auth
 	} else {
-		tmap, err := _BuildTmap[model.TmapLinkSignedOut](submitted_sql.Query, tagged_sql.Query, copied_sql.Query)
+		tmap, err := _BuildTmap[model.TmapLinkSignedOut](login_name, r)
 		if err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
@@ -347,35 +343,28 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
-	}else if !user_exists {
+	} else if !user_exists {
 		render.Render(w, r, ErrInvalidRequest(ErrNoUserWithLoginName))
 		return
 	}
-
-	req_user_id, req_login_name, err := GetJWTClaims(r)
+	
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-
+	
 	split_cats := strings.Split(categories, ",")
 
-	submitted_sql := query.NewGetTmapSubmitted(req_user_id, req_login_name).FromCategories(split_cats).ForUser(login_name)
-	tagged_sql := query.NewGetTmapTagged(req_user_id, req_login_name).FromCategories(split_cats).ForUser(login_name)
-	copied_sql := query.NewGetTmapCopied(req_user_id, req_login_name).FromCategories(split_cats).ForUser(login_name)
-
-	// Requesting user signed in: get IsLiked / IsCopied / IsTagged for each link
-	if req_user_id != "" {	
-		tmap, err := _BuildTmap[model.TmapLinkSignedIn](submitted_sql.Query, tagged_sql.Query, copied_sql.Query)
+	if req_user_id != "" {
+		tmap, err := _BuildTmapFromCategories[model.TmapLinkSignedIn](login_name, split_cats, r)
 		if err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
 		}
 		render.JSON(w, r, tmap)
-		
-	// No auth
 	} else {
-		tmap, err := _BuildTmap[model.TmapLinkSignedOut](submitted_sql.Query, tagged_sql.Query, copied_sql.Query)
+		tmap, err := _BuildTmapFromCategories[model.TmapLinkSignedOut](login_name, split_cats, r)
 		if err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
@@ -396,16 +385,38 @@ func _UserExists(login_name string) (bool, error) {
 	return true, nil
 }
 
-func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](get_submitted, get_tagged, get_copied query.Query) (*model.TreasureMap[T], error) {
-	submitted, err := _ScanTmapLinks[T](get_submitted)
+func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name string, r *http.Request) (*model.TreasureMap[T], error) {
+	var submitted_sql *query.GetTmapSubmitted
+	var copied_sql *query.GetTmapCopied
+	var tagged_sql *query.GetTmapTagged
+
+	req_user_id, req_login_name, err := GetJWTClaims(r)
 	if err != nil {
 		return nil, err
 	}
-	tagged, err := _ScanTmapLinks[T](get_tagged)
+	
+	// Requesting user signed in: get IsLiked / IsCopied / IsTagged for each link
+	if req_user_id != "" {	
+		submitted_sql = query.NewGetTmapSubmitted(req_user_id, req_login_name).ForUser(login_name)
+		copied_sql = query.NewGetTmapCopied(req_user_id, req_login_name).ForUser(login_name)
+		tagged_sql = query.NewGetTmapTagged(req_user_id, req_login_name).ForUser(login_name)
+		
+	// No auth
+	} else {
+		submitted_sql = query.NewGetTmapSubmitted("", "").ForUser(login_name)
+		copied_sql = query.NewGetTmapCopied("", "").ForUser(login_name)
+		tagged_sql = query.NewGetTmapTagged("", "").ForUser(login_name)
+	}
+
+	submitted, err := _ScanTmapLinks[T](submitted_sql.Query)
 	if err != nil {
 		return nil, err
 	}
-	copied, err := _ScanTmapLinks[T](get_copied)
+	tagged, err := _ScanTmapLinks[T](tagged_sql.Query)
+	if err != nil {
+		return nil, err
+	}
+	copied, err := _ScanTmapLinks[T](copied_sql.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -413,6 +424,50 @@ func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](get_submitte
 
 	all_links := slices.Concat(*submitted, *tagged, *copied)
 	cat_counts := GetTmapCategoryCounts(&all_links, nil)
+	tmap.Categories = cat_counts
+
+	return &tmap, nil
+}
+
+func _BuildTmapFromCategories[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name string, categories []string, r *http.Request) (*model.TreasureMap[T], error) {
+	req_user_id, req_login_name, err := GetJWTClaims(r)
+	if err != nil {
+		return nil, err
+	}
+
+	var submitted_sql *query.GetTmapSubmitted
+	var copied_sql *query.GetTmapCopied
+	var tagged_sql *query.GetTmapTagged
+
+	// Requesting user signed in: get IsLiked / IsCopied / IsTagged for each link
+	if req_user_id != "" {	
+		submitted_sql = query.NewGetTmapSubmitted(req_user_id, req_login_name).FromCategories(categories).ForUser(login_name)
+		copied_sql = query.NewGetTmapCopied(req_user_id, req_login_name).FromCategories(categories).ForUser(login_name)
+		tagged_sql = query.NewGetTmapTagged(req_user_id, req_login_name).FromCategories(categories).ForUser(login_name)
+		
+	// No auth
+	} else {
+		submitted_sql = query.NewGetTmapSubmitted("", "").FromCategories(categories).ForUser(login_name)
+		copied_sql = query.NewGetTmapCopied("", "").FromCategories(categories).ForUser(login_name)
+		tagged_sql = query.NewGetTmapTagged("", "").FromCategories(categories).ForUser(login_name)
+	}
+
+	submitted, err := _ScanTmapLinks[T](submitted_sql.Query)
+	if err != nil {
+		return nil, err
+	}
+	tagged, err := _ScanTmapLinks[T](tagged_sql.Query)
+	if err != nil {
+		return nil, err
+	}
+	copied, err := _ScanTmapLinks[T](copied_sql.Query)
+	if err != nil {
+		return nil, err
+	}
+	tmap := model.TreasureMap[T]{Submitted: submitted, Tagged: tagged, Copied: copied}
+
+	all_links := slices.Concat(*submitted, *tagged, *copied)
+	cat_counts := GetTmapCategoryCounts(&all_links, categories)
 	tmap.Categories = cat_counts
 
 	return &tmap, nil

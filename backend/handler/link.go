@@ -687,9 +687,15 @@ func CopyLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, _, err := GetJWTClaims(r)
+	req_user_id, reg_login_name, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	owns_link := _UserSubmittedLink(reg_login_name, link_id)
+	if !owns_link {
+		render.Render(w, r, ErrInvalidRequest(errors.New("cannot copy your own link to your treasure map")))
 		return
 	}
 

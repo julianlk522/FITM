@@ -4,7 +4,6 @@
 
 ### Features:
 
--Fix broken tmap subcategories (including original category)
 -Middleware to alphabetize tag categories automatically
     -e.g., http://localhost:4321/cat/shit,nerd => http://localhost:4321/cat/nerd,shit
     -/top/{period}/{cat}, /cat/{cat}
@@ -52,6 +51,8 @@
 -Separate tag categories into distinct rows in Tags table
     -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)
     -would help optimize GetTopTagCategories / GetTopTagCategoriesByPeriod handlers since queries could all be done in sql (as of now requires splitting global_cats field in Go)
+
+
 
 ## Why?
 
