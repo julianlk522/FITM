@@ -43,7 +43,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 		</section>
 		<section>
 			<h2>Top Categories</h2>
-			<ol id='top-cats'>
+			<ol id='top-categories'>
 				{
 					top_cats.map((cat) => (
 						<li>
@@ -94,12 +94,6 @@ const other_periods = Periods.filter((other) => other !== 'month')
 		height: auto;
 		opacity: 0.25;
 		z-index: -1;
-	}
-	#top-cats {
-		display: flex;
-		flex-direction: column;
-		flex-wrap: wrap;
-		max-height: 160px;
 	}
 	#change-period {
 		display: flex;

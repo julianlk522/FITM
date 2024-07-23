@@ -92,7 +92,7 @@ if (links && links.length) {
 					<section>
 						<h2>Subcategories</h2>
 						{subcats.length ? (
-							<ol id='top-subcats'>
+							<ol id='top-categories'>
 								{subcats.map((subcat) => (
 									<li>
 										<strong>
@@ -185,12 +185,6 @@ if (links && links.length) {
 		a {
 			margin-left: 0.5rem;
 		}
-	}
-	#top-subcats {
-		display: flex;
-		flex-direction: column;
-		flex-wrap: wrap;
-		max-height: 160px;
 	}
 	li strong:has(+ span) a {
 		display: inline-block;
