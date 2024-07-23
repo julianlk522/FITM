@@ -236,7 +236,7 @@ func _ScanLinks[T model.LinkSignedIn | model.LinkSignedOut](get_links_sql *query
 	
 		for rows.Next() {
 			i := model.LinkSignedIn{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL, &i.IsLiked, &i.IsTagged, &i.IsCopied)
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
 			if err != nil {
 				return nil, err
 			}
