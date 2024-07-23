@@ -93,8 +93,7 @@ const GET_ALL_GLOBAL_CATEGORIES_BASE = `SELECT global_cats
 		WHERE global_cats != ""`
 
 func NewGetAllGlobalCategories() *GetAllGlobalCategories {
-	new := &GetAllGlobalCategories{Query: Query{Text: GET_ALL_GLOBAL_CATEGORIES_BASE}}
-	return new
+	return &GetAllGlobalCategories{Query: Query{Text: GET_ALL_GLOBAL_CATEGORIES_BASE}}
 }
 
 func (t *GetAllGlobalCategories) FromPeriod(period string) *GetAllGlobalCategories {

@@ -169,7 +169,7 @@ func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	counts, err := _GetCategoryCounts(categories)
+	counts, err := _GetCategoryCountsDuringPeriod(categories, period_params)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
@@ -224,6 +224,36 @@ func _GetCategoryCounts(categories *[]string) (*[]model.CategoryCount, error) {
 		category_counts[i].Category = (*categories)[i]
 
 		get_cat_count_sql := fmt.Sprintf(`SELECT count(*) as count_with_cat FROM (%s);`, query.NewGetLinkIDs((*categories)[i]).Text)
+
+		var c sql.NullInt32
+		err := DBClient.QueryRow(get_cat_count_sql).Scan(&c)
+		if err != nil {
+			return nil, err
+		}
+
+		category_counts[i].Count = c.Int32
+	}
+
+	_SortAndLimitCategoryCounts(&category_counts)
+
+	return &category_counts, nil
+
+}
+
+func _GetCategoryCountsDuringPeriod(categories *[]string, period string) (*[]model.CategoryCount, error) {
+	num_cats := len(*categories)
+	var category_counts []model.CategoryCount = make([]model.CategoryCount, num_cats)
+
+	period_clause, err := query.GetPeriodClause(period)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < num_cats; i++ {
+		category_counts[i].Category = (*categories)[i]
+
+		get_cat_count_sql := fmt.Sprintf(`SELECT count(*) as count_with_cat FROM (%s) WHERE %s;`, query.NewGetLinkIDs((*categories)[i]).Text, period_clause)
+		get_cat_count_sql = strings.Replace(get_cat_count_sql, "SELECT id", "SELECT id, submit_date", 1)
 
 		var c sql.NullInt32
 		err := DBClient.QueryRow(get_cat_count_sql).Scan(&c)
