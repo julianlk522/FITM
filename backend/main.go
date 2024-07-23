@@ -15,6 +15,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"oitm/handler"
+	m "oitm/middleware"
 )
 
 var token_auth *jwtauth.JWTAuth
@@ -87,10 +88,13 @@ func main() {
 		r.Get("/map/{login_name}/{categories}", handler.GetTreasureMapByCategories)
 
 		// LINKS
-		r.Get("/links", handler.GetTopLinks)
-		r.Get("/links/{period}", handler.GetTopLinksByPeriod)
-		r.Get("/links/cat/{categories}", handler.GetTopLinksByCategories)
-		r.Get("/links/{period}/{categories}", handler.GetTopLinksByPeriodAndCategories)	
+		r.Route("/links", func(r chi.Router) {
+			r.Use(m.Pagination)
+			r.Get("/", handler.GetTopLinks)
+			r.Get("/{period}", handler.GetTopLinksByPeriod)
+			r.Get("/cat/{categories}", handler.GetTopLinksByCategories)
+			r.Get("/{period}/{categories}", handler.GetTopLinksByPeriodAndCategories)	
+		})
 
 		// SUMMARIES
 		r.Get("/summaries/{link_id}", handler.GetSummariesForLink)

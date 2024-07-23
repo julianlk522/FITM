@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -16,20 +15,12 @@ import (
 	"golang.org/x/exp/slices"
 
 	query "oitm/db/query"
+	m "oitm/middleware"
 	"oitm/model"
 )
 
 func GetTopLinks(w http.ResponseWriter, r *http.Request) {
-	page := 1
-	var err error
-	page_param := r.URL.Query().Get("page")
-	if page_param != "" {
-		page, err = strconv.Atoi(page_param)
-		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
-			return
-		}
-	}
+	page := r.Context().Value(m.PageKey).(int)
 
 	get_links_sql := query.NewGetTopLinks().Page(page)
 	if get_links_sql.Error != nil {
@@ -68,16 +59,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	page := 1
-	var err error
-	page_param := r.URL.Query().Get("page")
-	if page_param != "" {
-		page, err = strconv.Atoi(page_param)
-		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
-			return
-		}
-	}
+	page := r.Context().Value(m.PageKey).(int)
 	
 	get_links_sql := query.NewGetTopLinks().DuringPeriod(period_params).Page(page)
 	if get_links_sql.Error != nil {
@@ -124,15 +106,7 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	page := 1
-	page_param := r.URL.Query().Get("page")
-	if page_param != "" {
-		page, err = strconv.Atoi(page_param)
-		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
-			return
-		}
-	}
+	page := r.Context().Value(m.PageKey).(int)
 
 	get_links_sql := query.NewGetTopLinks().FromLinkIDs(link_ids).Page(page)
 	if get_links_sql.Error != nil {
@@ -182,15 +156,7 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	page := 1
-	page_param := r.URL.Query().Get("page")
-	if page_param != "" {
-		page, err = strconv.Atoi(page_param)
-		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
-			return
-		}
-	}
+	page := r.Context().Value(m.PageKey).(int)
 
 	get_links_sql := query.NewGetTopLinks().FromLinkIDs(link_ids).DuringPeriod(period_params).Page(page)
 	if get_links_sql.Error != nil {
