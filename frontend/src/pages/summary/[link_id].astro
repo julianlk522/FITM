@@ -23,7 +23,13 @@ const get_summaries_resp = await (token
 if (get_summaries_resp.status > 399) {
 	return Astro.redirect('/404')
 }
-const summary_data: SummaryPage = await get_summaries_resp.json()
+let summary_data: SummaryPage = await get_summaries_resp.json()
+// move Auto Summary to last
+for (let i = 0; i < summary_data.Summaries.length; i++) {
+	if (summary_data.Summaries[i].SubmittedBy === 'Auto Summary') {
+		summary_data.Summaries.push(summary_data.Summaries.splice(i, 1)[0])
+	}
+}
 const { Link: link, Summaries: summaries } = summary_data
 ---
 

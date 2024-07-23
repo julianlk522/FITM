@@ -450,8 +450,11 @@ func _RecalculateGlobalSummary(link_id string) {
 		log.Fatal(err)
 	}
 
-	// Update global_summary
-	_, err = DBClient.Exec(`UPDATE Links SET global_summary = ? WHERE id = ?`, top_summary_text, link_id)
+	_SetLinkGlobalSummary(link_id, top_summary_text)
+}
+
+func _SetLinkGlobalSummary(link_id string, text string) {
+	_, err := DBClient.Exec(`UPDATE Links SET global_summary = ? WHERE id = ?`, text, link_id)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,6 +1,7 @@
 ---
 import Link from '../../components/Link'
 import Pagination from '../../components/Pagination.astro'
+import ScrollUp from '../../components/ScrollUp.astro'
 import Layout from '../../layouts/Layout.astro'
 import type {
 	CategoryContributor,
@@ -138,6 +139,8 @@ if (!links || links.length === 0) {
 					/>
 				) : null
 			}
+
+			<ScrollUp />
 		</section>
 	</main>
 </Layout>

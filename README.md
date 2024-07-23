@@ -4,7 +4,6 @@
 
 ### Features:
 
--Have auto summary submit in addition to user-submitted
 -Delete summary frontend error message
 -Middleware to alphabetize tag categories automatically
     -e.g., http://localhost:4321/cat/shit,nerd => http://localhost:4321/cat/nerd,shit

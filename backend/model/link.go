@@ -18,7 +18,6 @@ type NewLinkRequest struct {
 	SubmittedBy string
 	SubmitDate string
 	Summary string
-	SummaryAuthor string
 	SummaryCount int
 	LikeCount int64
 	ImgURL string
@@ -26,6 +25,7 @@ type NewLinkRequest struct {
 	// to be assigned by handler after processing
 	URL string
 	Categories string
+	AutoSummary string
 }
 
 func (a *NewLinkRequest) Bind(r *http.Request) error {

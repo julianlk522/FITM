@@ -521,7 +521,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	}
 	link_data.SubmittedBy = req_login_name
 
-	_AssignMetadata(link_data, req_user_id, resp)
+	_AssignMetadata(resp, link_data)
 	_AssignSortedCategories(link_data, link_data.NewLink.Categories)
 
 	res, err := DBClient.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, link_data.Categories, link_data.Summary, link_data.ImgURL)
@@ -535,20 +535,32 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = DBClient.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_data.ID, link_data.Categories, req_login_name, link_data.SubmitDate)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
-	if link_data.Summary != "" {
-		_, err = DBClient.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, link_data.Summary, link_data.ID, link_data.SummaryAuthor, link_data.SubmitDate)
+	if link_data.AutoSummary != "" {
+		// Note: UserID 15 is AutoSummary
+		// TODO: add constant, replace magic 15
+		_, err = DBClient.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, link_data.AutoSummary, link_data.ID, "15", link_data.SubmitDate)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 
 		link_data.SummaryCount = 1
+	}
+
+	if link_data.Summary != "" {
+		_, err = DBClient.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, link_data.Summary, link_data.ID, req_user_id, link_data.SubmitDate)
+		if err != nil {
+			render.Render(w, r, e.ErrInvalidRequest(err))
+			return
+		}
+
+		link_data.SummaryCount += 1
+	}
+
+	_, err = DBClient.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_data.ID, link_data.Categories, req_login_name, link_data.SubmitDate)
+	if err != nil {
+		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
 	}
 
 	render.Status(r, http.StatusCreated)
@@ -616,35 +628,22 @@ func _URLAlreadySaved(url string) bool {
 	return err == nil && u.Valid
 }
 
-func _AssignMetadata(link_data *model.NewLinkRequest, req_user_id string, resp *http.Response) {
+func _AssignMetadata(resp *http.Response, link_data *model.NewLinkRequest) {
 	defer resp.Body.Close()
 
 	meta := util.MetaFromHTMLTokens(resp.Body)
 
-	if link_data.Summary != "" {
-		link_data.SummaryAuthor = req_user_id
-
-	// Auto Summary
-	} else {
-		switch {
-			case meta.OGDescription != "":
-				link_data.Summary = meta.OGDescription
-			case meta.Description != "":
-				link_data.Summary = meta.Description
-			case meta.OGTitle != "":
-				link_data.Summary = meta.OGTitle
-			case meta.Title != "":
-				link_data.Summary = meta.Title
-			case meta.OGSiteName != "":
-				link_data.Summary = meta.OGSiteName
-		}
-
-		if link_data.Summary != "" {
-
-			// 15 is Auto Summary's user_id
-			// TODO: update with final
-			link_data.SummaryAuthor = "15"
-		}
+	switch {
+		case meta.OGDescription != "":
+			link_data.AutoSummary = meta.OGDescription
+		case meta.Description != "":
+			link_data.AutoSummary = meta.Description
+		case meta.OGTitle != "":
+			link_data.AutoSummary = meta.OGTitle
+		case meta.Title != "":
+			link_data.AutoSummary = meta.Title
+		case meta.OGSiteName != "":
+			link_data.AutoSummary = meta.OGSiteName
 	}
 
 	if meta.OGImage != "" {
