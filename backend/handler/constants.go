@@ -24,6 +24,8 @@ const (
 var (
 	DBClient *sql.DB = db.Client
 
+	ErrInvalidPage = errors.New("invalid page provided")
+
 	ErrNoPeriod error = errors.New("no period provided")
 	ErrNoCategories error = errors.New("no categories provided")
 	ErrNoLinkID error = errors.New("no link ID provided")

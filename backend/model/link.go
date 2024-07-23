@@ -62,18 +62,12 @@ type LinkSignedIn struct {
 	IsCopied bool
 }
 
-// TODO: refactor now that GetCategories is not being used
-type Link interface {
-	GetCategories() string
+type PaginatedLinks[T LinkSignedOut | LinkSignedIn] struct {
+	Links *[]T
+	NextPage int
 }
 
-func (l LinkSignedOut) GetCategories() string {
-	return l.Categories
-}
 
-func (l LinkSignedIn) GetCategories() string {
-	return l.Categories
-}
 
 type TmapLinkSignedOut struct {
 	LinkSignedOut
@@ -83,11 +77,6 @@ type TmapLinkSignedOut struct {
 type TmapLinkSignedIn struct {
 	LinkSignedIn
 	CategoriesFromUser bool
-}
-
-type CustomLinkCategories struct {
-	LinkID int64
-	Categories string
 }
 
 type CategoryContributor struct {

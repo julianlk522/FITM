@@ -5,12 +5,26 @@ import (
 	"strings"
 )
 
+// TODO: move constants to shared location, remove this duplicate
+const LINKS_PAGE_LIMIT = 20
+var LIMIT_CLAUSE = fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT)
+
+
 // LINKS
 type GetTopLinks struct {
 	Query
 }
 
-const get_top_links_base = `SELECT links_id as link_id, url, link_author as submitted_by, sd, categories, summary, coalesce(count(Summaries.id),0) as summary_count, like_count, img_url
+const get_top_links_base = `SELECT 
+links_id as link_id, 
+url, 
+link_author as submitted_by, 
+sd, 
+categories, 
+summary, 
+coalesce(count(Summaries.id),0) as summary_count, 
+like_count, 
+img_url
 FROM 
 	(
 	SELECT Links.id as links_id, url, submitted_by as link_author, Links.submit_date as sd, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url 
@@ -29,7 +43,8 @@ GROUP BY links_id
 ORDER BY like_count DESC, summary_count DESC, link_id DESC;`
 
 func NewGetTopLinks() *GetTopLinks {
-	return &GetTopLinks{Query: Query{Text: get_top_links_base}}
+	new := &GetTopLinks{Query: Query{Text: get_top_links_base}}
+	return new._Limit()
 }
 
 func (l *GetTopLinks) FromLinkIDs(link_ids []string) *GetTopLinks {
@@ -49,8 +64,18 @@ func (l *GetTopLinks) DuringPeriod(period string) (*GetTopLinks) {
 	return l
 }
 
-func (l *GetTopLinks) Limit(limit int) *GetTopLinks {
-	l.Text = strings.Replace(l.Text, ";", fmt.Sprintf(" LIMIT %d;", limit), 1)
+func (l *GetTopLinks) Page(page int) *GetTopLinks {
+	if page == 0 {
+		return l
+	}
+	
+	l.Text  = strings.Replace(l.Text, LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT +1, (page - 1) * LINKS_PAGE_LIMIT), 1)
+	
+	return l
+}
+
+func (l *GetTopLinks) _Limit() *GetTopLinks {
+	l.Text = strings.Replace(l.Text, ";", LIMIT_CLAUSE, 1)
 	return l
 }
 

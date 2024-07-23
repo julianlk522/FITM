@@ -8,9 +8,8 @@
     -e.g., http://localhost:4321/cat/shit,nerd => http://localhost:4321/cat/nerd,shit
     -/top/{period}/{cat}, /cat/{cat}
 -Pagination
-    -Home
-    -Top Links 
     -User Treasure Map
+    -Fix top tag cats so they are specific to page being shown?
 -Improve frontend look/semantic markup
     -A11y, responsive layouts for phones / tablets
     -Proper color scheme

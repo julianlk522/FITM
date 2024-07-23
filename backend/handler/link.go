@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -19,18 +20,45 @@ import (
 )
 
 func GetTopLinks(w http.ResponseWriter, r *http.Request) {
-	get_links_sql := query.NewGetTopLinks().Limit(LINKS_PAGE_LIMIT)
+	page := 1
+	var err error
+	page_param := r.URL.Query().Get("page")
+	if page_param != "" {
+		page, err = strconv.Atoi(page_param)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+	}
+
+	get_links_sql := query.NewGetTopLinks().Page(page)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
 		return
 	}
 
-	links, err := _ScanLinks(get_links_sql, r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-	_RenderLinks(links, w, r)
+
+	if req_user_id != "" {
+		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+		_RenderPaginatedLinks(links, page, w, r)
+	} else {
+		links, err := _ScanLinks[model.LinkSignedOut](get_links_sql, req_user_id)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+		_RenderPaginatedLinks(links, page, w, r)
+	}
+
 }
 
 func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
@@ -39,19 +67,45 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, ErrInvalidRequest(ErrNoPeriod))
 		return
 	}
+
+	page := 1
+	var err error
+	page_param := r.URL.Query().Get("page")
+	if page_param != "" {
+		page, err = strconv.Atoi(page_param)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+	}
 	
-	get_links_sql := query.NewGetTopLinks().DuringPeriod(period_params).Limit(LINKS_PAGE_LIMIT)
+	get_links_sql := query.NewGetTopLinks().DuringPeriod(period_params).Page(page)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
 		return
 	}
 
-	links, err := _ScanLinks(get_links_sql, r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-	_RenderLinks(links, w, r)
+
+	if req_user_id != "" {
+		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+		_RenderPaginatedLinks(links, page, w, r)
+	} else {
+		links, err := _ScanLinks[model.LinkSignedOut](get_links_sql, req_user_id)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+		_RenderPaginatedLinks(links, page, w, r)
+	}
 }
 
 func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
@@ -70,18 +124,43 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	get_links_sql := query.NewGetTopLinks().FromLinkIDs(link_ids).Limit(LINKS_PAGE_LIMIT)
+	page := 1
+	page_param := r.URL.Query().Get("page")
+	if page_param != "" {
+		page, err = strconv.Atoi(page_param)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+	}
+
+	get_links_sql := query.NewGetTopLinks().FromLinkIDs(link_ids).Page(page)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
 		return
 	}
 
-	links, err := _ScanLinks(get_links_sql, r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-	_RenderLinks(links, w, r)
+
+	if req_user_id != "" {
+		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+		_RenderPaginatedLinks(links, page, w, r)
+	} else {
+		links, err := _ScanLinks[model.LinkSignedOut](get_links_sql, req_user_id)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+		_RenderPaginatedLinks(links, page, w, r)
+	}
 }
 
 func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
@@ -103,25 +182,47 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	get_links_sql := query.NewGetTopLinks().FromLinkIDs(link_ids).DuringPeriod(period_params).Limit(LINKS_PAGE_LIMIT)
+	page := 1
+	page_param := r.URL.Query().Get("page")
+	if page_param != "" {
+		page, err = strconv.Atoi(page_param)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+	}
+
+	get_links_sql := query.NewGetTopLinks().FromLinkIDs(link_ids).DuringPeriod(period_params).Page(page)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
 		return
 	}
 	
-	links, err := _ScanLinks(get_links_sql, r)
+	req_user_id, _, err := GetJWTClaims(r)
 	if err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
-	_RenderLinks(links, w, r)
+
+	if req_user_id != "" {
+		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+		_RenderPaginatedLinks(links, page, w, r)
+	} else {
+		links, err := _ScanLinks[model.LinkSignedOut](get_links_sql, req_user_id)
+		if err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+		_RenderPaginatedLinks(links, page, w, r)
+	}
 }
 
-func _ScanLinks(get_links_sql *query.GetTopLinks, r *http.Request) (*[]model.Link, error) {
-	req_user_id, _, err := GetJWTClaims(r)
-	if err != nil {
-		return nil, err
-	}
+func _ScanLinks[T model.LinkSignedIn | model.LinkSignedOut](get_links_sql *query.GetTopLinks, req_user_id string) (*[]T, error) {
+	var links interface{}
 
 	rows, err := DBClient.Query(get_links_sql.Text)
 	if err != nil {
@@ -129,25 +230,24 @@ func _ScanLinks(get_links_sql *query.GetTopLinks, r *http.Request) (*[]model.Lin
 	}
 	defer rows.Close()
 
-	links := []model.Link{}
-
-	// Auth: Add IsLiked / IsCopied / IsTagged to links
-	if req_user_id != "" {
+	switch any(new(T)).(type) {
+	case *model.LinkSignedIn:
+		var signed_in_links = []model.LinkSignedIn{}
+	
 		for rows.Next() {
-
-			// Note: I found it impossible to reduce this repeated code without upsetting the compiler... may come back after learning more
 			i := model.LinkSignedIn{}
-			if err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL); err != nil {
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL, &i.IsLiked, &i.IsTagged, &i.IsCopied)
+			if err != nil {
 				return nil, err
 			}
-	
+
 			// Add IsLiked / IsCopied / IsTagged
 			var l sql.NullInt32
 			var t sql.NullInt32
 			var c sql.NullInt32
 	
 			
-			err := DBClient.QueryRow(fmt.Sprintf(`SELECT
+			err = DBClient.QueryRow(fmt.Sprintf(`SELECT
 			(
 				SELECT count(*) FROM 'Link Likes'
 				WHERE link_id = '%[1]d' AND user_id = '%[2]s'
@@ -169,32 +269,43 @@ func _ScanLinks(get_links_sql *query.GetTopLinks, r *http.Request) (*[]model.Lin
 			i.IsLiked = l.Int32 > 0
 			i.IsTagged = t.Int32 > 0
 			i.IsCopied = c.Int32 > 0
-	
-			links = append(links, i)
-		}
 
-	// No auth
-	} else {
+			signed_in_links = append(signed_in_links, i)
+		}
+	
+		links = &signed_in_links
+	
+	case *model.LinkSignedOut:
+		var signed_out_links = []model.LinkSignedOut{}
+	
 		for rows.Next() {
 			i := model.LinkSignedOut{}
-			if err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL); err != nil {
-				log.Fatal(err)
+			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
+			if err != nil {
+				return nil, err
 			}
-	
-			links = append(links, i)
+			signed_out_links = append(signed_out_links, i)
 		}
+	
+		links = &signed_out_links
 	}
-
-	return &links, err
+	
+	return links.(*[]T), nil
 }
 
-func _RenderLinks(links *[]model.Link, w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, &links)
-	render.Status(r, http.StatusOK)
+func _RenderPaginatedLinks[T model.LinkSignedIn | model.LinkSignedOut](links *[]T, page int, w http.ResponseWriter, r *http.Request) {
+	if len(*links) == 0 {
+		_RenderZeroLinks(w, r)
+	} else if len(*links) == LINKS_PAGE_LIMIT + 1 {
+		sliced := (*links)[:LINKS_PAGE_LIMIT]
+		render.JSON(w, r, &model.PaginatedLinks[T]{Links: &sliced, NextPage: page + 1})
+	} else {
+		render.JSON(w, r, &model.PaginatedLinks[T]{Links: links, NextPage: -1})
+	}
 }
 
 func _RenderZeroLinks(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, []model.Link{})
+	render.JSON(w, r, &model.PaginatedLinks[model.LinkSignedOut]{NextPage: -1})
 	render.Status(r, http.StatusOK)
 }
 
