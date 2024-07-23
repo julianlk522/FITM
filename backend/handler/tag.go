@@ -12,60 +12,62 @@ import (
 	"github.com/go-chi/render"
 	"golang.org/x/exp/slices"
 
+	"oitm/auth"
 	query "oitm/db/query"
+	e "oitm/error"
 	"oitm/model"
 )
 
 func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 	link_id := chi.URLParam(r, "link_id")
 	if link_id == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoLinkID))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLinkID))
 		return
 	}
 
 	link_exists, err := _LinkExists(link_id)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 	if !link_exists {
-		render.Render(w, r, ErrInvalidRequest(ErrNoLinkWithID))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLinkWithID))
 		return
 	}
 
-	req_user_id, req_login_name, err := GetJWTClaims(r)
+	req_user_id, req_login_name, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	get_link_sql := query.NewGetTagPageLink(link_id, req_user_id)
 	if get_link_sql.Error != nil {
-		render.Render(w, r, ErrInvalidRequest(get_link_sql.Error))
+		render.Render(w, r, e.ErrInvalidRequest(get_link_sql.Error))
 		return
 	}
 
 	link, err := _ScanTagPageLink(get_link_sql)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	user_tag, err := _GetUserTagForLink(req_login_name, link_id)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	earliest_tags_sql := query.NewGetEarliestTags(link_id)
 	if earliest_tags_sql.Error != nil {
-		render.Render(w, r, ErrInvalidRequest(earliest_tags_sql.Error))
+		render.Render(w, r, e.ErrInvalidRequest(earliest_tags_sql.Error))
 		return
 	}
 
 	earliest_tags, err := _ScanEarliestTags(earliest_tags_sql)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
@@ -132,19 +134,19 @@ func _ScanEarliestTags(earliest_cats_sql *query.GetEarliestTags) (*[]model.Early
 func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {	
 	get_global_cats_sql := query.NewGetAllGlobalCategories()
 	if get_global_cats_sql.Error != nil {
-		render.Render(w, r, ErrInvalidRequest(get_global_cats_sql.Error))
+		render.Render(w, r, e.ErrInvalidRequest(get_global_cats_sql.Error))
 		return
 	}
 
 	categories, err := _ScanGlobalCategories(get_global_cats_sql)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	counts, err := _GetCategoryCounts(categories)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 	_RenderCategoryCounts(counts, w, r)
@@ -153,25 +155,25 @@ func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {
 func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 	period_params := chi.URLParam(r, "period")
 	if period_params == "" {
-		render.Render(w, r, ErrInvalidRequest(errors.New("no period provided")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("no period provided")))
 		return
 	}
 
 	get_global_cats_sql := query.NewGetAllGlobalCategories().FromPeriod(period_params)
 	if get_global_cats_sql.Error != nil {
-		render.Render(w, r, ErrInvalidRequest(get_global_cats_sql.Error))
+		render.Render(w, r, e.ErrInvalidRequest(get_global_cats_sql.Error))
 		return
 	}
 
 	categories, err := _ScanGlobalCategories(get_global_cats_sql)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	counts, err := _GetCategoryCountsDuringPeriod(categories, period_params)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 	_RenderCategoryCounts(counts, w, r)
@@ -279,53 +281,53 @@ func _RenderCategoryCounts(category_counts *[]model.CategoryCount, w http.Respon
 func AddTag(w http.ResponseWriter, r *http.Request) {
 	tag_data := &model.NewTagRequest{}
 	if err := render.Bind(r, tag_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
-	if strings.Count(tag_data.Categories, ",") > NEW_TAG_CATEGORY_LIMIT {
-		render.Render(w, r, ErrInvalidRequest(ErrTooManyCategories))
+	if strings.Count(tag_data.Categories, ",") > e.NEW_TAG_CATEGORY_LIMIT {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrTooManyCategories))
 		return
 	}
 	
 	link_exists, err := _LinkExists(tag_data.LinkID)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if !link_exists {
-		render.Render(w, r, ErrInvalidRequest(ErrNoLinkWithID))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLinkWithID))
 		return
 	}
 
-	_, req_login_name, err := GetJWTClaims(r)
+	_, req_login_name, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	duplicate, err := _UserHasSubmittedTagToLink(req_login_name, tag_data.LinkID)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if duplicate {
-		render.Render(w, r, ErrInvalidRequest(ErrDuplicateTag))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrDuplicateTag))
 		return
 	}
 	
 	tag_data.Categories = strings.ToLower(tag_data.Categories)
 	res, err := DBClient.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, tag_data.LinkID, tag_data.Categories, req_login_name, tag_data.LastUpdated)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	if err = _RecalculateGlobalCategories(tag_data.LinkID); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	if err := _AssignNewTagIDToRequest(res, tag_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
@@ -361,22 +363,22 @@ func _AssignNewTagIDToRequest(res sql.Result, request *model.NewTagRequest) erro
 func EditTag(w http.ResponseWriter, r *http.Request) {
 	edit_tag_data := &model.EditTagRequest{}
 	if err := render.Bind(r, edit_tag_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
-	_, req_login_name, err := GetJWTClaims(r)
+	_, req_login_name, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 	
 	owns_tag, err := _UserHasSubmittedTag(req_login_name, edit_tag_data.ID)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(ErrNoTagWithID))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoTagWithID))
 		return
 	} else if !owns_tag {
-		render.Render(w, r, ErrInvalidRequest(ErrDoesntOwnTag))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrDoesntOwnTag))
 		return
 	}
 
@@ -387,16 +389,16 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 	WHERE id = ?;`, 
 	edit_tag_data.Categories, edit_tag_data.LastUpdated, edit_tag_data.ID)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	link_id, err := _GetLinkIDFromTagID(edit_tag_data.ID)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if err = _RecalculateGlobalCategories(link_id); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 

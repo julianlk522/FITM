@@ -14,7 +14,10 @@ import (
 	"github.com/go-chi/render"
 	"golang.org/x/exp/slices"
 
+	"oitm/auth"
 	query "oitm/db/query"
+	e "oitm/error"
+	util "oitm/handler/util"
 	m "oitm/middleware"
 	"oitm/model"
 )
@@ -24,27 +27,27 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 
 	get_links_sql := query.NewGetTopLinks().Page(page)
 	if get_links_sql.Error != nil {
-		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
+		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
 		return
 	}
 
-	req_user_id, _, err := GetJWTClaims(r)
+	req_user_id, _, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	if req_user_id != "" {
 		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 		_RenderPaginatedLinks(links, page, w, r)
 	} else {
 		links, err := _ScanLinks[model.LinkSignedOut](get_links_sql, req_user_id)
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 		_RenderPaginatedLinks(links, page, w, r)
@@ -55,7 +58,7 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	period_params := chi.URLParam(r, "period")
 	if period_params == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoPeriod))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoPeriod))
 		return
 	}
 
@@ -63,27 +66,27 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	
 	get_links_sql := query.NewGetTopLinks().DuringPeriod(period_params).Page(page)
 	if get_links_sql.Error != nil {
-		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
+		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
 		return
 	}
 
-	req_user_id, _, err := GetJWTClaims(r)
+	req_user_id, _, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	if req_user_id != "" {
 		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 		_RenderPaginatedLinks(links, page, w, r)
 	} else {
 		links, err := _ScanLinks[model.LinkSignedOut](get_links_sql, req_user_id)
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 		_RenderPaginatedLinks(links, page, w, r)
@@ -93,13 +96,13 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	categories_params := chi.URLParam(r, "categories")
 	if categories_params == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoCategories))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
 		return
 	}
 
 	link_ids, err := _GetIDsOfLinksHavingCategories(categories_params)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if len(link_ids) == 0 {
 		_RenderZeroLinks(w, r)
@@ -110,27 +113,27 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 
 	get_links_sql := query.NewGetTopLinks().FromLinkIDs(link_ids).Page(page)
 	if get_links_sql.Error != nil {
-		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
+		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
 		return
 	}
 
-	req_user_id, _, err := GetJWTClaims(r)
+	req_user_id, _, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	if req_user_id != "" {
 		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 		_RenderPaginatedLinks(links, page, w, r)
 	} else {
 		links, err := _ScanLinks[model.LinkSignedOut](get_links_sql, req_user_id)
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 		_RenderPaginatedLinks(links, page, w, r)
@@ -140,16 +143,16 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 	period_params, categories_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
 	if period_params == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoPeriod))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoPeriod))
 		return
 	} else if categories_params == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoCategories))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
 		return
 	}
 
 	link_ids, err := _GetIDsOfLinksHavingCategories(categories_params)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if len(link_ids) == 0 {
 		_RenderZeroLinks(w, r)
@@ -160,27 +163,27 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 
 	get_links_sql := query.NewGetTopLinks().FromLinkIDs(link_ids).DuringPeriod(period_params).Page(page)
 	if get_links_sql.Error != nil {
-		render.Render(w, r, ErrInvalidRequest(get_links_sql.Error))
+		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
 		return
 	}
 	
-	req_user_id, _, err := GetJWTClaims(r)
+	req_user_id, _, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	if req_user_id != "" {
 		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 		_RenderPaginatedLinks(links, page, w, r)
 	} else {
 		links, err := _ScanLinks[model.LinkSignedOut](get_links_sql, req_user_id)
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 		_RenderPaginatedLinks(links, page, w, r)
@@ -302,14 +305,14 @@ func _GetIDsOfLinksHavingCategories(categories_str string) (link_ids []string, e
 func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
 	categories_params := chi.URLParam(r, "categories")
 	if categories_params == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoCategories))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
 		return
 	}
 	categories := strings.Split(categories_params, ",")
 
 	get_contributors_sql := query.NewGetCategoryContributors(categories).Limit(CATEGORY_CONTRIBUTORS_LIMIT)
 	if get_contributors_sql.Error != nil {
-		render.Render(w, r, ErrInvalidRequest(get_contributors_sql.Error))
+		render.Render(w, r, e.ErrInvalidRequest(get_contributors_sql.Error))
 		return
 	}
 	
@@ -320,17 +323,17 @@ func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
 func GetTopCategoryContributorsByPeriod(w http.ResponseWriter, r *http.Request) {
 	period_params, categories_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
 	if period_params == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoPeriod))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoPeriod))
 		return
 	} else if categories_params == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoCategories))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
 		return
 	}
 	
 	categories := strings.Split(categories_params, ",")
 	get_contributors_sql := query.NewGetCategoryContributors(categories).DuringPeriod(period_params).Limit(CATEGORY_CONTRIBUTORS_LIMIT)
 	if get_contributors_sql.Error != nil {
-		render.Render(w, r, ErrInvalidRequest(get_contributors_sql.Error))
+		render.Render(w, r, e.ErrInvalidRequest(get_contributors_sql.Error))
 		return
 	}
 
@@ -366,7 +369,7 @@ func _RenderCategoryContributors(contributors *[]model.CategoryContributor, w ht
 func GetSubcategories(w http.ResponseWriter, r *http.Request) {
 	categories_params := chi.URLParam(r, "categories")
 	if categories_params == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoCategories))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
 		return
 	}
 
@@ -378,7 +381,7 @@ func GetSubcategories(w http.ResponseWriter, r *http.Request) {
 	
 	get_subcats_sql := query.NewGetSubcategories(categories)
 	if get_subcats_sql.Error != nil {
-		render.Render(w, r, ErrInvalidRequest(get_subcats_sql.Error))
+		render.Render(w, r, e.ErrInvalidRequest(get_subcats_sql.Error))
 		return
 	}
 
@@ -393,10 +396,10 @@ func GetSubcategories(w http.ResponseWriter, r *http.Request) {
 func GetSubcategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 	period_params, categories_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
 	if period_params == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoPeriod))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoPeriod))
 		return
 	} else if categories_params == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoCategories))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
 		return
 	}
 	categories_params = strings.ToLower(categories_params)
@@ -404,7 +407,7 @@ func GetSubcategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 
 	get_subcats_sql := query.NewGetSubcategories(categories).DuringPeriod(period_params)
 	if get_subcats_sql.Error != nil {
-		render.Render(w, r, ErrInvalidRequest(get_subcats_sql.Error))
+		render.Render(w, r, e.ErrInvalidRequest(get_subcats_sql.Error))
 		return
 	}
 
@@ -451,7 +454,7 @@ func _RenderZeroSubcategories(w http.ResponseWriter, r *http.Request) {
 func _RenderSubcategories(subcats []string, categories []string, w http.ResponseWriter, r *http.Request) {
 	with_counts, err := _GetSubcategoryCounts(subcats, categories)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
@@ -491,29 +494,29 @@ func _SortAndLimitCategoryCounts(cats_with_counts *[]model.CategoryCount) {
 func AddLink(w http.ResponseWriter, r *http.Request) {
 	link_data := &model.NewLinkRequest{}
 	if err := render.Bind(r, link_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
-	if strings.Count(link_data.NewLink.Categories, ",") > NEW_TAG_CATEGORY_LIMIT {
-		render.Render(w, r, ErrInvalidRequest(ErrTooManyCategories))
+	if strings.Count(link_data.NewLink.Categories, ",") > e.NEW_TAG_CATEGORY_LIMIT {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrTooManyCategories))
 		return
 	}
 
     resp, err := _ResolveURL(link_data)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	if _URLAlreadySaved(link_data.URL) {
-		render.Render(w, r, ErrInvalidRequest(fmt.Errorf("duplicate URL: %s", link_data.URL)))
+		render.Render(w, r, e.ErrInvalidRequest(fmt.Errorf("duplicate URL: %s", link_data.URL)))
 		return
 	}
 
-	req_user_id, req_login_name, err := GetJWTClaims(r)
+	req_user_id, req_login_name, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 	link_data.SubmittedBy = req_login_name
@@ -523,25 +526,25 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	res, err := DBClient.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, link_data.Categories, link_data.Summary, link_data.ImgURL)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	if err := _AssignNewLinkIDToRequest(res, link_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	_, err = DBClient.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_data.ID, link_data.Categories, req_login_name, link_data.SubmitDate)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	if link_data.Summary != "" {
 		_, err = DBClient.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, link_data.Summary, link_data.ID, link_data.SummaryAuthor, link_data.SubmitDate)
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 
@@ -616,7 +619,7 @@ func _URLAlreadySaved(url string) bool {
 func _AssignMetadata(link_data *model.NewLinkRequest, req_user_id string, resp *http.Response) {
 	defer resp.Body.Close()
 
-	meta := MetaFromHTMLTokens(resp.Body)
+	meta := util.MetaFromHTMLTokens(resp.Body)
 
 	if link_data.Summary != "" {
 		link_data.SummaryAuthor = req_user_id
@@ -673,23 +676,23 @@ func _AssignNewLinkIDToRequest(res sql.Result, request *model.NewLinkRequest) er
 func LikeLink(w http.ResponseWriter, r *http.Request) {
 	link_id := chi.URLParam(r, "link_id")
 	if link_id == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoLinkID))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLinkID))
 		return
 	}
 
-	req_user_id, req_login_name, err := GetJWTClaims(r)
+	req_user_id, req_login_name, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	if _UserSubmittedLink(req_login_name, link_id) {
-		render.Render(w, r, ErrInvalidRequest(errors.New("cannot like your own link")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("cannot like your own link")))
 		return
 	}
 
 	if _UserHasLikedLink(req_user_id, link_id) {
-		render.Render(w, r, ErrInvalidRequest(errors.New("already liked")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("already liked")))
 		return
 	}
 
@@ -714,18 +717,18 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 	link_id := chi.URLParam(r, "link_id")
 	if link_id == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoLinkID))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLinkID))
 		return
 	}
 
-	req_user_id, _, err := GetJWTClaims(r)
+	req_user_id, _, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	if !_UserHasLikedLink(req_user_id, link_id) {
-		render.Render(w, r, ErrInvalidRequest(errors.New("link like not found")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("link like not found")))
 		return
 	}
 
@@ -760,25 +763,25 @@ func _UserHasLikedLink(user_id string, link_id string) bool {
 func CopyLink(w http.ResponseWriter, r *http.Request) {
 	link_id := chi.URLParam(r, "link_id")
 	if link_id == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoLinkID))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLinkID))
 		return
 	}
 
-	req_user_id, reg_login_name, err := GetJWTClaims(r)
+	req_user_id, reg_login_name, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	owns_link := _UserSubmittedLink(reg_login_name, link_id)
 	if !owns_link {
-		render.Render(w, r, ErrInvalidRequest(errors.New("cannot copy your own link to your treasure map")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("cannot copy your own link to your treasure map")))
 		return
 	}
 
 	already_copied := _UserHasCopiedLink(req_user_id, link_id)
 	if already_copied {
-		render.Render(w, r, ErrInvalidRequest(errors.New("link already copied to treasure map")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("link already copied to treasure map")))
 		return
 	}
 
@@ -804,19 +807,19 @@ func CopyLink(w http.ResponseWriter, r *http.Request) {
 func UncopyLink(w http.ResponseWriter, r *http.Request) {
 	link_id := chi.URLParam(r, "link_id")
 	if link_id == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoLinkID))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLinkID))
 		return
 	}
 
-	req_user_id, _, err := GetJWTClaims(r)
+	req_user_id, _, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	already_copied := _UserHasCopiedLink(req_user_id, link_id)
 	if !already_copied {
-		render.Render(w, r, ErrInvalidRequest(errors.New("link copy does not exist")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("link copy does not exist")))
 		return
 	}
 

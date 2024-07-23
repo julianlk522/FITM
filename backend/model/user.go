@@ -1,9 +1,10 @@
 package model
 
 import (
-	"errors"
 	"net/http"
 	"time"
+
+	e "oitm/error"
 )
 
 type User struct {
@@ -24,12 +25,10 @@ type SignUpRequest struct {
 }
 
 func (a *SignUpRequest) Bind(r *http.Request) error {
-	if a.UserAuth == nil {
-		return errors.New("signup info not provided")
-	} else if a.UserAuth.LoginName == "" {
-		return errors.New("missing login name")
+	if a.UserAuth.LoginName == "" {
+		return e.ErrNoLoginName
 	} else if a.UserAuth.Password == "" {
-		return errors.New("missing password")
+		return e.ErrNoPassword
 	}
 
 	a.Created = time.Now().Format("2006-01-02 15:04:05")
@@ -42,12 +41,10 @@ type LogInRequest struct {
 
 
 func (a *LogInRequest) Bind(r *http.Request) error {
-	if a.UserAuth == nil {
-		return errors.New("login info not provided")
-	} else if a.UserAuth.LoginName == "" {
-		return errors.New("missing login name")
+	if a.UserAuth.LoginName == "" {
+		return e.ErrNoLoginName
 	} else if a.UserAuth.Password == "" {
-		return errors.New("missing password")
+		return e.ErrNoPassword
 	}
 
 	return nil

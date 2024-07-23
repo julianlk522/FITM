@@ -1,9 +1,10 @@
 package model
 
 import (
-	"errors"
 	"net/http"
 	"time"
+
+	e "oitm/error"
 )
 
 // ADD
@@ -15,10 +16,10 @@ type NewSummaryRequest struct {
 
 func (a *NewSummaryRequest) Bind(r *http.Request) error {
 	if a.LinkID == "" {
-		return errors.New("missing link ID")
+		return e.ErrNoLinkID
 	}
 	if a.Text == "" {
-		return errors.New("missing summary text")
+		return e.ErrNoSummaryText
 	}
 
 	a.LastUpdated = time.Now().Format("2006-01-02 15:04:05")
@@ -34,7 +35,7 @@ type DeleteSummaryRequest struct {
 
 func (a *DeleteSummaryRequest) Bind(r *http.Request) error {
 	if a.SummaryID == "" {
-		return errors.New("missing summary ID")
+		return e.ErrNoSummaryID
 	}
 	return nil
 }
@@ -47,10 +48,10 @@ type EditSummaryRequest struct {
 
 func (a *EditSummaryRequest) Bind(r *http.Request) error {
 	if a.SummaryID == "" {
-		return errors.New("missing summary ID")
+		return e.ErrNoSummaryID
 	}
 	if a.Text == "" {
-		return errors.New("missing replacement text")
+		return e.ErrNoSummaryReplacementText
 	}
 	return nil
 }

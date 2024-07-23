@@ -1,8 +1,8 @@
 package model
 
 import (
-	"errors"
 	"net/http"
+	e "oitm/error"
 	"time"
 )
 
@@ -30,9 +30,9 @@ type NewLinkRequest struct {
 
 func (a *NewLinkRequest) Bind(r *http.Request) error {
 	if a.NewLink.URL == "" {
-		return errors.New("missing url")
+		return e.ErrNoURL
 	} else if a.NewLink.Categories == "" {
-		return errors.New("missing tag category(ies)")
+		return e.ErrNoTagCategories
 	}
 
 	a.SubmitDate = time.Now().Format("2006-01-02 15:04:05")

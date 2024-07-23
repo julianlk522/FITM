@@ -1,9 +1,10 @@
 package model
 
 import (
-	"errors"
 	"net/http"
 	"time"
+
+	e "oitm/error"
 )
 
 type NewTag struct {
@@ -18,8 +19,10 @@ type NewTagRequest struct {
 }
 
 func (a *NewTagRequest) Bind(r *http.Request) error {
-	if a.NewTag == nil {
-		return errors.New("missing required Tag fields")
+	if a.NewTag.Categories == "" {
+		return e.ErrNoCategories
+	} else if a.NewTag.LinkID == "" {
+		return e.ErrNoLinkID
 	}
 
 	a.LastUpdated = time.Now().Format("2006-01-02 15:04:05")
@@ -35,10 +38,10 @@ type EditTagRequest struct {
 
 func (a *EditTagRequest) Bind(r *http.Request) error {
 	if a.ID == "" {
-		return errors.New("missing tag ID")
+		return e.ErrNoTagID
 	}
 	if a.Categories == "" {
-		return errors.New("missing tag category(ies)")
+		return e.ErrNoTagCategories
 	}
 
 	a.LastUpdated = time.Now().Format("2006-01-02 15:04:05")

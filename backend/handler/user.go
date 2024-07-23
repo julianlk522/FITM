@@ -25,7 +25,9 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"golang.org/x/crypto/bcrypt"
 
+	"oitm/auth"
 	query "oitm/db/query"
+	e "oitm/error"
 	"oitm/model"
 )
 
@@ -41,12 +43,12 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	signup_data := &model.SignUpRequest{}
 
 	if err := render.Bind(r, signup_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	if _LoginNameTaken(signup_data.UserAuth.LoginName) {
-		render.Render(w, r, ErrInvalidRequest(errors.New("login name taken")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("login name taken")))
 		return
 	}
 
@@ -62,7 +64,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	token, err := _GetJWTFromLoginName(signup_data.UserAuth.LoginName)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
@@ -82,22 +84,22 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 	login_data := &model.LogInRequest{}
 
 	if err := render.Bind(r, login_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	is_authenticated, err := _AuthenticateUser(login_data.LoginName, login_data.Password)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if !is_authenticated {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid login")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("invalid login")))
 		return
 	}
 
 	token, err := _GetJWTFromLoginName(login_data.UserAuth.LoginName)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
@@ -149,7 +151,7 @@ func _RenderJWT(token string, w http.ResponseWriter, r *http.Request) {
 func GetProfile(w http.ResponseWriter, r *http.Request) {
 	login_name := chi.URLParam(r, "login_name")
 	if login_name == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoLoginName))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLoginName))
 		return
 	}
 
@@ -159,7 +161,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 	FROM Users 
 	WHERE login_name = ?;`, login_name).Scan(&u.LoginName, &u.About, &u.PFP, &u.Created)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(ErrNoUserWithLoginName))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoUserWithLoginName))
 		return
 	}
 
@@ -170,13 +172,13 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 func EditAbout(w http.ResponseWriter, r *http.Request) {
 	edit_about_data := &model.EditAboutRequest{}
 	if err := render.Bind(r, edit_about_data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
-	req_user_id, _, err := GetJWTClaims(r)
+	req_user_id, _, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 	
@@ -196,7 +198,7 @@ func GetProfilePic(w http.ResponseWriter, r *http.Request) {
 	path := pic_dir + "/" + file_name
 	
 	if _, err := os.Stat(path); err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("profile pic not found")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("profile pic not found")))
 		return
 	}
 	
@@ -211,26 +213,26 @@ func UploadNewProfilePic(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm( 10 << 20 )
 	file, handler, err := r.FormFile("pic")
     if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
         return
     }
     defer file.Close()
 
 	// Valid image
 	if !strings.Contains(handler.Header.Get("Content-Type"), "image") {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid file provided (accepted image formats: .jpg, .jpeg, .png, .webp)")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("invalid file provided (accepted image formats: .jpg, .jpeg, .png, .webp)")))
 		return
 	}
 
 	img, _, err := image.Decode(file)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 	
 	// Aspect ratio is no more than 2:1 and no less than 0.5:1
 	if !_HasAcceptableAspectRatio(img) {
-		render.Render(w, r, ErrInvalidRequest(errors.New("profile pic aspect ratio must be no more than 2:1 and no less than 0.5:1")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("profile pic aspect ratio must be no more than 2:1 and no less than 0.5:1")))
 		return
 	}
 
@@ -240,7 +242,7 @@ func UploadNewProfilePic(w http.ResponseWriter, r *http.Request) {
 
 	dst, err := os.Create(full_path)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("could not create new file")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("could not create new file")))
 		return
 	}
 	defer dst.Close()
@@ -250,19 +252,19 @@ func UploadNewProfilePic(w http.ResponseWriter, r *http.Request) {
 	
 	// Save to new file
 	if _, err := io.Copy(dst, file); err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("could not copy profile pic to new file")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("could not copy profile pic to new file")))
 		return
 	}
 
-	req_user_id, _, err := GetJWTClaims(r)
+	req_user_id, _, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
 	_, err = DBClient.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, unique_name, req_user_id)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("could not save new profile pic")))
+		render.Render(w, r, e.ErrInvalidRequest(errors.New("could not save new profile pic")))
 		return
 	}
 
@@ -287,22 +289,22 @@ func _HasAcceptableAspectRatio(img image.Image) bool {
 func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	var login_name string = chi.URLParam(r, "login_name")
 	if login_name == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoLoginName))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLoginName))
 		return
 	}
 
 	user_exists, err := _UserExists(login_name)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if !user_exists {
-		render.Render(w, r, ErrInvalidRequest(ErrNoUserWithLoginName))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoUserWithLoginName))
 		return
 	}
 
-	req_user_id, _, err := GetJWTClaims(r)
+	req_user_id, _, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
@@ -310,7 +312,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	if req_user_id != "" {	
 		tmap, err := _BuildTmap[model.TmapLinkSignedIn](login_name, r)
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 		render.JSON(w, r, tmap)
@@ -319,7 +321,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	} else {
 		tmap, err := _BuildTmap[model.TmapLinkSignedOut](login_name, r)
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 		render.JSON(w, r, tmap)
@@ -329,28 +331,28 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 	var login_name string = chi.URLParam(r, "login_name")
 	if login_name == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoLoginName))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLoginName))
 		return
 	}
 
 	var categories string = chi.URLParam(r, "categories")
 	if categories == "" {
-		render.Render(w, r, ErrInvalidRequest(ErrNoCategories))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
 		return
 	}
 
 	user_exists, err := _UserExists(login_name)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if !user_exists {
-		render.Render(w, r, ErrInvalidRequest(ErrNoUserWithLoginName))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoUserWithLoginName))
 		return
 	}
 	
-	req_user_id, _, err := GetJWTClaims(r)
+	req_user_id, _, err := auth.GetJWTClaims(r)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 	
@@ -359,14 +361,14 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 	if req_user_id != "" {
 		tmap, err := _BuildTmapFromCategories[model.TmapLinkSignedIn](login_name, split_cats, r)
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 		render.JSON(w, r, tmap)
 	} else {
 		tmap, err := _BuildTmapFromCategories[model.TmapLinkSignedOut](login_name, split_cats, r)
 		if err != nil {
-			render.Render(w, r, ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 		render.JSON(w, r, tmap)
@@ -390,7 +392,7 @@ func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name s
 	var copied_sql *query.GetTmapCopied
 	var tagged_sql *query.GetTmapTagged
 
-	req_user_id, req_login_name, err := GetJWTClaims(r)
+	req_user_id, req_login_name, err := auth.GetJWTClaims(r)
 	if err != nil {
 		return nil, err
 	}
@@ -430,7 +432,7 @@ func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name s
 }
 
 func _BuildTmapFromCategories[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name string, categories []string, r *http.Request) (*model.TreasureMap[T], error) {
-	req_user_id, req_login_name, err := GetJWTClaims(r)
+	req_user_id, req_login_name, err := auth.GetJWTClaims(r)
 	if err != nil {
 		return nil, err
 	}

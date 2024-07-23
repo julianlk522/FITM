@@ -14,7 +14,8 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	_ "github.com/mattn/go-sqlite3"
 
-	"oitm/handler"
+	"oitm/auth"
+	h "oitm/handler"
 	m "oitm/middleware"
 )
 
@@ -60,44 +61,44 @@ func main() {
 
 	// PUBLIC
 	// USER ACCOUNTS
-	r.Get("/users/{login_name}", handler.GetProfile)
-	r.Get("/pic/{file_name}", handler.GetProfilePic)
-	r.Post("/signup", handler.SignUp)
-	r.Post("/login", handler.LogIn)
+	r.Get("/users/{login_name}", h.GetProfile)
+	r.Get("/pic/{file_name}", h.GetProfilePic)
+	r.Post("/signup", h.SignUp)
+	r.Post("/login", h.LogIn)
 
 	// LINKS
-	r.Get("/links/cat/{categories}/users", handler.GetTopCategoryContributors)
-	r.Get("/links/{period}/cat/{categories}/users", handler.GetTopCategoryContributorsByPeriod)
-	r.Get("/links/subcat/{categories}", handler.GetSubcategories)
-	r.Get("/links/{period}/subcat/{categories}", handler.GetSubcategoriesByPeriod)
+	r.Get("/links/cat/{categories}/users", h.GetTopCategoryContributors)
+	r.Get("/links/{period}/cat/{categories}/users", h.GetTopCategoryContributorsByPeriod)
+	r.Get("/links/subcat/{categories}", h.GetSubcategories)
+	r.Get("/links/{period}/subcat/{categories}", h.GetSubcategoriesByPeriod)
 
 	// TAGS
-	r.Get("/tags/popular", handler.GetTopTagCategories)
-	r.Get("/tags/popular/{period}", handler.GetTopTagCategoriesByPeriod)
+	r.Get("/tags/popular", h.GetTopTagCategories)
+	r.Get("/tags/popular/{period}", h.GetTopTagCategoriesByPeriod)
 
 
 
 	// OPTIONAL AUTHENTICATION
 	// (bearer token used optionally to get IsLiked / IsCopied / IsTagged for links)
 	r.Group(func(r chi.Router) {
-		r.Use(handler.VerifierOptional(token_auth))
-		r.Use(handler.AuthenticatorOptional(token_auth))
+		r.Use(auth.VerifierOptional(token_auth))
+		r.Use(auth.AuthenticatorOptional(token_auth))
 
 		// USER ACCOUNTS
-		r.Get("/map/{login_name}", handler.GetTreasureMap)
-		r.Get("/map/{login_name}/{categories}", handler.GetTreasureMapByCategories)
+		r.Get("/map/{login_name}", h.GetTreasureMap)
+		r.Get("/map/{login_name}/{categories}", h.GetTreasureMapByCategories)
 
 		// LINKS
 		r.Route("/links", func(r chi.Router) {
 			r.Use(m.Pagination)
-			r.Get("/", handler.GetTopLinks)
-			r.Get("/{period}", handler.GetTopLinksByPeriod)
-			r.Get("/cat/{categories}", handler.GetTopLinksByCategories)
-			r.Get("/{period}/{categories}", handler.GetTopLinksByPeriodAndCategories)	
+			r.Get("/", h.GetTopLinks)
+			r.Get("/{period}", h.GetTopLinksByPeriod)
+			r.Get("/cat/{categories}", h.GetTopLinksByCategories)
+			r.Get("/{period}/{categories}", h.GetTopLinksByPeriodAndCategories)	
 		})
 
 		// SUMMARIES
-		r.Get("/summaries/{link_id}", handler.GetSummariesForLink)
+		r.Get("/summaries/{link_id}", h.GetSummariesForLink)
 	})
 
 
@@ -109,26 +110,26 @@ func main() {
 		r.Use(jwtauth.Authenticator(token_auth))
 
 		// USER ACCOUNTS
-		r.Put("/users/about", handler.EditAbout)
-		r.Post("/pic", handler.UploadNewProfilePic)
+		r.Put("/users/about", h.EditAbout)
+		r.Post("/pic", h.UploadNewProfilePic)
 
 		// LINKS
-		r.Post("/links", handler.AddLink)
-		r.Post("/links/{link_id}/like", handler.LikeLink)
-		r.Delete("/links/{link_id}/like", handler.UnlikeLink)
-		r.Post("/links/{link_id}/copy", handler.CopyLink)
-		r.Delete("/links/{link_id}/copy", handler.UncopyLink)
+		r.Post("/links", h.AddLink)
+		r.Post("/links/{link_id}/like", h.LikeLink)
+		r.Delete("/links/{link_id}/like", h.UnlikeLink)
+		r.Post("/links/{link_id}/copy", h.CopyLink)
+		r.Delete("/links/{link_id}/copy", h.UncopyLink)
 
 		// TAGS
-		r.Get("/tags/{link_id}", handler.GetTagsForLink)
-		r.Post("/tags", handler.AddTag)
-		r.Put("/tags", handler.EditTag)
+		r.Get("/tags/{link_id}", h.GetTagsForLink)
+		r.Post("/tags", h.AddTag)
+		r.Put("/tags", h.EditTag)
 
 		// SUMMARIES
-		r.Post("/summaries", handler.AddSummary)
-		r.Delete("/summaries", handler.DeleteSummary)
-		r.Post("/summaries/{summary_id}/like", handler.LikeSummary)
-		r.Delete("/summaries/{summary_id}/like", handler.UnlikeSummary)
+		r.Post("/summaries", h.AddSummary)
+		r.Delete("/summaries", h.DeleteSummary)
+		r.Post("/summaries/{summary_id}/like", h.LikeSummary)
+		r.Delete("/summaries/{summary_id}/like", h.UnlikeSummary)
 
 	})
 }

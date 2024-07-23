@@ -1,4 +1,4 @@
-package handler
+package auth
 
 import (
 	"net/http"
@@ -9,7 +9,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
-// MODIFIED JWT VERIFIER
+// MODIFIED JWT VERIFIER / AUTHENTICATOR
 // (requests with no token are allowed, but getting isLiked / isCopied / isTagged on links requires a token)
 func VerifierOptional(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler {
 	return VerifyOptional(ja, jwtauth.TokenFromHeader, jwtauth.TokenFromCookie)
@@ -44,8 +44,6 @@ func VerifyRequestOptional(ja *jwtauth.JWTAuth, r *http.Request, findTokenFns ..
 	return jwtauth.VerifyToken(ja, tokenString)
 }
 
-// MODIFIED JWT AUTHENTICATOR
-// (requests with no token are allowed, but getting isLiked / isCopied / isTagged on links requires a token)
 func AuthenticatorOptional(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		hfn := func(w http.ResponseWriter, r *http.Request) {
