@@ -2,7 +2,7 @@
 import Link from '../components/Link'
 import ScrollUp from '../components/ScrollUp.astro'
 import Layout from '../layouts/Layout.astro'
-import { Periods, type CategoryCount, type LinkData } from '../types'
+import { Periods, type CategoryCount, type PaginatedLinks } from '../types'
 
 // get auth token and user if user signed in
 const token = Astro.cookies.get('token')?.value
@@ -21,7 +21,8 @@ const get_links_resp = await (token
 			headers: { Authorization: `Bearer ${token}` },
 		})
 	: fetch('http://127.0.0.1:8000/links/month'))
-const links: LinkData[] = await get_links_resp.json()
+const data: PaginatedLinks = await get_links_resp.json()
+const links = data.Links
 // [{URL: 'https://example.com', LikeCount: 100}, ...]
 const other_periods = Periods.filter((other) => other !== 'month')
 ---
@@ -98,7 +99,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 		display: flex;
 		flex-direction: column;
 		flex-wrap: wrap;
-		height: 160px;
+		max-height: 160px;
 	}
 	#change-period {
 		display: flex;

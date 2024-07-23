@@ -1,7 +1,12 @@
 ---
 import Link from '../../components/Link'
+import Pagination from '../../components/Pagination.astro'
 import Layout from '../../layouts/Layout.astro'
-import type { CategoryContributor, CategoryCount, LinkData } from '../../types'
+import type {
+	CategoryContributor,
+	CategoryCount,
+	PaginatedLinks,
+} from '../../types'
 import { Periods } from '../../types'
 
 const { category } = Astro.params
@@ -11,12 +16,16 @@ const other_periods = Periods.filter((other) => other !== 'all')
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
 
+const page = Astro.url.searchParams.get('page')
+const page_num = page ? parseInt(page) : 1
+
 const get_links_resp = await (token
 	? fetch(`http://127.0.0.1:8000/links/cat/${category}`, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
 	: fetch(`http://127.0.0.1:8000/links/cat/${category}`))
-const links: LinkData[] = await get_links_resp.json()
+const data: PaginatedLinks = await get_links_resp.json()
+const links = data.Links
 // [{URL: 'https://example.com', LikeCount: 100}, ...]
 
 let subcats: CategoryCount[]
@@ -59,7 +68,7 @@ if (!links || links.length === 0) {
 				subcats.length ? (
 					<>
 						<h2>Subcategories</h2>
-						<ul>
+						<ol id='top-subcats'>
 							{subcats.map((subcat) => (
 								<li>
 									<strong>
@@ -72,7 +81,7 @@ if (!links || links.length === 0) {
 									<span> ({subcat.Count})</span>
 								</li>
 							))}
-						</ul>
+						</ol>
 					</>
 				) : (
 					<p>No further subcategories</p>
@@ -98,6 +107,13 @@ if (!links || links.length === 0) {
 		</section>
 		<section>
 			<h2>Top Links</h2>
+
+			<Pagination
+				Period={'all'}
+				Page={page_num}
+				NextPage={data.NextPage}
+			/>
+
 			<ol>
 				{
 					links.map((link) => (
@@ -112,6 +128,16 @@ if (!links || links.length === 0) {
 					))
 				}
 			</ol>
+
+			{
+				data.NextPage > 0 ? (
+					<Pagination
+						Period={'all'}
+						Page={page_num}
+						NextPage={data.NextPage}
+					/>
+				) : null
+			}
 		</section>
 	</main>
 </Layout>
@@ -137,5 +163,11 @@ if (!links || links.length === 0) {
 	}
 	li strong:has(+ span) a {
 		display: inline-block;
+	}
+	#top-subcats {
+		display: flex;
+		flex-direction: column;
+		flex-wrap: wrap;
+		max-height: 160px;
 	}
 </style>

@@ -1,0 +1,62 @@
+---
+import type { Period } from '../types'
+
+interface Props {
+	Period: Period
+	Page: number
+	NextPage: number
+}
+
+const { Period: period, Page: page, NextPage: next_page } = Astro.props
+---
+
+<p>
+	Page:
+	{page > 1 ? <a href={`/top/${period}`}>1</a> : null}
+
+	{
+		page > 2 ? (
+			<span>
+				<a href={`/top/${period}?page=${page - 1}`}>{page - 1}</a>
+			</span>
+		) : null
+	}
+
+	<span>
+		{page}
+	</span>
+
+	{
+		next_page > 0 ? (
+			<a href={`/top/${period}?page=${next_page}`}>{next_page}</a>
+		) : null
+	}
+</p>
+
+<style>
+	#scroll-to-top {
+		display: none;
+		background-color: transparent;
+		border: none;
+		color: white;
+		flex-direction: column;
+		align-items: center;
+		position: fixed;
+		bottom: 10px;
+		right: max(24px, calc((100% - min(100%, 1080px)) / 2));
+	}
+	#scroll-to-top svg {
+		width: 24px;
+		height: 24px;
+	}
+	#scroll-to-top p {
+		font-size: 0.9rem;
+		margin: 0;
+	}
+	#scroll-to-top:hover {
+		cursor: pointer;
+	}
+	#scroll-to-top.visible {
+		display: flex;
+	}
+</style>

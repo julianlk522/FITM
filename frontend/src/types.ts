@@ -32,6 +32,11 @@ type LinkData = {
 	IsCopied: boolean | undefined
 }
 
+type PaginatedLinks = {
+	Links: LinkData[]
+	NextPage: number
+}
+
 const Periods = ['day', 'week', 'month', 'year', 'all'] as const
 type Period = typeof Periods[number]
 
@@ -91,5 +96,5 @@ type TreasureMap = {
 const tmap_sections = ['Submitted', 'Copied', 'Tagged'] as const
 
 export { Periods, is_error_response, tmap_sections }
-export type { CategoryContributor, CategoryCount, ErrorResponse, LinkData, Period, Summary, SummaryPage, Tag, TagPage, TreasureMap, User }
+export type { CategoryContributor, CategoryCount, ErrorResponse, LinkData, PaginatedLinks, Period, Summary, SummaryPage, Tag, TagPage, TreasureMap, User }
 

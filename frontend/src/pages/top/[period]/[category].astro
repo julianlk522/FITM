@@ -1,10 +1,12 @@
 ---
 import Link from '../../../components/Link'
+import Pagination from '../../../components/Pagination.astro'
+import ScrollUp from '../../../components/ScrollUp.astro'
 import Layout from '../../../layouts/Layout.astro'
 import type {
 	CategoryContributor,
 	CategoryCount,
-	LinkData,
+	PaginatedLinks,
 	Period,
 } from '../../../types'
 import { Periods } from '../../../types'
@@ -27,18 +29,22 @@ if (category && period === 'all') {
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
 
+const page = Astro.url.searchParams.get('page')
+const page_num = page ? parseInt(page) : 1
+
 const get_links_resp = await (token
 	? fetch(`http://127.0.0.1:8000/links/${period}/${category}`, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
 	: fetch(`http://127.0.0.1:8000/links/${period}/${category}`))
-const links: LinkData[] = await get_links_resp.json()
+const data: PaginatedLinks = await get_links_resp.json()
+const links = data.Links
 // [{URL: 'https://example.com', LikeCount: 100}, ...]
 
 let subcats: CategoryCount[] = []
 let top_contributors: CategoryContributor[] = []
 
-if (links.length) {
+if (links && links.length) {
 	// r.Get("/links/{period}/subcat/{categories}", handler.GetSubcategoriesByPeriod)
 	const subcats_resp = await fetch(
 		`http://127.0.0.1:8000/links/${period}/subcat/${category}`
@@ -81,12 +87,12 @@ if (links.length) {
 			</div>
 		</section>
 		{
-			links.length ? (
+			links && links.length ? (
 				<>
 					<section>
 						<h2>Subcategories</h2>
 						{subcats.length ? (
-							<ul>
+							<ol id='top-subcats'>
 								{subcats.map((subcat) => (
 									<li>
 										<strong>
@@ -99,7 +105,7 @@ if (links.length) {
 										<span> ({subcat.Count})</span>
 									</li>
 								))}
-							</ul>
+							</ol>
 						) : (
 							<p>No further subcategories</p>
 						)}
@@ -127,6 +133,13 @@ if (links.length) {
 					</section>
 					<section>
 						<h2>Top Links</h2>
+
+						<Pagination
+							Period={period}
+							Page={page_num}
+							NextPage={data.NextPage}
+						/>
+
 						<ol>
 							{links.map((link) => (
 								<Link
@@ -140,6 +153,16 @@ if (links.length) {
 							))}
 						</ol>
 					</section>
+
+					{data.NextPage > 0 ? (
+						<Pagination
+							Period={period}
+							Page={page_num}
+							NextPage={data.NextPage}
+						/>
+					) : null}
+
+					<ScrollUp />
 				</>
 			) : (
 				<p>No links found</p>
@@ -162,6 +185,12 @@ if (links.length) {
 		a {
 			margin-left: 0.5rem;
 		}
+	}
+	#top-subcats {
+		display: flex;
+		flex-direction: column;
+		flex-wrap: wrap;
+		max-height: 160px;
 	}
 	li strong:has(+ span) a {
 		display: inline-block;

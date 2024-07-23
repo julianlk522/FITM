@@ -1,17 +1,21 @@
 ---
 import Link from '../../components/Link'
+import Pagination from '../../components/Pagination.astro'
 import ScrollUp from '../../components/ScrollUp.astro'
 import Layout from '../../layouts/Layout.astro'
 import {
 	Periods,
 	type CategoryCount,
-	type LinkData,
+	type PaginatedLinks,
 	type Period,
 } from '../../types'
 
 // get auth token and user if user signed in
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
+
+const page = Astro.url.searchParams.get('page')
+const page_num = page ? parseInt(page) : 1
 
 const { period } = Astro.params as { period: Period }
 if (period && !Periods.includes(period)) {
@@ -21,19 +25,20 @@ const other_periods = Periods.filter((other) => other !== period)
 
 const links_api_url =
 	period === 'all'
-		? 'http://127.0.0.1:8000/links'
-		: `http://127.0.0.1:8000/links/${period}`
+		? `http://127.0.0.1:8000/links?page=${page_num}`
+		: `http://127.0.0.1:8000/links/${period}?page=${page_num}`
 const get_links_resp = await (token
 	? fetch(links_api_url, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
 	: fetch(links_api_url))
-const links: LinkData[] = await get_links_resp.json()
+const data: PaginatedLinks = await get_links_resp.json()
+const links = data.Links
 // [{URL: 'https://example.com', LikeCount: 100}, ...]
 
 let top_cats: CategoryCount[] = []
 
-if (links.length) {
+if (links && links.length) {
 	const cats_api_url =
 		period === 'all'
 			? 'http://127.0.0.1:8000/tags/popular'
@@ -68,7 +73,7 @@ if (links.length) {
 		</section>
 
 		{
-			links.length ? (
+			links && links.length ? (
 				<>
 					<section>
 						<h2>Categories</h2>
@@ -92,7 +97,15 @@ if (links.length) {
 
 					<section>
 						<h2>Links</h2>
-						<ol id='links'>
+
+						<Pagination
+							Period={period}
+							Page={page_num}
+							NextPage={data.NextPage}
+						/>
+
+						{/* TODO: replace magic page limit number */}
+						<ol id='links' start={(page_num - 1) * 20 + 1}>
 							{links.map((link) => (
 								<Link
 									client:load
@@ -104,6 +117,14 @@ if (links.length) {
 								/>
 							))}
 						</ol>
+
+						{data.NextPage > 0 ? (
+							<Pagination
+								Period={period}
+								Page={page_num}
+								NextPage={data.NextPage}
+							/>
+						) : null}
 					</section>
 
 					<ScrollUp />
@@ -145,7 +166,7 @@ if (links.length) {
 		display: flex;
 		flex-direction: column;
 		flex-wrap: wrap;
-		height: 160px;
+		max-height: 160px;
 	}
 	#links {
 		padding: 0;
