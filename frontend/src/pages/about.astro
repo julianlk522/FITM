@@ -28,15 +28,11 @@ import Layout from '../layouts/Layout.astro'
 			</p>
 			<p>
 				For example, high SEO is not always relevant to content quality.
-				Great <a href='https://www.paulgraham.com/makersschedule.html'
-					>blog posts</a
-				>, <a href='https://www.fffuel.co/'>powerful utilities</a>,
-				videos, memes, and other rarities are occasionally served
-				unencrypted, or in HTML markup that is semantically barebones
-				and therefore less intelligible to assistive technologies. They
-				may be buried in search results for this, to the detriment of
-				any user who cares more about the novelty of the content than
-				its presentation.
+				Awesome things on the web are occasionally served unencrypted,
+				or in HTML markup that is semantically barebones and therefore
+				less intelligible to assistive technologies. It may be buried in
+				search results for this, to the detriment of users who care more
+				about the content novelty than presentation.
 			</p>
 			<p>
 				Search engines also are incentivized to promote results from the
@@ -53,42 +49,55 @@ import Layout from '../layouts/Layout.astro'
 			</p>
 			<p>
 				But we typically also want only results that are relevant to
-				some specific topic. In OITM, links can be tagged with category
-				combinations. Visitors can stack categories in searches to
-				efficiently and reliably find pages that match a desired
+				some specific topic. In OITM, links can be tagged with one or
+				more categories. Visitors can stack desired categories in
+				searches to efficiently and reliably find pages that match some
 				theme(s). More on that later.
 			</p>
 			<h3>"Reddit?"</h3>
 			<p>
 				Some might argue that this purpose has been achieved (done well,
-				and for a long time) by Reddit.
+				and for a long time, even) by Reddit.
 			</p>
 			<p>
-				OITM was inspired greatly by Reddit. Reddit is an awesome
-				content sharing resource and a blessing to the internet.
-				However, these tools are different in that OITM is primarily a
-				data hub while Reddit is primarily a communication hub. OITM is
-				not meant for topical discussion. OITM is meant only for web
-				resource sharing and discovery.
+				Reddit is an inspiration to OITM. It is an invaluable resource
+				and a blessing to the internet. However, these tools are
+				different in that OITM is primarily a data hub while Reddit is
+				primarily a communication hub. OITM is not meant for topical
+				discussion. OITM is meant only for web resource sharing and
+				discovery.
+			</p>
+			<p>
+				Additionally, OITM aims to use category stacking to serve users
+				interested in various intersecting themes while Reddit is home
+				to communities defined by a single theme. Traditional WWW
+				searches make it hard to find sites that appeal to multiple
+				interests at once, especially if they aren't common or obviously
+				related. For example, if you like coding and heavy metal.
+				However, if such a site exists and has been catalogued on OITM,
+				you can find it very easily by adding "coding" and "heavy metal"
+				as category filters to your search.
 			</p>
 		</section>
 
 		<section>
-			<h2>Core Features</h2>
-			<p><strong>Summarize</strong></p>
-			<p><strong>Copy to Treasure Map</strong></p>
-			<p><strong>Like</strong></p>
-			<p><strong>Tag</strong></p>
+			<h2>Core Treasure Hunting Actions</h2>
+			<ol id='actions'>
+				<li><strong>Summarize</strong></li>
+				<li><strong>Copy to Treasure Map</strong></li>
+				<li><strong>Like</strong></li>
+				<li><strong>Tag</strong></li>
+			</ol>
 
 			<p>
-				Each plays a different part in helping Internet treasure hunters
-				to build immensely informative Treasure Maps.
+				These all play a useful part for Internet treasure hunters in
+				building immensely valuable Treasure Maps.
 			</p>
 			<h3>Summarize</h3>
 			<p>
 				Every link added to OITM has a summary page where any user can
-				submit their summary of its content. Summaries can be upvoted to
-				allow the "best" to filter to the top of the page.
+				submit their summary of its content. Summaries can be upvoted,
+				bringing the most liked to the top.
 			</p>
 			<p>
 				A link's top summary will be shown above its URL at all times to
@@ -98,17 +107,18 @@ import Layout from '../layouts/Layout.astro'
 			<p>
 				<strong>Copying</strong> a link to your Treasure Map is about improving
 				discoverability via proliferation. It allows you to easily find a
-				link again or let others&mdash;maybe those who know you or have similar
-				interests to you&mdash;find it by reading your Treasure Map.
+				link again or let others find it by reading your Treasure Map.
 			</p>
 			<h3>Like</h3>
 			<p>
 				<strong>Liking</strong> is about improving discoverability via corroboration.
 				It's a way to vouch for the "goodness" (authenticity, hilarity, comprehensiveness,
-				etc.) of a link without needing to save it to your Treasure Map.
-				It allows great content to filter to the top of searches, helping
-				more people&mdash;even those who don't know you&mdash;find it by
-				reading the Global Treasure Map or yours.
+				etc.) of a link without needing to pin it to your Treasure Map.
+			</p>
+			<p>
+				Liking allows great content to filter to the top of searches,
+				helping people&mdash;even those who don't know to browse your
+				Treasure Map&mdash;find it in searches.
 			</p>
 			<h3>Tag</h3>
 			<p>
@@ -118,11 +128,11 @@ import Layout from '../layouts/Layout.astro'
 				to narrow searches to desired topics.
 			</p>
 			<p>
-				Internetters of course will disagree on their preferred
-				categorization(s) for various links. Each is invited to tag any
-				link however they see fit. Any user's tag, i.e., their
-				categorization(s) for some link, is how that link will be
-				represented in their Treasure Map.
+				Obviously not everyone agrees on preferred categorizations for
+				various links. Each user is invited to tag any link however they
+				see fit. Any tag, i.e., a user's categorization(s) for some
+				link, dictates how that link will be shown on their Treasure
+				Map.
 			</p>
 		</section>
 		<section>
@@ -163,6 +173,11 @@ import Layout from '../layouts/Layout.astro'
 	h2,
 	h3 {
 		margin-top: 50px;
+		text-align: center;
+	}
+
+	#actions {
+		list-style: none;
 		text-align: center;
 	}
 </style>
