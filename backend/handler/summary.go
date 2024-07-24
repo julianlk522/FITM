@@ -11,9 +11,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 
-	"oitm/auth"
 	query "oitm/db/query"
 	e "oitm/error"
+	m "oitm/middleware"
 	"oitm/model"
 )
 
@@ -35,12 +35,7 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if req_user_id != "" {
 		summary_page, err := _GetSummaryPageSignedIn(link_id, req_user_id)
 		if err != nil {
@@ -164,12 +159,7 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	link_exists, err := _LinkExists(summary_data.LinkID)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
@@ -249,12 +239,7 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	owns_summary, err := _SummarySubmittedByUser(delete_data.SummaryID, req_user_id)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
@@ -319,19 +304,14 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-	
 	var link_id sql.NullString
-	err = DBClient.QueryRow("SELECT link_id FROM Summaries WHERE id = ?", summary_id).Scan(&link_id)
+	err := DBClient.QueryRow("SELECT link_id FROM Summaries WHERE id = ?", summary_id).Scan(&link_id)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoSummaryWithID))
 		return
 	}
 
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	owns_summary, err := _SummarySubmittedByUser(summary_id, req_user_id)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
@@ -381,12 +361,7 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-	
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	already_liked, err := _UserHasLikedSummary(req_user_id, summary_id)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))

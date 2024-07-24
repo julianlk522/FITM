@@ -14,7 +14,6 @@ import (
 	"github.com/go-chi/render"
 	"golang.org/x/exp/slices"
 
-	"oitm/auth"
 	query "oitm/db/query"
 	e "oitm/error"
 	util "oitm/handler/util"
@@ -24,19 +23,14 @@ import (
 
 func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	page := r.Context().Value(m.PageKey).(int)
-
+	
 	get_links_sql := query.NewGetTopLinks().Page(page)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
 		return
 	}
-
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
+	
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if req_user_id != "" {
 		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
 		if err != nil {
@@ -70,12 +64,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if req_user_id != "" {
 		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
 		if err != nil {
@@ -117,12 +106,7 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if req_user_id != "" {
 		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
 		if err != nil {
@@ -167,12 +151,7 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if req_user_id != "" {
 		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
 		if err != nil {
@@ -514,22 +493,18 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, req_login_name, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
+	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	link_data.SubmittedBy = req_login_name
-
+	
 	_AssignMetadata(resp, link_data)
 	_AssignSortedCategories(link_data, link_data.NewLink.Categories)
-
+	
 	res, err := DBClient.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, link_data.Categories, link_data.Summary, link_data.ImgURL)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
-
+	
 	if err := _AssignNewLinkIDToRequest(res, link_data); err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
@@ -547,6 +522,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		link_data.SummaryCount = 1
 	}
 
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if link_data.Summary != "" {
 		_, err = DBClient.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, link_data.Summary, link_data.ID, req_user_id, link_data.SubmitDate)
 		if err != nil {
@@ -679,17 +655,13 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, req_login_name, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
+	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	if _UserSubmittedLink(req_login_name, link_id) {
 		render.Render(w, r, e.ErrInvalidRequest(errors.New("cannot like your own link")))
 		return
 	}
 
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if _UserHasLikedLink(req_user_id, link_id) {
 		render.Render(w, r, e.ErrInvalidRequest(errors.New("already liked")))
 		return
@@ -720,18 +692,13 @@ func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if !_UserHasLikedLink(req_user_id, link_id) {
 		render.Render(w, r, e.ErrInvalidRequest(errors.New("link like not found")))
 		return
 	}
 
-	_, err = DBClient.Exec("DELETE FROM 'Link Likes' WHERE user_id = ? AND link_id = ?;", req_user_id, link_id)
+	_, err := DBClient.Exec("DELETE FROM 'Link Likes' WHERE user_id = ? AND link_id = ?;", req_user_id, link_id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -766,18 +733,14 @@ func CopyLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, reg_login_name, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
-	owns_link := _UserSubmittedLink(reg_login_name, link_id)
+	req_login_name := r.Context().Value(m.LoginNameKey).(string)
+	owns_link := _UserSubmittedLink(req_login_name, link_id)
 	if !owns_link {
 		render.Render(w, r, e.ErrInvalidRequest(errors.New("cannot copy your own link to your treasure map")))
 		return
 	}
 
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	already_copied := _UserHasCopiedLink(req_user_id, link_id)
 	if already_copied {
 		render.Render(w, r, e.ErrInvalidRequest(errors.New("link already copied to treasure map")))
@@ -810,12 +773,7 @@ func UncopyLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	already_copied := _UserHasCopiedLink(req_user_id, link_id)
 	if !already_copied {
 		render.Render(w, r, e.ErrInvalidRequest(errors.New("link copy does not exist")))
@@ -823,7 +781,7 @@ func UncopyLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Delete
-	_, err = DBClient.Exec("DELETE FROM 'Link Copies' WHERE user_id = ? AND link_id = ?;", req_user_id, link_id)
+	_, err := DBClient.Exec("DELETE FROM 'Link Copies' WHERE user_id = ? AND link_id = ?;", req_user_id, link_id)
 	if err != nil {
 		log.Fatal(err)
 	}

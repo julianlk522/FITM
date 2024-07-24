@@ -12,9 +12,9 @@ import (
 	"github.com/go-chi/render"
 	"golang.org/x/exp/slices"
 
-	"oitm/auth"
 	query "oitm/db/query"
 	e "oitm/error"
+	m "oitm/middleware"
 	"oitm/model"
 )
 
@@ -35,12 +35,7 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, req_login_name, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	get_link_sql := query.NewGetTagPageLink(link_id, req_user_id)
 	if get_link_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_link_sql.Error))
@@ -53,6 +48,7 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	user_tag, err := _GetUserTagForLink(req_login_name, link_id)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
@@ -299,12 +295,7 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, req_login_name, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
+	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	duplicate, err := _UserHasSubmittedTagToLink(req_login_name, tag_data.LinkID)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
@@ -367,12 +358,7 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, req_login_name, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-	
+	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	owns_tag, err := _UserHasSubmittedTag(req_login_name, edit_tag_data.ID)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoTagWithID))

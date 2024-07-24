@@ -14,7 +14,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	_ "github.com/mattn/go-sqlite3"
 
-	"oitm/auth"
 	h "oitm/handler"
 	m "oitm/middleware"
 )
@@ -81,8 +80,9 @@ func main() {
 	// OPTIONAL AUTHENTICATION
 	// (bearer token used optionally to get IsLiked / IsCopied / IsTagged for links)
 	r.Group(func(r chi.Router) {
-		r.Use(auth.VerifierOptional(token_auth))
-		r.Use(auth.AuthenticatorOptional(token_auth))
+		r.Use(m.VerifierOptional(token_auth))
+		r.Use(m.AuthenticatorOptional(token_auth))
+		r.Use(m.JWT)
 
 		// USER ACCOUNTS
 		r.Get("/map/{login_name}", h.GetTreasureMap)
@@ -108,6 +108,7 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(jwtauth.Verifier(token_auth))
 		r.Use(jwtauth.Authenticator(token_auth))
+		r.Use(m.JWT)
 
 		// USER ACCOUNTS
 		r.Put("/users/about", h.EditAbout)

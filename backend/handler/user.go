@@ -25,9 +25,9 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"golang.org/x/crypto/bcrypt"
 
-	"oitm/auth"
 	query "oitm/db/query"
 	e "oitm/error"
+	m "oitm/middleware"
 	"oitm/model"
 )
 
@@ -176,13 +176,8 @@ func EditAbout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-	
-	_, err = DBClient.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_about_data.About, req_user_id)
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	_, err := DBClient.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_about_data.About, req_user_id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -256,12 +251,7 @@ func UploadNewProfilePic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	_, err = DBClient.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, unique_name, req_user_id)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(errors.New("could not save new profile pic")))
@@ -302,12 +292,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	// Requesting user signed in: get IsLiked / IsCopied / IsTagged for each link
 	if req_user_id != "" {	
 		tmap, err := _BuildTmap[model.TmapLinkSignedIn](login_name, r)
@@ -350,14 +335,9 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	req_user_id, _, err := auth.GetJWTClaims(r)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-	
 	split_cats := strings.Split(categories, ",")
 
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if req_user_id != "" {
 		tmap, err := _BuildTmapFromCategories[model.TmapLinkSignedIn](login_name, split_cats, r)
 		if err != nil {
@@ -392,10 +372,8 @@ func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name s
 	var copied_sql *query.GetTmapCopied
 	var tagged_sql *query.GetTmapTagged
 
-	req_user_id, req_login_name, err := auth.GetJWTClaims(r)
-	if err != nil {
-		return nil, err
-	}
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	
 	// Requesting user signed in: get IsLiked / IsCopied / IsTagged for each link
 	if req_user_id != "" {	
@@ -432,10 +410,8 @@ func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name s
 }
 
 func _BuildTmapFromCategories[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name string, categories []string, r *http.Request) (*model.TreasureMap[T], error) {
-	req_user_id, req_login_name, err := auth.GetJWTClaims(r)
-	if err != nil {
-		return nil, err
-	}
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 
 	var submitted_sql *query.GetTmapSubmitted
 	var copied_sql *query.GetTmapCopied
