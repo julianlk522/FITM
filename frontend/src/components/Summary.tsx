@@ -18,6 +18,7 @@ export default function Summary(props: Props) {
 
 	const [is_liked, set_is_liked] = useState(props.IsLiked)
     const [like_count, set_like_count] = useState(props.LikeCount)
+	const [error, set_error ] = useState<string | undefined>(undefined)
 
 	const like_api_url = `http://127.0.0.1:8000/summaries/${ID}/like`
 
@@ -92,7 +93,7 @@ export default function Summary(props: Props) {
 		if (delete_data.message === 'deleted') {
 			return window.location.reload()
 		} else {
-			console.error("WTF is this: ",delete_data)
+			set_error(delete_data.error)
 		}
 	}
 	return (
@@ -107,7 +108,13 @@ export default function Summary(props: Props) {
 					class={`like-btn${is_liked ? ' liked' : ''}`}>{is_liked ? 'Unlike' : 'Like'} ({like_count})
 					</button>
 				)
-			: <button onClick={handle_delete}>Delete</button>}
+			: 
+				(
+			<>
+				<button onClick={handle_delete}>Delete</button>
+				{error ? <p class='error'>{error}</p> : null}
+			</>
+				)}
 		</li>
 	)
 }

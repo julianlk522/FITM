@@ -23,7 +23,6 @@ import (
 
 func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	page := r.Context().Value(m.PageKey).(int)
-	
 	get_links_sql := query.NewGetTopLinks().Page(page)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
@@ -57,7 +56,6 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page := r.Context().Value(m.PageKey).(int)
-	
 	get_links_sql := query.NewGetTopLinks().DuringPeriod(period_params).Page(page)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
@@ -99,7 +97,6 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page := r.Context().Value(m.PageKey).(int)
-
 	get_links_sql := query.NewGetTopLinks().FromLinkIDs(link_ids).Page(page)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
@@ -144,7 +141,6 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page := r.Context().Value(m.PageKey).(int)
-
 	get_links_sql := query.NewGetTopLinks().FromLinkIDs(link_ids).DuringPeriod(period_params).Page(page)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
@@ -222,7 +218,7 @@ func _ScanLinks[T model.LinkSignedIn | model.LinkSignedOut](get_links_sql *query
 		}
 	
 		links = &signed_in_links
-	
+			
 	case *model.LinkSignedOut:
 		var signed_out_links = []model.LinkSignedOut{}
 	

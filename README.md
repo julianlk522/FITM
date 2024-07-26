@@ -4,19 +4,21 @@
 
 ### Features:
 
--Delete summary frontend error message
+-Fix tmap link sorting alphabetically before by like count
+-Merge GetProfile handler logic into GetTreasureMap handler
+    -(since it is only used on tmap page alongside link data)
 -Middleware to alphabetize tag categories automatically
     -e.g., http://localhost:4321/cat/shit,nerd => http://localhost:4321/cat/nerd,shit
     -/top/{period}/{cat}, /cat/{cat}
+-Use traditional "?" URL params instead of routes
+    -one single link results page spanning all of /cat/{categories}, /top/{period}, /top/{period}/{categories} depending on URL params passed
+    -/cat, /top, etc. get confusing
 -Pagination
     -User Treasure Map
     -Fix top tag cats so they are specific to page being shown?
 -Improve frontend look/semantic markup
     -A11y, responsive layouts for phones / tablets
     -Proper color scheme
--Use traditional "?" URL params instead of routes
-    -one single link results page spanning all of /cat/{categories}, /top/{period}, /top/{period}/{categories} depending on URL params passed
-    -/cat, /top, etc. get confusing
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 
@@ -26,14 +28,11 @@
     -e.g., Global Categories vs. Global Tag categories
     -Popular Categories vs. Top Categories 
 -Rebrand subcategories as category overlaps since that is a bit more accurate
--Merge GetProfile handler logic into GetTreasureMap handler
-    -(since it is only used on tmap page alongside link data)
 -Remove repeat code wherever possible
 -Follow patterns shown in https://github.com/jonnylangefeld/go-api
 -Tests
     -https://github.com/ory/dockertest
 -Update JWT to use actual secret
--Better logging
 
 ## To Maybe-Dos:
 
@@ -51,6 +50,9 @@
 -Separate tag categories into distinct rows in Tags table
     -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)
     -would help optimize GetTopTagCategories / GetTopTagCategoriesByPeriod handlers since queries could all be done in sql (as of now requires splitting global_cats field in Go)
+-Better logging?
+    (Zap)
+
 
 
 
