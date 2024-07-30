@@ -155,7 +155,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var u model.User
+	var u model.Profile
 	err := DBClient.QueryRow(`
 	SELECT login_name, COALESCE(about,"") as about, COALESCE(pfp,"") as pfp, COALESCE(created,"") as created 
 	FROM Users 

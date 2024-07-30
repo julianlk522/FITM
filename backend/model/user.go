@@ -2,17 +2,10 @@ package model
 
 import (
 	"net/http"
-	"time"
 
 	e "oitm/error"
+	util "oitm/model/util"
 )
-
-type User struct {
-	LoginName string
-	About string
-	PFP string
-	Created string
-}
 
 // AUTH
 type UserAuth struct {
@@ -31,7 +24,7 @@ func (a *SignUpRequest) Bind(r *http.Request) error {
 		return e.ErrNoPassword
 	}
 
-	a.Created = time.Now().Format("2006-01-02 15:04:05")
+	a.Created = util.NEW_TIMESTAMP
 	return nil
 }
 
@@ -50,7 +43,16 @@ func (a *LogInRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-// EDIT PROFILE
+
+
+// PROFILE
+type Profile struct {
+	LoginName string
+	About string
+	PFP string
+	Created string
+}
+
 type EditAboutRequest struct {
 	About string `json:"about"`
 }
@@ -62,6 +64,8 @@ func (a *EditAboutRequest) Bind(r *http.Request) error {
 type EditPfpRequest struct {
 	PFP string `json:"pfp,omitempty"`
 }
+
+
 
 // TREASURE MAP
 type TreasureMap[T TmapLinkSignedIn | TmapLinkSignedOut] struct {

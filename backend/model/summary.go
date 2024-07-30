@@ -2,9 +2,9 @@ package model
 
 import (
 	"net/http"
-	"time"
 
 	e "oitm/error"
+	util "oitm/model/util"
 )
 
 // ADD
@@ -22,7 +22,7 @@ func (a *NewSummaryRequest) Bind(r *http.Request) error {
 		return e.ErrNoSummaryText
 	}
 
-	a.LastUpdated = time.Now().Format("2006-01-02 15:04:05")
+	a.LastUpdated = util.NEW_TIMESTAMP
 	
 	return nil
 

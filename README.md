@@ -4,17 +4,19 @@
 
 ### Features:
 
--Prevent tag last_updated from being changed if no cats were edited
 -Merge GetProfile handler logic into GetTreasureMap handler
     -(since it is only used on tmap page alongside link data)
--Middleware to alphabetize tag categories automatically
-    -e.g., http://localhost:4321/cat/shit,nerd => http://localhost:4321/cat/nerd,shit
-    -/top/{period}/{cat}, /cat/{cat}
 -Use traditional "?" URL params instead of routes
     -one single link results page spanning all of /cat/{categories}, /top/{period}, /top/{period}/{categories} depending on URL params passed
     -/cat, /top, etc. get confusing
 -Pagination
     -User Treasure Map
+        -Submitted / Copied / Tagged links
+        -Categories
+        -Subcategories
+    -Global Categories
+    -Global Subcategories
+
     -Fix top tag cats so they are specific to page being shown?
 -Improve frontend look/semantic markup
     -A11y, responsive layouts for phones / tablets
@@ -52,6 +54,11 @@
     -would help optimize GetTopTagCategories / GetTopTagCategoriesByPeriod handlers since queries could all be done in sql (as of now requires splitting global_cats field in Go)
 -Better logging?
     (Zap)
+-Middleware to alphabetize tag categories automatically
+    -e.g., http://localhost:4321/cat/shit,nerd => http://localhost:4321/cat/nerd,shit
+    -/top/{period}/{cat}, /cat/{cat}
+
+    -Probably not necessary if using URL search params instead
 
 
 

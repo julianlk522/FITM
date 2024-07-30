@@ -3,7 +3,8 @@ package model
 import (
 	"net/http"
 	e "oitm/error"
-	"time"
+
+	util "oitm/model/util"
 )
 
 type NewLink struct {
@@ -35,7 +36,7 @@ func (a *NewLinkRequest) Bind(r *http.Request) error {
 		return e.ErrNoTagCategories
 	}
 
-	a.SubmitDate = time.Now().Format("2006-01-02 15:04:05")
+	a.SubmitDate = util.NEW_TIMESTAMP
 	a.LikeCount = 0
 
 	return nil

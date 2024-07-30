@@ -2,9 +2,9 @@ package model
 
 import (
 	"net/http"
-	"time"
 
 	e "oitm/error"
+	util "oitm/model/util"
 )
 
 type NewTag struct {
@@ -25,7 +25,7 @@ func (a *NewTagRequest) Bind(r *http.Request) error {
 		return e.ErrNoLinkID
 	}
 
-	a.LastUpdated = time.Now().Format("2006-01-02 15:04:05")
+	a.LastUpdated = util.NEW_TIMESTAMP
 
 	return nil
 }
@@ -44,7 +44,7 @@ func (a *EditTagRequest) Bind(r *http.Request) error {
 		return e.ErrNoTagCategories
 	}
 
-	a.LastUpdated = time.Now().Format("2006-01-02 15:04:05")
+	a.LastUpdated = util.NEW_TIMESTAMP
 
 	return nil
 }

@@ -116,7 +116,7 @@ export default function EditTag(props: Props) {
                     <button 
                         onClick={() => {
                             set_categories(categories.sort())
-
+                            
                             // update if changes detected, else skip
                             if (editing && (categories.length !== initial_cats.length || categories.some((c, i) => c !== initial_cats[i]))) {
                                 confirm_changes()
