@@ -4,7 +4,7 @@
 
 ### Features:
 
--Fix tmap link sorting alphabetically before by like count
+-Prevent tag last_updated from being changed if no cats were edited
 -Merge GetProfile handler logic into GetTreasureMap handler
     -(since it is only used on tmap page alongside link data)
 -Middleware to alphabetize tag categories automatically

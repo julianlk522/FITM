@@ -19,6 +19,9 @@ const BASE_FIELDS = `SELECT
 	COALESCE(img_url,"") as img_url
 `
 
+const BASE_ORDER = ` 
+ORDER BY like_count DESC, summary_count DESC, link_id DESC;`
+
 // Authenticated: add IsLiked, IsCopied, IsTagged
 const AUTH_FIELDS = `, 
 COALESCE(is_liked,0) as is_liked, 
@@ -62,11 +65,12 @@ func NewGetTmapSubmitted(req_user_id string, req_login_name string) *GetTmapSubm
 	
 	if req_user_id != "" {
 		req_user_auth_from := strings.Replace(AUTH_FROM, "REQ_LOGIN_NAME", req_login_name, 1)
-		sql = BASE_FIELDS + AUTH_FIELDS + SUBMITTED_FROM + req_user_auth_from + SUBMITTED_WHERE
+		sql = 
+			BASE_FIELDS + AUTH_FIELDS + SUBMITTED_FROM + req_user_auth_from + SUBMITTED_WHERE + BASE_ORDER
 
 		sql = strings.ReplaceAll(sql, "REQ_USER_ID", req_user_id)
 	} else {
-		sql = BASE_FIELDS + SUBMITTED_FROM + SUBMITTED_WHERE
+		sql = BASE_FIELDS + SUBMITTED_FROM + SUBMITTED_WHERE + BASE_ORDER
 	}
 	
 	return &GetTmapSubmitted{Query: Query{Text: sql}}
@@ -100,17 +104,17 @@ const SUBMITTED_WHERE = ` WHERE submitted_by = 'LOGIN_NAME'`
 func (q *GetTmapSubmitted) FromCategories(categories []string) *GetTmapSubmitted {
 	var cat_clause string
 	for _, cat := range categories {
-		cat_clause += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
+		cat_clause += fmt.Sprintf(` 
+		AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
 	}
 
-	q.Text += cat_clause
+	q.Text = strings.Replace(q.Text, SUBMITTED_WHERE, SUBMITTED_WHERE + cat_clause, 1)
 
 	return q
 }
 
 func (q *GetTmapSubmitted) ForUser(login_name string) *GetTmapSubmitted {
 	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
-	q.Text += ";"
 
 	return q
 }
@@ -127,11 +131,11 @@ func NewGetTmapCopied(req_user_id string, req_login_name string) *GetTmapCopied 
 
 	if req_user_id != "" {
 		req_user_auth_from := strings.Replace(AUTH_FROM, "REQ_LOGIN_NAME", req_login_name, 1)
-		sql = COPIED_FIELDS + AUTH_FIELDS + COPIED_FROM + req_user_auth_from + COPIED_WHERE
+		sql = COPIED_FIELDS + AUTH_FIELDS + COPIED_FROM + req_user_auth_from + COPIED_WHERE + BASE_ORDER
 
 		sql = strings.ReplaceAll(sql, "REQ_USER_ID", req_user_id)
 	} else {
-		sql = COPIED_FIELDS + COPIED_FROM + COPIED_WHERE
+		sql = COPIED_FIELDS + COPIED_FROM + COPIED_WHERE + BASE_ORDER
 	}	
 
 	return &GetTmapCopied{Query: Query{Text: sql}}
@@ -178,17 +182,17 @@ func (q *GetTmapCopied) FromCategories(categories []string) *GetTmapCopied {
 	var cat_clause string
 
 	for _, cat := range categories {
-		cat_clause += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
+		cat_clause += fmt.Sprintf(` 
+		AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
 	}
 
-	q.Text += cat_clause
+	q.Text = strings.Replace(q.Text, COPIED_WHERE, COPIED_WHERE + cat_clause, 1)
 
 	return q
 }
 
 func (q *GetTmapCopied) ForUser(login_name string) *GetTmapCopied {
 	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
-	q.Text += ";"
 
 	return q
 }
@@ -205,11 +209,11 @@ func NewGetTmapTagged(req_user_id string, req_login_name string) *GetTmapTagged 
 
 	if req_user_id != "" {
 		req_user_auth_from := strings.Replace(AUTH_FROM, "REQ_LOGIN_NAME", req_login_name, 1)
-		sql = BASE_FIELDS + AUTH_FIELDS + TAGGED_FROM + req_user_auth_from + TAGGED_WHERE
+		sql = BASE_FIELDS + AUTH_FIELDS + TAGGED_FROM + req_user_auth_from + TAGGED_WHERE + BASE_ORDER
 
 		sql = strings.ReplaceAll(sql, "REQ_USER_ID", req_user_id)
 	} else {
-		sql = BASE_FIELDS + TAGGED_FROM + TAGGED_WHERE
+		sql = BASE_FIELDS + TAGGED_FROM + TAGGED_WHERE + BASE_ORDER
 	}	
 
 	return &GetTmapTagged{Query: Query{Text: sql}}
@@ -227,19 +231,19 @@ const TAGGED_WHERE = ` WHERE submitted_by != 'LOGIN_NAME'
 		)`
 
 func (q *GetTmapTagged) FromCategories(categories []string) *GetTmapTagged {
-	var and_clause string
+	var cat_clause string
 	for _, cat := range categories {
-		and_clause += fmt.Sprintf(` AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
+		cat_clause += fmt.Sprintf(` 
+		AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
 	}
 
-	q.Text += and_clause
+	q.Text = strings.Replace(q.Text, BASE_ORDER, cat_clause + BASE_ORDER, 1)
 
 	return q
 }
 
 func (q *GetTmapTagged) ForUser(login_name string) *GetTmapTagged {
 	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
-	q.Text += ";"
 
 	return q
 }
