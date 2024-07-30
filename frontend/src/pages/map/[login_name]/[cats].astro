@@ -3,7 +3,7 @@ import Link from '../../../components/Link'
 import ScrollUp from '../../../components/ScrollUp.astro'
 import TagCategory from '../../../components/TagCategory'
 import Layout from '../../../layouts/Layout.astro'
-import type { TreasureMap } from '../../../types'
+import type { FilteredTreasureMap } from '../../../types'
 import { tmap_sections } from '../../../types'
 
 const { login_name, cats: categories } = Astro.params
@@ -27,7 +27,7 @@ const tmap_resp = token
 if (tmap_resp.status > 399) {
 	return Astro.redirect('/404')
 }
-const tmap: TreasureMap = await tmap_resp.json()
+const tmap: FilteredTreasureMap = await tmap_resp.json()
 // Submitted: [{URL: 'https://example.com', LikeCount: 100}, ...],
 // Copied: [{URL: 'https://example.com', LikeCount: 1}, ...]
 // Tagged: [{URL: 'https://example.com', LikeCount: 2}, ...],

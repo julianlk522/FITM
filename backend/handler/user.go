@@ -147,28 +147,6 @@ func _RenderJWT(token string, w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, return_json)
 }
 
-// GET PROFILE
-func GetProfile(w http.ResponseWriter, r *http.Request) {
-	login_name := chi.URLParam(r, "login_name")
-	if login_name == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLoginName))
-		return
-	}
-
-	var u model.Profile
-	err := DBClient.QueryRow(`
-	SELECT login_name, COALESCE(about,"") as about, COALESCE(pfp,"") as pfp, COALESCE(created,"") as created 
-	FROM Users 
-	WHERE login_name = ?;`, login_name).Scan(&u.LoginName, &u.About, &u.PFP, &u.Created)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoUserWithLoginName))
-		return
-	}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, u)
-}
-
 func EditAbout(w http.ResponseWriter, r *http.Request) {
 	edit_about_data := &model.EditAboutRequest{}
 	if err := render.Bind(r, edit_about_data); err != nil {
@@ -388,6 +366,15 @@ func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name s
 		tagged_sql = query.NewGetTmapTagged("", "").ForUser(login_name)
 	}
 
+	var u model.Profile
+	err := DBClient.QueryRow(`
+	SELECT login_name, COALESCE(about,"") as about, COALESCE(pfp,"") as pfp, COALESCE(created,"") as created 
+	FROM Users 
+	WHERE login_name = ?;`, login_name).Scan(&u.LoginName, &u.About, &u.PFP, &u.Created)
+	if err != nil {
+		return nil, e.ErrNoUserWithLoginName
+	}
+
 	submitted, err := _ScanTmapLinks[T](submitted_sql.Query)
 	if err != nil {
 		return nil, err
@@ -400,7 +387,8 @@ func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name s
 	if err != nil {
 		return nil, err
 	}
-	tmap := model.TreasureMap[T]{Submitted: submitted, Tagged: tagged, Copied: copied}
+
+	tmap := model.TreasureMap[T]{Profile: u, Submitted: submitted, Tagged: tagged, Copied: copied}
 
 	all_links := slices.Concat(*submitted, *tagged, *copied)
 	cat_counts := GetTmapCategoryCounts(&all_links, nil)
@@ -409,7 +397,7 @@ func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name s
 	return &tmap, nil
 }
 
-func _BuildTmapFromCategories[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name string, categories []string, r *http.Request) (*model.TreasureMap[T], error) {
+func _BuildTmapFromCategories[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name string, categories []string, r *http.Request) (*model.FilteredTreasureMap[T], error) {
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 
@@ -442,7 +430,7 @@ func _BuildTmapFromCategories[T model.TmapLinkSignedIn | model.TmapLinkSignedOut
 	if err != nil {
 		return nil, err
 	}
-	tmap := model.TreasureMap[T]{Submitted: submitted, Tagged: tagged, Copied: copied}
+	tmap := model.FilteredTreasureMap[T]{Submitted: submitted, Tagged: tagged, Copied: copied}
 
 	all_links := slices.Concat(*submitted, *tagged, *copied)
 	cat_counts := GetTmapCategoryCounts(&all_links, categories)

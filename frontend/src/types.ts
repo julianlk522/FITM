@@ -9,7 +9,7 @@ function is_error_response(obj: any): obj is ErrorResponse {
   }
 
 // USER
-type User = {
+type Profile = {
 	LoginName: string
 	About: string
 	PFP: string
@@ -86,15 +86,17 @@ type SummaryPage = {
 // TREASURE MAP
 type TmapLink = LinkData & { CategoriesFromUser: boolean | undefined }
 
-type TreasureMap = {
+type FilteredTreasureMap = {
 	Submitted: TmapLink[]
 	Copied: TmapLink[]
 	Tagged: TmapLink[]
 	Categories: CategoryCount[]
 }
 
+type TreasureMap = FilteredTreasureMap & { Profile: Profile }
+
 const tmap_sections = ['Submitted', 'Copied', 'Tagged'] as const
 
 export { Periods, is_error_response, tmap_sections }
-export type { CategoryContributor, CategoryCount, ErrorResponse, LinkData, PaginatedLinks, Period, Summary, SummaryPage, Tag, TagPage, TreasureMap, User }
+export type { CategoryContributor, CategoryCount, ErrorResponse, FilteredTreasureMap, LinkData, PaginatedLinks, Period, Profile, Summary, SummaryPage, Tag, TagPage, TreasureMap }
 

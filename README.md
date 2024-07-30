@@ -4,8 +4,6 @@
 
 ### Features:
 
--Merge GetProfile handler logic into GetTreasureMap handler
-    -(since it is only used on tmap page alongside link data)
 -Use traditional "?" URL params instead of routes
     -one single link results page spanning all of /cat/{categories}, /top/{period}, /top/{period}/{categories} depending on URL params passed
     -/cat, /top, etc. get confusing

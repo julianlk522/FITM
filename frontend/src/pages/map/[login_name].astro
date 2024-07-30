@@ -4,7 +4,7 @@ import Link from '../../components/Link'
 import ProfilePic from '../../components/ProfilePic'
 import ScrollUp from '../../components/ScrollUp.astro'
 import Layout from '../../layouts/Layout.astro'
-import type { TreasureMap, User } from '../../types'
+import type { Profile, TreasureMap } from '../../types'
 import { tmap_sections } from '../../types'
 import format_date from '../../util/format_date'
 
@@ -28,33 +28,29 @@ if (tmap_resp.status > 399) {
 	return Astro.redirect('/404')
 }
 const tmap: TreasureMap = await tmap_resp.json()
+// Profile: {LoginName: 'bob', About: '...', PFP: '...', Created: '2022-01-01 00:00:00'},
 // Submitted: [{URL: 'https://example.com', LikeCount: 100}, ...],
 // Copied: [{URL: 'https://example.com', LikeCount: 1}, ...],
 // Tagged: [{URL: 'https://example.com', LikeCount: 2}, ...]
 // CategoryCounts: [{Category: 'umvc3', Count: 1}, ...],
 
+const profile: Profile = tmap.Profile
+const display_about = profile.About || is_signed_in_user
+
 const used_sections = tmap_sections.filter((s) => tmap[s].length)
 if (!used_sections.length) {
 	return Astro.redirect(`/404`)
 }
-
-const user_resp = await fetch(`http://127.0.0.1:8000/users/${login_name}`)
-if (user_resp.status > 399) {
-	return Astro.redirect('/404')
-}
-const user: User = await user_resp.json()
-// {LoginName: 'bob', About: '...', PFP: '...', Created: '2022-01-01 00:00:00'}
-const display_about = user.About || is_signed_in_user
 ---
 
 <Layout Title=`${login_name}'s Treasure Map`>
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
-		<h2 class='subtitle'>Created: {format_date(user.Created)}</h2>
+		<h2 class='subtitle'>Created: {format_date(profile.Created)}</h2>
 		<figure id='profile'>
 			<ProfilePic
 				client:load
-				PFP={user.PFP ? user.PFP : undefined}
+				PFP={profile.PFP ? profile.PFP : undefined}
 				LoginName={login_name}
 				SignedInUser={signed_in_user}
 				Token={token}
@@ -66,10 +62,10 @@ const display_about = user.About || is_signed_in_user
 						<EditAbout
 							client:load
 							token={token}
-							initial={user.About}
+							initial={profile.About}
 						/>
 					) : (
-						<figcaption>{user.About}</figcaption>
+						<figcaption>{profile.About}</figcaption>
 					)
 				) : null
 			}

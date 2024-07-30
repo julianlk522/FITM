@@ -60,7 +60,6 @@ func main() {
 
 	// PUBLIC
 	// USER ACCOUNTS
-	r.Get("/users/{login_name}", h.GetProfile)
 	r.Get("/pic/{file_name}", h.GetProfilePic)
 	r.Post("/signup", h.SignUp)
 	r.Post("/login", h.LogIn)
