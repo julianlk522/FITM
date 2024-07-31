@@ -1,8 +1,8 @@
 # open-internet-treasure-map
 
-## Todos:
+## Todos
 
-### Features:
+### Features
 
 -Use traditional "?" URL params instead of routes
     -one single link results page spanning all of /cat/{categories}, /top/{period}, /top/{period}/{categories} depending on URL params passed
@@ -22,19 +22,20 @@
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 
-### Code Quality:
+### Code Quality
 
+-Fix ("","") args for NewGetTmap_ funcs
 -Enforce consistent names
     -e.g., Global Categories vs. Global Tag categories
-    -Popular Categories vs. Top Categories 
+    -Popular Categories vs. Top Categories
 -Rebrand subcategories as category overlaps since that is a bit more accurate
 -Remove repeat code wherever possible
--Follow patterns shown in https://github.com/jonnylangefeld/go-api
+-Follow patterns shown in <https://github.com/jonnylangefeld/go-api>
 -Tests
-    -https://github.com/ory/dockertest
+    -<https://github.com/ory/dockertest>
 -Update JWT to use actual secret
 
-## To Maybe-Dos:
+## To-Maybe-Dos
 
 -Show number of copies along with number of likes in frontend
 -Edit category filters directly on top links by period/category(ies) page
@@ -53,19 +54,16 @@
 -Better logging?
     (Zap)
 -Middleware to alphabetize tag categories automatically
-    -e.g., http://localhost:4321/cat/shit,nerd => http://localhost:4321/cat/nerd,shit
+    -e.g., <http://localhost:4321/cat/shit,nerd> => <http://localhost:4321/cat/nerd,shit>
     -/top/{period}/{cat}, /cat/{cat}
 
     -Probably not necessary if using URL search params instead
-
-
-
 
 ## Why?
 
 Because there's a lot of good shit on the internet that's hard to be aware of and, to a lesser extent, hard to find even when you know about it.
 
-Internet users deserve a portal that provides them an unbiased, direct view into the web's useful contents. 
+Internet users deserve a portal that provides them an unbiased, direct view into the web's useful contents.
 
 ## What would be better than the status quo?
 
@@ -78,14 +76,6 @@ Links are tagged with various categories to best organize and produce relevant r
 e.g., Vim Adventures could be tagged with 'programming', 'learning games', 'typing games', 'keyboard ergonometry', etc.
 
 Users can like listed links to boost them, so in theory the most univerally appreciated resources are easiest to find.
-
-## Stack:
-
-Astro, TS
-Go
-Netlify (frontend)
-MySQL - ~$15/m for 1GB RAM, 1vCPU
-[some VPS - Akamai? DO?] (backend) - ~$24/m for 4GB RAM / 2 CPUs, ~$1/m for 10GB block storage
 
 ## Why is this service different and better than existing alternatives?
 
@@ -107,7 +97,7 @@ MySQL - ~$15/m for 1GB RAM, 1vCPU
 
 -Are.na: some good ideas but requires signup to do anything and paid plan to do much, not explicitly web content (just too big a can of worms at that point), requires too much upfront learning/adapting (e.g. blocks and channels methodology), nested channels impose arbitrary complexity and are too confusing to navigate, kind of dull and scary looking
 
-## Anecdotes to keep in mind:
+## Anecdotes to keep in mind
 
 "what made these sites awesome for me was the backfill of amazing content that other people had already cataloged. I didn’t share much, I just enjoyed other people’s content."
 

@@ -5,7 +5,14 @@ import (
 	"strings"
 )
 
-// User Treasure Map Links
+// PROFILE
+func NewGetTmapProfile(login_name string) string {
+	return fmt.Sprintf(`SELECT login_name, COALESCE(about,"") as about, COALESCE(pfp,"") as pfp, COALESCE(created,"") as created 
+	FROM Users 
+	WHERE login_name = %s;`, login_name)
+}
+
+// LINKS
 const BASE_FIELDS = `SELECT 
 	Links.id as link_id, 
 	url, 

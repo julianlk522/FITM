@@ -69,7 +69,7 @@ type EditPfpRequest struct {
 
 // TREASURE MAP
 type TreasureMap[T TmapLinkSignedIn | TmapLinkSignedOut] struct {
-	Profile Profile
+	Profile *Profile
 	Submitted *[]T
 	Tagged *[]T
 	Copied *[]T

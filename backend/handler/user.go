@@ -352,6 +352,12 @@ func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name s
 
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
+
+	profile_sql := query.NewGetTmapProfile(login_name)
+	profile, err := _ScanTmapProfile(profile_sql)
+	if err != nil {
+		return nil, err
+	}
 	
 	// Requesting user signed in: get IsLiked / IsCopied / IsTagged for each link
 	if req_user_id != "" {	
@@ -364,15 +370,6 @@ func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name s
 		submitted_sql = query.NewGetTmapSubmitted("", "").ForUser(login_name)
 		copied_sql = query.NewGetTmapCopied("", "").ForUser(login_name)
 		tagged_sql = query.NewGetTmapTagged("", "").ForUser(login_name)
-	}
-
-	var u model.Profile
-	err := DBClient.QueryRow(`
-	SELECT login_name, COALESCE(about,"") as about, COALESCE(pfp,"") as pfp, COALESCE(created,"") as created 
-	FROM Users 
-	WHERE login_name = ?;`, login_name).Scan(&u.LoginName, &u.About, &u.PFP, &u.Created)
-	if err != nil {
-		return nil, e.ErrNoUserWithLoginName
 	}
 
 	submitted, err := _ScanTmapLinks[T](submitted_sql.Query)
@@ -388,13 +385,23 @@ func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name s
 		return nil, err
 	}
 
-	tmap := model.TreasureMap[T]{Profile: u, Submitted: submitted, Tagged: tagged, Copied: copied}
+	tmap := model.TreasureMap[T]{Profile: profile, Submitted: submitted, Tagged: tagged, Copied: copied}
 
 	all_links := slices.Concat(*submitted, *tagged, *copied)
 	cat_counts := GetTmapCategoryCounts(&all_links, nil)
 	tmap.Categories = cat_counts
 
 	return &tmap, nil
+}
+
+func _ScanTmapProfile(sql string) (*model.Profile, error) {
+	var u model.Profile
+	err := DBClient.QueryRow(sql).Scan(&u.LoginName, &u.About, &u.PFP, &u.Created)
+	if err != nil {
+		return nil, e.ErrNoUserWithLoginName
+	}
+
+	return &u, nil
 }
 
 func _BuildTmapFromCategories[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name string, categories []string, r *http.Request) (*model.FilteredTreasureMap[T], error) {
