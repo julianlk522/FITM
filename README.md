@@ -4,9 +4,6 @@
 
 ### Features
 
--Use traditional "?" URL params instead of routes
-    -one single link results page spanning all of /cat/{categories}, /top/{period}, /top/{period}/{categories} depending on URL params passed
-    -/cat, /top, etc. get confusing
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links

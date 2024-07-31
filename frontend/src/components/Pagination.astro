@@ -12,12 +12,12 @@ const { Period: period, Page: page, NextPage: next_page } = Astro.props
 
 <p>
 	Page:
-	{page > 1 ? <a href={`/top/${period}`}>1</a> : null}
+	{page > 1 ? <a href={`/top?period=${period}`}>1</a> : null}
 
 	{
 		page > 2 ? (
 			<span>
-				<a href={`/top/${period}?page=${page - 1}`}>{page - 1}</a>
+				<a href={`/top?period=${period}&page=${page - 1}`}>{page - 1}</a>
 			</span>
 		) : null
 	}
@@ -28,7 +28,7 @@ const { Period: period, Page: page, NextPage: next_page } = Astro.props
 
 	{
 		next_page > 0 ? (
-			<a href={`/top/${period}?page=${next_page}`}>{next_page}</a>
+			<a href={`/top?period=${period}&page=${next_page}`}>{next_page}</a>
 		) : null
 	}
 </p>

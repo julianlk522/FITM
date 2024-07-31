@@ -47,7 +47,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 				{
 					top_cats.map((cat) => (
 						<li>
-							<a href={`/cat/${cat.Category}`}>{cat.Category}</a>
+							<a href={`/top?categories=${cat.Category}`}>{cat.Category}</a>
 							<span>({cat.Count})</span>
 						</li>
 					))
@@ -60,7 +60,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 				{
 					other_periods.map((period) => (
 						<li class='period'>
-							<a href={`/top/${period}`}>{period}</a>
+							<a href={`/top?period=${period}`}>{period}</a>
 						</li>
 					))
 				}

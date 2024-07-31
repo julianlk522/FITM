@@ -88,6 +88,9 @@ let user = Astro.cookies.get('user')?.value
 			background: rgba(var(--accent-light), 5%);
 			padding: 3px;
 		}
+		h1:has(+ h2.subtitle) {
+			margin-bottom: 25px;
+		}
 		code {
 			font-family:
 				Menlo,

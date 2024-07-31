@@ -1,0 +1,278 @@
+---
+import Link from '../components/Link'
+import Pagination from '../components/Pagination.astro'
+import ScrollUp from '../components/ScrollUp.astro'
+import Layout from '../layouts/Layout.astro'
+import {
+Periods,
+type CategoryContributor,
+type CategoryCount,
+type PaginatedLinks,
+type Period,
+} from '../types'
+
+// get auth token and user if user signed in
+const token = Astro.cookies.get('token')?.value
+const user = Astro.cookies.get('user')?.value
+
+// Params:
+let page = 1
+if (Astro.url.searchParams.get('page')) {
+	page = parseInt(Astro.url.searchParams.get('page') as string)
+}
+let categories: string | undefined
+if (Astro.url.searchParams.get('categories')) {
+	categories = Astro.url.searchParams.get('categories') as string
+}
+let period: Period = 'all'
+let other_periods: Period[] = Periods.filter((other) => other !== 'all')
+if (
+	Astro.url.searchParams.get('period') &&
+	(Periods as readonly string[]).includes(
+		Astro.url.searchParams.get('period') as Period
+	)
+) {
+	period = Astro.url.searchParams.get('period') as Period
+	other_periods = Periods.filter((other) => other !== period)
+}
+
+// Generate links endpoint
+// TODO: replace after converting API endpoints to single route using search params?
+const LINKS_BASE_ENDPOINT = 'http://127.0.0.1:8000/links'
+let links_endpoint = LINKS_BASE_ENDPOINT
+if (period !== 'all') {
+	links_endpoint += `/${period}`
+} else if (categories) {
+	links_endpoint += '/cat'
+}
+if (categories) {
+	links_endpoint += `/${categories}`
+}
+links_endpoint += `?page=${page}`
+const get_links_resp = await (token
+	? fetch(links_endpoint, {
+			headers: { Authorization: `Bearer ${token}` },
+		})
+	: fetch(links_endpoint))
+const data: PaginatedLinks = await get_links_resp.json()
+const links = data.Links
+// [{URL: 'https://example.com', LikeCount: 100}, ...]
+
+let top_cats: CategoryCount[] = []
+let top_subcats: CategoryCount[] = []
+let top_contributors: CategoryContributor[] = []
+
+if (links && links.length) {
+
+	// Get subcategory counts and category contributors
+	if (categories) {
+		let subcats_endpoint = LINKS_BASE_ENDPOINT
+		let contributors_endpoint = LINKS_BASE_ENDPOINT
+
+		if (period !== 'all') {
+			subcats_endpoint += `/${period}`
+			contributors_endpoint += `/${period}`
+		}
+
+		subcats_endpoint += `/subcat/${categories}`
+		contributors_endpoint += `/cat/${categories}/users`
+
+		const subcats_resp = await fetch(subcats_endpoint)
+		top_subcats = await subcats_resp.json()
+		// [{Category: 'flowers', Count: 2}, ...]
+
+		const contributors_resp = await fetch(contributors_endpoint)
+		top_contributors = await contributors_resp.json()
+		// [{"Categories":"umvc3,2dfighters","LoginName":"bob","LinksSubmitted":"10"}]
+	
+	// Get category counts
+	} else {
+		let cats_endpoint = `http://127.0.0.1:8000/tags/popular`
+
+		if (period !== 'all') {
+			cats_endpoint += `/${period}`
+		}
+
+		const top_cats_resp = await fetch(cats_endpoint)
+		top_cats = await top_cats_resp.json()
+		// [{Category: 'umvc3', Count: 1}, ...]
+	}
+}
+
+const page_title =
+	categories
+		? categories
+		: 'Top Rated'
+---
+
+<Layout Title='Welcome to the Open Internet Treasure Map (OITM)'>
+	<main>
+		<h1>
+			{page_title}
+		</h1>
+		{period !== 'all' ? <h2 class="subtitle">({period.charAt(0).toUpperCase() + period.slice(1)})</h2> : null}
+		<section id='search-filters'>
+			<h2>Filters</h2>
+			<div>
+				<p>Period:</p>
+				{
+					other_periods.map((other) => (
+						<a
+							class='period'
+							href={`/top?period=${other}${categories ? `&categories=${categories}` : ''}`}
+						>
+							{other}
+						</a>
+					))
+				}
+			</div>
+			{
+				categories ? (
+					<div>
+						<p>
+							{categories.includes(',')
+								? 'Categories: '
+								: 'Category: '}
+						</p>
+						<a href={`/top${period !== 'all' ? `?period=${period}` : ''}`}>Remove</a>
+					</div>
+				) : null
+			}
+		</section>
+
+		{
+			links && links.length ? (
+				<>
+					{top_cats.length ? (
+						<section>
+							<h2>Categories</h2>
+							<ol id='top-categories'>
+								{top_cats.map((cat) => (
+									<li>
+										<a
+											href={`/top?categories=${cat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
+										>
+											{cat.Category}
+										</a>
+										<span>({cat.Count})</span>
+									</li>
+								))}
+							</ol>
+						</section>
+					) : (
+						<>
+							<section>
+								<h2>Subcategories</h2>
+								{top_subcats.length ? (
+									<ol id='top-categories'>
+										{top_subcats.map((subcat) => (
+											<li>
+												<strong>
+													<a
+														href={`/top?categories=${categories + ',' + subcat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
+													>
+														{subcat.Category}
+													</a>
+												</strong>
+												<span> ({subcat.Count})</span>
+											</li>
+										))}
+									</ol>
+								) : (
+									<p>No further subcategories</p>
+								)}
+							</section>
+							<section>
+								<h2>Top Contributors</h2>
+								<ol>
+									{top_contributors.map(
+										(contributor: CategoryContributor) => (
+											<li>
+												<strong>
+													<a
+														href={`/map/${contributor.LoginName}`}
+													>
+														{contributor.LoginName}
+													</a>
+												</strong>
+												<span>
+													({contributor.LinksSubmitted})
+												</span>
+											</li>
+										)
+									)}
+								</ol>
+							</section>
+						</>
+					)}
+
+					<section>
+						<h2>Links</h2>
+
+						<Pagination
+							Period={period}
+							Page={page}
+							NextPage={data.NextPage}
+						/>
+
+						{/* TODO: replace magic page limit number */}
+						<ol id='links' start={(page - 1) * 20 + 1}>
+							{links.map((link) => (
+								<Link
+									client:load
+									IsSummaryPage={false}
+									IsTagPage={false}
+									Link={link}
+									Token={token}
+									User={user}
+								/>
+							))}
+						</ol>
+
+						{data.NextPage > 0 ? (
+							<Pagination
+								Period={period}
+								Page={page}
+								NextPage={data.NextPage}
+							/>
+						) : null}
+					</section>
+
+					<ScrollUp />
+				</>
+			) : (
+				<>
+					<p>No links found</p>
+					{user ? (
+						<p>
+							<a href={`/new`}>Add link</a>
+						</p>
+					) : null}
+				</>
+			)
+		}
+	</main>
+</Layout>
+
+<style>
+	#search-filters {
+		div {
+			display: flex;
+			align-items: center;
+		}
+
+		p {
+			margin-top: 0;
+		}
+
+		a {
+			margin-left: 5px;
+		}
+	}
+	#links {
+		padding: 0;
+	}
+	li strong:has(+ span) a {
+		display: inline-block;
+	}
+</style>
