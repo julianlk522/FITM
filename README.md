@@ -4,6 +4,7 @@
 
 ### Features
 
+-Fix broken copying
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
@@ -21,40 +22,32 @@
 
 ### Code Quality
 
--Fix ("","") args for NewGetTmap_ funcs
--Enforce consistent names
-    -e.g., Global Categories vs. Global Tag categories
-    -Popular Categories vs. Top Categories
 -Rebrand subcategories as category overlaps since that is a bit more accurate
--Remove repeat code wherever possible
--Follow patterns shown in <https://github.com/jonnylangefeld/go-api>
 -Tests
     -<https://github.com/ory/dockertest>
 -Update JWT to use actual secret
+-Enforce consistent names
+    -e.g., Global Categories vs. Global Tag categories
+    -Popular Categories vs. Top Categories
+-Remove repeat code wherever possible
+    -backend handlers
 
 ## To-Maybe-Dos
 
+-Better way to visualize how Global Cats are determined
 -Show number of copies along with number of likes in frontend
 -Edit category filters directly on top links by period/category(ies) page
     -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads
 -Search for existing tag cats while adding/editing
     -Fuzzysort?
+-Better logging?
+    (Zap)
 -Way to prevent many tags from flooding global tag
     -might not happen actually? would require many different cats which is not super likely i would not imagine
--Some way to visualize how Global Cats are determined
--Improve profile pic upload
-    -more file formats?
-    -maybe optimize min/max aspect ratios
 -Separate tag categories into distinct rows in Tags table
     -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)
     -would help optimize GetTopTagCategories / GetTopTagCategoriesByPeriod handlers since queries could all be done in sql (as of now requires splitting global_cats field in Go)
--Better logging?
-    (Zap)
--Middleware to alphabetize tag categories automatically
-    -e.g., <http://localhost:4321/cat/shit,nerd> => <http://localhost:4321/cat/nerd,shit>
-    -/top/{period}/{cat}, /cat/{cat}
-
-    -Probably not necessary if using URL search params instead
+-Improve profile pic upload?
 
 ## Why?
 

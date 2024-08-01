@@ -346,30 +346,39 @@ func _UserExists(login_name string) (bool, error) {
 }
 
 func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name string, r *http.Request) (*model.TreasureMap[T], error) {
-	var submitted_sql *query.GetTmapSubmitted
-	var copied_sql *query.GetTmapCopied
-	var tagged_sql *query.GetTmapTagged
-
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
-	req_login_name := r.Context().Value(m.LoginNameKey).(string)
-
 	profile_sql := query.NewGetTmapProfile(login_name)
 	profile, err := _ScanTmapProfile(profile_sql)
 	if err != nil {
 		return nil, err
 	}
+
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_login_name := r.Context().Value(m.LoginNameKey).(string)
+
+	var submitted_sql *query.GetTmapSubmitted
+	var copied_sql *query.GetTmapCopied
+	var tagged_sql *query.GetTmapTagged
 	
 	// Requesting user signed in: get IsLiked / IsCopied / IsTagged for each link
 	if req_user_id != "" {	
-		submitted_sql = query.NewGetTmapSubmitted(req_user_id, req_login_name).ForUser(login_name)
-		copied_sql = query.NewGetTmapCopied(req_user_id, req_login_name).ForUser(login_name)
-		tagged_sql = query.NewGetTmapTagged(req_user_id, req_login_name).ForUser(login_name)
+		submitted_sql = query.
+			NewGetTmapSubmitted(login_name).
+			AsSignedInUser(req_user_id, req_login_name)
+		copied_sql = query.
+			NewGetTmapCopied(login_name).
+			AsSignedInUser(req_user_id, req_login_name)
+		tagged_sql = query.
+			NewGetTmapTagged(login_name).
+			AsSignedInUser(req_user_id, req_login_name)
 		
 	// No auth
 	} else {
-		submitted_sql = query.NewGetTmapSubmitted("", "").ForUser(login_name)
-		copied_sql = query.NewGetTmapCopied("", "").ForUser(login_name)
-		tagged_sql = query.NewGetTmapTagged("", "").ForUser(login_name)
+		submitted_sql = query.
+			NewGetTmapSubmitted(login_name)
+		copied_sql = query.
+			NewGetTmapCopied(login_name)
+		tagged_sql = query.
+			NewGetTmapTagged(login_name)
 	}
 
 	submitted, err := _ScanTmapLinks[T](submitted_sql.Query)
@@ -414,15 +423,30 @@ func _BuildTmapFromCategories[T model.TmapLinkSignedIn | model.TmapLinkSignedOut
 
 	// Requesting user signed in: get IsLiked / IsCopied / IsTagged for each link
 	if req_user_id != "" {	
-		submitted_sql = query.NewGetTmapSubmitted(req_user_id, req_login_name).FromCategories(categories).ForUser(login_name)
-		copied_sql = query.NewGetTmapCopied(req_user_id, req_login_name).FromCategories(categories).ForUser(login_name)
-		tagged_sql = query.NewGetTmapTagged(req_user_id, req_login_name).FromCategories(categories).ForUser(login_name)
+		submitted_sql = query.
+			NewGetTmapSubmitted(login_name).
+			FromCategories(categories).
+			AsSignedInUser(req_user_id, req_login_name)
+		copied_sql = query.
+			NewGetTmapCopied(login_name).
+			FromCategories(categories).
+			AsSignedInUser(req_user_id, req_login_name)
+		tagged_sql = query.
+			NewGetTmapTagged(login_name).
+			FromCategories(categories).
+			AsSignedInUser(req_user_id, req_login_name)
 		
 	// No auth
 	} else {
-		submitted_sql = query.NewGetTmapSubmitted("", "").FromCategories(categories).ForUser(login_name)
-		copied_sql = query.NewGetTmapCopied("", "").FromCategories(categories).ForUser(login_name)
-		tagged_sql = query.NewGetTmapTagged("", "").FromCategories(categories).ForUser(login_name)
+		submitted_sql = query.
+			NewGetTmapSubmitted(login_name).
+			FromCategories(categories)
+		copied_sql = query.
+			NewGetTmapCopied(login_name).
+			FromCategories(categories)
+		tagged_sql = query.
+			NewGetTmapTagged(login_name).
+			FromCategories(categories)
 	}
 
 	submitted, err := _ScanTmapLinks[T](submitted_sql.Query)
