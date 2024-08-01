@@ -4,7 +4,6 @@
 
 ### Features
 
--Fix broken copying
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
@@ -34,6 +33,8 @@
 
 ## To-Maybe-Dos
 
+-Friends
+    -(i.e., saved users whose tmaps you can quickly access without manually typing the URL)
 -Better way to visualize how Global Cats are determined
 -Show number of copies along with number of likes in frontend
 -Edit category filters directly on top links by period/category(ies) page

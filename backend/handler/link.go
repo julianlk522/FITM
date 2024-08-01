@@ -731,7 +731,7 @@ func CopyLink(w http.ResponseWriter, r *http.Request) {
 
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	owns_link := _UserSubmittedLink(req_login_name, link_id)
-	if !owns_link {
+	if owns_link {
 		render.Render(w, r, e.ErrInvalidRequest(errors.New("cannot copy your own link to your treasure map")))
 		return
 	}
