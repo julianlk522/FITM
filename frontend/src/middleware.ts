@@ -1,100 +1,124 @@
+import type { APIContext } from 'astro'
+import { sequence } from 'astro:middleware'
+import type { VerifyErrors } from 'jsonwebtoken'
+import jwt from 'jsonwebtoken'
 
-import type { APIContext } from "astro";
-import { sequence } from "astro:middleware";
-import type { VerifyErrors } from "jsonwebtoken";
-import jwt from "jsonwebtoken";
+export const onRequest = sequence(handle_jwt_auth, handle_redirect_action)
 
-export const onRequest = sequence(handle_jwt_auth, handle_redirect_action);
+async function handle_jwt_auth(
+	context: APIContext,
+	next: () => Promise<Response>
+) {
+	const req_token = context.cookies.get('token')?.value
+	const req_user = context.cookies.get('user')?.value
 
-async function handle_jwt_auth(context: APIContext, next: () => Promise<Response>) {
-    const req_token = context.cookies.get('token')?.value
-    const req_user = context.cookies.get('user')?.value
-    
-    // authenticate token cookie if found
-    if (req_token) { 
-        try {
-            jwt.verify(req_token, 'secret', function<JwtPayload> (err: VerifyErrors | null, decoded: JwtPayload | undefined) {
+	// authenticate token cookie if found
+	if (req_token) {
+		try {
+			// TODO: add real jwt password
+			jwt.verify(req_token, 'secret', function <
+				JwtPayload
+			>(err: VerifyErrors | null, decoded: JwtPayload | undefined) {
+				// delete cookies and redirect to login if invalid
+				// @ts-ignore
+				if (err || !decoded || !decoded.login_name) {
+					context.cookies.delete('token')
+					context.cookies.delete('user')
 
-                // @ts-ignore
-                if (err || !decoded || !decoded.login_name) {
-                    context.cookies.delete('token')
-                    context.cookies.delete('user')
+					return Response.redirect(
+						new URL('/login', context.request.url),
+						302
+					)
 
-                    return Response.redirect(new URL("/login", context.request.url), 302);
-                
-                // set user cookie if verified
-                } else {
-                    
-                    // @ts-ignore
-                    context.cookies.set('user', decoded.login_name, {path: '/', maxAge: 3600, sameSite: 'strict', secure: true})
-                }
-            })
-        } catch(err) {
-            console.log("jwt errors: ", err)
-            return Response.redirect(new URL("/login", context.request.url), 302);
-        }
+					// set user cookie if verified
+				} else {
+					// @ts-ignore
+					context.cookies.set('user', decoded.login_name, {
+						path: '/',
+						maxAge: 3600,
+						sameSite: 'strict',
+						secure: true,
+					})
+				}
+			})
+		} catch (err) {
+			// TODO: add (saved) logging
+			console.log('jwt errors: ', err)
+			return Response.redirect(
+				new URL('/login', context.request.url),
+				302
+			)
+		}
 
-    // if user cookie found but no token, reset user cookie and redirect to login
-    } else if (req_user) {
-        context.cookies.delete('user')
-        return Response.redirect(new URL("/login", context.request.url))
+		// reset and redirect to login if user cookie found but not token cookie
+	} else if (req_user) {
+		context.cookies.delete('user')
+		return Response.redirect(new URL('/login', context.request.url))
+	}
 
-    }
-
-    return next();
+	return next()
 }
 
-async function handle_redirect_action(context: APIContext, next: () => Promise<Response>) {
-    const redirect_action = context.cookies.get('redirect_action')?.value
-     // user may be in the redirect process; don't delete cookie if so
-    // otherwise delete cookie so no accidental actions
-    if (!redirect_action || context.request.url === "http://127.0.0.1:4321/login" || context.request.url === "http://localhost:4321/login") {
-        return next()
-    }
+async function handle_redirect_action(
+	context: APIContext,
+	next: () => Promise<Response>
+) {
+	// "like summary 78", "copy summary 89", etc.
+	const redirect_action = context.cookies.get('redirect_action')?.value
 
-    const token = context.cookies.get('token')?.value
-    if (!token) {
-        context.cookies.delete('redirect_action')
-        return next()
-    }
-    
-    // e.g., "like summary 78" or "copy summary 78"
-    const action = redirect_action.split(' ')[0]
-    const item = redirect_action.split(' ')[1]
-    let api_section
-    if (item === 'summary') {
-        api_section = 'summaries'
-    } else if (item === 'link') {
-        api_section = 'links'
-    }
-    const item_id = redirect_action.split(' ')[2]
+	// continue normally if no redirect action cookie found
+	// or if user aborted redirect process from login page
+	if (
+		!redirect_action ||
+		context.request.url === 'http://127.0.0.1:4321/login' ||
+		context.request.url === 'http://localhost:4321/login'
+	) {
+		return next()
+	}
 
-    // LINKS
-    // r.Post("/links/{link_id}/like", handler.LikeLink)
-    // r.Post("/links/{link_id}/copy", handler.CopyLink)
+	// remove cookie if unauthenticated
+	const token = context.cookies.get('token')?.value
+	if (!token) {
+		context.cookies.delete('redirect_action')
+		return next()
+	}
 
-    // SUMMARIES
-    // r.Post("/summaries/{summary_id}/like", handler.LikeSummary)
+	// "like", "copy"
+	const action = redirect_action.split(' ')[0]
 
-    const api_url = 'http://127.0.0.1:8000'
-    const redirect_action_url = `${api_url}/${api_section}/${item_id}/${action}`
+	// "link", "summary"
+	const item = redirect_action.split(' ')[1]
+	let api_section
+	if (item === 'link') {
+		api_section = 'links'
+	} else if (item === 'summary') {
+		api_section = 'summaries'
+	}
 
-    const resp = await fetch(
-        redirect_action_url,
-        {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-        }
-    )
+	const api_url = 'http://127.0.0.1:8000'
+	const item_id = redirect_action.split(' ')[2]
+	const redirect_action_url = `${api_url}/${api_section}/${item_id}/${action}`
 
-    if (resp.status !== 200) {
-        console.error("redirect action failed")
-    } else {
-        context.cookies.delete('redirect_action', {path: context.url.pathname})
-    }
+	const resp = await fetch(redirect_action_url, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			Authorization: `Bearer ${token}`,
+		},
+	})
 
-    return next()
+	if (resp.status !== 200) {
+		// not a big deal if the redirect action fails. some sites don't do it by default.
+		// but would be nice to try to understand what went wrong.
+
+		// TODO: maybe add (saved) logging
+		console.error('redirect action failed')
+	} else {
+		// cleanup cookie if successful
+		context.cookies.delete('redirect_action', {
+			path: context.url.pathname,
+		})
+	}
+
+	return next()
 }
