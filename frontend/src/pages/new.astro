@@ -19,14 +19,25 @@ if (!token || !user) {
 <Layout Title='Submit a New Link to OITM'>
 	<main>
 		<h1>Submit New Links</h1>
-		<h2>Rules</h2>
-		<p>
-			Anything NSFW needs to be tagged with category "NSFW" or will be
-			removed.
-		</p>
+		<section>
+			<h2>Rules</h2>
+			<p>
+				Anything <a href="https://en.wikipedia.org/wiki/Not_safe_for_work">NSFW</a> must be tagged with cat <span id="example-cat" class="category">"NSFW"</span>.
+			</p>
+		</section>
 
 		<NewLinks client:load Token={token} User={user} />
 	</main>
 </Layout>
 
-<style></style>
+<style>
+	#example-cat {
+		display: inline;
+		margin: 5px;
+		color: black;
+		font-weight: bold;
+	}
+	a {
+		font-weight: bold;
+	}
+</style>
