@@ -37,15 +37,17 @@ const { Link: link, UserTag: user_tag, EarliestTags: top_tags } = tag_Data
 
 <Layout Title=`Tags for ${tag_Data.Link.Summary}`>
 	<main>
-		<h2>Link:</h2>
-		<Link
-			client:load
-			IsSummaryPage={false}
-			IsTagPage={true}
-			Link={link}
-			Token={token}
-			User={user}
-		/>
+		<section>
+			<h2>Link:</h2>
+			<Link
+				client:load
+				IsSummaryPage={false}
+				IsTagPage={true}
+				Link={link}
+				Token={token}
+				User={user}
+			/>
+		</section>
 
 		<EditTag
 			client:load

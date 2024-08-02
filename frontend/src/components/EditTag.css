@@ -1,14 +1,17 @@
+section#edit-tag {
+	margin-top: 75px;
+}
 #user_tags_title_bar {
-    display: flex;
-    align-items: center;
-    gap: 20px;
+	display: flex;
+	align-items: center;
+	gap: 20px;
 }
 #categories_grid {
-    display: flex;
-    flex-wrap: wrap;
-    padding-inline-start: 0;
-    gap: 10px;
+	display: flex;
+	flex-wrap: wrap;
+	padding-inline-start: 0;
+	gap: 10px;
 }
 .error {
-    color: red;
+	color: red;
 }

@@ -34,15 +34,16 @@ let user = Astro.cookies.get('user')?.value
 
 	<style is:global>
 		:root {
-			--accent: 136, 58, 234;
-			--accent-light: 224, 204, 250;
-			--accent-dark: 49, 10, 101;
-			--accent-gradient: linear-gradient(
-				45deg,
-				rgb(var(--accent)),
-				rgb(var(--accent-light)) 30%,
-				white 60%
-			);
+			--text: hsl(0, 0%, 92%);
+			--text-treasurey: hsl(44, 55%, 80%);
+			--text-treasurey-dark: hsl(46, 24%, 52%);
+			--text-treasurey-mild: hsl(44, 15%, 80%);
+			
+			--accent-treasurey: hsl(44, 95%, 71%);
+			--accent-treasurey-mild: hsl(54, 77%, 75%);
+			--accent-sky: hsl(180, 33%, 82%);
+			--accent-green: hsl(112, 33%, 56%);
+			--accent-green-mild: hsl(112, 66%, 90%);
 		}
 		html {
 			font-family: system-ui, sans-serif;
@@ -54,6 +55,11 @@ let user = Astro.cookies.get('user')?.value
 			max-width: 1080px;
 			margin: 0 auto;
 			padding: 1rem;
+
+			a,
+			a:visited {
+				color: var(--text);
+			}
 		}
 		nav :is(#user-tmap-link, #login-link) {
 			float: right;
@@ -63,21 +69,21 @@ let user = Astro.cookies.get('user')?.value
 			padding: 1rem;
 			width: 800px;
 			max-width: calc(100% - 2rem);
-			color: white;
-			font-size: 20px;
+			color: var(--text);
+			font-size: 18px;
 			line-height: 1.6;
 		}
 		h1 {
-			font-size: 4rem;
+			font-size: 3rem;
 			font-weight: 700;
 			line-height: 1;
 			text-align: center;
 		}
-		h2 {
-			font-size: 2rem;
+		h1:has(+ h2.subtitle) {
+			margin-bottom: 25px;
 		}
-		h2, h3, h4, h5, h6 {
-			margin: 0;
+		h2 {
+			font-size: 1.5rem;
 		}
 		h2.subtitle {
 			font-size: 1rem;
@@ -88,25 +94,23 @@ let user = Astro.cookies.get('user')?.value
 			background: rgba(var(--accent-light), 5%);
 			padding: 3px;
 		}
-		h1:has(+ h2.subtitle) {
-			margin-bottom: 25px;
+		h3 {
+			font-size: 1.15rem;
 		}
-		code {
-			font-family:
-				Menlo,
-				Monaco,
-				Lucida Console,
-				Liberation Mono,
-				DejaVu Sans Mono,
-				Bitstream Vera Sans Mono,
-				Courier New,
-				monospace;
+		h2, h3, h4, h5, h6 {
+			margin: 0;
 		}
 		section {
-			margin-top: 75px;
+			margin-top: 50px;
 		}
 		section:first-of-type {
 			margin-top: 0;
+		}
+		a:not(:visited) {
+			color: var(--text-treasurey);
+		}
+		a:visited {
+			color: var(--text-treasurey-dark);
 		}
 		button.img-btn {
 			padding: 3px 5px 0px;
@@ -116,11 +120,45 @@ let user = Astro.cookies.get('user')?.value
 			cursor: pointer;
 		}
 
-		#top-categories {
+		#top-cats {
 			display: flex;
 			flex-direction: column;
-			flex-wrap: wrap;
-			max-height: 160px;
+			list-style-position: inside;
+		}
+
+		@media (min-width: 375px) {
+			h1 {
+				font-size: 4rem;
+			}
+
+			h2 {
+				font-size: 2rem;
+			}
+
+			section {
+				margin-top: 75px;
+			}
+		}
+
+		@media (min-width: 480px) {
+			#top-cats {
+				flex-wrap: wrap;
+				max-height: 350px;
+
+				li {
+					max-width: 50%
+				}
+			}
+		}
+
+		@media (min-width: 680px) {
+			#top-cats {
+				max-height: 200px;
+
+				li {
+					max-width: 33%
+				}
+			}
 		}
 
 	</style>

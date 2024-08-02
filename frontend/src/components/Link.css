@@ -1,56 +1,72 @@
 .link {
-    border: 1px solid rgba(var(--accent), 25%);
-    margin: 50px 0 0;
+	border: 1px solid rgba(var(--accent), 25%);
+	margin: 25px 0 0;
 }
 astro-island:first-of-type li.link {
-    margin-top: 0;
+	margin-top: 0;
 }
 .link.single {
-    list-style: none;
+	list-style: none;
 }
 .preview {
-    display: inline-flex;
-    gap: 20px;
-    vertical-align: top;
+	display: inline-flex;
+	gap: 20px;
+	vertical-align: top;
 }
 .preview img {
-    object-fit: cover;
+	object-fit: cover;
 }
 .url {
-    font-size: 0.9rem;
-    line-height: 0.5;
-    margin-bottom: 20px
+	font-size: 0.9rem;
+	color: var(--accent-treasurey);
 }
 .url-anchor {
-    display: inline-block;
-    vertical-align: top;
+	display: inline-block;
+	vertical-align: top;
+}
+.url-anchor,
+.url-anchor:visited,
+.summaries a,
+.summaries a:visited,
+.submitted-by a,
+.submitted-by a:visited {
+	color: var(--text);
+}
+.tag {
+	max-width: calc(100% - 32px);
 }
 .tag-icon {
-    margin-left: 10px;
-    margin-bottom: -5px;
+	margin-left: 10px;
+	margin-bottom: -5px;
 }
 .like-btn,
 .copy-btn {
-    border-radius: 2px;
-    margin-right: 5px;
+	border-radius: 2px;
+	margin-right: 5px;
 }
 .like-btn.liked,
 .copy-btn.copied {
-    background-color: rgba(var(--accent), 50%);
-    color: white;
+	background-color: var(--accent-sky);
+	font-weight: bold;
 }
 .like-btn,
 .copy-btn,
 .same-user-like-count {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
 }
 p,
 button,
 .same-user-like-count {
-    margin-top: 0.5rem;
+	margin-top: 0.5rem;
 }
 p {
-    margin-bottom: 0;
+	margin-bottom: 0;
+}
+
+@media (min-width: 768px) {
+	.link {
+		margin-top: 50px;
+	}
 }
