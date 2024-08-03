@@ -1,10 +1,11 @@
-#categories_grid {
+#cat_list {
 	display: flex;
 	flex-wrap: wrap;
 	padding-inline-start: 0;
 	gap: 10px;
 }
 
-button#add-category {
+button#add-cat {
+	margin-top: 0;
 	margin-left: 5px;
 }

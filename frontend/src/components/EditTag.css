@@ -6,7 +6,7 @@ section#edit-tag {
 	align-items: center;
 	gap: 20px;
 }
-#categories_grid {
+#cat_list {
 	display: flex;
 	flex-wrap: wrap;
 	padding-inline-start: 0;

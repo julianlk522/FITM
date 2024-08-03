@@ -4,69 +4,63 @@ import './NewTag.css'
 import TagCategory from './TagCategory'
 
 interface Props {
-	Categories: string[]
-	SetCategories: Dispatch<StateUpdater<string[]>>
+	Cats: string[]
+	SetCats: Dispatch<StateUpdater<string[]>>
 	SetError: Dispatch<StateUpdater<string | undefined>>
 }
 
 export default function NewTag(props: Props) {
-	const {
-		Categories: categories,
-		SetCategories: set_categories,
-		SetError: set_error,
-	} = props
+	const { Cats: cats, SetCats: set_cats, SetError: set_error } = props
 
 	// Pass deleted_cat signal to children TagCategory.tsx
-	// to allow removing their category in this NewTag.tsx parent
+	// to allow removing their cat in this NewTag.tsx parent
 	const deleted_cat = useSignal<string | undefined>(undefined)
 
-	// Check for deleted category and set categories accordingly
+	// Check for deleted cat and set cats accordingly
 	effect(() => {
 		if (deleted_cat.value) {
-			set_categories((c) => c.filter((cat) => cat !== deleted_cat.value))
+			set_cats((c) => c.filter((cat) => cat !== deleted_cat.value))
 			deleted_cat.value = undefined
 		}
 	})
 
-	function add_category(event: MouseEvent) {
+	function add_tag_cat(event: MouseEvent) {
 		event.preventDefault()
 
 		// @ts-ignore
 		const form = event.target.form as HTMLFormElement
 		if (!form) return set_error('Form not found')
 		const formData = new FormData(form)
-		const category = formData.get('category')?.toString()
+		const cat = formData.get('cat')?.toString()
 
-		if (!category) {
-			set_error('Missing category')
+		if (!cat) {
+			set_error('Missing cat')
 			return
 		}
 
-		if (categories.includes(category)) {
+		if (cats.includes(cat)) {
 			set_error('Category already added')
 			return
 		}
 
-		set_categories([...categories, category].sort())
+		set_cats([...cats, cat].sort())
 		set_error(undefined)
 
-		const cat_field = document.getElementById(
-			'category'
-		) as HTMLInputElement
+		const cat_field = document.getElementById('cat') as HTMLInputElement
 		cat_field.value = ''
 		return
 	}
 
 	return (
 		<>
-			<label for='category'>Tag Cat(s)</label>
-			<input type='text' id='category' name='category' />
-			<button id='add-category' onClick={(event) => add_category(event)}>
-				Add
+			<label for='cat'>Tag</label>
+			<input type='text' id='cat' name='cat' />
+			<button id='add-cat' onClick={(event) => add_tag_cat(event)}>
+				Add Cat
 			</button>
 
-			<ol id='categories_grid'>
-				{categories.map((cat) => (
+			<ol id='cat_list'>
+				{cats.map((cat) => (
 					<TagCategory
 						Category={cat}
 						EditActivated={true}

@@ -20,12 +20,13 @@ astro-island:first-of-type li.link {
 	font-size: 0.9rem;
 	color: var(--accent-treasurey);
 }
-.url-anchor {
+h3.url-anchor {
+	font-size: 1.15rem;
 	display: inline-block;
 	vertical-align: top;
 }
-.url-anchor,
-.url-anchor:visited,
+h3.url-anchor,
+h3.url-anchor:visited,
 .summaries a,
 .summaries a:visited,
 .submitted-by a,

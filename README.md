@@ -4,8 +4,6 @@
 
 ### Features
 
--Fix broken auto og:image
-    -e.g., coolers.co image should not have been added
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links

@@ -96,11 +96,13 @@ const other_periods = Periods.filter((other) => other !== 'month')
 	#new-link {
 		text-align: center;
 	}
+	section:has(#top-cats) {
+		margin-top: 1.5rem;
+	}
 	#change-period {
 		display: flex;
-		justify-content: center;
 		list-style: none;
-		padding-inline-start: 0;
+		padding-inline-start: 1rem;
 		margin-top: 0;
 	}
 	#new-link,
@@ -120,12 +122,5 @@ const other_periods = Periods.filter((other) => other !== 'month')
 		max-width: calc(100% - 1rem);
 		margin-left: auto;
 		padding: 0;
-	}
-
-	@media (min-width: 400px) {
-		#change-period {
-			justify-content: flex-start;
-			padding-inline-start: 1rem;
-		}
 	}
 </style>

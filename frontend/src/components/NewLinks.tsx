@@ -13,7 +13,7 @@ export default function NewLinks(props: Props) {
 	const { Token: token } = props
 
 	const [error, set_error] = useState<string | undefined>(undefined)
-	const [categories, set_categories] = useState<string[]>([])
+	const [cats, set_cats] = useState<string[]>([])
 	const [submitted_links, set_submitted_links] = useState<LinkData[]>([])
 
 	async function handle_submit(event: SubmitEvent) {
@@ -28,13 +28,13 @@ export default function NewLinks(props: Props) {
 		if (summary) {
 			resp_body = JSON.stringify({
 				url,
-				categories: categories.join(','),
+				categories: cats.join(','),
 				summary,
 			})
 		} else {
 			resp_body = JSON.stringify({
 				url,
-				categories: categories.join(','),
+				categories: cats.join(','),
 			})
 		}
 
@@ -57,7 +57,7 @@ export default function NewLinks(props: Props) {
 		} else {
 			new_link_data.IsTagged = true
 			set_submitted_links([...submitted_links, new_link_data])
-			set_categories([])
+			set_cats([])
 			set_error(undefined)
 			form.reset()
 		}
@@ -66,29 +66,25 @@ export default function NewLinks(props: Props) {
 	}
 
 	return (
-		<section id='new-link'>
-			<h2>New Link</h2>
-
-			{error ? <p class='error'>{`Error: ${error}`}</p> : null}
-
-			<form onSubmit={async (e) => await handle_submit(e)}>
-				<label for='url'>URL</label>
-				<input type='text' id='url' name='url' />
-
-				<label for='summary'>Summary (optional)</label>
-				<textarea id='summary' name='summary' rows={3} cols={50} />
-
-				<NewTag
-					Categories={categories}
-					SetCategories={set_categories}
-					SetError={set_error}
-				/>
-
-				<input type='submit' value='Submit' />
-			</form>
-
+		<>
+			<section id='new-link'>
+				<h2>New Link</h2>
+				{error ? <p class='error'>{`Error: ${error}`}</p> : null}
+				<form onSubmit={async (e) => await handle_submit(e)}>
+					<label for='url'>URL</label>
+					<input type='text' id='url' name='url' />
+					<label for='summary'>Summary (optional)</label>
+					<textarea id='summary' name='summary' rows={3} cols={50} />
+					<NewTag
+						Cats={cats}
+						SetCats={set_cats}
+						SetError={set_error}
+					/>
+					<input type='submit' value='Submit' />
+				</form>
+			</section>
 			{submitted_links.length ? (
-				<div id='submitted'>
+				<section id='submitted-links'>
 					<h2>Submitted Links</h2>
 					<ol>
 						{submitted_links.map((link) => (
@@ -102,8 +98,8 @@ export default function NewLinks(props: Props) {
 							/>
 						))}
 					</ol>
-				</div>
+				</section>
 			) : null}
-		</section>
+		</>
 	)
 }
