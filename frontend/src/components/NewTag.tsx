@@ -1,72 +1,73 @@
-import { effect, useSignal } from "@preact/signals";
-import type { Dispatch, StateUpdater } from "preact/hooks";
-import './NewTag.css';
-import TagCategory from './TagCategory';
+import { effect, useSignal } from '@preact/signals'
+import type { Dispatch, StateUpdater } from 'preact/hooks'
+import './NewTag.css'
+import TagCategory from './TagCategory'
 
 interface Props {
-    Categories: string[]
-    SetCategories: Dispatch<StateUpdater<string[]>>
-    SetError: Dispatch<StateUpdater<string | undefined>>
+	Cats: string[]
+	SetCats: Dispatch<StateUpdater<string[]>>
+	SetError: Dispatch<StateUpdater<string | undefined>>
 }
 
 export default function NewTag(props: Props) {
-    const { Categories: categories, SetCategories: set_categories, SetError: set_error } = props
+	const { Cats: cats, SetCats: set_cats, SetError: set_error } = props
 
-    // Pass deleted_cat signal to children TagCategory.tsx
-    // to allow removing their category in this NewTag.tsx parent
-    const deleted_cat = useSignal<string | undefined>(undefined)
-    
-    // Check for deleted category and set categories accordingly
-    effect(() => {
-        if (deleted_cat.value) {
-            set_categories((c) => c.filter(cat => cat !== deleted_cat.value))
-            deleted_cat.value = undefined
-        }
-    })
-    
-    function add_category(event: MouseEvent) {
-        event.preventDefault()
+	// Pass deleted_cat signal to children TagCategory.tsx
+	// to allow removing their cat in this NewTag.tsx parent
+	const deleted_cat = useSignal<string | undefined>(undefined)
 
-        // @ts-ignore
-        const form = event.target.form as HTMLFormElement
-        if (!form) return set_error('Form not found')
-        const formData = new FormData(form)
-        const category = formData.get('category')?.toString()
+	// Check for deleted cat and set cats accordingly
+	effect(() => {
+		if (deleted_cat.value) {
+			set_cats((c) => c.filter((cat) => cat !== deleted_cat.value))
+			deleted_cat.value = undefined
+		}
+	})
 
-        if (!category) {
-            set_error('Missing category')
-            return
-        }
+	function add_tag_cat(event: MouseEvent) {
+		event.preventDefault()
 
-        if (categories.includes(category)) {
-            set_error('Category already added')
-            return
-        }
+		// @ts-ignore
+		const form = event.target.form as HTMLFormElement
+		if (!form) return set_error('Form not found')
+		const formData = new FormData(form)
+		const cat = formData.get('cat')?.toString()
 
-        set_categories([...categories, category].sort())
-        set_error(undefined)
+		if (!cat) {
+			set_error('Missing cat')
+			return
+		}
 
-        const cat_field = document.getElementById("category") as HTMLInputElement
-        cat_field.value = ""
-        return
-    }
+		if (cats.includes(cat)) {
+			set_error('Category already added')
+			return
+		}
 
-    return (
-        <>
-            <label for='category'>Tag Category(ies)</label>
-            <input type='text' id='category' name='category' />
-            <button onClick={(event) => add_category(event)}>Add Category</button>
+		set_cats([...cats, cat].sort())
+		set_error(undefined)
 
-            <ol id='categories_grid'>
-                {categories.map((cat) => (
-                    <TagCategory
-                    Category={cat}
-                    EditActivated={true}
-                    Deleted={deleted_cat}
-                />
-                ))}
-            </ol>
-        </>
-    )
-    
+		const cat_field = document.getElementById('cat') as HTMLInputElement
+		cat_field.value = ''
+		return
+	}
+
+	return (
+		<>
+			<label for='cat'>Tag</label>
+			<input type='text' id='cat' name='cat' />
+			<button id='add-cat' onClick={(event) => add_tag_cat(event)}>
+				Add Cat
+			</button>
+
+			<ol id='cat_list'>
+				{cats.map((cat) => (
+					<TagCategory
+						Category={cat}
+						EditActivated={true}
+						Deleted={deleted_cat}
+					/>
+				))}
+			</ol>
+		</>
+	)
 }

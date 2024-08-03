@@ -29,21 +29,19 @@ const other_periods = Periods.filter((other) => other !== 'month')
 
 <Layout Title='Welcome to the Open Internet Treasure Map (OITM)'>
 	<main>
-		<section>
-			<img class='chest-backdrop' src='../../chest.svg' />
+		<img class='chest-backdrop' src='../../chest.svg' />
 			<h1>Welcome to OITM</h1>
 			<h2 class='subtitle bg'>a map of the web's treasures</h2>
 			{
 				user ? (
-					<p>
-						<a href={`/new`}>Submit new link</a>
-					</p>
+					<h3 id="new-link">
+						<a href={`/new`}>Add link</a>
+					</h3>
 				) : null
 			}
-		</section>
 		<section>
-			<h2>Top Categories</h2>
-			<ol id='top-categories'>
+			<h2>Top Cats</h2>
+			<ol id="top-cats">
 				{
 					top_cats.map((cat) => (
 						<li>
@@ -95,10 +93,24 @@ const other_periods = Periods.filter((other) => other !== 'month')
 		opacity: 0.25;
 		z-index: -1;
 	}
+	#new-link {
+		text-align: center;
+	}
+	section:has(#top-cats) {
+		margin-top: 1.5rem;
+	}
 	#change-period {
 		display: flex;
 		list-style: none;
+		padding-inline-start: 1rem;
 		margin-top: 0;
+	}
+	#new-link,
+	#change-period {
+		a,
+		a:visited {
+			color: var(--text);
+		}
 	}
 	.period {
 		margin-right: 0.5rem;
@@ -107,6 +119,8 @@ const other_periods = Periods.filter((other) => other !== 'month')
 		margin-right: 0;
 	}
 	#top-links {
+		max-width: calc(100% - 1rem);
+		margin-left: auto;
 		padding: 0;
 	}
 </style>

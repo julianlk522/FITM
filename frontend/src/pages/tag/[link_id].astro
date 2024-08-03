@@ -37,15 +37,17 @@ const { Link: link, UserTag: user_tag, EarliestTags: top_tags } = tag_Data
 
 <Layout Title=`Tags for ${tag_Data.Link.Summary}`>
 	<main>
-		<h2>Link:</h2>
-		<Link
-			client:load
-			IsSummaryPage={false}
-			IsTagPage={true}
-			Link={link}
-			Token={token}
-			User={user}
-		/>
+		<section>
+			<h2>Link:</h2>
+			<Link
+				client:load
+				IsSummaryPage={false}
+				IsTagPage={true}
+				Link={link}
+				Token={token}
+				User={user}
+			/>
+		</section>
 
 		<EditTag
 			client:load
@@ -61,7 +63,7 @@ const { Link: link, UserTag: user_tag, EarliestTags: top_tags } = tag_Data
 					<ol>
 						{top_tags.map((tag) => (
 							<li class='tag'>
-								<ul id='categories_grid'>
+								<ul id='cat_list'>
 									{tag.Categories.split(',').map((tag) => {
 										return (
 											<TagCategory
@@ -96,7 +98,7 @@ const { Link: link, UserTag: user_tag, EarliestTags: top_tags } = tag_Data
 	.tag {
 		margin-bottom: 50px;
 	}
-	#categories_grid {
+	#cat_list {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 10px;
