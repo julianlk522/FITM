@@ -4,6 +4,7 @@
 
 ### Features
 
+-Make Auto Summary appear first IF it has the most votes
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
@@ -21,6 +22,7 @@
 
 ### Code Quality
 
+-Merge isliked/iscopied/istagged into get links queries without doubleup
 -Rebrand subcategories as category overlaps since that is a bit more accurate
 -Tests
     -<https://github.com/ory/dockertest>

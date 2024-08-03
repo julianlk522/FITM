@@ -57,7 +57,7 @@ func (a *EditSummaryRequest) Bind(r *http.Request) error {
 }
 
 // GENERAL
-type SummarySignedOut struct {
+type Summary struct {
 	ID string
 	Text string
 	SubmittedBy string
@@ -66,11 +66,11 @@ type SummarySignedOut struct {
 }
 
 type SummarySignedIn struct {
-	SummarySignedOut
+	Summary
 	IsLiked bool
 }
 
-type SummaryPage[S SummarySignedIn | SummarySignedOut, L LinkSignedIn | LinkSignedOut ] struct {
+type SummaryPage[S SummarySignedIn | Summary, L LinkSignedIn | Link ] struct {
 	Link L
 	Summaries []S
 }

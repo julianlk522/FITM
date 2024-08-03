@@ -54,21 +54,21 @@ func (l *GetTagPageLink) _ForSignedInUser(user_id string ) *GetTagPageLink {
 
 
 // Earliest Tags for Link
-type GetEarliestTags struct {
+type GetTagRankings struct {
 	Query
 }
 
-const GET_EARLIEST_TAGS_BASE = `SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) * 100 AS lifespan_overlap, categories, Tags.submitted_by, last_updated 
+const GET_TAG_RANKINGS_BASE = `SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) * 100 AS lifespan_overlap, categories, Tags.submitted_by, last_updated 
 	FROM Tags 
 	INNER JOIN Links 
 	ON Links.id = Tags.link_id `
 
-func NewGetEarliestTags(link_id string) *GetEarliestTags {
-	new := &GetEarliestTags{Query: Query{Text: GET_EARLIEST_TAGS_BASE}}
+func NewGetTagRankingsForLink(link_id string) *GetTagRankings {
+	new := &GetTagRankings{Query: Query{Text: GET_TAG_RANKINGS_BASE}}
 	return new._FromLink(link_id)
 }
 
-func (t *GetEarliestTags) _FromLink(link_id string) *GetEarliestTags {
+func (t *GetTagRankings) _FromLink(link_id string) *GetTagRankings {
 
 	t.Text += fmt.Sprintf(` WHERE link_id = '%s'
 	ORDER BY lifespan_overlap DESC`, link_id)
@@ -76,7 +76,7 @@ func (t *GetEarliestTags) _FromLink(link_id string) *GetEarliestTags {
 	return t
 }
 
-func (t *GetEarliestTags) Limit(limit int) *GetEarliestTags {
+func (t *GetTagRankings) Limit(limit int) *GetTagRankings {
 
 	t.Text += fmt.Sprintf(` LIMIT %d;`, limit)
 	return t

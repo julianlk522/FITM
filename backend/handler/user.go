@@ -47,22 +47,22 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _LoginNameTaken(signup_data.UserAuth.LoginName) {
+	if _LoginNameTaken(signup_data.Auth.LoginName) {
 		render.Render(w, r, e.ErrInvalidRequest(errors.New("login name taken")))
 		return
 	}
 
-	pw_hash, err := bcrypt.GenerateFromPassword([]byte(signup_data.UserAuth.Password), bcrypt.DefaultCost)
+	pw_hash, err := bcrypt.GenerateFromPassword([]byte(signup_data.Auth.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	_, err = DBClient.Exec(`INSERT INTO users VALUES (?,?,?,?,?,?)`, nil, signup_data.UserAuth.LoginName, pw_hash, nil, nil, signup_data.Created)
+	_, err = DBClient.Exec(`INSERT INTO users VALUES (?,?,?,?,?,?)`, nil, signup_data.Auth.LoginName, pw_hash, nil, nil, signup_data.CreatedAt)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	token, err := _GetJWTFromLoginName(signup_data.UserAuth.LoginName)
+	token, err := _GetJWTFromLoginName(signup_data.Auth.LoginName)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
@@ -97,7 +97,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := _GetJWTFromLoginName(login_data.UserAuth.LoginName)
+	token, err := _GetJWTFromLoginName(login_data.Auth.LoginName)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
@@ -215,6 +215,9 @@ func UploadNewProfilePic(w http.ResponseWriter, r *http.Request) {
 
 	dst, err := os.Create(full_path)
 	if err != nil {
+		// Note: if, for some reason, the directory at pic_dir's path
+		// doesn't exist, this will fail
+		// shouldn't matter but just for posterity
 		render.Render(w, r, e.ErrInvalidRequest(errors.New("could not create new file")))
 		return
 	}
@@ -282,7 +285,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		
 	// No auth
 	} else {
-		tmap, err := _BuildTmap[model.TmapLinkSignedOut](login_name, r)
+		tmap, err := _BuildTmap[model.TmapLink](login_name, r)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
@@ -324,7 +327,7 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 		}
 		render.JSON(w, r, tmap)
 	} else {
-		tmap, err := _BuildTmapFromCategories[model.TmapLinkSignedOut](login_name, split_cats, r)
+		tmap, err := _BuildTmapFromCategories[model.TmapLink](login_name, split_cats, r)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
@@ -345,7 +348,7 @@ func _UserExists(login_name string) (bool, error) {
 	return true, nil
 }
 
-func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name string, r *http.Request) (*model.TreasureMap[T], error) {
+func _BuildTmap[T model.TmapLink | model.TmapLinkSignedIn](login_name string, r *http.Request) (*model.TreasureMap[T], error) {
 	profile_sql := query.NewGetTmapProfile(login_name)
 	profile, err := _ScanTmapProfile(profile_sql)
 	if err != nil {
@@ -394,7 +397,14 @@ func _BuildTmap[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name s
 		return nil, err
 	}
 
-	tmap := model.TreasureMap[T]{Profile: profile, Submitted: submitted, Tagged: tagged, Copied: copied}
+	tmap := model.TreasureMap[T]{
+		Profile: profile, 
+		TreasureMapSections: &model.TreasureMapSections[T]{
+			Submitted: submitted, 
+			Tagged: tagged, 
+			Copied: copied,
+		},
+	}
 
 	all_links := slices.Concat(*submitted, *tagged, *copied)
 	cat_counts := GetTmapCategoryCounts(&all_links, nil)
@@ -413,7 +423,7 @@ func _ScanTmapProfile(sql string) (*model.Profile, error) {
 	return &u, nil
 }
 
-func _BuildTmapFromCategories[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](login_name string, categories []string, r *http.Request) (*model.FilteredTreasureMap[T], error) {
+func _BuildTmapFromCategories[T model.TmapLink | model.TmapLinkSignedIn](login_name string, categories []string, r *http.Request) (*model.FilteredTreasureMap[T], error) {
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 
@@ -461,7 +471,13 @@ func _BuildTmapFromCategories[T model.TmapLinkSignedIn | model.TmapLinkSignedOut
 	if err != nil {
 		return nil, err
 	}
-	tmap := model.FilteredTreasureMap[T]{Submitted: submitted, Tagged: tagged, Copied: copied}
+	tmap := model.FilteredTreasureMap[T]{
+		TreasureMapSections: &model.TreasureMapSections[T]{
+			Submitted: submitted,
+			Tagged: tagged,
+			Copied: copied,
+		},
+	}
 
 	all_links := slices.Concat(*submitted, *tagged, *copied)
 	cat_counts := GetTmapCategoryCounts(&all_links, categories)
@@ -470,7 +486,7 @@ func _BuildTmapFromCategories[T model.TmapLinkSignedIn | model.TmapLinkSignedOut
 	return &tmap, nil
 }
 
-func _ScanTmapLinks[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](sql query.Query) (*[]T, error) {
+func _ScanTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](sql query.Query) (*[]T, error) {
 	rows, err := DBClient.Query(sql.Text)
 	if err != nil {
 		return nil, err
@@ -485,7 +501,22 @@ func _ScanTmapLinks[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](sql quer
 
 			for rows.Next() {
 				i := model.TmapLinkSignedIn{}
-				err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.CategoriesFromUser, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL, &i.IsLiked, &i.IsTagged, &i.IsCopied)
+				err := rows.Scan(
+					&i.ID, 
+					&i.URL, 
+					&i.SubmittedBy, 
+					&i.SubmitDate, 
+					&i.Categories, 
+					&i.CategoriesFromUser, 
+					&i.Summary, 
+					&i.SummaryCount, 
+					&i.LikeCount, 
+					&i.ImgURL,
+					
+					// Add IsLiked / IsCopied / IsTagged 
+					&i.IsLiked, 
+					&i.IsTagged, 
+					&i.IsCopied)
 				if err != nil {
 					return nil, err
 				}
@@ -494,12 +525,22 @@ func _ScanTmapLinks[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](sql quer
 
 			links = &signed_in_links
 
-		case *model.TmapLinkSignedOut:
-			var signed_out_links = []model.TmapLinkSignedOut{}
+		case *model.TmapLink:
+			var signed_out_links = []model.TmapLink{}
 
 			for rows.Next() {
-				i := model.TmapLinkSignedOut{}
-				err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.CategoriesFromUser, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
+				i := model.TmapLink{}
+				err := rows.Scan(
+					&i.ID, 
+					&i.URL, 
+					&i.SubmittedBy, 
+					&i.SubmitDate, 
+					&i.Categories, 
+					&i.CategoriesFromUser, 
+					&i.Summary, 
+					&i.SummaryCount, 
+					&i.LikeCount, 
+					&i.ImgURL)
 				if err != nil {
 					return nil, err
 				}
@@ -516,7 +557,7 @@ func _ScanTmapLinks[T model.TmapLinkSignedIn | model.TmapLinkSignedOut](sql quer
 // Omit any categories passed via omitted_cats
 // (omit used to retrieve subcategories by passing directly searched categories)
 // TODO: refactor to make this clearer
-func GetTmapCategoryCounts[T model.TmapLinkSignedIn | model.TmapLinkSignedOut] (links *[]T, omitted_cats []string) *[]model.CategoryCount {
+func GetTmapCategoryCounts[T model.TmapLink | model.TmapLinkSignedIn] (links *[]T, omitted_cats []string) *[]model.CategoryCount {
 	counts := []model.CategoryCount{}
 	found_cats := []string{}
 	var found bool
@@ -526,7 +567,7 @@ func GetTmapCategoryCounts[T model.TmapLinkSignedIn | model.TmapLinkSignedOut] (
 		switch l := any(link).(type) {
 			case model.TmapLinkSignedIn:
 				categories = l.Categories
-			case model.TmapLinkSignedOut:
+			case model.TmapLink:
 				categories = l.Categories
 		}
 

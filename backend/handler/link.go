@@ -23,7 +23,9 @@ import (
 
 func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 	page := r.Context().Value(m.PageKey).(int)
-	get_links_sql := query.NewGetTopLinks().Page(page)
+	get_links_sql := query.
+		NewGetTopLinks().
+		Page(page)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
 		return
@@ -38,7 +40,7 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 		}
 		_RenderPaginatedLinks(links, page, w, r)
 	} else {
-		links, err := _ScanLinks[model.LinkSignedOut](get_links_sql, req_user_id)
+		links, err := _ScanLinks[model.Link](get_links_sql, req_user_id)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
@@ -56,7 +58,10 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page := r.Context().Value(m.PageKey).(int)
-	get_links_sql := query.NewGetTopLinks().DuringPeriod(period_params).Page(page)
+	get_links_sql := query.
+		NewGetTopLinks().
+		DuringPeriod(period_params).
+		Page(page)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
 		return
@@ -71,7 +76,7 @@ func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
 		}
 		_RenderPaginatedLinks(links, page, w, r)
 	} else {
-		links, err := _ScanLinks[model.LinkSignedOut](get_links_sql, req_user_id)
+		links, err := _ScanLinks[model.Link](get_links_sql, req_user_id)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
@@ -97,7 +102,10 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page := r.Context().Value(m.PageKey).(int)
-	get_links_sql := query.NewGetTopLinks().FromLinkIDs(link_ids).Page(page)
+	get_links_sql := query.
+		NewGetTopLinks().
+		FromLinkIDs(link_ids).
+		Page(page)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
 		return
@@ -112,7 +120,7 @@ func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
 		}
 		_RenderPaginatedLinks(links, page, w, r)
 	} else {
-		links, err := _ScanLinks[model.LinkSignedOut](get_links_sql, req_user_id)
+		links, err := _ScanLinks[model.Link](get_links_sql, req_user_id)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
@@ -141,7 +149,11 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page := r.Context().Value(m.PageKey).(int)
-	get_links_sql := query.NewGetTopLinks().FromLinkIDs(link_ids).DuringPeriod(period_params).Page(page)
+	get_links_sql := query.
+		NewGetTopLinks().
+		FromLinkIDs(link_ids).
+		DuringPeriod(period_params).
+		Page(page)
 	if get_links_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
 		return
@@ -156,7 +168,7 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 		}
 		_RenderPaginatedLinks(links, page, w, r)
 	} else {
-		links, err := _ScanLinks[model.LinkSignedOut](get_links_sql, req_user_id)
+		links, err := _ScanLinks[model.Link](get_links_sql, req_user_id)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
@@ -165,7 +177,7 @@ func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func _ScanLinks[T model.LinkSignedIn | model.LinkSignedOut](get_links_sql *query.GetTopLinks, req_user_id string) (*[]T, error) {
+func _ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.GetTopLinks, req_user_id string) (*[]T, error) {
 	var links interface{}
 
 	rows, err := DBClient.Query(get_links_sql.Text)
@@ -180,7 +192,17 @@ func _ScanLinks[T model.LinkSignedIn | model.LinkSignedOut](get_links_sql *query
 	
 		for rows.Next() {
 			i := model.LinkSignedIn{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
+			err := rows.Scan(
+				&i.ID, 
+				&i.URL, 
+				&i.SubmittedBy, 
+				&i.SubmitDate, 
+				&i.Categories, 
+				&i.Summary, 
+				&i.SummaryCount, 
+				&i.LikeCount, 
+				&i.ImgURL,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -191,21 +213,27 @@ func _ScanLinks[T model.LinkSignedIn | model.LinkSignedOut](get_links_sql *query
 			var c sql.NullInt32
 	
 			
-			err = DBClient.QueryRow(fmt.Sprintf(`SELECT
-			(
-				SELECT count(*) FROM 'Link Likes'
-				WHERE link_id = '%[1]d' AND user_id = '%[2]s'
-			) as is_liked,
-			(
-				SELECT count(*) FROM Tags
-				JOIN Users
-				ON Users.login_name = Tags.submitted_by
-				WHERE link_id = '%[1]d' AND Users.id = '%[2]s'
-			) AS is_tagged,
-			(
-				SELECT count(*) FROM 'Link Copies'
-				WHERE link_id = '%[1]d' AND user_id = '%[2]s'
-			) as is_copied;`, i.ID, req_user_id)).Scan(&l,&t, &c)
+			err = DBClient.QueryRow(
+				fmt.Sprintf(
+					`SELECT
+					(
+						SELECT count(*) FROM 'Link Likes'
+						WHERE link_id = '%[1]d' AND user_id = '%[2]s'
+					) as is_liked,
+					(
+						SELECT count(*) FROM Tags
+						JOIN Users
+						ON Users.login_name = Tags.submitted_by
+						WHERE link_id = '%[1]d' AND Users.id = '%[2]s'
+					) AS is_tagged,
+					(
+						SELECT count(*) FROM 'Link Copies'
+						WHERE link_id = '%[1]d' AND user_id = '%[2]s'
+					) as is_copied;`, 
+					i.ID, 
+					req_user_id,
+				),
+			).Scan(&l,&t, &c)
 			if err != nil {
 				return nil, err
 			}
@@ -219,12 +247,22 @@ func _ScanLinks[T model.LinkSignedIn | model.LinkSignedOut](get_links_sql *query
 	
 		links = &signed_in_links
 			
-	case *model.LinkSignedOut:
-		var signed_out_links = []model.LinkSignedOut{}
+	case *model.Link:
+		var signed_out_links = []model.Link{}
 	
 		for rows.Next() {
-			i := model.LinkSignedOut{}
-			err := rows.Scan(&i.ID, &i.URL, &i.SubmittedBy, &i.SubmitDate, &i.Categories, &i.Summary, &i.SummaryCount, &i.LikeCount, &i.ImgURL)
+			i := model.Link{}
+			err := rows.Scan(
+				&i.ID, 
+				&i.URL, 
+				&i.SubmittedBy, 
+				&i.SubmitDate, 
+				&i.Categories, 
+				&i.Summary, 
+				&i.SummaryCount, 
+				&i.LikeCount, 
+				&i.ImgURL,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -237,19 +275,25 @@ func _ScanLinks[T model.LinkSignedIn | model.LinkSignedOut](get_links_sql *query
 	return links.(*[]T), nil
 }
 
-func _RenderPaginatedLinks[T model.LinkSignedIn | model.LinkSignedOut](links *[]T, page int, w http.ResponseWriter, r *http.Request) {
+func _RenderPaginatedLinks[T model.LinkSignedIn | model.Link](links *[]T, page int, w http.ResponseWriter, r *http.Request) {
 	if len(*links) == 0 {
 		_RenderZeroLinks(w, r)
 	} else if len(*links) == LINKS_PAGE_LIMIT + 1 {
 		sliced := (*links)[:LINKS_PAGE_LIMIT]
-		render.JSON(w, r, &model.PaginatedLinks[T]{Links: &sliced, NextPage: page + 1})
+		render.JSON(w, r, &model.PaginatedLinks[T]{
+			Links: &sliced, 
+			NextPage: page + 1,
+		})
 	} else {
-		render.JSON(w, r, &model.PaginatedLinks[T]{Links: links, NextPage: -1})
+		render.JSON(w, r, &model.PaginatedLinks[T]{
+			Links: links, 
+			NextPage: -1,
+		})
 	}
 }
 
 func _RenderZeroLinks(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, &model.PaginatedLinks[model.LinkSignedOut]{NextPage: -1})
+	render.JSON(w, r, &model.PaginatedLinks[model.Link]{NextPage: -1})
 	render.Status(r, http.StatusOK)
 }
 
@@ -285,7 +329,9 @@ func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
 	}
 	categories := strings.Split(categories_params, ",")
 
-	get_contributors_sql := query.NewGetCategoryContributors(categories).Limit(CATEGORY_CONTRIBUTORS_LIMIT)
+	get_contributors_sql := query.
+		NewGetCategoryContributors(categories).
+		Limit(CATEGORY_CONTRIBUTORS_LIMIT)
 	if get_contributors_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_contributors_sql.Error))
 		return
@@ -306,7 +352,10 @@ func GetTopCategoryContributorsByPeriod(w http.ResponseWriter, r *http.Request) 
 	}
 	
 	categories := strings.Split(categories_params, ",")
-	get_contributors_sql := query.NewGetCategoryContributors(categories).DuringPeriod(period_params).Limit(CATEGORY_CONTRIBUTORS_LIMIT)
+	get_contributors_sql := query.
+		NewGetCategoryContributors(categories).
+		DuringPeriod(period_params).
+		Limit(CATEGORY_CONTRIBUTORS_LIMIT)
 	if get_contributors_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_contributors_sql.Error))
 		return
@@ -380,7 +429,9 @@ func GetSubcategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 	categories_params = strings.ToLower(categories_params)
 	categories := strings.Split(categories_params, ",")
 
-	get_subcats_sql := query.NewGetSubcategories(categories).DuringPeriod(period_params)
+	get_subcats_sql := query.
+		NewGetSubcategories(categories).
+		DuringPeriod(period_params)
 	if get_subcats_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_subcats_sql.Error))
 		return
@@ -495,7 +546,16 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	_AssignMetadata(resp, link_data)
 	_AssignSortedCategories(link_data, link_data.NewLink.Categories)
 	
-	res, err := DBClient.Exec("INSERT INTO Links VALUES(?,?,?,?,?,?,?);", nil, link_data.URL, req_login_name, link_data.SubmitDate, link_data.Categories, link_data.Summary, link_data.ImgURL)
+	res, err := DBClient.Exec(
+		"INSERT INTO Links VALUES(?,?,?,?,?,?,?);", 
+		nil, 
+		link_data.URL, 
+		req_login_name, 
+		link_data.SubmitDate, 
+		link_data.Categories, 
+		link_data.Summary, 
+		link_data.ImgURL,
+	)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
@@ -509,7 +569,14 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	if link_data.AutoSummary != "" {
 		// Note: UserID 15 is AutoSummary
 		// TODO: add constant, replace magic 15
-		_, err = DBClient.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, link_data.AutoSummary, link_data.ID, "15", link_data.SubmitDate)
+		_, err = DBClient.Exec(
+			"INSERT INTO Summaries VALUES(?,?,?,?,?);", 
+			nil, 
+			link_data.AutoSummary, 
+			link_data.ID, 
+			"15", 
+			link_data.SubmitDate,
+		)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
@@ -520,7 +587,14 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if link_data.Summary != "" {
-		_, err = DBClient.Exec("INSERT INTO Summaries VALUES(?,?,?,?,?);", nil, link_data.Summary, link_data.ID, req_user_id, link_data.SubmitDate)
+		_, err = DBClient.Exec(
+			"INSERT INTO Summaries VALUES(?,?,?,?,?);", 
+			nil, 
+			link_data.Summary, 
+			link_data.ID, 
+			req_user_id, 
+			link_data.SubmitDate,
+		)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
@@ -529,7 +603,14 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		link_data.SummaryCount += 1
 	}
 
-	_, err = DBClient.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, link_data.ID, link_data.Categories, req_login_name, link_data.SubmitDate)
+	_, err = DBClient.Exec(
+		"INSERT INTO Tags VALUES(?,?,?,?,?);", 
+		nil, 
+		link_data.ID, 
+		link_data.Categories, 
+		req_login_name, 
+		link_data.SubmitDate,
+	)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return

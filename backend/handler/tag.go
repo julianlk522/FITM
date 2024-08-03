@@ -55,13 +55,13 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	earliest_tags_sql := query.NewGetEarliestTags(link_id)
-	if earliest_tags_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(earliest_tags_sql.Error))
+	tag_rankings_sql := query.NewGetTagRankingsForLink(link_id)
+	if tag_rankings_sql.Error != nil {
+		render.Render(w, r, e.ErrInvalidRequest(tag_rankings_sql.Error))
 		return
 	}
 
-	earliest_tags, err := _ScanEarliestTags(earliest_tags_sql)
+	tag_rankings, err := _ScanTagRankings(tag_rankings_sql)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
@@ -70,7 +70,7 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 	tag_page := model.TagPage{
 		Link: link,
 		UserTag: user_tag,
-		EarliestTags: earliest_tags,
+		TagRankings: tag_rankings,
 	}
 	render.JSON(w, r, tag_page)
 }
@@ -78,7 +78,20 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 func _ScanTagPageLink(get_link_sql *query.GetTagPageLink) (*model.LinkSignedIn, error) {
 	var link = &model.LinkSignedIn{}
 
-	err := DBClient.QueryRow(get_link_sql.Text).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.ImgURL, &link.IsLiked, &link.IsCopied)
+	err := DBClient.
+		QueryRow(get_link_sql.Text).
+		Scan(
+			&link.ID, 
+			&link.URL, 
+			&link.SubmittedBy, 
+			&link.SubmitDate, 
+			&link.Categories, 
+			&link.Summary, 
+			&link.LikeCount, 
+			&link.ImgURL, 
+			&link.IsLiked, 
+			&link.IsCopied,
+		)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +102,9 @@ func _ScanTagPageLink(get_link_sql *query.GetTagPageLink) (*model.LinkSignedIn, 
 func _GetUserTagForLink(login_name string, link_id string) (*model.Tag, error) {
 	var id, cats, last_updated sql.NullString
 
-	err := DBClient.QueryRow("SELECT id, categories, last_updated FROM 'Tags' WHERE submitted_by = ? AND link_id = ?;", login_name, link_id).Scan(&id, &cats, &last_updated)
+	err := DBClient.
+		QueryRow("SELECT id, categories, last_updated FROM 'Tags' WHERE submitted_by = ? AND link_id = ?;", login_name, link_id).
+		Scan(&id, &cats, &last_updated)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -106,24 +121,29 @@ func _GetUserTagForLink(login_name string, link_id string) (*model.Tag, error) {
 	}, nil
 }
 
-func _ScanEarliestTags(earliest_cats_sql *query.GetEarliestTags) (*[]model.EarlyTagPublic, error) {
-	rows, err := DBClient.Query(earliest_cats_sql.Text)
+func _ScanTagRankings(tag_rankings_sql *query.GetTagRankings) (*[]model.TagRankingPublic, error) {
+	rows, err := DBClient.Query(tag_rankings_sql.Text)
 	if err != nil {
 		return nil, err
 	}
 
-	earliest_tags := []model.EarlyTagPublic{}
+	tag_rankings := []model.TagRankingPublic{}
 
 	for rows.Next() {
-		var tag model.EarlyTagPublic
-		err = rows.Scan(&tag.LifeSpanOverlap, &tag.Categories, &tag.SubmittedBy, &tag.LastUpdated)
+		var tag model.TagRankingPublic
+		err = rows.Scan(
+			&tag.LifeSpanOverlap, 
+			&tag.Categories, 
+			&tag.SubmittedBy, 
+			&tag.LastUpdated,
+		)
 		if err != nil {
 			return nil, err
 		}
-		earliest_tags = append(earliest_tags, tag)
+		tag_rankings = append(tag_rankings, tag)
 	}
 
-	return &earliest_tags, nil
+	return &tag_rankings, nil
 }
 
 // GET MOST-USED TAG CATEGORIES
@@ -155,7 +175,9 @@ func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	get_global_cats_sql := query.NewGetAllGlobalCategories().FromPeriod(period_params)
+	get_global_cats_sql := query.
+		NewGetAllGlobalCategories().
+		FromPeriod(period_params)
 	if get_global_cats_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_global_cats_sql.Error))
 		return
@@ -250,7 +272,11 @@ func _GetCategoryCountsDuringPeriod(categories *[]string, period string) (*[]mod
 	for i := 0; i < num_cats; i++ {
 		category_counts[i].Category = (*categories)[i]
 
-		get_cat_count_sql := fmt.Sprintf(`SELECT count(*) as count_with_cat FROM (%s) WHERE %s;`, query.NewGetLinkIDs((*categories)[i]).Text, period_clause)
+		get_cat_count_sql := fmt.Sprintf(
+			`SELECT count(*) as count_with_cat FROM (%s) WHERE %s;`, 
+			query.NewGetLinkIDs((*categories)[i]).Text, 
+			period_clause,
+		)
 		get_cat_count_sql = strings.Replace(get_cat_count_sql, "SELECT id", "SELECT id, submit_date", 1)
 
 		var c sql.NullInt32
@@ -306,7 +332,14 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	tag_data.Categories = strings.ToLower(tag_data.Categories)
-	res, err := DBClient.Exec("INSERT INTO Tags VALUES(?,?,?,?,?);", nil, tag_data.LinkID, tag_data.Categories, req_login_name, tag_data.LastUpdated)
+	res, err := DBClient.Exec(
+		"INSERT INTO Tags VALUES(?,?,?,?,?);", 
+		nil, 
+		tag_data.LinkID, 
+		tag_data.Categories, 
+		req_login_name, 
+		tag_data.LastUpdated,
+	)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
@@ -370,10 +403,14 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 
 	edit_tag_data.Categories = _AlphabetizeCategories(edit_tag_data.Categories)
 
-	_, err = DBClient.Exec(`UPDATE Tags 
-	SET categories = ?, last_updated = ? 
-	WHERE id = ?;`, 
-	edit_tag_data.Categories, edit_tag_data.LastUpdated, edit_tag_data.ID)
+	_, err = DBClient.Exec(
+		`UPDATE Tags 
+		SET categories = ?, last_updated = ? 
+		WHERE id = ?;`, 
+		edit_tag_data.Categories, 
+		edit_tag_data.LastUpdated, 
+		edit_tag_data.ID,
+	)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
@@ -428,7 +465,9 @@ func _GetLinkIDFromTagID(tag_id string) (string, error) {
 // (technically should affect all links that share 1+ categories but that's too complicated) 
 // (many links will also not be seen enough to justify being updated constantly. makes enough sense to only update a link's global cats when a new tag is added to that link.)
 func _RecalculateGlobalCategories(link_id string) error {
-	get_overlap_scores_sql := query.NewGetTopOverlapScores(link_id).Limit(TOP_OVERLAP_SCORES_LIMIT)
+	get_overlap_scores_sql := query.
+		NewGetTopOverlapScores(link_id).
+		Limit(TOP_OVERLAP_SCORES_LIMIT)
 	if get_overlap_scores_sql.Error != nil {
 		return get_overlap_scores_sql.Error
 	}
@@ -439,22 +478,20 @@ func _RecalculateGlobalCategories(link_id string) error {
 	}
 	defer rows.Close()
 
-	earliest_tags := []model.EarlyTag{}
+	tag_rankings := []model.TagRanking{}
 	for rows.Next() {
-		var t model.EarlyTag
+		var t model.TagRanking
 		err = rows.Scan(&t.LifeSpanOverlap, &t.Categories)
 		if err != nil {
 			return err
 		}
-		earliest_tags = append(earliest_tags, t)
+		tag_rankings = append(tag_rankings, t)
 	}
 
 	overlap_scores := make(map[string]float32)
+	var max_cat_score float32
 
-	max_row_score := 1 / float32(len(earliest_tags))
-	var max_score float32
-
-	for _, tag := range earliest_tags {
+	for _, tag := range tag_rankings {
 		
 		// square root lifespan overlap to smooth out scores
 		// (allows brand-new tags to still have some influence)
@@ -462,22 +499,23 @@ func _RecalculateGlobalCategories(link_id string) error {
 		
 		cat_field_lc := strings.ToLower(tag.Categories)
 
+		// multiple categories
 		if strings.Contains(cat_field_lc, ",") {
 			cats := strings.Split(cat_field_lc, ",")
 			for _, cat := range cats {
-				overlap_scores[cat] += tag.LifeSpanOverlap * max_row_score
+				overlap_scores[cat] += tag.LifeSpanOverlap
 
-				if overlap_scores[cat] > max_score {
-					max_score = overlap_scores[cat]
+				if overlap_scores[cat] > max_cat_score {
+					max_cat_score = overlap_scores[cat]
 				}
 			}
 
 		// single category
 		} else {
-			overlap_scores[cat_field_lc] += tag.LifeSpanOverlap * max_row_score
+			overlap_scores[cat_field_lc] += tag.LifeSpanOverlap
 
-			if overlap_scores[cat_field_lc] > max_score {
-				max_score = overlap_scores[cat_field_lc]
+			if overlap_scores[cat_field_lc] > max_cat_score {
+				max_cat_score = overlap_scores[cat_field_lc]
 			}
 		}
 	}
@@ -489,7 +527,7 @@ func _RecalculateGlobalCategories(link_id string) error {
 
 	// Assign to global cats if >= 50% of max category score
 	for _, cat := range alphabetized_cats {
-		if overlap_scores[cat] >= max_score * 0.5 {
+		if overlap_scores[cat] >= max_cat_score * 0.5 {
 			global_cats += cat + ","
 		}
 	}

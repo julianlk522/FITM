@@ -72,13 +72,15 @@ func SortCategories(i, j CategoryCount) int {
 	return 1
 }
 
-type EarlyTag struct {
+// TagRanking is used to rank the top cats for a given link in order to
+// calculate global cats. Tags are ranked by submit date.
+type TagRanking struct {
 	LifeSpanOverlap float32
 	Categories string
 }
 
-type EarlyTagPublic struct {
-	EarlyTag
+type TagRankingPublic struct {
+	TagRanking
 	SubmittedBy string
 	LastUpdated string
 }
@@ -86,5 +88,5 @@ type EarlyTagPublic struct {
 type TagPage struct {
 	Link *LinkSignedIn
 	UserTag *Tag
-	EarliestTags *[]EarlyTagPublic
+	TagRankings *[]TagRankingPublic
 }

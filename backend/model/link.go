@@ -23,7 +23,7 @@ type NewLinkRequest struct {
 	LikeCount int64
 	ImgURL string
 
-	// to be assigned by handler after processing
+	// to be assigned by handler
 	URL string
 	Categories string
 	AutoSummary string
@@ -44,7 +44,7 @@ func (a *NewLinkRequest) Bind(r *http.Request) error {
 
 
 
-type LinkSignedOut struct {
+type Link struct {
 	ID int64
 	URL string
 	SubmittedBy string
@@ -57,21 +57,21 @@ type LinkSignedOut struct {
 }
 
 type LinkSignedIn struct {
-	LinkSignedOut
+	Link
 	IsLiked bool
 	IsTagged bool
 	IsCopied bool
 }
 
-type PaginatedLinks[T LinkSignedOut | LinkSignedIn] struct {
+type PaginatedLinks[T Link | LinkSignedIn] struct {
 	Links *[]T
 	NextPage int
 }
 
 
 
-type TmapLinkSignedOut struct {
-	LinkSignedOut
+type TmapLink struct {
+	Link
 	CategoriesFromUser bool
 }
 
