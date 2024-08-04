@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
-import type { LinkData } from '../types'
-import format_date from '../util/format_date'
+import type { LinkData } from '../../types'
+import format_date from '../../util/format_date'
 import './Link.css'
 
 interface Props {

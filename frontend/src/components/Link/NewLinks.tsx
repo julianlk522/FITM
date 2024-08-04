@@ -1,9 +1,9 @@
 import { useState } from 'preact/hooks'
-import type { ErrorResponse, LinkData } from '../types'
-import { is_error_response } from '../types'
+import type { ErrorResponse, LinkData } from '../../types'
+import { is_error_response } from '../../types'
+import NewTag from '../Tag/NewTag'
 import Link from './Link'
 import './NewLinks.css'
-import NewTag from './NewTag'
 interface Props {
 	Token: string
 	User: string

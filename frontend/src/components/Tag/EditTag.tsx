@@ -1,8 +1,8 @@
 import { effect, useSignal } from '@preact/signals'
 import { useState } from 'preact/hooks'
-import type { Tag } from '../types'
-import { is_error_response } from '../types'
-import format_date from '../util/format_date'
+import type { Tag } from '../../types'
+import { is_error_response } from '../../types'
+import format_date from '../../util/format_date'
 import './EditTag.css'
 import TagCategory from './TagCategory'
 interface Props {
