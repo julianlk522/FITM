@@ -18,7 +18,6 @@ astro-island:first-of-type li.link {
 }
 .url {
 	font-size: 0.9rem;
-	color: var(--treasurey);
 	word-wrap: break-word;
 }
 h3.url-anchor {
@@ -26,8 +25,6 @@ h3.url-anchor {
 	display: inline-block;
 	vertical-align: top;
 }
-h3.url-anchor,
-h3.url-anchor:visited,
 .summaries a,
 .summaries a:visited,
 .submitted-by a,

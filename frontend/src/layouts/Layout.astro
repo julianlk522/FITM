@@ -37,7 +37,7 @@ let user = Astro.cookies.get('user')?.value
 			--text: hsl(0, 0%, 92%);
 			--text-treasurey: hsl(44, 55%, 80%);
 			--text-treasurey-mild: hsl(44, 15%, 80%);
-			--text-treasurey-dark: hsl(46, 24%, 52%);
+			--text-treasurey-dark: hsl(44, 25%, 60%);
 			
 			--treasurey: hsl(44, 95%, 71%);
 			--treasurey-mild: hsl(54, 77%, 75%);
@@ -74,7 +74,7 @@ let user = Astro.cookies.get('user')?.value
 			max-width: calc(100% - 2rem);
 			color: var(--text);
 			font-size: 18px;
-			line-height: 1.6;
+			line-height: 1.5;
 		}
 		h1 {
 			font-size: 2rem;
@@ -83,7 +83,7 @@ let user = Astro.cookies.get('user')?.value
 			text-align: center;
 		}
 		h1:has(+h2.subtitle) {
-			margin-bottom: 1rem;
+			margin-bottom: 0.5rem;
 		}
 		h1,
 		h2.subtitle {
@@ -94,6 +94,7 @@ let user = Astro.cookies.get('user')?.value
 		}
 		h2.subtitle {
 			font-size: 1rem;
+			font-weight: normal;
 			text-align: center;
 		}
 		h2.subtitle.bg {
@@ -149,6 +150,12 @@ let user = Astro.cookies.get('user')?.value
 			padding-inline-start: 0;
 		}
 
+		#top-links {
+			max-width: calc(100% - 1rem);
+			margin-left: auto;
+			padding: 0;
+		}
+
 		@media (min-width: 480px) {
 			h2 {
 				font-size: 1.5rem;
@@ -168,6 +175,10 @@ let user = Astro.cookies.get('user')?.value
 		}
 
 		@media (min-width: 680px) {
+			main {
+				padding: 2rem;
+				max-width: calc(100% - 4rem);
+			}
 			section,
 			footer {
 				margin-top: 75px;
