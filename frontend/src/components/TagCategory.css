@@ -3,7 +3,7 @@
 	display: flex;
 	padding: 0 5px;
 	border-radius: 2px;
-	background-color: var(--accent-green-mild);
+	background-color: var(--green-mild);
 }
 
 .category p {

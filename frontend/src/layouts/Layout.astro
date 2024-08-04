@@ -36,14 +36,17 @@ let user = Astro.cookies.get('user')?.value
 		:root {
 			--text: hsl(0, 0%, 92%);
 			--text-treasurey: hsl(44, 55%, 80%);
-			--text-treasurey-dark: hsl(46, 24%, 52%);
 			--text-treasurey-mild: hsl(44, 15%, 80%);
+			--text-treasurey-dark: hsl(46, 24%, 52%);
 			
-			--accent-treasurey: hsl(44, 95%, 71%);
-			--accent-treasurey-mild: hsl(54, 77%, 75%);
-			--accent-sky: hsl(180, 33%, 82%);
-			--accent-green: hsl(112, 33%, 56%);
-			--accent-green-mild: hsl(112, 66%, 90%);
+			--treasurey: hsl(44, 95%, 71%);
+			--treasurey-mild: hsl(54, 77%, 75%);
+
+			--sky: hsl(180, 33%, 82%);
+			--sky-mild: hsla(180, 33%, 82%, 0.05);
+
+			--green: hsl(112, 33%, 56%);
+			--green-mild: hsl(112, 66%, 90%);
 		}
 		html {
 			font-family: system-ui, sans-serif;
@@ -74,24 +77,27 @@ let user = Astro.cookies.get('user')?.value
 			line-height: 1.6;
 		}
 		h1 {
-			font-size: 3rem;
+			font-size: 2rem;
 			font-weight: 700;
 			line-height: 1;
 			text-align: center;
 		}
+		h1:has(+h2.subtitle) {
+			margin-bottom: 1rem;
+		}
 		h1,
 		h2.subtitle {
-			margin-bottom: 1.5rem;
+			margin-bottom: 1rem;
 		}
 		h2 {
-			font-size: 1.5rem;
+			font-size: 2rem;
 		}
 		h2.subtitle {
 			font-size: 1rem;
 			text-align: center;
 		}
 		h2.subtitle.bg {
-			background: rgba(var(--accent-light), 5%);
+			background: var(--sky-mild);
 			padding: 3px;
 		}
 		h3 {
@@ -143,22 +149,14 @@ let user = Astro.cookies.get('user')?.value
 			padding-inline-start: 0;
 		}
 
-		@media (min-width: 375px) {
-			section,
-			footer {
-				margin-top: 75px;
-			}
-		}
-
 		@media (min-width: 480px) {
-			h1 {
-				font-size: 4rem;
-			}
-
 			h2 {
-				font-size: 2rem;
+				font-size: 1.5rem;
 			}
 
+			h3 {
+				font-size: 1.15rem;
+			}
 			#top-cats {
 				flex-wrap: wrap;
 				max-height: 350px;
@@ -170,6 +168,11 @@ let user = Astro.cookies.get('user')?.value
 		}
 
 		@media (min-width: 680px) {
+			section,
+			footer {
+				margin-top: 75px;
+			}
+
 			#top-cats {
 				max-height: 200px;
 

@@ -18,7 +18,8 @@ astro-island:first-of-type li.link {
 }
 .url {
 	font-size: 0.9rem;
-	color: var(--accent-treasurey);
+	color: var(--treasurey);
+	word-wrap: break-word;
 }
 h3.url-anchor {
 	font-size: 1.15rem;
@@ -47,7 +48,7 @@ h3.url-anchor:visited,
 }
 .like-btn.liked,
 .copy-btn.copied {
-	background-color: var(--accent-sky);
+	background-color: var(--sky);
 	font-weight: bold;
 }
 .like-btn,

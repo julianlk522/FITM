@@ -14,11 +14,11 @@ import Layout from '../layouts/Layout.astro'
 				The <strong>Open Internet Treasure Map (OITM)</strong>
 				is a tool for sharing valuable Internet content. It seeks to defeat
 				the challenges of high obscurity and resultingly low discoverability
-				of key resources; to announce the whereabouts of delicious flavors
-				throughout the web's sprawling contents.
+				of key online resources; to announce the whereabouts of delicious flavors
+				hidden in the web's sprawling contents.
 			</p>
 			<p>
-				"Treasure" is intentionally vague. This site is about sharing or
+				<em>Treasure</em> is intentionally vague. This site is about sharing or
 				discovering anything on the Internet that's worth sharing or
 				discovering.
 			</p>
@@ -32,26 +32,21 @@ import Layout from '../layouts/Layout.astro'
 			</p>
 			<p>
 				For example, high SEO is not always relevant to content quality.
-				<a href="http://www.ronjarzombek.com/">Awesome things on the web are occasionally served unencrypted</a>,
-				or in HTML markup that is semantically barebones, and will often be buried in
-				search results for it. Searchers who care more
-				about novelty than presentation of results are not well served by this approach.
+				Awesome things on the web are sometimes absent in search results because they are served unencrypted
+				or in semantically barebones HTML. Users who care more
+				about novelty than presentation of results don&apos;t benefit from this approach.
 			</p>
 			<p>
 				Search engines also are incentivized to promote results from the
-				highest bidders. Depending on who you ask, this may be a
-				feature and not a bug. But some will consider the profiles behind
-				some of their favorite links and conclude that a big budget and
-				marketing passion do not reliably indicate high quality.
+				highest bidders. Maybe this is a
+				feature and not a bug, depending on who you ask. Do big budgets and marketing passion reliably produce high quality web content? If you don't think so, you are in the right place.
 			</p>
 			<p>
-				Arguably, a simple enough proxy for quality is the number of
-				people who decide, for one reason or another, to upvote a link. It's then trivial to find
-				good content by 
-				sorting on like count.
+				Arguably, a simple enough proxy for a link's quality is the number of
+				people who decide, for one reason or another, to upvote it. It's then trivial to find good content by sorting on like count.
 			</p>
 			<p>
-				But typically results are also meant to be specific to some topic (you know, the one you searched for). In OITM, links are tagged with 1+ categories. You can stack desired categories in
+				But, of course, results are also usually only meant to be about a specific topic (you know, the one you searched for). In OITM, links are tagged with 1+ <em><a href="#cats">cats</a></em>. You can stack desired cats in
 				searches to efficiently and reliably find pages that match some
 				theme(s). More on that later.
 			</p>
@@ -85,7 +80,13 @@ import Layout from '../layouts/Layout.astro'
 		</section>
 
 		<section>
-			<h2>Core Actions</h2>
+			<h2>How OITM Works</h2>
+
+			<h3 id="cats" class="subsection">Cats?</h3>
+			<p>The term <em>"cats"</em> is used often on OITM. It&apos;s a shorthand for <em><a href="#tags">tag categories</a></em> but is also meant as a nod to the <a href="https://en.wikipedia.org/wiki/I_Can_Has_Cheezburger%3F">historical prominence of cats in Internet culture</a>.</p>
+			<p>Please don't be alarmed by mention of "stacking cats" or things of that nature. No animals were harmed in the making of this site, and further <em>"cat"</em>s are written with the above intended meaning.</p>
+
+			<h3 class="subsection">Core Actions</h3>
 			<ol>
 				<li><strong>Summarize</strong></li>
 				<li><strong>Copy</strong></li>
@@ -94,7 +95,7 @@ import Layout from '../layouts/Layout.astro'
 			</ol>
 
 			<p>
-				These will help you to develop a mightily valuable treasure map.
+				These will help you to develop valuable treasure maps which are coveted across the lands.
 			</p>
 
 			<h3 class="subsection">Summarize</h3>
@@ -127,11 +128,10 @@ import Layout from '../layouts/Layout.astro'
 				Treasure Map&mdash;to find it easily.
 			</p>
 
-			<h3 class="subsection">Tag</h3>
+			<h3 id="tags" class="subsection">Tag</h3>
 			<p>
 				<strong>Tagging</strong> a link is about improving discoverability
-				via filtration. A tag represents a user's interpretation about how
-				a link's content should be categorized. Tag categories can be used
+				via filtration. A tag is a list of categories, chosen by a user, that a certain link is thought to embody. It represents that user's interpretation of the link's content. Tag cats can be used
 				to narrow searches.
 			</p>
 			<p>
@@ -141,20 +141,16 @@ import Layout from '../layouts/Layout.astro'
 			</p>
 			<p>
 				Any <em>user-submitted tag</em>, i.e., a user's categorization(s) of some link,
-				dictates how that link will be indexed on their Treasure Map. By contrast, links are indexed using <em>global tags</em> in <a href="#global">Global Treaure Map</a> searches.
+				dictates how that link will be indexed on <em>their</em> Treasure Map. By contrast, links are indexed using <em>global tags</em> in <a href="#global">Global Treasure Map</a> searches.
 			</p>
 
-			<h3>Cats?</h3>
-			<p>You may see the term <em>"cats"</em> thrown around. It&apos;s a shorthand for <em>tag categories</em> but is also meant as a nod to the <a href="https://en.wikipedia.org/wiki/I_Can_Has_Cheezburger%3F">historical prominence of cats in Internet culture</a>.</p>
-		</section>
-		<section>
-			<h2 id="global">The Global Treasure Map and Global Tags</h2>
+			<h3 id="global" class='subsection'>The Global Treasure Map and Global Tags</h3>
 			<p>
-				Each link is also associated with a <strong>global tag</strong>,
-				which filters the results of Global Treasure Map searches. (Outside of any single
+				Each link is also associated with a <em>global tag</em>,
+				which filters the results of searches made outside of any single
 				user's map. For example, on the <a
 				href='http://localhost:4321/top?period=week'>Top Rated (Week)</a
-			> page.)
+			> page.
 			</p>
 			<p>
 				<em>Global tags</em> are calculated automatically by the age of every
@@ -163,9 +159,13 @@ import Layout from '../layouts/Layout.astro'
 			</p>
 			<p>
 				The assumption is that repeated categorizations are more likely to be
-				universally pleasing, as are categorizations that have remained unedited
+				universally pleasing, and so are ones that have remained unedited
 				for a long time.
 			</p>
+			<p>A long-unedited tag may be bad, but if another user sees it and disagrees then they can submit their own tag. If more users agree with the 2nd interpretation and tag similarly, the 1st tag's cats will soon lose relevance and be stripped from the link's global tag.</p>
+		</section>
+		<section>
+			
 		</section>
 		<section>
 			<h2>Additional Notes</h2>
@@ -191,12 +191,13 @@ import Layout from '../layouts/Layout.astro'
 	img {
 		display: flex;
 		margin: 0 auto;
+		max-height: 150px;
 	}
 	.subsection {
 		margin-top: 50px;
 	}
 
-	@media (min-width: 375px) {
+	@media (min-width: 680px) {
 		.subsection {
 			margin-top: 75px;
 		}

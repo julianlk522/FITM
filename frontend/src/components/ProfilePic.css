@@ -13,9 +13,9 @@ img#pfp {
 
 #new-pic-upload-label {
 	background-color: transparent;
-	color: var(--accent-treasurey-mild);
+	color: var(--treasurey-mild);
 	padding: 0 8px;
-	border: 1px solid var(--accent-green);
+	border: 1px solid var(--green);
 	border-radius: 2px;
 	cursor: pointer;
 	font-weight: bold;
