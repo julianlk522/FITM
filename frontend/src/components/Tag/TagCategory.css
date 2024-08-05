@@ -1,0 +1,14 @@
+.category {
+	list-style: none;
+	display: flex;
+	padding: 0 5px;
+	border-radius: 2px;
+	background-color: var(--green-mild);
+}
+
+.category p {
+	color: black;
+	font-weight: bold;
+	margin: 0;
+	white-space: nowrap;
+}

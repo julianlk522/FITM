@@ -1,5 +1,5 @@
 ---
-import Link from '../components/Link'
+import Link from '../components/Link/Link'
 import ScrollUp from '../components/ScrollUp.astro'
 import Layout from '../layouts/Layout.astro'
 import { Periods, type CategoryCount, type PaginatedLinks } from '../types'
@@ -29,21 +29,19 @@ const other_periods = Periods.filter((other) => other !== 'month')
 
 <Layout Title='Welcome to the Open Internet Treasure Map (OITM)'>
 	<main>
-		<section>
-			<img class='chest-backdrop' src='../../chest.svg' />
+		<img class='chest-backdrop' src='../../chest.svg' alt="treasure chest" />
 			<h1>Welcome to OITM</h1>
 			<h2 class='subtitle bg'>a map of the web's treasures</h2>
 			{
 				user ? (
-					<p>
-						<a href={`/new`}>Submit new link</a>
-					</p>
+					<h3 id="new-link">
+						<a href={`/new`}>Add link</a>
+					</h3>
 				) : null
 			}
-		</section>
 		<section>
-			<h2>Top Categories</h2>
-			<ol id='top-categories'>
+			<h2>Top Cats</h2>
+			<ol id="top-cats">
 				{
 					top_cats.map((cat) => (
 						<li>
@@ -90,23 +88,31 @@ const other_periods = Periods.filter((other) => other !== 'month')
 		top: 1em;
 		left: 50%;
 		transform: translatex(-50%);
-		width: 180px;
+		width: 150px;
 		height: auto;
 		opacity: 0.25;
 		z-index: -1;
 	}
+	#new-link {
+		text-align: center;
+	}
 	#change-period {
 		display: flex;
 		list-style: none;
+		padding-inline-start: 1rem;
 		margin-top: 0;
+	}
+	#new-link,
+	#change-period {
+		a,
+		a:visited {
+			color: var(--text);
+		}
 	}
 	.period {
 		margin-right: 0.5rem;
 	}
 	.period:last-of-type {
 		margin-right: 0;
-	}
-	#top-links {
-		padding: 0;
 	}
 </style>

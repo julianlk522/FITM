@@ -1,5 +1,5 @@
 ---
-import Link from '../components/Link'
+import Link from '../components/Link/Link'
 import Pagination from '../components/Pagination.astro'
 import ScrollUp from '../components/ScrollUp.astro'
 import Layout from '../layouts/Layout.astro'
@@ -146,7 +146,7 @@ const page_title =
 					{top_cats.length ? (
 						<section>
 							<h2>Top Categories</h2>
-							<ol id='top-categories'>
+							<ol id='top-cats'>
 								{top_cats.map((cat) => (
 									<li>
 										<a
@@ -164,16 +164,14 @@ const page_title =
 							<section>
 								<h2>Top Subcategories</h2>
 								{top_subcats.length ? (
-									<ol id='top-categories'>
+									<ol id='top-cats'>
 										{top_subcats.map((subcat) => (
 											<li>
-												<strong>
-													<a
-														href={`/top?categories=${categories + ',' + subcat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
-													>
-														{subcat.Category}
-													</a>
-												</strong>
+												<a
+													href={`/top?categories=${categories + ',' + subcat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
+												>
+													{subcat.Category}
+												</a>
 												<span> ({subcat.Count})</span>
 											</li>
 										))}
@@ -184,7 +182,7 @@ const page_title =
 							</section>
 							<section>
 								<h2>Top Contributors</h2>
-								<ol>
+								<ol id="top-contributors">
 									{top_contributors.map(
 										(contributor: CategoryContributor) => (
 											<li>
@@ -216,7 +214,7 @@ const page_title =
 						/>
 
 						{/* TODO: replace magic page limit number */}
-						<ol id='links' start={(page - 1) * 20 + 1}>
+						<ol id='top-links' start={(page - 1) * 20 + 1}>
 							{links.map((link) => (
 								<Link
 									client:load
@@ -241,14 +239,14 @@ const page_title =
 					<ScrollUp />
 				</>
 			) : (
-				<>
+				<section>
 					<p>No links found</p>
 					{user ? (
 						<p>
 							<a href={`/new`}>Add link</a>
 						</p>
 					) : null}
-				</>
+				</section>
 			)
 		}
 	</main>
@@ -269,10 +267,13 @@ const page_title =
 			margin-left: 5px;
 		}
 	}
-	#links {
-		padding: 0;
-	}
-	li strong:has(+ span) a {
-		display: inline-block;
+
+	#top-contributors {
+		padding-inline-start: 0;
+		list-style-position: inside;
+
+		li strong:has(+ span) a {
+			display: inline-block;
+		}
 	}
 </style>

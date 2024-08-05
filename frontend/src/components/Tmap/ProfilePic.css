@@ -1,0 +1,28 @@
+.error {
+	color: red;
+}
+
+img {
+	display: block;
+}
+
+img#pfp {
+	max-height: 150px;
+	margin-bottom: 20px;
+}
+
+#new-pic-upload-label {
+	font-size: 0.9rem;
+	background-color: transparent;
+	padding: 1px 8px;
+	border: 1px solid var(--sky);
+	border-radius: 2px;
+	cursor: pointer;
+	display: flex;
+	gap: 5px;
+	width: fit-content;
+}
+
+#upload-btn {
+	padding: 0;
+}

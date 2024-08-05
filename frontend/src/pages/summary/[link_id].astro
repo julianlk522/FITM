@@ -1,12 +1,13 @@
 ---
-import Link from '../../components/Link'
-import Summary from '../../components/Summary'
-import NewSummary from '../../components/NewSummary'
+import Link from '../../components/Link/Link'
+import Summary from '../../components/Summary/Summary'
+import NewSummary from '../../components/Summary/NewSummary'
 import Layout from '../../layouts/Layout.astro'
 import type { SummaryPage } from '../../types'
 
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
+const is_signed_in = user && token
 
 const { link_id } = Astro.params
 if (!link_id) {
@@ -24,16 +25,10 @@ if (get_summaries_resp.status > 399) {
 	return Astro.redirect('/404')
 }
 let summary_data: SummaryPage = await get_summaries_resp.json()
-// move Auto Summary to last
-for (let i = 0; i < summary_data.Summaries.length; i++) {
-	if (summary_data.Summaries[i].SubmittedBy === 'Auto Summary') {
-		summary_data.Summaries.push(summary_data.Summaries.splice(i, 1)[0])
-	}
-}
 const { Link: link, Summaries: summaries } = summary_data
 ---
 
-<Layout Title=`Summaries for ${summary_data.Link.Summary}`>
+<Layout Title=`Summaries for ${link.Summary}`>
 	<script>
 		function handle_redirect() {
 			document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=3600; SameSite=strict; Secure`
@@ -45,7 +40,9 @@ const { Link: link, Summaries: summaries } = summary_data
 			?.addEventListener('click', handle_redirect)
 	</script>
 	<main>
+		<h1>Summaries</h1>
 		<section>
+			<h2>Link</h2>
 			<Link
 				client:load
 				Link={link}
@@ -55,23 +52,16 @@ const { Link: link, Summaries: summaries } = summary_data
 				User={user}
 			/>
 		</section>
-		<section>
-			{
-				user && token ? (
-					<NewSummary client:load Token={token} LinkID={link_id} />
-				) : (
-					<p>
-						<a id='login-redirect-link' href='#'>
-							Login
-						</a>
-						<span> to like summaries or add your own.</span>
-					</p>
-				)
-			}
-		</section>
+
+		{is_signed_in ? 
+			<section>
+				<NewSummary client:load Token={token} LinkID={link_id} />
+			</section>
+		 : null}
+
 		<section>
 			<h2>Top Summaries</h2>
-			<ol>
+			<ol id="top-summaries">
 				{
 					summaries.length ? (
 						summaries.map((summary) => (
@@ -88,12 +78,34 @@ const { Link: link, Summaries: summaries } = summary_data
 							/>
 						))
 					) : (
-						<p>None yet.</p>
+						<p>No summaries yet.</p>
 					)
 				}
 			</ol>
 		</section>
+
+		{is_signed_in 
+			? null 
+			: <section>
+				<p>
+					<a id='login-redirect-link' href='#'>
+						Login
+					</a>
+					<span> to like summaries or add your own.</span>
+				</p>
+			</section>
+		}
 	</main>
 </Layout>
 
-<style></style>
+<style>
+	#login-redirect-link {
+		display: inline-block;
+	}
+
+	#top-summaries {
+		max-width: calc(100% - 1rem);
+		margin-left: auto;
+		padding: 0;
+	}
+</style>

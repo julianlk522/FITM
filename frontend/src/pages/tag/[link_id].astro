@@ -1,7 +1,7 @@
 ---
-import EditTag from '../../components/EditTag'
-import Link from '../../components/Link'
-import TagCategory from '../../components/TagCategory'
+import Link from '../../components/Link/Link'
+import EditTag from '../../components/Tag/EditTag'
+import TagCategory from '../../components/Tag/TagCategory'
 import Layout from '../../layouts/Layout.astro'
 import type { TagPage } from '../../types'
 import format_date from '../../util/format_date'
@@ -32,20 +32,22 @@ if (get_tags_resp.status > 399) {
 	return Astro.redirect('/404')
 }
 const tag_Data: TagPage = await get_tags_resp.json()
-const { Link: link, UserTag: user_tag, EarliestTags: top_tags } = tag_Data
+const { Link: link, UserTag: user_tag, TagRankings: top_tags } = tag_Data
 ---
 
 <Layout Title=`Tags for ${tag_Data.Link.Summary}`>
 	<main>
-		<h2>Link:</h2>
-		<Link
-			client:load
-			IsSummaryPage={false}
-			IsTagPage={true}
-			Link={link}
-			Token={token}
-			User={user}
-		/>
+		<section>
+			<h2>Link:</h2>
+			<Link
+				client:load
+				IsSummaryPage={false}
+				IsTagPage={true}
+				Link={link}
+				Token={token}
+				User={user}
+			/>
+		</section>
 
 		<EditTag
 			client:load
@@ -61,7 +63,7 @@ const { Link: link, UserTag: user_tag, EarliestTags: top_tags } = tag_Data
 					<ol>
 						{top_tags.map((tag) => (
 							<li class='tag'>
-								<ul id='categories_grid'>
+								<ul id='cat_list'>
 									{tag.Categories.split(',').map((tag) => {
 										return (
 											<TagCategory
@@ -96,7 +98,7 @@ const { Link: link, UserTag: user_tag, EarliestTags: top_tags } = tag_Data
 	.tag {
 		margin-bottom: 50px;
 	}
-	#categories_grid {
+	#cat_list {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 10px;
