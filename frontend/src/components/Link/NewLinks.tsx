@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks'
-import type { ErrorResponse, LinkData } from '../../types'
+import * as types from '../../types'
 import { is_error_response } from '../../types'
 import NewTag from '../Tag/NewTag'
 import Link from './Link'
@@ -14,7 +14,7 @@ export default function NewLinks(props: Props) {
 
 	const [error, set_error] = useState<string | undefined>(undefined)
 	const [cats, set_cats] = useState<string[]>([])
-	const [submitted_links, set_submitted_links] = useState<LinkData[]>([])
+	const [submitted_links, set_submitted_links] = useState<types.Link[]>([])
 
 	async function handle_submit(event: SubmitEvent) {
 		event.preventDefault()
@@ -49,7 +49,8 @@ export default function NewLinks(props: Props) {
 		if (new_link_resp.statusText === 'Unauthorized') {
 			window.location.href = '/login'
 		}
-		let new_link_data: LinkData | ErrorResponse = await new_link_resp.json()
+		let new_link_data: types.Link | types.ErrorResponse =
+			await new_link_resp.json()
 
 		if (is_error_response(new_link_data)) {
 			set_error(new_link_data.error)

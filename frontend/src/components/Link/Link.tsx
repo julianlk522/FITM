@@ -1,10 +1,10 @@
 import { useState } from 'preact/hooks'
-import type { LinkData } from '../../types'
+import * as types from '../../types'
 import format_date from '../../util/format_date'
 import './Link.css'
 
 interface Props {
-	Link: LinkData
+	Link: types.Link
 	CategoriesFromUser?: string
 	IsSummaryPage: boolean
 	IsTagPage: boolean

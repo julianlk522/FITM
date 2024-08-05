@@ -5,8 +5,8 @@ type ErrorResponse = {
 }
 
 function is_error_response(obj: any): obj is ErrorResponse {
-    return obj.error !== undefined 
-  }
+	return obj.error !== undefined
+}
 
 // USER
 type Profile = {
@@ -17,7 +17,7 @@ type Profile = {
 }
 
 // LINK
-type LinkData = {
+type Link = {
 	ID: number
 	URL: string
 	SubmittedBy: string
@@ -33,12 +33,12 @@ type LinkData = {
 }
 
 type PaginatedLinks = {
-	Links: LinkData[]
+	Links: Link[]
 	NextPage: number
 }
 
 const Periods = ['day', 'week', 'month', 'year', 'all'] as const
-type Period = typeof Periods[number]
+type Period = (typeof Periods)[number]
 
 // TAG
 type Tag = {
@@ -48,12 +48,12 @@ type Tag = {
 	LastUpdated: string
 }
 
-type EarlyTag = Tag & {LifeSpanOverlap: number}
+type TagRanking = Tag & { LifeSpanOverlap: number }
 
 type TagPage = {
-	Link: LinkData
+	Link: Link
 	UserTag: Tag | undefined
-	EarliestTags: EarlyTag[]
+	TagRankings: TagRanking[]
 }
 
 // CATEGORY
@@ -79,12 +79,12 @@ type Summary = {
 }
 
 type SummaryPage = {
-	Link: LinkData
+	Link: Link
 	Summaries: Summary[]
 }
 
 // TREASURE MAP
-type TmapLink = LinkData & { CategoriesFromUser: boolean | undefined }
+type TmapLink = Link & { CategoriesFromUser: boolean | undefined }
 
 type FilteredTreasureMap = {
 	Submitted: TmapLink[]
@@ -98,5 +98,18 @@ type TreasureMap = FilteredTreasureMap & { Profile: Profile }
 const tmap_sections = ['Submitted', 'Copied', 'Tagged'] as const
 
 export { Periods, is_error_response, tmap_sections }
-export type { CategoryContributor, CategoryCount, ErrorResponse, FilteredTreasureMap, LinkData, PaginatedLinks, Period, Profile, Summary, SummaryPage, Tag, TagPage, TreasureMap }
-
+export type {
+	CategoryContributor,
+	CategoryCount,
+	ErrorResponse,
+	FilteredTreasureMap,
+	Link,
+	PaginatedLinks,
+	Period,
+	Profile,
+	Summary,
+	SummaryPage,
+	Tag,
+	TagPage,
+	TreasureMap,
+}
