@@ -69,4 +69,7 @@ p {
 	.link {
 		margin-top: 50px;
 	}
+	.preview {
+		overflow: auto;
+	}
 }

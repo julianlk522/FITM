@@ -46,60 +46,63 @@ if (!used_sections.length) {
 <Layout Title=`${login_name}'s Treasure Map`>
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
-		<h2 class='subtitle'>Created: {format_date(profile.Created)}</h2>
-		<figure id='profile'>
-			<ProfilePic
-				client:load
-				PFP={profile.PFP ? profile.PFP : undefined}
-				LoginName={login_name}
-				SignedInUser={signed_in_user}
-				Token={token}
-			/>
+		<h2 class="subtitle">created: {format_date(profile.Created)}</h2>
 
-			{
-				display_about ? (
-					is_signed_in_user ? (
-						<EditAbout
-							client:load
-							token={token}
-							initial={profile.About}
-						/>
-					) : (
-						<figcaption>{profile.About}</figcaption>
-					)
-				) : null
-			}
-		</figure>
+		<div class="flex-container">
+			<section id="profile">
+				<ProfilePic
+						client:load
+						PFP={profile.PFP ? profile.PFP : undefined}
+						LoginName={login_name}
+						SignedInUser={signed_in_user}
+						Token={token}
+				/>
+				{
+					display_about ? (
+						is_signed_in_user ? (
+							<EditAbout
+								client:load
+								token={token}
+								initial={profile.About}
+							/>
+						) : (
+							<figcaption>about: {profile.About}</figcaption>
+						)
+					) : null
+				}
+			</section>
+			
+			<section id='overview'>
+				<div>
+					<h2>Top Categories</h2>
+					<ol>
+						{
+							tmap.Categories.map((cat) => (
+								<li>
+									<a href={`/map/${login_name}/${cat.Category}`}>
+										{cat.Category}
+									</a>
+									<span>({cat.Count})</span>
+								</li>
+							))
+						}
+					</ol>
+				</div>
+				<div>
+					<h2>Skip to Section</h2>
+					<ul id='skip_to_link_section'>
+						{
+							used_sections.map((s) => (
+								<li>
+									<a href={`#${s}`}>{s}</a>
+								</li>
+							))
+						}
+					</ul>
+				</div>
+			</section>
+		</div>
 
-		<section id='overview'>
-			<div>
-				<h2>Top Categories</h2>
-				<ol>
-					{
-						tmap.Categories.map((cat) => (
-							<li>
-								<a href={`/map/${login_name}/${cat.Category}`}>
-									{cat.Category}
-								</a>
-								<span>({cat.Count})</span>
-							</li>
-						))
-					}
-				</ol>
-			</div>
-			<div>
-				<h2>Skip to Section</h2>
-				<ul id='skip_to_link_section'>
-					{
-						used_sections.map((s) => (
-							<li>
-								<a href={`#${s}`}>{s}</a>
-							</li>
-						))
-					}
-				</ul>
-			</div>
-		</section>
 		{
 			used_sections.map((s) => {
 				return (
@@ -147,12 +150,15 @@ if (!used_sections.length) {
 </Layout>
 
 <style>
+	h1,
+	h2 {
+		text-align: left;
+	}
 	#profile {
-		text-align: center;
-
-		figcaption {
-			margin-top: 0.5rem;
-		}
+		padding-top: 0;
+	}
+	#profile-pic figcaption {
+		margin-top: 0.5rem;
 	}
 	#about {
 		display: inline;
@@ -169,7 +175,19 @@ if (!used_sections.length) {
 	.link_section h2 {
 		position: sticky;
 		top: 0px;
-		padding: 10px 0;
+		padding: 1rem 0 0.5rem;
 		background-color: #13151a;
+	}
+
+	@media (min-width: 680px) {
+		.flex-container {
+			display: flex;
+			justify-content: space-between;
+			gap: 50px;
+		}
+
+		#overview {
+			padding-top: 0;
+		}
 	}
 </style>

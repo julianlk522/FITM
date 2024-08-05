@@ -65,11 +65,14 @@ export default function EditAbout(props: Props) {
 					</button>
 				</form>
 			) : initial ? (
-				<figcaption>{initial}</figcaption>
+				<figcaption>about: {initial}</figcaption>
 			) : null}
 
 			<button
-				onClick={() => set_editing((prev) => !prev)}
+				onClick={() => {
+					set_error(undefined)
+					set_editing((prev) => !prev)
+				}}
 				class='img-btn'
 			>
 				<img
