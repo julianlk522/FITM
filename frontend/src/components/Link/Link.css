@@ -1,12 +1,13 @@
 .link {
 	border: 1px solid rgba(var(--accent), 25%);
-	margin: 25px 0 0;
+	margin: 2rem 0 0;
 }
 astro-island:first-of-type li.link {
 	margin-top: 0;
 }
 .link.single {
 	list-style: none;
+	margin-bottom: 0.5rem;
 }
 .preview {
 	display: inline-flex;
@@ -22,7 +23,6 @@ astro-island:first-of-type li.link {
 	word-wrap: break-word;
 }
 h3.url-anchor {
-	font-size: 1.15rem;
 	display: inline-block;
 	vertical-align: top;
 }

@@ -1,72 +1,114 @@
 ---
-import Layout from '../layouts/Layout.astro'
+let user = Astro.cookies.get('user')?.value
 ---
 
-<Layout Title='Leave Feedback for OITM'>
-	<script>
-		async function handle_feedback_submit(event: SubmitEvent) {
-			event.preventDefault()
+<!doctype html>
+<html lang='en'>
+	<head>
+		<meta charset='UTF-8' />
+		<meta name='description' content='Open Internet Treasure Map' />
+		<meta name='viewport' content='width=device-width' />
+		<link rel='icon' type='image/svg+xml' href='/favicon.svg' />
+		<meta name='generator' content={Astro.generator} />
+		<title>Leave Feedback for OITM</title>
+	</head>
+	<nav>
+		<a href='/'>Home</a>
+		<a href='/about'>About</a>
+		{
+			user ? (
+			<a href=`/map/${user}` id="user-tmap-link">{user}</a>) : (<a href='/login' id="login-link">Login</a>)
+		}
+	</nav>
+	<body>
+		<main>
+			<h1>Feedback</h1>
+			<section>
+				<h3>Email</h3>
+				<p>If you have an opinion about how OITM could be better, please email <a href='mailto:oitmsupport@protonmail.com'>oitmsupport@protonmail.com</a> to share it. </p>
+				<p>Your comments are appreciated and any suggestions will be considered in the next round of updates.</p>
+				<p>Thanks for visiting!</p>
+			</section>
+		</main>
+	</body>
+</html>
 
-			const form = event.target as HTMLFormElement
-			const formData = new FormData(form)
-			const feedback = formData.get('feedback')
+<style>
+		:root {
+			--text: hsl(0, 0%, 92%);
+			--text-treasurey: hsl(44, 55%, 80%);
+			--text-treasurey-dark: hsl(44, 25%, 60%);
+		}
+		html {
+			font-family: system-ui, sans-serif;
+			background: #13151a;
+			background-size: 224px;
+		}
+		nav {
+			max-width: 1080px;
+			margin: 0 auto;
+			padding: 1rem;
 
-			// TODO: API endpoint / db table for collecting feedback
-			const submit_feedback_resp = await fetch(
-				'http://127.0.0.1:8000/feedback',
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({
-						feedback,
-					}),
-				}
-			)
-			const submit_feedback = await submit_feedback_resp.json()
-			if (submit_feedback.status === 'success') {
-				// TODO: thank-you-for-feedback page
-				window.location.href = '/thank-you-for-feedback'
+			a,
+			a:visited {
+				color: var(--text);
+			}
+		}
+		nav :is(#user-tmap-link, #login-link) {
+			float: right;
+		}
+		main {
+			margin: auto;
+			padding: 1rem;
+			width: 800px;
+			max-width: calc(100% - 2rem);
+			color: var(--text);
+			font-size: 18px;
+			line-height: 1.5;
+		}
+		h1 {
+			font-size: 2rem;
+			line-height: 1;
+			text-align: center;
+		}
+		h2 {
+			font-size: 1.5rem;
+		}
+		h3 {
+			font-size: 1.25rem;
+		}
+		h2, h3, h4, h5, h6 {
+			margin: 0;
+		}
+		section {
+			padding: 1rem 0;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+		}
+		a:not(:visited) {
+			color: var(--text-treasurey);
+		}
+		a:visited {
+			color: var(--text-treasurey-dark);
+		}
+
+		@media (min-width: 480px) {
+			h2 {
+				font-size: 1.25rem;
+			}
+
+			h3 {
+				font-size: 1.15rem;
 			}
 		}
 
-		document
-			.getElementById('feedback_form')
-			?.addEventListener('submit', (e) => handle_feedback_submit(e))
-	</script>
-	<main>
-		<h1>Leave Feedback for OITM devs</h1>
-		<h3>What do you like or not like about OITM?</h3>
-		<h3>What changes would you like to see in the next update?</h3>
-		<form id='feedback_form'>
-			<label for='feedback'>Feedback</label>
-			<textarea id='feedback' name='feedback'></textarea>
-			<input type='submit' value='Submit' />
-		</form>
-	</main>
-</Layout>
+		@media (min-width: 680px) {
+			main {
+				padding: 2rem;
+				max-width: calc(100% - 4rem);
+			}
 
-<style>
-	.chest-backdrop {
-		position: absolute;
-		top: 1em;
-		left: 50%;
-		transform: translatex(-50%);
-		width: 180px;
-		height: auto;
-		opacity: 0.25;
-		z-index: -1;
-	}
-	#change-time-duration {
-		font-size: 0.9rem;
-		display: flex;
-
-		p {
-			margin-top: 0;
+			section {
+				padding: 2rem 0;
+			}
 		}
-	}
-	.time-duration {
-		margin-left: 0.5rem;
-	}
 </style>

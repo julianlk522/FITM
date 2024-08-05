@@ -55,10 +55,9 @@ export default function NewSummary(props: Props) {
 
 	return (
 		<form onSubmit={async (e) => await handle_submit(e, token)}>
-			<h2>Add New Summary</h2>
 			{error ? <p class='error'>{`Error: ${error}`}</p> : null}
 
-			<label for='summary'>Summary</label>
+			<label for='summary'>Add New Summary</label>
 			<input type='text' id='summary' name='summary' />
 			<button type='submit'>Submit</button>
 		</form>

@@ -1,10 +1,6 @@
 .summary {
-    margin-bottom: 50px;
+	margin: 2rem 0 0;
 }
-.like-btn {
-    background-color: rgba(255 255 255 / 0.5);
-}
-.like-btn.liked {
-    background-color: rgba(var(--accent), 50%);
-    color: white;
+astro-island:first-of-type li.summary {
+	margin-top: 0;
 }
