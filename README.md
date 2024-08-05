@@ -4,7 +4,6 @@
 
 ### Features
 
--Make Auto Summary appear first IF it has the most votes
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
