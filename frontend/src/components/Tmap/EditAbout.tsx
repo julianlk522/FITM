@@ -73,7 +73,9 @@ export default function EditAbout(props: Props) {
 				</form>
 			) : (
 				<>
-					{initial ? <figcaption>about: {initial}</figcaption> : null}
+					{initial ? (
+						<figcaption id='about'>about: {initial}</figcaption>
+					) : null}
 					<button
 						onClick={() => {
 							set_editing(true)
