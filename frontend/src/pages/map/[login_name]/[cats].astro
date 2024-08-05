@@ -95,7 +95,7 @@ if (!used_sections.length) {
 			</div>
 			<div>
 				<h2>Skip to Section</h2>
-				<ul id='skip_to_link_section'>
+				<ul id='skip_to_link-section'>
 					{
 						used_sections.map((s) => (
 							<li>
@@ -110,7 +110,7 @@ if (!used_sections.length) {
 		{
 			used_sections.map((s) => {
 				return (
-					<section id={s} class='link_section'>
+					<section id={s} class='link-section'>
 						<h2>{s}</h2>
 						<ol>
 							{tmap[s].map((link) => {
@@ -176,11 +176,11 @@ if (!used_sections.length) {
 	:is(#filters, #overview) > * {
 		width: 50%;
 	}
-	#skip_to_link_section {
+	#skip_to_link-section {
 		list-style: none;
 		padding: 0;
 	}
-	.link_section h2 {
+	.link-section h2 {
 		position: sticky;
 		top: 0px;
 		padding: 10px 0;

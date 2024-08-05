@@ -190,7 +190,6 @@ export default function Link(props: Props) {
 					<img
 						src={img_url}
 						alt={summary ? summary : url}
-						height={100}
 						width={100}
 					/>
 					<div>
