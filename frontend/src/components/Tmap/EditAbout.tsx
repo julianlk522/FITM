@@ -13,20 +13,27 @@ export default function EditAbout(props: Props) {
 	const [editing, set_editing] = useState<boolean>(false)
 	const [error, set_error] = useState<string | undefined>(undefined)
 
-	async function update_about(event: SubmitEvent) {
+	function handle_finished_editing(event: SubmitEvent) {
 		event.preventDefault()
-
-		if (!token) {
-			return (window.location.href = '/login')
-		}
 
 		const form = event.target as HTMLFormElement
 		const formData = new FormData(form)
-		const about = formData.get('about')?.toString()
+		let about = formData.get('about')?.toString()
 
-		if (about === initial) {
-			set_error('No changes made')
+		if (about === initial || (!about && !initial)) {
+			set_editing(false)
+			set_error(undefined)
 			return
+		} else if (!about) {
+			about = ''
+		}
+
+		update_about(about)
+	}
+
+	async function update_about(about: string) {
+		if (!token) {
+			return (window.location.href = '/login')
 		}
 
 		const resp = await fetch('http://127.0.0.1:8000/users/about', {
@@ -50,7 +57,7 @@ export default function EditAbout(props: Props) {
 	return (
 		<div id='edit-about'>
 			{editing ? (
-				<form onSubmit={(event) => update_about(event)}>
+				<form onSubmit={(event) => handle_finished_editing(event)}>
 					<label for='about'>About</label>
 					<textarea name='about' cols={50} rows={1}>
 						{initial}
@@ -64,24 +71,24 @@ export default function EditAbout(props: Props) {
 						/>
 					</button>
 				</form>
-			) : initial ? (
-				<figcaption>about: {initial}</figcaption>
-			) : null}
-
-			<button
-				onClick={() => {
-					set_error(undefined)
-					set_editing((prev) => !prev)
-				}}
-				class='img-btn'
-			>
-				<img
-					src='../../../edit_about.svg'
-					height={24}
-					width={24}
-					alt='Toggle About Section edit mode'
-				/>
-			</button>
+			) : (
+				<>
+					{initial ? <figcaption>about: {initial}</figcaption> : null}
+					<button
+						onClick={() => {
+							set_editing(true)
+						}}
+						class='img-btn'
+					>
+						<img
+							src='../../../edit_about.svg'
+							height={24}
+							width={24}
+							alt='Toggle About Section edit mode'
+						/>
+					</button>
+				</>
+			)}
 
 			{error ? <p class='error'>{error}</p> : null}
 		</div>
