@@ -272,9 +272,9 @@ const page_title =
 		margin: 0;
 		padding: 0;
 		list-style-position: inside;
+	}
 
-		li strong:has(+ span) a {
-			display: inline-block;
-		}
+	:is(li a, li strong:has(a)):has(+ span) {
+		display: inline-block;
 	}
 </style>

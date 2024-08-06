@@ -3,7 +3,7 @@
 	display: flex;
 	padding: 0 5px;
 	border-radius: 2px;
-	background-color: var(--green-mild);
+	background-color: var(--sky);
 }
 
 .category p {

@@ -255,6 +255,8 @@ if (!used_sections.length) {
 		}
 
 		#overview {
+			padding-top: 0.5rem;
+
 			> * {
 				max-width: 50%;
 			}
@@ -266,15 +268,27 @@ if (!used_sections.length) {
 
 		#skip-to-link-section {
 			list-style: none;
+			margin: 0;
 			padding: 0;
 		}
 	}
 
-	.link-section h2 {
-		position: sticky;
-		top: 0px;
-		padding: 1rem 0 0.5rem;
-		background-color: #13151a;
+	.link-section {
+		padding-top: 0;
+
+		h2 {
+			position: sticky;
+			top: 0px;
+			padding: 1rem 0 0.5rem;
+			background-color: #13151a;
+		}
+
+		ol {
+			max-width: calc(100% - 1rem);
+			margin: 0;
+			margin-left: auto;
+			padding: 0;
+		}
 	}
 
 	.flex {
@@ -283,13 +297,15 @@ if (!used_sections.length) {
 	}
 
 	@media (min-width: 480px) {
-		#profile-overview-flex-container #overview {
-			> * {
-				max-width: initial;
-			}
+		#profile-overview-flex-container {
+			#overview {
+				> * {
+					max-width: initial;
+				}
 
-			#top-cats li {
-				max-width: initial;
+				#top-cats li {
+					max-width: initial;
+				}
 			}
 		}
 
@@ -299,9 +315,17 @@ if (!used_sections.length) {
 	}
 
 	@media (min-width: 680px) {
-		.flex-container {
+		#profile-overview-flex-container {
 			display: flex;
-			justify-content: space-between;
+			gap: 3rem;
+
+			#overview {
+				padding-top: 0;
+			}
+
+			#profile {
+				padding-bottom: 1.5rem;
+			}
 
 			#profile,
 			#overview {
@@ -310,7 +334,9 @@ if (!used_sections.length) {
 		}
 
 		section:not(:first-of-type).link-section {
-			padding-top: 1rem;
+			padding-top: 0.5rem;
 		}
+
+
 	}
 </style>
