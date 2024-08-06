@@ -8,9 +8,12 @@ interface Props {
 }
 
 const { Period: period, Page: page, NextPage: next_page } = Astro.props
+const is_only_page = 
+	page === 1
+	&& next_page === -1
 ---
 
-<p>
+<nav class="pagination" style=`display: ${is_only_page ? 'none' : 'block'}`>
 	Page:
 	{page > 1 ? <a href={`/top?period=${period}`}>1</a> : null}
 
@@ -31,7 +34,7 @@ const { Period: period, Page: page, NextPage: next_page } = Astro.props
 			<a href={`/top?period=${period}&page=${next_page}`}>{next_page}</a>
 		) : null
 	}
-</p>
+</nav>
 
 <style>
 	#scroll-to-top {
