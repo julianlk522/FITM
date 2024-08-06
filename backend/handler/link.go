@@ -21,8 +21,8 @@ import (
 	"oitm/model"
 )
 
-func GetTopLinks(w http.ResponseWriter, r *http.Request) {
-	get_links_sql := query.NewGetTopLinks()
+func GetLinks(w http.ResponseWriter, r *http.Request) {
+	links_sql := query.NewGetTopLinks()
 
 	cats_params := r.URL.Query().Get("cats")
 	if cats_params != "" {
@@ -35,32 +35,32 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		get_links_sql = get_links_sql.FromLinkIDs(link_ids)
+		links_sql = links_sql.FromLinkIDs(link_ids)
 	}
 
 	period_params := r.URL.Query().Get("period")
 	if period_params != "" {
-		get_links_sql = get_links_sql.DuringPeriod(period_params)
+		links_sql = links_sql.DuringPeriod(period_params)
 	}
 
 	page := r.Context().Value(m.PageKey).(int)
-	get_links_sql = get_links_sql.Page(page)
+	links_sql = links_sql.Page(page)
 
-	if get_links_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
+	if links_sql.Error != nil {
+		render.Render(w, r, e.ErrInvalidRequest(links_sql.Error))
 		return
 	}
 	
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if req_user_id != "" {
-		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
+		links, err := _ScanLinks[model.LinkSignedIn](links_sql, req_user_id)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 		_RenderPaginatedLinks(links, page, w, r)
 	} else {
-		links, err := _ScanLinks[model.Link](get_links_sql, req_user_id)
+		links, err := _ScanLinks[model.Link](links_sql, req_user_id)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
@@ -214,52 +214,33 @@ func _RenderPaginatedLinks[T model.LinkSignedIn | model.Link](links *[]T, page i
 	}
 }
 
-func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
-	categories_params := chi.URLParam(r, "categories")
-	if categories_params == "" {
+func GetTopCategoriesContributors(w http.ResponseWriter, r *http.Request) {
+	cats_params := chi.URLParam(r, "cats")
+	if cats_params == "" {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
 		return
 	}
-	categories := strings.Split(categories_params, ",")
+	cats := strings.Split(cats_params, ",")
+	contributors_sql := query.NewGetCategoryContributors(cats)
 
-	get_contributors_sql := query.
-		NewGetCategoryContributors(categories).
-		Limit(CATEGORY_CONTRIBUTORS_LIMIT)
-	if get_contributors_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(get_contributors_sql.Error))
+	period_params := r.URL.Query().Get("period")
+	if period_params != "" {
+		contributors_sql = contributors_sql.DuringPeriod(period_params)
+	}
+
+	contributors_sql = contributors_sql.Limit(CATEGORY_CONTRIBUTORS_LIMIT)
+
+	if contributors_sql.Error != nil {
+		render.Render(w, r, e.ErrInvalidRequest(contributors_sql.Error))
 		return
 	}
 	
-	contributors := _ScanCategoryContributors(get_contributors_sql, categories_params)
+	contributors := _ScanCategoryContributors(contributors_sql, cats_params)
 	_RenderCategoryContributors(contributors, w, r)
 }
 
-func GetTopCategoryContributorsByPeriod(w http.ResponseWriter, r *http.Request) {
-	period_params, categories_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
-	if period_params == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoPeriod))
-		return
-	} else if categories_params == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
-		return
-	}
-	
-	categories := strings.Split(categories_params, ",")
-	get_contributors_sql := query.
-		NewGetCategoryContributors(categories).
-		DuringPeriod(period_params).
-		Limit(CATEGORY_CONTRIBUTORS_LIMIT)
-	if get_contributors_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(get_contributors_sql.Error))
-		return
-	}
-
-	contributors := _ScanCategoryContributors(get_contributors_sql, categories_params)
-	_RenderCategoryContributors(contributors, w, r)
-}
-
-func _ScanCategoryContributors(get_contributors_sql *query.GetCategoryContributors, categories_str string) *[]model.CategoryContributor {
-	rows, err := DBClient.Query(get_contributors_sql.Text)
+func _ScanCategoryContributors(contributors_sql *query.GetCategoryContributors, categories_str string) *[]model.CategoryContributor {
+	rows, err := DBClient.Query(contributors_sql.Text)
 	if err != nil {
 		log.Fatal(err)
 	}

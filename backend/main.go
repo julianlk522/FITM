@@ -65,10 +65,11 @@ func main() {
 	r.Post("/login", h.LogIn)
 
 	// LINKS
-	r.Get("/links/cat/{categories}/users", h.GetTopCategoryContributors)
-	r.Get("/links/{period}/cat/{categories}/users", h.GetTopCategoryContributorsByPeriod)
 	r.Get("/links/subcat/{categories}", h.GetSubcategories)
 	r.Get("/links/{period}/subcat/{categories}", h.GetSubcategoriesByPeriod)
+
+	// CONTRIBUTORS
+	r.Get("/contributors/{cats}", h.GetTopCategoriesContributors)
 
 	// TAGS
 	r.Get("/tags/popular", h.GetTopTagCategories)
@@ -90,7 +91,7 @@ func main() {
 		// LINKS
 		r.Route("/links", func(r chi.Router) {
 			r.Use(m.Pagination)
-			r.Get("/top", h.GetTopLinks)
+			r.Get("/top", h.GetLinks)
 		})
 
 		// SUMMARIES
