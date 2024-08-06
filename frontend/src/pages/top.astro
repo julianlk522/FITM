@@ -15,7 +15,7 @@ type Period,
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
 
-// Params:
+// Params
 let page = 1
 if (Astro.url.searchParams.get('page')) {
 	page = parseInt(Astro.url.searchParams.get('page') as string)

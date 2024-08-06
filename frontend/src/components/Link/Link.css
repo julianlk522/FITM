@@ -26,10 +26,10 @@ h3.url-anchor {
 	display: inline-block;
 	vertical-align: top;
 }
-.summaries a,
+.summaries a:not(:visited),
 .summaries a:visited,
-.submitted-by a,
-.submitted-by a:visited {
+.tag > a:not(:visited),
+.tag > a:visited {
 	color: var(--text);
 }
 .tag {
