@@ -51,14 +51,18 @@ export default function Link(props: Props) {
 			  split_cats?.map((cat, i) => {
 					if (i === split_cats.length - 1) {
 						return (
-							<a href={`/map/${categories_from_user}/${cat}`}>
+							<a
+								href={`/map/${categories_from_user}?cats=${cat}`}
+							>
 								{cat}
 							</a>
 						)
 					} else {
 						return (
 							<span>
-								<a href={`/map/${categories_from_user}/${cat}`}>
+								<a
+									href={`/map/${categories_from_user}?cats=${cat}`}
+								>
 									{cat}
 								</a>
 								,{' '}
@@ -224,10 +228,12 @@ export default function Link(props: Props) {
 			)}
 
 			{categories ? (
-				<p class='tag'>
+				<p class='tags'>
 					{is_tag_page ? null : (
 						<>
-							<a href={`/tag/${id}`}>{tag_attribution}</a>
+							<a class='tags-page-link' href={`/tag/${id}`}>
+								{tag_attribution}
+							</a>
 							{': '}
 							{categories_html}
 						</>
