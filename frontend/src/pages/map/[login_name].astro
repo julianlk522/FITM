@@ -35,6 +35,17 @@ const tmap: TreasureMap = await tmap_resp.json()
 // CategoryCounts: [{Category: 'umvc3', Count: 1}, ...],
 
 const profile: Profile = tmap.Profile
+
+let found_pfp = true
+const found_pfp_resp = await fetch(`http://127.0.0.1:8000/pic/${profile.PFP}`, {
+	headers: { 'Content-Type': 'image/png' },
+})
+
+if (found_pfp_resp.status > 399) {
+	found_pfp = false
+}
+
+const display_profile = found_pfp || profile.About
 const display_about = profile.About || is_signed_in_user
 
 const used_sections = tmap_sections.filter((s) => tmap[s].length)
@@ -49,7 +60,7 @@ if (!used_sections.length) {
 		<h2 class="subtitle">created: {format_date(profile.Created)}</h2>
 
 		<div class="flex-container">
-			<section id="profile">
+			{display_profile ? <section id="profile">
 				<ProfilePic
 						client:load
 						PFP={profile.PFP ? profile.PFP : undefined}
@@ -70,7 +81,7 @@ if (!used_sections.length) {
 						)
 					) : null
 				}
-			</section>
+			</section> : null}
 			
 			<section id='overview'>
 				<div>
@@ -172,10 +183,6 @@ if (!used_sections.length) {
 		}
 	}
 
-	section.link-section {
-		padding-top: 0.5rem;
-	}
-
 	.link-section h2 {
 		position: sticky;
 		top: 0px;
@@ -189,17 +196,13 @@ if (!used_sections.length) {
 			justify-content: space-between;
 			gap: 50px;
 
-			#overview {
-				padding-top: 0;
-			}
-
 			#profile,
 			#overview {
 				border: none;
 			}
 		}
 
-		section.link-section {
+		section:not(:first-of-type).link-section {
 			padding-top: 1rem;
 		}
 	}

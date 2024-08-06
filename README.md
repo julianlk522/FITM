@@ -4,6 +4,7 @@
 
 ### Features
 
+-Show tag count on each link next to tags
 -Increase max tag cats to 10? (5 is too low)
 -Make Auto Summary appear first IF it has the most votes
 -Pagination
@@ -23,6 +24,7 @@
 
 ### Code Quality
 
+-Replace tag / summary ids with UUID
 -Merge tmap/filtered tmap pages
 -Merge isliked/iscopied/istagged into get links queries without doubleup
 -Rebrand subcategories as category overlaps since that is a bit more accurate
