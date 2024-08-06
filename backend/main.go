@@ -90,10 +90,7 @@ func main() {
 		// LINKS
 		r.Route("/links", func(r chi.Router) {
 			r.Use(m.Pagination)
-			r.Get("/", h.GetTopLinks)
-			r.Get("/{period}", h.GetTopLinksByPeriod)
-			r.Get("/cat/{categories}", h.GetTopLinksByCategories)
-			r.Get("/{period}/{categories}", h.GetTopLinksByPeriodAndCategories)	
+			r.Get("/top", h.GetTopLinks)
 		})
 
 		// SUMMARIES

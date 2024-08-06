@@ -22,10 +22,30 @@ import (
 )
 
 func GetTopLinks(w http.ResponseWriter, r *http.Request) {
+	get_links_sql := query.NewGetTopLinks()
+
+	cats_params := r.URL.Query().Get("cats")
+	if cats_params != "" {
+		link_ids, err := _GetIDsOfLinksHavingCategories(cats_params)
+		if err != nil {
+			render.Render(w, r, e.ErrInvalidRequest(err))
+			return
+		} else if len(link_ids) == 0 {
+			_RenderZeroLinks(w, r)
+			return
+		}
+
+		get_links_sql = get_links_sql.FromLinkIDs(link_ids)
+	}
+
+	period_params := r.URL.Query().Get("period")
+	if period_params != "" {
+		get_links_sql = get_links_sql.DuringPeriod(period_params)
+	}
+
 	page := r.Context().Value(m.PageKey).(int)
-	get_links_sql := query.
-		NewGetTopLinks().
-		Page(page)
+	get_links_sql = get_links_sql.Page(page)
+
 	if get_links_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
 		return
@@ -50,131 +70,33 @@ func GetTopLinks(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func GetTopLinksByPeriod(w http.ResponseWriter, r *http.Request) {
-	period_params := chi.URLParam(r, "period")
-	if period_params == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoPeriod))
-		return
+func _GetIDsOfLinksHavingCategories(categories_str string) (link_ids []string, err error) {
+	get_link_ids_sql := query.NewGetLinkIDs(categories_str)
+	if get_link_ids_sql.Error != nil {
+		err = get_link_ids_sql.Error
 	}
 
-	page := r.Context().Value(m.PageKey).(int)
-	get_links_sql := query.
-		NewGetTopLinks().
-		DuringPeriod(period_params).
-		Page(page)
-	if get_links_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
-		return
-	}
-
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
-	if req_user_id != "" {
-		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
-		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
-			return
-		}
-		_RenderPaginatedLinks(links, page, w, r)
-	} else {
-		links, err := _ScanLinks[model.Link](get_links_sql, req_user_id)
-		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
-			return
-		}
-		_RenderPaginatedLinks(links, page, w, r)
-	}
-}
-
-func GetTopLinksByCategories(w http.ResponseWriter, r *http.Request) {
-	categories_params := chi.URLParam(r, "categories")
-	if categories_params == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
-		return
-	}
-
-	link_ids, err := _GetIDsOfLinksHavingCategories(categories_params)
+	rows, err := DBClient.Query(get_link_ids_sql.Text)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	} else if len(link_ids) == 0 {
-		_RenderZeroLinks(w, r)
-		return
+		log.Fatal(err)
 	}
-
-	page := r.Context().Value(m.PageKey).(int)
-	get_links_sql := query.
-		NewGetTopLinks().
-		FromLinkIDs(link_ids).
-		Page(page)
-	if get_links_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
-		return
-	}
-
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
-	if req_user_id != "" {
-		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
-		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
-			return
-		}
-		_RenderPaginatedLinks(links, page, w, r)
-	} else {
-		links, err := _ScanLinks[model.Link](get_links_sql, req_user_id)
-		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
-			return
-		}
-		_RenderPaginatedLinks(links, page, w, r)
-	}
-}
-
-func GetTopLinksByPeriodAndCategories(w http.ResponseWriter, r *http.Request) {
-	period_params, categories_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
-	if period_params == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoPeriod))
-		return
-	} else if categories_params == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
-		return
-	}
-
-	link_ids, err := _GetIDsOfLinksHavingCategories(categories_params)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	} else if len(link_ids) == 0 {
-		_RenderZeroLinks(w, r)
-		return
-	}
-
-	page := r.Context().Value(m.PageKey).(int)
-	get_links_sql := query.
-		NewGetTopLinks().
-		FromLinkIDs(link_ids).
-		DuringPeriod(period_params).
-		Page(page)
-	if get_links_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(get_links_sql.Error))
-		return
-	}
+	defer rows.Close()
 	
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
-	if req_user_id != "" {
-		links, err := _ScanLinks[model.LinkSignedIn](get_links_sql, req_user_id)
-		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
-			return
+	for rows.Next() {
+		var lid string
+		if err := rows.Scan(&lid); err != nil {
+			log.Fatal(err)
 		}
-		_RenderPaginatedLinks(links, page, w, r)
-	} else {
-		links, err := _ScanLinks[model.Link](get_links_sql, req_user_id)
-		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
-			return
-		}
-		_RenderPaginatedLinks(links, page, w, r)
+
+		link_ids = append(link_ids, lid)
 	}
+
+	return link_ids, err
+}
+
+func _RenderZeroLinks(w http.ResponseWriter, r *http.Request) {
+	render.JSON(w, r, &model.PaginatedLinks[model.Link]{NextPage: -1})
+	render.Status(r, http.StatusOK)
 }
 
 func _ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.GetTopLinks, req_user_id string) (*[]T, error) {
@@ -290,35 +212,6 @@ func _RenderPaginatedLinks[T model.LinkSignedIn | model.Link](links *[]T, page i
 			NextPage: -1,
 		})
 	}
-}
-
-func _RenderZeroLinks(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, &model.PaginatedLinks[model.Link]{NextPage: -1})
-	render.Status(r, http.StatusOK)
-}
-
-func _GetIDsOfLinksHavingCategories(categories_str string) (link_ids []string, err error) {
-	get_link_ids_sql := query.NewGetLinkIDs(categories_str)
-	if get_link_ids_sql.Error != nil {
-		err = get_link_ids_sql.Error
-	}
-
-	rows, err := DBClient.Query(get_link_ids_sql.Text)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-	
-	for rows.Next() {
-		var lid string
-		if err := rows.Scan(&lid); err != nil {
-			log.Fatal(err)
-		}
-
-		link_ids = append(link_ids, lid)
-	}
-
-	return link_ids, err
 }
 
 func GetTopCategoryContributors(w http.ResponseWriter, r *http.Request) {
