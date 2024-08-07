@@ -214,10 +214,10 @@ func _RenderPaginatedLinks[T model.LinkSignedIn | model.Link](links *[]T, page i
 	}
 }
 
-func GetTopCategoriesContributors(w http.ResponseWriter, r *http.Request) {
+func GetTopCatsContributors(w http.ResponseWriter, r *http.Request) {
 	cats_params := chi.URLParam(r, "cats")
 	if cats_params == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCats))
 		return
 	}
 	cats := strings.Split(cats_params, ",")
@@ -264,54 +264,31 @@ func _RenderCategoryContributors(contributors *[]model.CategoryContributor, w ht
 	render.JSON(w, r, contributors)
 }
 
-func GetSubcategories(w http.ResponseWriter, r *http.Request) {
-	categories_params := chi.URLParam(r, "categories")
-	if categories_params == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
+func GetSubcats(w http.ResponseWriter, r *http.Request) {
+	cats_params := chi.URLParam(r, "cats")
+	if cats_params == "" {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCats))
 		return
 	}
 
 	// TODO: replace with middleware that converts all URLs to lowercase
 	// maybe encode uppercase chars another way?
 	// TODO: figure out how other sites do that
-	categories_params = strings.ToLower(categories_params)
-	categories := strings.Split(categories_params, ",")
+	cats_params = strings.ToLower(cats_params)
+	categories := strings.Split(cats_params, ",")
+	subcats_sql := query.NewGetSubcategories(categories)
 	
-	get_subcats_sql := query.NewGetSubcategories(categories)
-	if get_subcats_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(get_subcats_sql.Error))
+	period_params := r.URL.Query().Get("period")
+	if period_params != "" {
+		subcats_sql = subcats_sql.DuringPeriod(period_params)
+	}
+	
+	if subcats_sql.Error != nil {
+		render.Render(w, r, e.ErrInvalidRequest(subcats_sql.Error))
 		return
 	}
 
-	subcats := _ScanSubcategories(get_subcats_sql, categories)
-	if len(subcats) == 0 {
-		_RenderZeroSubcategories(w, r)
-		return
-	}
-	_RenderSubcategories(subcats, categories, w, r)
-}
-
-func GetSubcategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
-	period_params, categories_params := chi.URLParam(r, "period"), chi.URLParam(r, "categories")
-	if period_params == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoPeriod))
-		return
-	} else if categories_params == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
-		return
-	}
-	categories_params = strings.ToLower(categories_params)
-	categories := strings.Split(categories_params, ",")
-
-	get_subcats_sql := query.
-		NewGetSubcategories(categories).
-		DuringPeriod(period_params)
-	if get_subcats_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(get_subcats_sql.Error))
-		return
-	}
-
-	subcats := _ScanSubcategories(get_subcats_sql, categories)
+	subcats := _ScanSubcategories(subcats_sql, categories)
 	if len(subcats) == 0 {
 		_RenderZeroSubcategories(w, r)
 		return

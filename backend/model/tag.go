@@ -20,7 +20,7 @@ type NewTagRequest struct {
 
 func (a *NewTagRequest) Bind(r *http.Request) error {
 	if a.NewTag.Categories == "" {
-		return e.ErrNoCategories
+		return e.ErrNoCats
 	} else if a.NewTag.LinkID == "" {
 		return e.ErrNoLinkID
 	}

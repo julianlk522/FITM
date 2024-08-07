@@ -303,7 +303,7 @@ func GetTreasureMapByCategories(w http.ResponseWriter, r *http.Request) {
 
 	var categories string = chi.URLParam(r, "categories")
 	if categories == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCategories))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCats))
 		return
 	}
 
