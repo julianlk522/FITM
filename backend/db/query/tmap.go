@@ -186,8 +186,7 @@ func (q *GetTmapCopied) FromCategories(categories []string) *GetTmapCopied {
 		AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
 	}
 
-	q.Text = strings.Replace(q.Text, COPIED_WHERE, COPIED_WHERE + cat_clause, 1)
-
+	q.Text = strings.Replace(q.Text, BASE_ORDER, cat_clause + BASE_ORDER, 1)
 	return q
 }
 
