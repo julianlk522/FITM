@@ -78,17 +78,13 @@ func main() {
 		r.Use(m.AuthenticatorOptional(token_auth))
 		r.Use(m.JWT)
 
-		// USER ACCOUNTS
 		r.Get("/map/{login_name}", h.GetTreasureMap)
-		r.Get("/map/{login_name}/{categories}", h.GetTreasureMapByCategories)
 
-		// LINKS
 		r.Route("/links", func(r chi.Router) {
 			r.Use(m.Pagination)
 			r.Get("/top", h.GetLinks)
 		})
 
-		// SUMMARIES
 		r.Get("/summaries/{link_id}", h.GetSummariesForLink)
 	})
 

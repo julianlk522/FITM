@@ -35,13 +35,9 @@ if (Astro.url.searchParams.get('cats')) {
 
 // Get Tmap
 let tmap: TreasureMap | FilteredTreasureMap
-let profile: Profile | undefined
-let display_about = false
-let display_profile = false
-
 let tmap_url = TMAP_ENDPOINT + `/${login_name}`
 if (cats_split.length) {
-	tmap_url += `/${cats_split[0]}`
+	tmap_url += `?cats=${cats_split[0]}`
 
 	for (let i = 1; i < cats_split.length; i++) {
 		tmap_url += `,${cats_split[i]}`
@@ -61,6 +57,10 @@ if (tmap_resp.status > 399) {
 tmap = await tmap_resp.json()
 
 // Attempt PFP fetch, display about/pfp if they are used
+let profile: Profile | undefined
+let display_about = false
+let display_profile = false
+
 if (tmap.hasOwnProperty('Profile')) {
 	profile = (tmap as TreasureMap).Profile
 
