@@ -4,6 +4,8 @@
 
 ### Features
 
+-Investigate into whether tmap is double-counting some links
+    -might be ones that are in 2 sections e.g., copied and tagged
 -Show tag count on each link next to tags
 -Pagination
     -User Treasure Map
@@ -20,7 +22,6 @@
 ### Code Quality
 
 -Replace tag / summary ids with UUID
--_BuildTmap repeat funcs
 -Merge isliked/iscopied/istagged into get links queries without doubleup
 -Rebrand subcategories as category overlaps since that is a bit more accurate
 -Tests
