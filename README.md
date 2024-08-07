@@ -31,12 +31,12 @@
     -e.g., Global Categories vs. Global Tag categories
     -Popular Categories vs. Top Categories
 -Remove repeat code wherever possible
-    -backend handlers
 
 ## To-Maybe-Dos
 
 -Friends
     -(i.e., saved users whose tmaps you can quickly access without manually typing the URL)
+    -might actually do a 'favorite maps' type thing instead, since it does not need to be bidirectional relationship
 -Better way to visualize how Global Cats are determined
 -Show number of copies along with number of likes in frontend
 -Edit category filters directly on top links by period/category(ies) page

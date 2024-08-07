@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
@@ -292,9 +293,9 @@ func _UserExists(login_name string) (bool, error) {
 }
 
 func _RenderTmap[T model.TmapLink | model.TmapLinkSignedIn](r *http.Request, w http.ResponseWriter, login_name string) {
-	submitted_sql := query.NewGetTmapSubmitted(login_name)
-	copied_sql := query.NewGetTmapCopied(login_name)
-	tagged_sql := query.NewGetTmapTagged(login_name)
+	submitted_sql := query.NewTmapSubmitted(login_name)
+	copied_sql := query.NewTmapCopied(login_name)
+	tagged_sql := query.NewTmapTagged(login_name)
 	
 	cats_params := r.URL.Query().Get("cats") 
 	has_cat_filter := cats_params != ""
@@ -305,7 +306,7 @@ func _RenderTmap[T model.TmapLink | model.TmapLinkSignedIn](r *http.Request, w h
 		cats = strings.Split(cats_params, ",")
 	} else {
 		var err error
-		profile_sql := query.NewGetTmapProfile(login_name)
+		profile_sql := query.NewTmapProfile(login_name)
 		profile, err = _ScanTmapProfile(profile_sql)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))

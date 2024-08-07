@@ -35,13 +35,13 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
-	get_link_sql := query.NewGetTagPageLink(link_id, req_user_id)
-	if get_link_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(get_link_sql.Error))
+	link_sql := query.NewTagPageLink(link_id, req_user_id)
+	if link_sql.Error != nil {
+		render.Render(w, r, e.ErrInvalidRequest(link_sql.Error))
 		return
 	}
 
-	link, err := _ScanTagPageLink(get_link_sql)
+	link, err := _ScanTagPageLink(link_sql)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
@@ -54,7 +54,7 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tag_rankings_sql := query.NewGetTagRankingsForLink(link_id)
+	tag_rankings_sql := query.NewTagRankingsForLink(link_id)
 	if tag_rankings_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(tag_rankings_sql.Error))
 		return
@@ -74,11 +74,11 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, tag_page)
 }
 
-func _ScanTagPageLink(get_link_sql *query.GetTagPageLink) (*model.LinkSignedIn, error) {
+func _ScanTagPageLink(link_sql *query.TagPageLink) (*model.LinkSignedIn, error) {
 	var link = &model.LinkSignedIn{}
 
 	err := DBClient.
-		QueryRow(get_link_sql.Text).
+		QueryRow(link_sql.Text).
 		Scan(
 			&link.ID, 
 			&link.URL, 
@@ -120,7 +120,7 @@ func _GetUserTagForLink(login_name string, link_id string) (*model.Tag, error) {
 	}, nil
 }
 
-func _ScanTagRankings(tag_rankings_sql *query.GetTagRankings) (*[]model.TagRankingPublic, error) {
+func _ScanTagRankings(tag_rankings_sql *query.TagRankings) (*[]model.TagRankingPublic, error) {
 	rows, err := DBClient.Query(tag_rankings_sql.Text)
 	if err != nil {
 		return nil, err
@@ -147,7 +147,7 @@ func _ScanTagRankings(tag_rankings_sql *query.GetTagRankings) (*[]model.TagRanki
 
 // TOP GLOBAL CATS (MOST-USED OVERALL OR IN PERIOD)
 func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {	
-	global_cats_sql := query.NewGetAllGlobalCategories()
+	global_cats_sql := query.NewAllGlobalCats()
 
 	period_params := r.URL.Query().Get("period")
 	has_period := period_params != ""
@@ -180,8 +180,8 @@ func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {
 	_RenderCategoryCounts(counts, w, r)
 }
 
-func _ScanGlobalCategories(get_global_cats_sql *query.GetAllGlobalCategories) (*[]string, error) {
-	rows, err := DBClient.Query(get_global_cats_sql.Text)
+func _ScanGlobalCategories(global_cats_sql *query.GlobalCats) (*[]string, error) {
+	rows, err := DBClient.Query(global_cats_sql.Text)
 	if err != nil {
 		return nil, err
 	}
@@ -226,10 +226,10 @@ func _GetCategoryCounts(categories *[]string) (*[]model.CategoryCount, error) {
 	for i := 0; i < num_cats; i++ {
 		category_counts[i].Category = (*categories)[i]
 
-		get_cat_count_sql := fmt.Sprintf(`SELECT count(*) as count_with_cat FROM (%s);`, query.NewGetLinkIDs((*categories)[i]).Text)
+		cat_count_sql := fmt.Sprintf(`SELECT count(*) as count_with_cat FROM (%s);`, query.NewLinkIDs((*categories)[i]).Text)
 
 		var c sql.NullInt32
-		err := DBClient.QueryRow(get_cat_count_sql).Scan(&c)
+		err := DBClient.QueryRow(cat_count_sql).Scan(&c)
 		if err != nil {
 			return nil, err
 		}
@@ -255,15 +255,15 @@ func _GetCategoryCountsDuringPeriod(categories *[]string, period string) (*[]mod
 	for i := 0; i < num_cats; i++ {
 		category_counts[i].Category = (*categories)[i]
 
-		get_cat_count_sql := fmt.Sprintf(
+		cat_count_sql := fmt.Sprintf(
 			`SELECT count(*) as count_with_cat FROM (%s) WHERE %s;`, 
-			query.NewGetLinkIDs((*categories)[i]).Text, 
+			query.NewLinkIDs((*categories)[i]).Text, 
 			period_clause,
 		)
-		get_cat_count_sql = strings.Replace(get_cat_count_sql, "SELECT id", "SELECT id, submit_date", 1)
+		cat_count_sql = strings.Replace(cat_count_sql, "SELECT id", "SELECT id, submit_date", 1)
 
 		var c sql.NullInt32
-		err := DBClient.QueryRow(get_cat_count_sql).Scan(&c)
+		err := DBClient.QueryRow(cat_count_sql).Scan(&c)
 		if err != nil {
 			return nil, err
 		}
@@ -443,14 +443,14 @@ func _GetLinkIDFromTagID(tag_id string) (string, error) {
 // (technically should affect all links that share 1+ categories but that's too complicated) 
 // (many links will also not be seen enough to justify being updated constantly. makes enough sense to only update a link's global cats when a new tag is added to that link.)
 func _RecalculateGlobalCategories(link_id string) error {
-	get_overlap_scores_sql := query.
-		NewGetTopOverlapScores(link_id).
+	overlap_scores_sql := query.
+		NewTopOverlapScores(link_id).
 		Limit(TOP_OVERLAP_SCORES_LIMIT)
-	if get_overlap_scores_sql.Error != nil {
-		return get_overlap_scores_sql.Error
+	if overlap_scores_sql.Error != nil {
+		return overlap_scores_sql.Error
 	}
 
-	rows, err := DBClient.Query(get_overlap_scores_sql.Text)
+	rows, err := DBClient.Query(overlap_scores_sql.Text)
 	if err != nil {
 		return err
 	}

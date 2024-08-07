@@ -11,11 +11,11 @@ var LIMIT_CLAUSE = fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT)
 
 
 // LINKS
-type GetTopLinks struct {
+type TopLinks struct {
 	Query
 }
 
-const get_top_links_base = `SELECT 
+const TOP_LINKS_BASE = `SELECT 
 links_id as link_id, 
 url, 
 link_author as submitted_by, 
@@ -42,19 +42,18 @@ ON Summaries.link_id = links_id
 GROUP BY links_id 
 ORDER BY like_count DESC, summary_count DESC, link_id DESC;`
 
-func NewGetTopLinks() *GetTopLinks {
-	new := &GetTopLinks{Query: Query{Text: get_top_links_base}}
-	return new._Limit()
+func NewTopLinks() *TopLinks {
+	return (&TopLinks{Query: Query{Text: TOP_LINKS_BASE}})._Limit()
 }
 
-func (l *GetTopLinks) FromLinkIDs(link_ids []string) *GetTopLinks {
+func (l *TopLinks) FromLinkIDs(link_ids []string) *TopLinks {
 	link_ids_str := strings.Join(link_ids, ",")
 
 	l._Where(fmt.Sprintf(`links_id IN (%s)`, link_ids_str))
 	return l
 }
 
-func (l *GetTopLinks) DuringPeriod(period string) (*GetTopLinks) {
+func (l *TopLinks) DuringPeriod(period string) (*TopLinks) {
 	clause , err := GetPeriodClause(period)
 	if err != nil {
 		l.Error = err
@@ -64,7 +63,7 @@ func (l *GetTopLinks) DuringPeriod(period string) (*GetTopLinks) {
 	return l
 }
 
-func (l *GetTopLinks) Page(page int) *GetTopLinks {
+func (l *TopLinks) Page(page int) *TopLinks {
 	if page == 0 {
 		return l
 	}
@@ -74,17 +73,16 @@ func (l *GetTopLinks) Page(page int) *GetTopLinks {
 	return l
 }
 
-func (l *GetTopLinks) _Limit() *GetTopLinks {
+func (l *TopLinks) _Limit() *TopLinks {
 	l.Text = strings.Replace(l.Text, ";", LIMIT_CLAUSE, 1)
 	return l
 }
 
-func (l *GetTopLinks) _Where(clause string) *GetTopLinks {
+func (l *TopLinks) _Where(clause string) *TopLinks {
 
 	// Swap previous WHERE for AND, if any
 	l.Text = strings.Replace(l.Text, "WHERE", "AND", 1)
 
-	// Prepend new clause
 	l.Text = strings.Replace(l.Text, "ON Links.id = likes_link_id", fmt.Sprintf("ON Links.id = likes_link_id WHERE %s", clause), 1)
 
 	return l
@@ -94,21 +92,19 @@ func (l *GetTopLinks) _Where(clause string) *GetTopLinks {
 
 // LINK IDs
 // e.g., for checking if a link exists
-type GetLinkIDs struct {
+type LinkIDs struct {
 	Query
 }
 
-const get_link_ids_base = "SELECT id FROM Links"
+const LINK_IDS_BASE = "SELECT id FROM Links"
 
-func NewGetLinkIDs(categories_str string) *GetLinkIDs {
+func NewLinkIDs(categories_str string) *LinkIDs {
 	categories := strings.Split(categories_str, ",")
 
-	new := &GetLinkIDs{Query: Query{Text: get_link_ids_base}}
-	new._FromCategories(categories)
-	return new
+	return (&LinkIDs{Query: Query{Text: LINK_IDS_BASE}})._FromCategories(categories)
 }
 
-func (l *GetLinkIDs) _FromCategories(categories []string) *GetLinkIDs {
+func (l *LinkIDs) _FromCategories(categories []string) *LinkIDs {
 	l.Text += fmt.Sprintf(` WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'`, categories[0])
 	for i := 1; i < len(categories); i++ {
 		l.Text += fmt.Sprintf(` AND ',' || global_cats || ',' LIKE '%%,%s,%%'`, categories[i])
@@ -122,19 +118,17 @@ func (l *GetLinkIDs) _FromCategories(categories []string) *GetLinkIDs {
 
 
 // LINK SUBCATEGORIES
-type GetSubcategories struct {
+type Subcats struct {
 	Query
 }
 
-const get_subcategories_base = "SELECT global_cats FROM Links"
+const SUBCATS_BASE = "SELECT global_cats FROM Links"
 
-func NewGetSubcategories(categories []string) *GetSubcategories {
-	new := &GetSubcategories{Query: Query{Text: get_subcategories_base}}
-	new._FromCategories(categories)
-	return new
+func NewSubcats(categories []string) *Subcats {
+	return (&Subcats{Query: Query{Text: SUBCATS_BASE}})._FromCategories(categories)
 }
 
-func (c *GetSubcategories) _FromCategories(categories []string) *GetSubcategories {
+func (c *Subcats) _FromCategories(categories []string) *Subcats {
 	c.Text += fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[0])
 	for i := 1; i < len(categories); i++ {
 		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[i])
@@ -145,7 +139,7 @@ func (c *GetSubcategories) _FromCategories(categories []string) *GetSubcategorie
 	return c
 }
 
-func (c *GetSubcategories) DuringPeriod(period string) (*GetSubcategories) {
+func (c *Subcats) DuringPeriod(period string) (*Subcats) {
 	clause , err := GetPeriodClause(period)
 	if err != nil {
 		c.Error = err
@@ -155,38 +149,35 @@ func (c *GetSubcategories) DuringPeriod(period string) (*GetSubcategories) {
 	return c
 }
 
-func (c *GetSubcategories) _Where(clause string) *GetSubcategories {
+func (c *Subcats) _Where(clause string) *Subcats {
 
 	// Swap previous WHERE for AND, if any
 	c.Text = strings.Replace(c.Text, "WHERE", "AND", 1)
 
 	// Prepend new clause
-	c.Text = strings.Replace(c.Text, get_subcategories_base, fmt.Sprintf("%s WHERE %s", get_subcategories_base, clause), 1)
+	c.Text = strings.Replace(c.Text, SUBCATS_BASE, fmt.Sprintf("%s WHERE %s", SUBCATS_BASE, clause), 1)
 
 	return c
 }
 
 
-// LINK COUNTS
-type GetLinkCount struct {
+// CAT COUNTS
+type CatCount struct {
 	Query
 }
 
-const get_category_counts_base = "SELECT count(*) as link_count FROM Links"
+const CAT_COUNT_BASE = "SELECT count(*) as link_count FROM Links"
 
-func NewGetLinkCount(categories []string) *GetLinkCount {
-	new := &GetLinkCount{Query: Query{Text: get_category_counts_base}}
-	new._FromCategories(categories)
-	return new
+func NewCatCount(categories []string) *CatCount {
+	return (&CatCount{Query: Query{Text: CAT_COUNT_BASE}})._FromCategories(categories)
 }
 
 
-func (c *GetLinkCount) _FromCategories(categories []string) *GetLinkCount {
+func (c *CatCount) _FromCategories(categories []string) *CatCount {
 	c.Text += fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[0])
 	for i := 1; i < len(categories); i++ {
 		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[i])
 	}
-
 	c.Text +=";"
 
 	return c
@@ -194,20 +185,19 @@ func (c *GetLinkCount) _FromCategories(categories []string) *GetLinkCount {
 
 
 
-// CATEGORY CONTRIBUTORS
-type GetCategoryContributors struct {
+// CATS CONTRIBUTORS
+// (single or multiple cats)
+type CatsContributors struct {
 	Query
 }
 
-const get_category_contributors_base = `SELECT count(*), submitted_by FROM Links`
+const CATS_CONTRIBUTORS_BASE = `SELECT count(*), submitted_by FROM Links`
 
-func NewGetCategoryContributors(categories []string) *GetCategoryContributors {
-	new := &GetCategoryContributors{Query: Query{Text: get_category_contributors_base}}
-	new._FromCategories(categories)
-	return new
+func NewCatsContributors(categories []string) *CatsContributors {
+	return (&CatsContributors{Query: Query{Text: CATS_CONTRIBUTORS_BASE}})._FromCategories(categories)
 }
 
-func (c *GetCategoryContributors) _FromCategories(categories []string) *GetCategoryContributors {
+func (c *CatsContributors) _FromCategories(categories []string) *CatsContributors {
 	c.Text += fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[0])
 	for i := 1; i < len(categories); i++ {
 		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[i])
@@ -218,7 +208,7 @@ func (c *GetCategoryContributors) _FromCategories(categories []string) *GetCateg
 	return c
 }
 
-func (c *GetCategoryContributors) DuringPeriod(period string) (*GetCategoryContributors) {
+func (c *CatsContributors) DuringPeriod(period string) (*CatsContributors) {
 	clause , err := GetPeriodClause(period)
 	if err != nil {
 		c.Error = err
@@ -228,19 +218,19 @@ func (c *GetCategoryContributors) DuringPeriod(period string) (*GetCategoryContr
 	return c
 }
 
-func (c *GetCategoryContributors) Limit(limit int) *GetCategoryContributors {
+func (c *CatsContributors) Limit(limit int) *CatsContributors {
 	c.Text = strings.Replace(c.Text, ";", fmt.Sprintf(" LIMIT %d;", limit), 1)
 	return c
 }
 
 
-func (c *GetCategoryContributors) _Where(clause string) *GetCategoryContributors {
+func (c *CatsContributors) _Where(clause string) *CatsContributors {
 
 	// Swap previous WHERE for AND, if any
 	c.Text = strings.Replace(c.Text, "WHERE", "AND", 1)
 
 	// Prepend new clause
-	c.Text = strings.Replace(c.Text, get_category_contributors_base, fmt.Sprintf("%s WHERE %s", get_category_contributors_base, clause), 1)
+	c.Text = strings.Replace(c.Text, CATS_CONTRIBUTORS_BASE, fmt.Sprintf("%s WHERE %s", CATS_CONTRIBUTORS_BASE, clause), 1)
 
 	return c
 }

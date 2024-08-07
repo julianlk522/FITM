@@ -22,7 +22,7 @@ import (
 )
 
 func GetLinks(w http.ResponseWriter, r *http.Request) {
-	links_sql := query.NewGetTopLinks()
+	links_sql := query.NewTopLinks()
 
 	cats_params := r.URL.Query().Get("cats")
 	if cats_params != "" {
@@ -71,12 +71,12 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 }
 
 func _GetIDsOfLinksHavingCategories(categories_str string) (link_ids []string, err error) {
-	get_link_ids_sql := query.NewGetLinkIDs(categories_str)
-	if get_link_ids_sql.Error != nil {
-		err = get_link_ids_sql.Error
+	link_ids_sql := query.NewLinkIDs(categories_str)
+	if link_ids_sql.Error != nil {
+		err = link_ids_sql.Error
 	}
 
-	rows, err := DBClient.Query(get_link_ids_sql.Text)
+	rows, err := DBClient.Query(link_ids_sql.Text)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -99,7 +99,7 @@ func _RenderZeroLinks(w http.ResponseWriter, r *http.Request) {
 	render.Status(r, http.StatusOK)
 }
 
-func _ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.GetTopLinks, req_user_id string) (*[]T, error) {
+func _ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks, req_user_id string) (*[]T, error) {
 	var links interface{}
 
 	rows, err := DBClient.Query(get_links_sql.Text)
@@ -221,7 +221,7 @@ func GetCatsContributors(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cats := strings.Split(cats_params, ",")
-	contributors_sql := query.NewGetCategoryContributors(cats)
+	contributors_sql := query.NewCatsContributors(cats)
 
 	period_params := r.URL.Query().Get("period")
 	if period_params != "" {
@@ -239,7 +239,7 @@ func GetCatsContributors(w http.ResponseWriter, r *http.Request) {
 	_RenderCategoryContributors(contributors, w, r)
 }
 
-func _ScanCategoryContributors(contributors_sql *query.GetCategoryContributors, categories_str string) *[]model.CategoryContributor {
+func _ScanCategoryContributors(contributors_sql *query.CatsContributors, categories_str string) *[]model.CategoryContributor {
 	rows, err := DBClient.Query(contributors_sql.Text)
 	if err != nil {
 		log.Fatal(err)
@@ -276,7 +276,7 @@ func GetSubcats(w http.ResponseWriter, r *http.Request) {
 	// TODO: figure out how other sites do that
 	cats_params = strings.ToLower(cats_params)
 	categories := strings.Split(cats_params, ",")
-	subcats_sql := query.NewGetSubcategories(categories)
+	subcats_sql := query.NewSubcats(categories)
 	
 	period_params := r.URL.Query().Get("period")
 	if period_params != "" {
@@ -296,7 +296,7 @@ func GetSubcats(w http.ResponseWriter, r *http.Request) {
 	_RenderSubcategories(subcats, categories, w, r)
 }
 
-func _ScanSubcategories(get_subcats_sql *query.GetSubcategories, search_categories []string) []string {
+func _ScanSubcategories(get_subcats_sql *query.Subcats, search_categories []string) []string {
 	rows, err := DBClient.Query(get_subcats_sql.Text)
 	if err != nil {
 		log.Fatal(err)
@@ -347,7 +347,7 @@ func _GetSubcategoryCounts(subcats []string, categories []string) (*[]model.Cate
 		subcats_with_counts[i].Category = subcats[i]
 		
 		all_cats := append(categories, subcats[i])
-		get_link_count_sql := query.NewGetLinkCount(all_cats)
+		get_link_count_sql := query.NewCatCount(all_cats)
 		if get_link_count_sql.Error != nil {
 			return nil, get_link_count_sql.Error
 		}

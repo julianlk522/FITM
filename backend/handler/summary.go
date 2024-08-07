@@ -90,7 +90,7 @@ func _GetSummaryPageSignedIn(link_id string, req_user_id string) (*model.Summary
 
 	// add IsLiked to summary query
 	get_summaries_sql := query.
-		NewGetSummaries(link_id).
+		NewSummariesForLink(link_id).
 		ForSignedInUser(req_user_id)
 	if get_summaries_sql.Error != nil {
 		return nil, get_summaries_sql.Error
@@ -153,7 +153,7 @@ func _GetSummaryPage(link_id string) (*model.SummaryPage[model.Summary, model.Li
 		}
 	}
 
-	get_summaries_sql := query.NewGetSummaries(link_id)
+	get_summaries_sql := query.NewSummariesForLink(link_id)
 	if get_summaries_sql.Error != nil {
 		return nil, get_summaries_sql.Error
 	}
