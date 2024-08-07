@@ -96,7 +96,7 @@ func NewGetAllGlobalCategories() *GetAllGlobalCategories {
 	return &GetAllGlobalCategories{Query: Query{Text: GET_ALL_GLOBAL_CATEGORIES_BASE}}
 }
 
-func (t *GetAllGlobalCategories) FromPeriod(period string) *GetAllGlobalCategories {
+func (t *GetAllGlobalCategories) DuringPeriod(period string) *GetAllGlobalCategories {
 	clause, err := GetPeriodClause(period)
 	if err != nil {
 		t.Error = err

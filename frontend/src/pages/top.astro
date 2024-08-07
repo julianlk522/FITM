@@ -11,7 +11,7 @@ type PaginatedLinks,
 type Period,
 } from '../types'
 
-// get auth token and user if user signed in
+// Auth
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
 
@@ -38,27 +38,36 @@ if (
 
 // Get links
 const API_URL = 'http://127.0.0.1:8000'
-const LINKS_BASE_ENDPOINT = API_URL + '/links'
-let links_endpoint = LINKS_BASE_ENDPOINT
+const LINKS_ENDPOINT = API_URL + '/links/top'
+let links_url = LINKS_ENDPOINT
 
 let has_period = false
 if (period !== 'all') {
-	links_endpoint += `?period=${period}`
 	has_period = true
+	links_url += `?period=${period}`
 }
+
+let has_cats = false
 if (categories) {
+	has_cats = true
+
 	if (has_period) {
-		links_endpoint += `&cats=${categories}`
+		links_url += `&cats=${categories}`
 	} else {
-		links_endpoint += `?cats=${categories}`
+		links_url += `?cats=${categories}`
 	}
 }
-links_endpoint += `?page=${page}`
+if (has_period || has_cats) {
+	links_url += `&page=${page}`
+} else {
+	links_url += `?page=${page}`
+}
+
 const get_links_resp = await (token
-	? fetch(links_endpoint, {
+	? fetch(links_url, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
-	: fetch(links_endpoint))
+	: fetch(links_url))
 const data: PaginatedLinks = await get_links_resp.json()
 const links = data.Links
 // [{URL: 'https://example.com', LikeCount: 100}, ...]
@@ -71,31 +80,33 @@ if (links && links.length) {
 
 	// Get subcategory counts and category contributors
 	if (categories) {
-		let subcats_endpoint = API_URL + `/subcats/${categories}`
-		let contributors_endpoint = API_URL + `/contributors/${categories}`
+		const SUBCATS_ENDPOINT = API_URL + `/subcats/${categories}`
+		let subcats_url = SUBCATS_ENDPOINT
+		const CONTRIBUTORS_ENDPOINT = API_URL + `/contributors/${categories}`
+		let contributors_url = CONTRIBUTORS_ENDPOINT
 
 		if (period !== 'all') {
-			subcats_endpoint += `?period=${period}`
-			contributors_endpoint += `?period=${period}`
+			subcats_url += `?period=${period}`
+			contributors_url += `?period=${period}`
 		}
 
-		const subcats_resp = await fetch(subcats_endpoint)
+		const subcats_resp = await fetch(subcats_url)
 		top_subcats = await subcats_resp.json()
 		// [{Category: 'flowers', Count: 2}, ...]
 
-		const contributors_resp = await fetch(contributors_endpoint)
+		const contributors_resp = await fetch(contributors_url)
 		top_contributors = await contributors_resp.json()
 		// [{"Categories":"umvc3,2dfighters","LoginName":"bob","LinksSubmitted":"10"}]
 	
 	// Get category counts
 	} else {
-		let cats_endpoint = `http://127.0.0.1:8000/tags/popular`
-
+		const CATS_ENDPOINT = API_URL + '/cats'
+		let cats_url = CATS_ENDPOINT
 		if (period !== 'all') {
-			cats_endpoint += `/${period}`
+			cats_url += `?period=${period}`
 		}
 
-		const top_cats_resp = await fetch(cats_endpoint)
+		const top_cats_resp = await fetch(cats_url)
 		top_cats = await top_cats_resp.json()
 		// [{Category: 'umvc3', Count: 1}, ...]
 	}

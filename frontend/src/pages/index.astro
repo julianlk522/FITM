@@ -4,24 +4,29 @@ import ScrollUp from '../components/ScrollUp.astro'
 import Layout from '../layouts/Layout.astro'
 import { Periods, type CategoryCount, type PaginatedLinks } from '../types'
 
-// get auth token and user if user signed in
+// Auth
 const token = Astro.cookies.get('token')?.value
 const user: string | undefined = Astro.cookies.get('user')?.value
 
+const API_URL = 'http://127.0.0.1:8000'
+
+// Get top categories
+const cats_endpoint = API_URL + '/cats'
 const top_cats_resp = await (token
-	? fetch('http://127.0.0.1:8000/tags/popular', {
+	? fetch(cats_endpoint, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
-	: fetch('http://127.0.0.1:8000/tags/popular'))
+	: fetch(cats_endpoint))
 // [{Category: 'umvc3', Count: 1}, ...]
 const top_cats: CategoryCount[] = await top_cats_resp.json()
 
-const links_api_url = 'http://127.0.0.1:8000/links/top?period=month'
+// Get top links
+const links_endpoint = API_URL + '/links/top?period=month'
 const get_links_resp = await (token
-	? fetch(links_api_url, {
+	? fetch(links_endpoint, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
-	: fetch(links_api_url))
+	: fetch(links_endpoint))
 const data: PaginatedLinks = await get_links_resp.json()
 const links = data.Links
 // [{URL: 'https://example.com', LikeCount: 100}, ...]

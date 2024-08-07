@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -146,50 +145,34 @@ func _ScanTagRankings(tag_rankings_sql *query.GetTagRankings) (*[]model.TagRanki
 	return &tag_rankings, nil
 }
 
-// GET MOST-USED TAG CATEGORIES
-func GetTopTagCategories(w http.ResponseWriter, r *http.Request) {	
-	get_global_cats_sql := query.NewGetAllGlobalCategories()
-	if get_global_cats_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(get_global_cats_sql.Error))
+// TOP GLOBAL CATS (MOST-USED OVERALL OR IN PERIOD)
+func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {	
+	global_cats_sql := query.NewGetAllGlobalCategories()
+
+	period_params := r.URL.Query().Get("period")
+	has_period := period_params != ""
+	if has_period {
+		global_cats_sql = global_cats_sql.DuringPeriod(period_params)
+	}
+
+	if global_cats_sql.Error != nil {
+		render.Render(w, r, e.ErrInvalidRequest(global_cats_sql.Error))
 		return
 	}
 
-	categories, err := _ScanGlobalCategories(get_global_cats_sql)
+	cats, err := _ScanGlobalCategories(global_cats_sql)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
-	counts, err := _GetCategoryCounts(categories)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-	_RenderCategoryCounts(counts, w, r)
-}
-
-func GetTopTagCategoriesByPeriod(w http.ResponseWriter, r *http.Request) {
-	period_params := chi.URLParam(r, "period")
-	if period_params == "" {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("no period provided")))
-		return
+	var counts *[]model.CategoryCount
+	if has_period {
+		counts, err = _GetCategoryCountsDuringPeriod(cats, period_params)
+	} else {
+		counts, err = _GetCategoryCounts(cats)
 	}
 
-	get_global_cats_sql := query.
-		NewGetAllGlobalCategories().
-		FromPeriod(period_params)
-	if get_global_cats_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(get_global_cats_sql.Error))
-		return
-	}
-
-	categories, err := _ScanGlobalCategories(get_global_cats_sql)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
-	counts, err := _GetCategoryCountsDuringPeriod(categories, period_params)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return

@@ -64,15 +64,10 @@ func main() {
 	r.Post("/signup", h.SignUp)
 	r.Post("/login", h.LogIn)
 
-	// SUBCATS
+	// TAG CATS
+	r.Get("/cats", h.GetTopGlobalCats)
 	r.Get("/subcats/{cats}", h.GetSubcats)
-
-	// CONTRIBUTORS
 	r.Get("/contributors/{cats}", h.GetCatsContributors)
-
-	// TAGS
-	r.Get("/tags/popular", h.GetTopTagCategories)
-	r.Get("/tags/popular/{period}", h.GetTopTagCategoriesByPeriod)
 
 
 
