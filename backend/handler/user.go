@@ -3,7 +3,6 @@ package handler
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"

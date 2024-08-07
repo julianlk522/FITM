@@ -141,7 +141,15 @@ func NewTmapCopied(login_name string) *TmapCopied {
 	return q
 }
 
-var COPIED_FIELDS = strings.Replace(strings.Replace(BASE_FIELDS, "categories", `COALESCE(categories,global_cats) as categories`, 1), "0 as cats_from_user", `COALESCE(cats_from_user,0) as cats_from_user`, 1)
+var COPIED_FIELDS = strings.Replace(
+	strings.Replace(
+		BASE_FIELDS, 
+		"categories", 
+		`COALESCE(user_cats,global_cats) as cats`, 
+		1), 
+	"0 as cats_from_user", 
+	`COALESCE(cats_from_user,0) as cats_from_user`, 
+	1)
 
 const COPIED_FROM = ` FROM Links
 JOIN
@@ -155,7 +163,7 @@ JOIN
 ON copy_link_id = link_id
 LEFT JOIN
 	(
-	SELECT categories, categories IS NOT NULL as cats_from_user, link_id as tag_link_id
+	SELECT categories as user_cats, categories IS NOT NULL as cats_from_user, link_id as tag_link_id
 	FROM Tags
 	WHERE submitted_by = 'LOGIN_NAME'
 	)
@@ -183,7 +191,7 @@ func (q *TmapCopied) FromCategories(categories []string) *TmapCopied {
 
 	for _, cat := range categories {
 		cat_clause += fmt.Sprintf(` 
-		AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
+		AND ',' || cats || ',' LIKE '%%,%s,%%'`, cat)
 	}
 
 	q.Text = strings.Replace(q.Text, BASE_ORDER, cat_clause + BASE_ORDER, 1)

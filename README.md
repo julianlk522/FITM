@@ -4,8 +4,6 @@
 
 ### Features
 
--Investigate into whether tmap is double-counting some links
-    -might be ones that are in 2 sections e.g., copied and tagged
 -Show tag count on each link next to tags
 -Pagination
     -User Treasure Map
