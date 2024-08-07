@@ -289,11 +289,6 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
-
-	if strings.Count(tag_data.Categories, ",") > e.NEW_TAG_CATEGORY_LIMIT {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrTooManyCategories))
-		return
-	}
 	
 	link_exists, err := _LinkExists(tag_data.LinkID)
 	if err != nil {

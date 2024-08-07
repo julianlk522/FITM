@@ -32,8 +32,11 @@ type NewLinkRequest struct {
 func (a *NewLinkRequest) Bind(r *http.Request) error {
 	if a.NewLink.URL == "" {
 		return e.ErrNoURL
-	} else if a.NewLink.Categories == "" {
-		return e.ErrNoTagCategories
+	}
+	if a.NewLink.Categories == "" {
+		return e.ErrNoTagCats
+	} else if _IsTooManyCats(a.NewLink.Categories) {
+		return e.ErrTooManyCats
 	}
 
 	a.SubmitDate = util.NEW_TIMESTAMP

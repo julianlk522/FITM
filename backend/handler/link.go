@@ -375,11 +375,6 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.Count(link_data.NewLink.Categories, ",") > e.NEW_TAG_CATEGORY_LIMIT {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrTooManyCategories))
-		return
-	}
-
     resp, err := _ResolveURL(link_data)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
