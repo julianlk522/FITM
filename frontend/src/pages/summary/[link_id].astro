@@ -4,7 +4,9 @@ import Summary from '../../components/Summary/Summary'
 import NewSummary from '../../components/Summary/NewSummary'
 import Layout from '../../layouts/Layout.astro'
 import type { SummaryPage } from '../../types'
+import {SUMMARIES_ENDPOINT} from '../../constants'
 
+// Auth
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
 const is_signed_in = user && token
@@ -14,13 +16,15 @@ if (!link_id) {
 	return Astro.redirect('/404')
 }
 
+// Get summaries
+const summaries_url = SUMMARIES_ENDPOINT + `/${link_id}`
 const get_summaries_resp = await (token
-	? fetch(`http://127.0.0.1:8000/summaries/${link_id}`, {
+	? fetch(summaries_url, {
 			headers: {
 				Authorization: `Bearer ${token}`,
 			},
 		})
-	: fetch(`http://127.0.0.1:8000/summaries/${link_id}`))
+	: fetch(summaries_url))
 if (get_summaries_resp.status > 399) {
 	return Astro.redirect('/404')
 }

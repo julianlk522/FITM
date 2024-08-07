@@ -4,6 +4,7 @@ import ScrollUp from '../../components/ScrollUp.astro'
 import TagCategory from '../../components/Tag/TagCategory'
 import EditAbout from '../../components/Tmap/EditAbout'
 import ProfilePic from '../../components/Tmap/ProfilePic'
+import { GET_PFP_ENDPOINT, TMAP_ENDPOINT } from '../../constants'
 import Layout from '../../layouts/Layout.astro'
 import type { FilteredTreasureMap, Profile, TreasureMap } from '../../types'
 import { tmap_sections } from '../../types'
@@ -32,38 +33,32 @@ if (Astro.url.searchParams.get('cats')) {
 	}
 }
 
-// Get User Tmap
+// Get Tmap
 let tmap: TreasureMap | FilteredTreasureMap
-let profile: Profile | undefined = undefined
-let display_profile = false
+let profile: Profile | undefined
 let display_about = false
+let display_profile = false
 
-const TMAP_BASE_ENDPOINT = `http://127.0.0.1:8000/map/${login_name}`
-let tmap_endpoint = TMAP_BASE_ENDPOINT
+let tmap_url = TMAP_ENDPOINT + `/${login_name}`
 if (cats_split.length) {
-	tmap_endpoint += `/${cats_split[0]}`
+	tmap_url += `/${cats_split[0]}`
 
 	for (let i = 1; i < cats_split.length; i++) {
-		tmap_endpoint += `,${cats_split[i]}`
+		tmap_url += `,${cats_split[i]}`
 	}
 }
 
 const tmap_resp = token
-	? await fetch(tmap_endpoint, {
+	? await fetch(tmap_url, {
 			headers: {
 				Authorization: `Bearer ${token}`,
 			},
 		})
-	: await fetch(tmap_endpoint)
+	: await fetch(tmap_url)
 if (tmap_resp.status > 399) {
 	return Astro.redirect('/404')
 }
 tmap = await tmap_resp.json()
-// Profile: {LoginName: 'bob', About: '...', PFP: '...', Created: '2022-01-01 00:00:00'},
-// Submitted: [{URL: 'https://example.com', LikeCount: 100}, ...],
-// Copied: [{URL: 'https://example.com', LikeCount: 1}, ...],
-// Tagged: [{URL: 'https://example.com', LikeCount: 2}, ...]
-// CategoryCounts: [{Category: 'umvc3', Count: 1}, ...],
 
 // Attempt PFP fetch, display about/pfp if they are used
 if (tmap.hasOwnProperty('Profile')) {
@@ -72,14 +67,15 @@ if (tmap.hasOwnProperty('Profile')) {
 	const has_about = profile.About !== undefined && profile.About.length > 0
 	display_about = (profile !== undefined && has_about) || is_signed_in_user
 
-	const found_pfp_resp = await fetch(`http://127.0.0.1:8000/pic/${profile.PFP}`, {
+	const get_pfp_url = GET_PFP_ENDPOINT + `/${profile.PFP}`
+	const found_pfp_resp = await fetch(get_pfp_url, {
 		headers: { 'Content-Type': 'image/png' },
 	})
-	let found_pfp = found_pfp_resp.status < 400
+	const found_pfp = found_pfp_resp.status < 400
 	display_profile = profile !== undefined && (found_pfp || has_about)
 }
 
-// Get Used Tmap Sections
+// Get used sections
 const used_sections = tmap_sections.filter((s) => tmap[s].length)
 if (!used_sections.length) {
 	return Astro.redirect(`/404`)

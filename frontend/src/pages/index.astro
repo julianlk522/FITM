@@ -1,6 +1,7 @@
 ---
 import Link from '../components/Link/Link'
 import ScrollUp from '../components/ScrollUp.astro'
+import { CATS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
 import Layout from '../layouts/Layout.astro'
 import { Periods, type CategoryCount, type PaginatedLinks } from '../types'
 
@@ -8,20 +9,16 @@ import { Periods, type CategoryCount, type PaginatedLinks } from '../types'
 const token = Astro.cookies.get('token')?.value
 const user: string | undefined = Astro.cookies.get('user')?.value
 
-const API_URL = 'http://127.0.0.1:8000'
-
 // Get top categories
-const cats_endpoint = API_URL + '/cats'
 const top_cats_resp = await (token
-	? fetch(cats_endpoint, {
+	? fetch(CATS_ENDPOINT, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
-	: fetch(cats_endpoint))
-// [{Category: 'umvc3', Count: 1}, ...]
+	: fetch(CATS_ENDPOINT))
 const top_cats: CategoryCount[] = await top_cats_resp.json()
 
 // Get top links
-const links_endpoint = API_URL + '/links/top?period=month'
+const links_endpoint = LINKS_ENDPOINT + '?period=month'
 const get_links_resp = await (token
 	? fetch(links_endpoint, {
 			headers: { Authorization: `Bearer ${token}` },
@@ -29,7 +26,6 @@ const get_links_resp = await (token
 	: fetch(links_endpoint))
 const data: PaginatedLinks = await get_links_resp.json()
 const links = data.Links
-// [{URL: 'https://example.com', LikeCount: 100}, ...]
 const other_periods = Periods.filter((other) => other !== 'month')
 ---
 

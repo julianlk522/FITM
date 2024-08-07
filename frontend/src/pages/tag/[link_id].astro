@@ -2,6 +2,7 @@
 import Link from '../../components/Link/Link'
 import EditTag from '../../components/Tag/EditTag'
 import TagCategory from '../../components/Tag/TagCategory'
+import { TAGS_ENDPOINT } from '../../constants'
 import Layout from '../../layouts/Layout.astro'
 import type { TagPage } from '../../types'
 import format_date from '../../util/format_date'
@@ -23,7 +24,8 @@ if (!link_id) {
 	return Astro.redirect('/404')
 }
 
-const get_tags_resp = await fetch(`http://127.0.0.1:8000/tags/${link_id}`, {
+const tags_url = TAGS_ENDPOINT + `/${link_id}`
+const get_tags_resp = await fetch(tags_url, {
 	headers: {
 		Authorization: `Bearer ${token}`,
 	},

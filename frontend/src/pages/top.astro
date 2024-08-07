@@ -2,6 +2,7 @@
 import Link from '../components/Link/Link'
 import Pagination from '../components/Pagination.astro'
 import ScrollUp from '../components/ScrollUp.astro'
+import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT, SUBCATS_ENDPOINT } from '../constants'
 import Layout from '../layouts/Layout.astro'
 import {
 Periods,
@@ -37,8 +38,6 @@ if (
 }
 
 // Get links
-const API_URL = 'http://127.0.0.1:8000'
-const LINKS_ENDPOINT = API_URL + '/links/top'
 let links_url = LINKS_ENDPOINT
 
 let has_period = false
@@ -46,7 +45,6 @@ if (period !== 'all') {
 	has_period = true
 	links_url += `?period=${period}`
 }
-
 let has_cats = false
 if (categories) {
 	has_cats = true
@@ -70,7 +68,6 @@ const get_links_resp = await (token
 	: fetch(links_url))
 const data: PaginatedLinks = await get_links_resp.json()
 const links = data.Links
-// [{URL: 'https://example.com', LikeCount: 100}, ...]
 
 let top_cats: CategoryCount[] = []
 let top_subcats: CategoryCount[] = []
@@ -80,10 +77,8 @@ if (links && links.length) {
 
 	// Get subcategory counts and category contributors
 	if (categories) {
-		const SUBCATS_ENDPOINT = API_URL + `/subcats/${categories}`
-		let subcats_url = SUBCATS_ENDPOINT
-		const CONTRIBUTORS_ENDPOINT = API_URL + `/contributors/${categories}`
-		let contributors_url = CONTRIBUTORS_ENDPOINT
+		let subcats_url = SUBCATS_ENDPOINT + `/${categories}`
+		let contributors_url = CONTRIBUTORS_ENDPOINT + `/${categories}`
 
 		if (period !== 'all') {
 			subcats_url += `?period=${period}`
@@ -92,15 +87,12 @@ if (links && links.length) {
 
 		const subcats_resp = await fetch(subcats_url)
 		top_subcats = await subcats_resp.json()
-		// [{Category: 'flowers', Count: 2}, ...]
 
 		const contributors_resp = await fetch(contributors_url)
 		top_contributors = await contributors_resp.json()
-		// [{"Categories":"umvc3,2dfighters","LoginName":"bob","LinksSubmitted":"10"}]
 	
 	// Get category counts
 	} else {
-		const CATS_ENDPOINT = API_URL + '/cats'
 		let cats_url = CATS_ENDPOINT
 		if (period !== 'all') {
 			cats_url += `?period=${period}`

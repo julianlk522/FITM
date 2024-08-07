@@ -4,7 +4,8 @@ import Layout from '../layouts/Layout.astro'
 
 <Layout Title='Log In to the Open Internet Treasure Map (OITM)'>
 	<script>
-		import get_cookie from '../util/get_cookie'
+		import { LOGIN_ENDPOINT, SIGNUP_ENDPOINT } from '../constants'
+import get_cookie from '../util/get_cookie'
 
 		async function handle_signup(event: SubmitEvent) {
 			event.preventDefault()
@@ -13,7 +14,7 @@ import Layout from '../layouts/Layout.astro'
 			const login_name = formData.get('login_name')
 			const password = formData.get('password')
 
-			const signup_resp = await fetch('http://127.0.0.1:8000/signup', {
+			const signup_resp = await fetch(SIGNUP_ENDPOINT, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -62,7 +63,7 @@ import Layout from '../layouts/Layout.astro'
 			const login_name = formData.get('login_name')
 			const password = formData.get('password')
 
-			const login_resp = await fetch('http://127.0.0.1:8000/login', {
+			const login_resp = await fetch(LOGIN_ENDPOINT, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -115,7 +116,7 @@ import Layout from '../layouts/Layout.astro'
 		<section>
 			<h2>Log In</h2>
 			<form id='login'>
-				<!-- TODO: add message if user redirected from trying to like a link, etc. -->
+				<!-- TODO: maybe add message if user redirected from trying to like a link, etc. -->
 				<label for='login_name'>Name</label>
 				<input type='text' name='login_name' />
 				<br />
