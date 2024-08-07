@@ -36,17 +36,22 @@ if (
 	other_periods = Periods.filter((other) => other !== period)
 }
 
-// Generate links endpoint
-// TODO: replace after converting API endpoints to single route using search params?
-const LINKS_BASE_ENDPOINT = 'http://127.0.0.1:8000/links'
+// Get links
+const API_URL = 'http://127.0.0.1:8000'
+const LINKS_BASE_ENDPOINT = API_URL + '/links'
 let links_endpoint = LINKS_BASE_ENDPOINT
+
+let has_period = false
 if (period !== 'all') {
-	links_endpoint += `/${period}`
-} else if (categories) {
-	links_endpoint += '/cat'
+	links_endpoint += `?period=${period}`
+	has_period = true
 }
 if (categories) {
-	links_endpoint += `/${categories}`
+	if (has_period) {
+		links_endpoint += `&cats=${categories}`
+	} else {
+		links_endpoint += `?cats=${categories}`
+	}
 }
 links_endpoint += `?page=${page}`
 const get_links_resp = await (token
@@ -66,16 +71,13 @@ if (links && links.length) {
 
 	// Get subcategory counts and category contributors
 	if (categories) {
-		let subcats_endpoint = LINKS_BASE_ENDPOINT
-		let contributors_endpoint = LINKS_BASE_ENDPOINT
+		let subcats_endpoint = API_URL + `/subcats/${categories}`
+		let contributors_endpoint = API_URL + `/contributors/${categories}`
 
 		if (period !== 'all') {
-			subcats_endpoint += `/${period}`
-			contributors_endpoint += `/${period}`
+			subcats_endpoint += `?period=${period}`
+			contributors_endpoint += `?period=${period}`
 		}
-
-		subcats_endpoint += `/subcat/${categories}`
-		contributors_endpoint += `/cat/${categories}/users`
 
 		const subcats_resp = await fetch(subcats_endpoint)
 		top_subcats = await subcats_resp.json()

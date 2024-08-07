@@ -214,7 +214,7 @@ func _RenderPaginatedLinks[T model.LinkSignedIn | model.Link](links *[]T, page i
 	}
 }
 
-func GetTopCatsContributors(w http.ResponseWriter, r *http.Request) {
+func GetCatsContributors(w http.ResponseWriter, r *http.Request) {
 	cats_params := chi.URLParam(r, "cats")
 	if cats_params == "" {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCats))

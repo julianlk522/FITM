@@ -16,11 +16,12 @@ const top_cats_resp = await (token
 // [{Category: 'umvc3', Count: 1}, ...]
 const top_cats: CategoryCount[] = await top_cats_resp.json()
 
+const links_api_url = 'http://127.0.0.1:8000/links/top?period=month'
 const get_links_resp = await (token
-	? fetch('http://127.0.0.1:8000/links/month', {
+	? fetch(links_api_url, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
-	: fetch('http://127.0.0.1:8000/links/month'))
+	: fetch(links_api_url))
 const data: PaginatedLinks = await get_links_resp.json()
 const links = data.Links
 // [{URL: 'https://example.com', LikeCount: 100}, ...]
