@@ -15,18 +15,17 @@ type NewLink struct {
 
 type NewLinkRequest struct {
 	*NewLink
-	ID int64
-	SubmittedBy string
 	SubmitDate string
-	Summary string
-	SummaryCount int
 	LikeCount int64
-	ImgURL string
-
+	
 	// to be assigned by handler
-	URL string
-	Categories string
+	ID int64
+	URL string // potentially modified after test request(s)
+	SubmittedBy string
+	Categories string // used after sort
 	AutoSummary string
+	SummaryCount int
+	ImgURL string
 }
 
 func (a *NewLinkRequest) Bind(r *http.Request) error {
@@ -55,6 +54,7 @@ type Link struct {
 	Categories string
 	Summary string
 	SummaryCount int
+	TagCount int
 	LikeCount int64
 	ImgURL string
 }

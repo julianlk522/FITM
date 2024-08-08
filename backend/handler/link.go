@@ -122,6 +122,7 @@ func _ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks
 				&i.Categories, 
 				&i.Summary, 
 				&i.SummaryCount, 
+				&i.TagCount,
 				&i.LikeCount, 
 				&i.ImgURL,
 			)
@@ -182,6 +183,7 @@ func _ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks
 				&i.Categories, 
 				&i.Summary, 
 				&i.SummaryCount, 
+				&i.TagCount,
 				&i.LikeCount, 
 				&i.ImgURL,
 			)

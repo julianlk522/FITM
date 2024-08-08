@@ -7,9 +7,13 @@ import (
 
 // PROFILE
 func NewTmapProfile(login_name string) string {
-	return fmt.Sprintf(`SELECT login_name, COALESCE(about,"") as about, COALESCE(pfp,"") as pfp, COALESCE(created,"") as created 
-	FROM Users 
-	WHERE login_name = '%s';`, login_name)
+	return fmt.Sprintf(`SELECT 
+	login_name, 
+	COALESCE(about,"") as about, 
+	COALESCE(pfp,"") as pfp, 
+	created
+FROM Users 
+WHERE login_name = '%s';`, login_name)
 }
 
 // LINKS
@@ -23,6 +27,7 @@ const BASE_FIELDS = `SELECT
 	COALESCE(global_summary,"") as summary, 
 	COALESCE(summary_count,0) as summary_count, 
 	COALESCE(like_count,0) as like_count, 
+	tag_count, 
 	COALESCE(img_url,"") as img_url`
 
 const BASE_ORDER = ` 
@@ -81,7 +86,14 @@ JOIN
 	FROM Tags
 	WHERE submitted_by = 'LOGIN_NAME'
 	)
-ON link_id = tag_link_id
+ON tag_link_id = link_id
+LEFT JOIN
+	(
+	SELECT count(*) as tag_count, link_id as tag_link_id2
+	FROM Tags
+	GROUP BY tag_link_id2
+	)
+ON tag_link_id2 = link_id
 LEFT JOIN
 	(
 	SELECT count(*) as like_count, link_id as like_link_id
@@ -167,7 +179,14 @@ LEFT JOIN
 	FROM Tags
 	WHERE submitted_by = 'LOGIN_NAME'
 	)
-ON link_id = tag_link_id
+ON tag_link_id = link_id
+LEFT JOIN
+	(
+	SELECT count(*) as tag_count, link_id as tag_link_id2
+	FROM Tags
+	GROUP BY tag_link_id2
+	)
+ON tag_link_id2 = link_id
 LEFT JOIN
 	(
 	SELECT count(*) as like_count, link_id as like_link_id

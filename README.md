@@ -4,7 +4,6 @@
 
 ### Features
 
--Show tag count on each link next to tags
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links

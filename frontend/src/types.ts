@@ -26,6 +26,7 @@ type Link = {
 	ImgURL: string | undefined
 	Summary: string | null
 	SummaryCount: number
+	TagCount: number
 	LikeCount: number
 	IsLiked: boolean | undefined
 	IsTagged: boolean | undefined
