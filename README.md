@@ -11,8 +11,6 @@
         -Subcategories
     -Global Categories
     -Global Subcategories
-
-    -Fix top tag cats so they are specific to page being shown?
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 
@@ -31,9 +29,11 @@
 
 ## To-Maybe-Dos
 
--Friends
-    -(i.e., saved users whose tmaps you can quickly access without manually typing the URL)
-    -might actually do a 'favorite maps' type thing instead, since it does not need to be bidirectional relationship
+-Favorite tmaps
+    -add favorites col to users table
+    -'Add to Favorites' button on other user's tmap
+    -'Favorites' link on tmap
+    -{user}'s favorite tmaps page
 -Better way to visualize how Global Cats are determined
 -Show number of copies along with number of likes in frontend
 -Edit category filters directly on top links by period/category(ies) page
