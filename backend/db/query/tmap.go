@@ -7,9 +7,13 @@ import (
 
 // PROFILE
 func NewTmapProfile(login_name string) string {
-	return fmt.Sprintf(`SELECT login_name, COALESCE(about,"") as about, COALESCE(pfp,"") as pfp, COALESCE(created,"") as created 
-	FROM Users 
-	WHERE login_name = '%s';`, login_name)
+	return fmt.Sprintf(`SELECT 
+	login_name, 
+	COALESCE(about,"") as about, 
+	COALESCE(pfp,"") as pfp, 
+	created
+FROM Users 
+WHERE login_name = '%s';`, login_name)
 }
 
 // LINKS
@@ -18,11 +22,12 @@ const BASE_FIELDS = `SELECT
 	url, 
 	submitted_by as login_name, 
 	submit_date, 
-	categories, 
+	cats, 
 	0 as cats_from_user,
 	COALESCE(global_summary,"") as summary, 
 	COALESCE(summary_count,0) as summary_count, 
 	COALESCE(like_count,0) as like_count, 
+	tag_count, 
 	COALESCE(img_url,"") as img_url`
 
 const BASE_ORDER = ` 
@@ -77,11 +82,18 @@ func NewTmapSubmitted(login_name string) *TmapSubmitted {
 const SUBMITTED_FROM = ` FROM Links
 JOIN
 	(
-	SELECT categories, link_id as tag_link_id
+	SELECT categories as cats, link_id as tag_link_id
 	FROM Tags
 	WHERE submitted_by = 'LOGIN_NAME'
 	)
-ON link_id = tag_link_id
+ON tag_link_id = link_id
+LEFT JOIN
+	(
+	SELECT count(*) as tag_count, link_id as tag_link_id2
+	FROM Tags
+	GROUP BY tag_link_id2
+	)
+ON tag_link_id2 = link_id
 LEFT JOIN
 	(
 	SELECT count(*) as like_count, link_id as like_link_id
@@ -104,7 +116,7 @@ func (q *TmapSubmitted) FromCategories(categories []string) *TmapSubmitted {
 	var cat_clause string
 	for _, cat := range categories {
 		cat_clause += fmt.Sprintf(` 
-		AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
+		AND ',' || cats || ',' LIKE '%%,%s,%%'`, cat)
 	}
 
 	q.Text = strings.Replace(q.Text, BASE_ORDER, cat_clause + BASE_ORDER, 1)
@@ -129,7 +141,7 @@ func (q *TmapSubmitted) AsSignedInUser(req_user_id string, req_login_name string
 
 
 
-// Copied links submitted by other users (global categories replaced with user-assigned if user has tagged)
+// Copied links submitted by other users (global cats replaced with user-assigned if user has tagged)
 type TmapCopied struct {
 	Query
 }
@@ -144,8 +156,8 @@ func NewTmapCopied(login_name string) *TmapCopied {
 var COPIED_FIELDS = strings.Replace(
 	strings.Replace(
 		BASE_FIELDS, 
-		"categories", 
-		`COALESCE(user_cats,global_cats) as cats`, 
+		"cats", 
+		"COALESCE(user_cats,global_cats) as cats", 
 		1), 
 	"0 as cats_from_user", 
 	`COALESCE(cats_from_user,0) as cats_from_user`, 
@@ -167,7 +179,14 @@ LEFT JOIN
 	FROM Tags
 	WHERE submitted_by = 'LOGIN_NAME'
 	)
-ON link_id = tag_link_id
+ON tag_link_id = link_id
+LEFT JOIN
+	(
+	SELECT count(*) as tag_count, link_id as tag_link_id2
+	FROM Tags
+	GROUP BY tag_link_id2
+	)
+ON tag_link_id2 = link_id
 LEFT JOIN
 	(
 	SELECT count(*) as like_count, link_id as like_link_id
@@ -219,7 +238,7 @@ func (q *TmapCopied) AsSignedInUser(req_user_id string, req_login_name string) *
 
 
 
-// Tagged links submitted by other users (global categories replaced with user-assigned)
+// Tagged links submitted by other users (global cats replaced with user-assigned)
 type TmapTagged struct {
 	Query
 }
@@ -246,7 +265,7 @@ func (q *TmapTagged) FromCategories(categories []string) *TmapTagged {
 	var cat_clause string
 	for _, cat := range categories {
 		cat_clause += fmt.Sprintf(` 
-		AND ',' || categories || ',' LIKE '%%,%s,%%'`, cat)
+		AND ',' || cats || ',' LIKE '%%,%s,%%'`, cat)
 	}
 
 	q.Text = strings.Replace(q.Text, BASE_ORDER, cat_clause + BASE_ORDER, 1)

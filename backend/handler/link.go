@@ -122,6 +122,7 @@ func _ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks
 				&i.Categories, 
 				&i.Summary, 
 				&i.SummaryCount, 
+				&i.TagCount,
 				&i.LikeCount, 
 				&i.ImgURL,
 			)
@@ -182,6 +183,7 @@ func _ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks
 				&i.Categories, 
 				&i.Summary, 
 				&i.SummaryCount, 
+				&i.TagCount,
 				&i.LikeCount, 
 				&i.ImgURL,
 			)
@@ -369,104 +371,124 @@ func _SortAndLimitCategoryCounts(cats_with_counts *[]model.CategoryCount) {
 }
 
 func AddLink(w http.ResponseWriter, r *http.Request) {
-	link_data := &model.NewLinkRequest{}
-	if err := render.Bind(r, link_data); err != nil {
+	request := &model.NewLinkRequest{}
+	if err := render.Bind(r, request); err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
-    resp, err := _ResolveURL(link_data)
+	// Check URL valid and unique
+    resp, err := _ResolveAndAssignURL(request.NewLink.URL, request)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
-	if _URLAlreadySaved(link_data.URL) {
-		render.Render(w, r, e.ErrInvalidRequest(fmt.Errorf("duplicate URL: %s", link_data.URL)))
+	if _URLAlreadySaved(request.URL) {
+		render.Render(w, r, e.ErrInvalidRequest(fmt.Errorf("duplicate URL: %s", request.URL)))
 		return
 	}
 
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
-	link_data.SubmittedBy = req_login_name
+	request.SubmittedBy = req_login_name
 	
-	_AssignMetadata(resp, link_data)
-	_AssignSortedCategories(link_data, link_data.NewLink.Categories)
+	_AssignMetadata(resp, request)
+
+	unsorted_cats := request.NewLink.Categories
+	_AssignSortedCategories(unsorted_cats, request)
 	
+	// Insert link
 	res, err := DBClient.Exec(
 		"INSERT INTO Links VALUES(?,?,?,?,?,?,?);", 
 		nil, 
-		link_data.URL, 
+		request.URL, 
 		req_login_name, 
-		link_data.SubmitDate, 
-		link_data.Categories, 
-		link_data.Summary, 
-		link_data.ImgURL,
+		request.SubmitDate, 
+		request.Categories, 
+		request.NewLink.Summary, 
+		request.ImgURL,
 	)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 	
-	if err := _AssignNewLinkIDToRequest(res, link_data); err != nil {
+	if err := _AssignNewLinkID(res, request); err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
-	if link_data.AutoSummary != "" {
+	// Insert Summary(ies)
+	// (might have user-submitted, Auto Summary, or both)
+	if request.AutoSummary != "" {
 		// Note: UserID 15 is AutoSummary
 		// TODO: add constant, replace magic 15
 		_, err = DBClient.Exec(
 			"INSERT INTO Summaries VALUES(?,?,?,?,?);", 
 			nil, 
-			link_data.AutoSummary, 
-			link_data.ID, 
+			request.AutoSummary, 
+			request.ID, 
 			"15", 
-			link_data.SubmitDate,
+			request.SubmitDate,
 		)
 		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
-			return
+			// continue... no auto summary
+			// but log err
+			log.Print("Error adding auto summary: ", err)
+		} else {
+			request.SummaryCount = 1
 		}
-
-		link_data.SummaryCount = 1
 	}
 
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
-	if link_data.Summary != "" {
+	if request.NewLink.Summary != "" {
 		_, err = DBClient.Exec(
 			"INSERT INTO Summaries VALUES(?,?,?,?,?);", 
 			nil, 
-			link_data.Summary, 
-			link_data.ID, 
+			request.NewLink.Summary, 
+			request.ID, 
 			req_user_id, 
-			link_data.SubmitDate,
+			request.SubmitDate,
 		)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
+		} else {
+			request.SummaryCount += 1
 		}
-
-		link_data.SummaryCount += 1
 	}
 
+	// Insert tag
 	_, err = DBClient.Exec(
 		"INSERT INTO Tags VALUES(?,?,?,?,?);", 
 		nil, 
-		link_data.ID, 
-		link_data.Categories, 
+		request.ID, 
+		request.Categories, 
 		req_login_name, 
-		link_data.SubmitDate,
+		request.SubmitDate,
 	)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
+	// Return new link
+	new_link := model.Link{
+		ID: request.ID,
+		URL: request.URL,
+		SubmittedBy: req_login_name,
+		SubmitDate: request.SubmitDate,
+		Categories: request.Categories,
+		Summary: request.NewLink.Summary,
+		SummaryCount: request.SummaryCount,
+		ImgURL: request.ImgURL,
+	}
+
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, link_data)
+	render.JSON(w, r, new_link)
 }
 
-func _ResolveURL(link_data *model.NewLinkRequest) (*http.Response, error) {	
+func _ResolveAndAssignURL(url string, request *model.NewLinkRequest) (*http.Response, error) {	
 	has_protocol_regex, err := regexp.Compile(`^(http(s?)\:\/\/)`)
 	if err != nil {
 		return nil, err
@@ -476,29 +498,29 @@ func _ResolveURL(link_data *model.NewLinkRequest) (*http.Response, error) {
 	var ErrRedirect error = errors.New("invalid link destination: redirect detected")
 
 	// Protocol specified: check as-is
-	if has_protocol_regex.MatchString(link_data.NewLink.URL) {
-		resp, err = http.Get(link_data.NewLink.URL)
+	if has_protocol_regex.MatchString(url) {
+		resp, err = http.Get(url)
 		if _IsRedirect(resp.StatusCode) {
 			return nil, ErrRedirect
 		} else if err != nil || resp.StatusCode == 404 {
-			return nil, _InvalidURLError(link_data.URL)
+			return nil, _InvalidURLError(url)
 		}
 		
 	// Protocol not specified: try https then http
 	} else {
-	
+
 		// https
-		link_data.URL = "https://" + link_data.NewLink.URL
-		resp, err = http.Get(link_data.URL)
+		modified_url := "https://" + url
+		resp, err = http.Get(modified_url)
 		if err != nil {
 
 			// http
-			link_data.URL = "http://" + link_data.NewLink.URL
-			resp, err = http.Get(link_data.URL)
+			modified_url = "http://" + url
+			resp, err = http.Get(modified_url)
 			if _IsRedirect(resp.StatusCode) {
 				return nil, ErrRedirect
 			} else if err != nil {
-				return nil, _InvalidURLError(link_data.URL)
+				return nil, _InvalidURLError(modified_url)
 			}
 
 		} else if _IsRedirect(resp.StatusCode) {
@@ -506,8 +528,8 @@ func _ResolveURL(link_data *model.NewLinkRequest) (*http.Response, error) {
 		}
 	}
 	
-	// Valid URL: save after any redirects e.g., to wwww.
-	link_data.URL = resp.Request.URL.String()
+	// save updated URL after any redirects e.g., to wwww.
+	request.URL = resp.Request.URL.String()
 
 	return resp, nil
 }
@@ -553,14 +575,14 @@ func _AssignMetadata(resp *http.Response, link_data *model.NewLinkRequest) {
 	}
 }
 
-func _AssignSortedCategories(link *model.NewLinkRequest, categories_str string) {
-	split_categories := strings.Split(categories_str, ",")
+func _AssignSortedCategories(unsorted_cats string, link *model.NewLinkRequest) {
+	split_categories := strings.Split(unsorted_cats, ",")
 	slices.Sort(split_categories)
 
 	link.Categories = strings.Join(split_categories, ",")
 }
 
-func _AssignNewLinkIDToRequest(res sql.Result, request *model.NewLinkRequest) error {
+func _AssignNewLinkID(res sql.Result, request *model.NewLinkRequest) error {
 	id, err := res.LastInsertId()
 	if err != nil {
 		return err

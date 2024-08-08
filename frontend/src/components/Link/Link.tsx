@@ -28,6 +28,7 @@ export default function Link(props: Props) {
 		Categories: categories,
 		Summary: summary,
 		SummaryCount: summary_count,
+		TagCount: tag_count,
 		ImgURL: img_url,
 		IsTagged: is_tagged,
 	} = props.Link
@@ -37,12 +38,15 @@ export default function Link(props: Props) {
 	const [like_count, set_like_count] = useState(props.Link.LikeCount)
 
 	const split_cats = categories?.split(',')
-	const tag_attribution =
+	let tag_attribution =
 		categories && user && categories_from_user === user
 			? 'Your Tag'
 			: categories_from_user
 			? `${categories_from_user}'s Tag`
+			: tag_count === 1
+			? `${submitted_by}'s Tag`
 			: 'Global Tag'
+	tag_attribution += ` (${tag_count})`
 	const categories_html =
 		// depending on if tmap page, link to tmap subcategories page or global categories page
 		categories_from_user

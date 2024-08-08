@@ -18,16 +18,25 @@ type TopLinks struct {
 const TOP_LINKS_BASE = `SELECT 
 links_id as link_id, 
 url, 
-link_author as submitted_by, 
+sb, 
 sd, 
-categories, 
+cats, 
 summary, 
-coalesce(count(Summaries.id),0) as summary_count, 
+summary_count,
+tag_count,
 like_count, 
 img_url
 FROM 
 	(
-	SELECT Links.id as links_id, url, submitted_by as link_author, Links.submit_date as sd, coalesce(global_cats,"") as categories, coalesce(global_summary,"") as summary, coalesce(like_count,0) as like_count, coalesce(img_url,"") as img_url 
+	SELECT 
+		Links.id as links_id, 
+		url, 
+		submitted_by as sb, 
+		Links.submit_date as sd, 
+		COALESCE(global_cats,"") as cats, 
+		COALESCE(global_summary,"") as summary, 
+		COALESCE(like_count,0) as like_count, 
+		COALESCE(img_url,"") as img_url 
 	FROM LINKS 
 	LEFT JOIN 
 		(
@@ -37,8 +46,20 @@ FROM
 		) 
 	ON Links.id = likes_link_id
 	)
-LEFT JOIN Summaries 
-ON Summaries.link_id = links_id 
+LEFT JOIN
+	(
+	SELECT count(*) as summary_count, link_id as slink_id
+	FROM Summaries
+	GROUP BY slink_id
+	)
+ON slink_id = links_id
+LEFT JOIN 
+	(
+	SELECT count(*) as tag_count, link_id as tlink_id
+	FROM Tags
+	GROUP BY tlink_id
+	)
+ON tlink_id = links_id
 GROUP BY links_id 
 ORDER BY like_count DESC, summary_count DESC, link_id DESC;`
 

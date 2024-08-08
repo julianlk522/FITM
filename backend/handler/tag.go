@@ -75,27 +75,28 @@ func GetTagsForLink(w http.ResponseWriter, r *http.Request) {
 }
 
 func _ScanTagPageLink(link_sql *query.TagPageLink) (*model.LinkSignedIn, error) {
-	var link = &model.LinkSignedIn{}
+	var l = &model.LinkSignedIn{}
 
 	err := DBClient.
 		QueryRow(link_sql.Text).
 		Scan(
-			&link.ID, 
-			&link.URL, 
-			&link.SubmittedBy, 
-			&link.SubmitDate, 
-			&link.Categories, 
-			&link.Summary, 
-			&link.LikeCount, 
-			&link.ImgURL, 
-			&link.IsLiked, 
-			&link.IsCopied,
+			&l.ID, 
+			&l.URL, 
+			&l.SubmittedBy, 
+			&l.SubmitDate, 
+			&l.Categories, 
+			&l.Summary, 
+			&l.SummaryCount,
+			&l.LikeCount, 
+			&l.ImgURL, 
+			&l.IsLiked, 
+			&l.IsCopied,
 		)
 	if err != nil {
 		return nil, err
 	}
 
-	return link, nil
+	return l, nil
 }
 
 func _GetUserTagForLink(login_name string, link_id string) (*model.Tag, error) {
@@ -439,9 +440,7 @@ func _GetLinkIDFromTagID(tag_id string) (string, error) {
 	return link_id.String, nil
 }
 
-// Recalculate global categories for a link whose tags changed
-// (technically should affect all links that share 1+ categories but that's too complicated) 
-// (many links will also not be seen enough to justify being updated constantly. makes enough sense to only update a link's global cats when a new tag is added to that link.)
+// Recalculate global cats for a link whose tags changed
 func _RecalculateGlobalCategories(link_id string) error {
 	overlap_scores_sql := query.
 		NewTopOverlapScores(link_id).

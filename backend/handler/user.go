@@ -395,27 +395,28 @@ func _ScanTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](sql query.Query) 
 			var signed_in_links = []model.TmapLinkSignedIn{}
 
 			for rows.Next() {
-				i := model.TmapLinkSignedIn{}
+				l := model.TmapLinkSignedIn{}
 				err := rows.Scan(
-					&i.ID, 
-					&i.URL, 
-					&i.SubmittedBy, 
-					&i.SubmitDate, 
-					&i.Categories, 
-					&i.CategoriesFromUser, 
-					&i.Summary, 
-					&i.SummaryCount, 
-					&i.LikeCount, 
-					&i.ImgURL,
+					&l.ID, 
+					&l.URL, 
+					&l.SubmittedBy, 
+					&l.SubmitDate, 
+					&l.Categories, 
+					&l.CategoriesFromUser, 
+					&l.Summary, 
+					&l.SummaryCount, 
+					&l.LikeCount, 
+					&l.TagCount,
+					&l.ImgURL,
 					
 					// Add IsLiked / IsCopied / IsTagged 
-					&i.IsLiked, 
-					&i.IsTagged, 
-					&i.IsCopied)
+					&l.IsLiked, 
+					&l.IsTagged, 
+					&l.IsCopied)
 				if err != nil {
 					return nil, err
 				}
-				signed_in_links = append(signed_in_links, i)
+				signed_in_links = append(signed_in_links, l)
 			}
 
 			links = &signed_in_links
@@ -424,22 +425,23 @@ func _ScanTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](sql query.Query) 
 			var signed_out_links = []model.TmapLink{}
 
 			for rows.Next() {
-				i := model.TmapLink{}
+				l := model.TmapLink{}
 				err := rows.Scan(
-					&i.ID, 
-					&i.URL, 
-					&i.SubmittedBy, 
-					&i.SubmitDate, 
-					&i.Categories, 
-					&i.CategoriesFromUser, 
-					&i.Summary, 
-					&i.SummaryCount, 
-					&i.LikeCount, 
-					&i.ImgURL)
+					&l.ID, 
+					&l.URL, 
+					&l.SubmittedBy, 
+					&l.SubmitDate, 
+					&l.Categories, 
+					&l.CategoriesFromUser, 
+					&l.Summary, 
+					&l.SummaryCount, 
+					&l.LikeCount, 
+					&l.TagCount,
+					&l.ImgURL)
 				if err != nil {
 					return nil, err
 				}
-				signed_out_links = append(signed_out_links, i)
+				signed_out_links = append(signed_out_links, l)
 			}
 
 			links = &signed_out_links

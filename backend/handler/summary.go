@@ -67,18 +67,19 @@ func _GetSummaryPageSignedIn(link_id string, req_user_id string) (*model.Summary
 		return nil, get_link_sql.Error
 	}
 
-	var link model.LinkSignedIn
+	var l model.LinkSignedIn
 	err := DBClient.QueryRow(get_link_sql.Text).Scan(
-		&link.ID, 
-		&link.URL, 
-		&link.SubmittedBy, 
-		&link.SubmitDate, 
-		&link.Categories, 
-		&link.Summary, 
-		&link.LikeCount, 
-		&link.ImgURL, 
-		&link.IsLiked, 
-		&link.IsCopied,
+		&l.ID, 
+		&l.URL, 
+		&l.SubmittedBy, 
+		&l.SubmitDate, 
+		&l.Categories, 
+		&l.Summary, 
+		&l.LikeCount, 
+		&l.TagCount,
+		&l.ImgURL, 
+		&l.IsLiked, 
+		&l.IsCopied,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -104,23 +105,23 @@ func _GetSummaryPageSignedIn(link_id string, req_user_id string) (*model.Summary
 
 	summaries := []model.SummarySignedIn{}
 	for rows.Next() {
-		i := model.SummarySignedIn{}
+		s := model.SummarySignedIn{}
 		err := rows.Scan(
-			&i.ID, 
-			&i.Text, 
-			&i.SubmittedBy, 
-			&i.LastUpdated, 
-			&i.LikeCount, 
-			&i.IsLiked,
+			&s.ID, 
+			&s.Text, 
+			&s.SubmittedBy, 
+			&s.LastUpdated, 
+			&s.LikeCount, 
+			&s.IsLiked,
 		)
 		if err != nil {
 			return nil, err
 		}
-		summaries = append(summaries, i)
+		summaries = append(summaries, s)
 	}
 
 	summary_page := model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn] {
-		Link: link,
+		Link: l,
 		Summaries: summaries,
 	}
 
@@ -134,16 +135,17 @@ func _GetSummaryPage(link_id string) (*model.SummaryPage[model.Summary, model.Li
 
 	}
 
-	var link model.Link
+	var l model.Link
 	err := DBClient.QueryRow(get_link_sql.Text).Scan(
-		&link.ID, 
-		&link.URL, 
-		&link.SubmittedBy, 
-		&link.SubmitDate, 
-		&link.Categories, 
-		&link.Summary, 
-		&link.LikeCount, 
-		&link.ImgURL,
+		&l.ID, 
+		&l.URL, 
+		&l.SubmittedBy, 
+		&l.SubmitDate, 
+		&l.Categories, 
+		&l.Summary, 
+		&l.LikeCount, 
+		&l.TagCount,
+		&l.ImgURL,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -166,22 +168,22 @@ func _GetSummaryPage(link_id string) (*model.SummaryPage[model.Summary, model.Li
 
 	summaries := []model.Summary{}
 	for rows.Next() {
-		i := model.Summary{}
+		s := model.Summary{}
 		err := rows.Scan(
-			&i.ID, 
-			&i.Text, 
-			&i.SubmittedBy, 
-			&i.LastUpdated, 
-			&i.LikeCount,
+			&s.ID, 
+			&s.Text, 
+			&s.SubmittedBy, 
+			&s.LastUpdated, 
+			&s.LikeCount,
 		)
 		if err != nil {
 			return nil, err
 		}
-		summaries = append(summaries, i)
+		summaries = append(summaries, s)
 	}
 
 	summary_page := model.SummaryPage[model.Summary, model.Link]{
-		Link: link,
+		Link: l,
 		Summaries: summaries,
 	}
 

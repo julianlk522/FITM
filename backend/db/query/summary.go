@@ -10,29 +10,66 @@ type SummaryPageLink struct {
 	Query
 }
 
-const SUMMARY_PAGE_LINK_BASE_FIELDS = `SELECT links_id as link_id, url, submitted_by, submit_date, coalesce(categories,"") as categories, summary, COUNT('Link Likes'.id) as like_count, img_url`
+const SUMMARY_PAGE_LINK_BASE_FIELDS = `SELECT 
+links_id as link_id, 
+url, 
+sb, 
+sd, 
+cats, 
+summary, 
+COALESCE(like_count,0) as like_count,
+tag_count,   
+img_url`
 
 const SUMMARY_PAGE_LINK_BASE = SUMMARY_PAGE_LINK_BASE_FIELDS + ` 
 FROM 
 	(
-	SELECT id as links_id, url, submitted_by, submit_date, global_cats as categories, global_summary as summary, coalesce(img_url,"") as img_url 
-		FROM Links`
+	SELECT 
+		id as links_id, 
+		url, 
+		submitted_by as sb, 
+		submit_date as sd, 
+		COALESCE(global_cats,"") as cats, 
+		global_summary as summary, 
+		COALESCE(img_url,"") as img_url 
+	FROM Links
+	) 
+LEFT JOIN
+	(
+	SELECT count(*) as like_count, link_id as llink_id
+	FROM 'Link Likes'
+	GROUP BY llink_id
+	)
+ON llink_id = links_id
+LEFT JOIN 
+	(
+	SELECT count(*) as tag_count, link_id as tlink_id
+	FROM Tags
+	GROUP BY tlink_id
+	)
+ON tlink_id = links_id;`
 
 func NewGetSummaryPageLink(ID string) *SummaryPageLink {
 	return (&SummaryPageLink{Query: Query{Text: SUMMARY_PAGE_LINK_BASE}})._FromID(ID)
 }
 
 func (l *SummaryPageLink) _FromID(ID string) *SummaryPageLink {
-	l.Text += fmt.Sprintf(` WHERE id = '%s'
-	) 
-LEFT JOIN 'Link Likes' 
-ON 'Link Likes'.link_id = links_id;`, ID)
+	l.Text = strings.Replace(
+		l.Text, 
+		"FROM Links", 
+		fmt.Sprintf(
+			`FROM Links 
+			WHERE id = '%s'`,
+			ID), 
+		1)
 
 	return l
 }
 
 func (l *SummaryPageLink) ForSignedInUser(user_id string ) *SummaryPageLink {
-	l.Text = strings.Replace(l.Text, SUMMARY_PAGE_LINK_BASE_FIELDS, SUMMARY_PAGE_LINK_BASE_FIELDS + ", COALESCE(is_liked,0) as is_liked, COALESCE(is_copied,0) as is_copied", 1)
+	l.Text = strings.Replace(l.Text, SUMMARY_PAGE_LINK_BASE_FIELDS, SUMMARY_PAGE_LINK_BASE_FIELDS + `, 
+		COALESCE(is_liked,0) as is_liked, 
+		COALESCE(is_copied,0) as is_copied`, 1)
 
 	l.Text = strings.Replace(l.Text, ";",
 		fmt.Sprintf(` 
