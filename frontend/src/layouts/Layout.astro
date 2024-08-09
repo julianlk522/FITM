@@ -34,15 +34,16 @@ let user = Astro.cookies.get('user')?.value
 
 	<style is:global>
 		:root {
-			--accent: 136, 58, 234;
-			--accent-light: 224, 204, 250;
-			--accent-dark: 49, 10, 101;
-			--accent-gradient: linear-gradient(
-				45deg,
-				rgb(var(--accent)),
-				rgb(var(--accent-light)) 30%,
-				white 60%
-			);
+			--text: hsl(0, 0%, 92%);
+			--text-treasurey: hsl(44, 55%, 80%);
+			--text-treasurey-mild: hsl(44, 15%, 80%);
+			--text-treasurey-dark: hsl(44, 25%, 60%);
+			
+			--treasurey: hsl(44, 95%, 71%);
+			--treasurey-mild: hsl(54, 77%, 75%);
+
+			--sky: hsl(180, 33%, 82%);
+			--sky-mild: hsla(180, 33%, 82%, 0.05);
 		}
 		html {
 			font-family: system-ui, sans-serif;
@@ -54,6 +55,11 @@ let user = Astro.cookies.get('user')?.value
 			max-width: 1080px;
 			margin: 0 auto;
 			padding: 1rem;
+
+			a,
+			a:visited {
+				color: var(--text);
+			}
 		}
 		nav :is(#user-tmap-link, #login-link) {
 			float: right;
@@ -63,64 +69,128 @@ let user = Astro.cookies.get('user')?.value
 			padding: 1rem;
 			width: 800px;
 			max-width: calc(100% - 2rem);
-			color: white;
-			font-size: 20px;
-			line-height: 1.6;
+			color: var(--text);
+			line-height: 1.5;
 		}
 		h1 {
-			font-size: 4rem;
+			font-size: 2rem;
 			font-weight: 700;
 			line-height: 1;
 			text-align: center;
 		}
+		h1:has(+h2.subtitle) {
+			margin-bottom: 0.5rem;
+		}
+		h1,
+		h2.subtitle {
+			margin-bottom: 1rem;
+		}
 		h2 {
-			font-size: 2rem;
+			font-size: 1.5rem;
+		}
+		h2.subtitle {
+			font-size: 1rem;
+			font-weight: normal;
+			text-align: center;
+		}
+		h2.subtitle.bg {
+			background: var(--sky-mild);
+			padding: 3px;
+		}
+		h3 {
+			font-size: 1.15rem;
 		}
 		h2, h3, h4, h5, h6 {
 			margin: 0;
 		}
-		h2.subtitle {
-			font-size: 1rem;
-			margin-bottom: 50px;
-			text-align: center;
-		}
-		h2.subtitle.bg {
-			background: rgba(var(--accent-light), 5%);
-			padding: 3px;
-		}
-		h1:has(+ h2.subtitle) {
-			margin-bottom: 25px;
-		}
-		code {
-			font-family:
-				Menlo,
-				Monaco,
-				Lucida Console,
-				Liberation Mono,
-				DejaVu Sans Mono,
-				Bitstream Vera Sans Mono,
-				Courier New,
-				monospace;
+		p {
+			margin-bottom: 0;
 		}
 		section {
-			margin-top: 75px;
+			padding: 1rem 0;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 		}
-		section:first-of-type {
-			margin-top: 0;
+		section:has(>h2) {
+			padding-top: 0.5rem;
+		}
+		a:not(:visited) {
+			color: var(--text-treasurey);
+		}
+		a:visited {
+			color: var(--text-treasurey-dark);
+		}
+		form {
+			label {
+				display: block;
+				margin-top: 5px;
+			}
+
+			textarea {
+				max-width: 100%;
+			}
+		}
+		img {
+			height: auto;
+			object-fit: contain;
+			max-width: 100%;
 		}
 		button.img-btn {
 			padding: 3px 5px 0px;
 			margin-top: 0;
+			min-width: fit-content;
 			background-color: transparent;
 			border: none;
 			cursor: pointer;
 		}
 
-		#top-categories {
+		#top-cats {
 			display: flex;
 			flex-direction: column;
-			flex-wrap: wrap;
-			max-height: 160px;
+			list-style-position: inside;
+			margin: 0;
+			padding: 0;
+		}
+
+		#top-links {
+			max-width: calc(100% - 1rem);
+			margin: 0;
+			margin-left: auto;
+			padding: 0;
+		}
+
+		@media (min-width: 480px) {
+			#top-cats {
+				flex-wrap: wrap;
+				max-height: 350px;
+
+				li {
+					max-width: 50%
+				}
+			}
+		}
+
+		@media (min-width: 680px) {
+			main {
+				padding: 2rem;
+				max-width: calc(100% - 4rem);
+			}
+
+			section {
+				padding: 2rem 0;
+			}
+
+			section:has(>h2) {
+				padding-top: 1.5rem;
+			}
+
+			#top-cats {
+				max-height: 200px;
+				margin-bottom: 0;
+
+				li {
+					max-width: 33%
+				}
+			}
 		}
 
 	</style>

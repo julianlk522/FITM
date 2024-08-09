@@ -5,32 +5,55 @@ import (
 	"strings"
 )
 
-// Tags for Link
-type GetTagPageLink struct {
+// Tags Page link
+type TagPageLink struct {
 	Query
 }
 
-const GET_TAG_PAGE_LINK_BASE = `SELECT links_id as link_id, url, submitted_by, submit_date, coalesce(categories,"") as categories, summary, COUNT('Link Likes'.id) as like_count, img_url, COALESCE(is_liked,0) as is_liked, COALESCE(is_copied,0) as is_copied
+const TAG_PAGE_LINK_BASE = `SELECT 
+	links_id as link_id, 
+	url, 
+	sb, 
+	sd, 
+	cats, 
+	summary,
+	summary_count, 
+	COUNT('Link Likes'.id) as like_count, 
+	img_url, 
+	COALESCE(is_liked,0) as is_liked, 
+	COALESCE(is_copied,0) as is_copied
 FROM 
 	(
-	SELECT id as links_id, url, submitted_by, submit_date, global_cats as categories, global_summary as summary, coalesce(img_url,"") as img_url 
-		FROM Links`
+	SELECT 
+		id as links_id, 
+		url, 
+		submitted_by as sb, 
+		submit_date as sd, 
+		COALESCE(global_cats,"") as cats, 
+		global_summary as summary, 
+		COALESCE(img_url,"") as img_url 
+	FROM Links`
 
-func NewGetTagPageLink(ID string, user_id string) *GetTagPageLink {
-	new := &GetTagPageLink{Query: Query{Text: GET_TAG_PAGE_LINK_BASE}}
-	return new._FromID(ID)._ForSignedInUser(user_id)
+func NewTagPageLink(ID string, user_id string) *TagPageLink {
+	return (&TagPageLink{Query: Query{Text: TAG_PAGE_LINK_BASE}})._FromID(ID)._ForSignedInUser(user_id)
 }
 
-func (l *GetTagPageLink) _FromID(ID string) *GetTagPageLink {
-	l.Text += fmt.Sprintf(` WHERE id = '%s'
-	) 
-`, ID)
+func (l *TagPageLink) _FromID(ID string) *TagPageLink {
+	l.Text += fmt.Sprintf(` WHERE id = '%s') `, ID)
 
 	return l
 }
 
-func (l *GetTagPageLink) _ForSignedInUser(user_id string ) *GetTagPageLink {
-	l.Text += fmt.Sprintf(`LEFT JOIN 'Link Likes'
+func (l *TagPageLink) _ForSignedInUser(user_id string ) *TagPageLink {
+	l.Text += fmt.Sprintf(` 
+	LEFT JOIN
+		(
+		SELECT count(*) as summary_count, link_id as slink_id
+		FROM Summaries
+		GROUP BY slink_id
+		)
+	ON slink_id = links_id
+	LEFT JOIN 'Link Likes'
 	ON 'Link Likes'.link_id = links_id
 	LEFT JOIN
 		(
@@ -54,21 +77,24 @@ func (l *GetTagPageLink) _ForSignedInUser(user_id string ) *GetTagPageLink {
 
 
 // Earliest Tags for Link
-type GetEarliestTags struct {
+type TagRankings struct {
 	Query
 }
 
-const GET_EARLIEST_TAGS_BASE = `SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) * 100 AS lifespan_overlap, categories, Tags.submitted_by, last_updated 
-	FROM Tags 
-	INNER JOIN Links 
-	ON Links.id = Tags.link_id `
+const TAG_RANKINGS_BASE = `SELECT 
+	(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) * 100 AS lifespan_overlap, 
+	categories, 
+	Tags.submitted_by, 
+	last_updated 
+FROM Tags 
+INNER JOIN Links 
+ON Links.id = Tags.link_id `
 
-func NewGetEarliestTags(link_id string) *GetEarliestTags {
-	new := &GetEarliestTags{Query: Query{Text: GET_EARLIEST_TAGS_BASE}}
-	return new._FromLink(link_id)
+func NewTagRankingsForLink(link_id string) *TagRankings {
+	return (&TagRankings{Query: Query{Text: TAG_RANKINGS_BASE}})._FromLink(link_id)
 }
 
-func (t *GetEarliestTags) _FromLink(link_id string) *GetEarliestTags {
+func (t *TagRankings) _FromLink(link_id string) *TagRankings {
 
 	t.Text += fmt.Sprintf(` WHERE link_id = '%s'
 	ORDER BY lifespan_overlap DESC`, link_id)
@@ -76,27 +102,27 @@ func (t *GetEarliestTags) _FromLink(link_id string) *GetEarliestTags {
 	return t
 }
 
-func (t *GetEarliestTags) Limit(limit int) *GetEarliestTags {
+func (t *TagRankings) Limit(limit int) *TagRankings {
 
 	t.Text += fmt.Sprintf(` LIMIT %d;`, limit)
 	return t
 }
 
 
-// All Global Categories
-type GetAllGlobalCategories struct {
+// All Global Cats
+type GlobalCats struct {
 	Query
 }
 
-const GET_ALL_GLOBAL_CATEGORIES_BASE = `SELECT global_cats
-		FROM Links
-		WHERE global_cats != ""`
+const GLOBAL_CATS_BASE = `SELECT global_cats
+	FROM Links
+	WHERE global_cats != ""`
 
-func NewGetAllGlobalCategories() *GetAllGlobalCategories {
-	return &GetAllGlobalCategories{Query: Query{Text: GET_ALL_GLOBAL_CATEGORIES_BASE}}
+func NewAllGlobalCats() *GlobalCats {
+	return &GlobalCats{Query: Query{Text: GLOBAL_CATS_BASE}}
 }
 
-func (t *GetAllGlobalCategories) FromPeriod(period string) *GetAllGlobalCategories {
+func (t *GlobalCats) DuringPeriod(period string) *GlobalCats {
 	clause, err := GetPeriodClause(period)
 	if err != nil {
 		t.Error = err
@@ -110,30 +136,30 @@ func (t *GetAllGlobalCategories) FromPeriod(period string) *GetAllGlobalCategori
 
 
 // Top Tags (Overlap Scores)
-type GetTopOverlapScores struct {
+type TopOverlapScores struct {
 	Query
 }
 
-const GET_TOP_OVERLAP_SCORES_BASE = `
-SELECT (julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, categories 
-	FROM Tags 
-	INNER JOIN Links 
-	ON Links.id = Tags.link_id
-	ORDER BY lifespan_overlap DESC`
+const TOP_OVERLAP_SCORES_BASE = `SELECT 
+	(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, 
+	categories 
+FROM Tags 
+INNER JOIN Links 
+ON Links.id = Tags.link_id
+ORDER BY lifespan_overlap DESC`
 
 
-func NewGetTopOverlapScores(link_id string) *GetTopOverlapScores {
-	new := &GetTopOverlapScores{Query: Query{Text: GET_TOP_OVERLAP_SCORES_BASE}}
-	return new._FromLink(link_id)
+func NewTopOverlapScores(link_id string) *TopOverlapScores {
+	return (&TopOverlapScores{Query: Query{Text: TOP_OVERLAP_SCORES_BASE}})._FromLink(link_id)
 }
 
-func (o *GetTopOverlapScores) _FromLink(link_id string) *GetTopOverlapScores {
+func (o *TopOverlapScores) _FromLink(link_id string) *TopOverlapScores {
 	o. Text = strings.Replace(o.Text, "ORDER BY lifespan_overlap DESC", fmt.Sprintf("WHERE link_id = '%s' ORDER BY lifespan_overlap DESC", link_id), 1)
 
 	return o
 }
 
-func (o *GetTopOverlapScores) Limit(limit int) *GetTopOverlapScores {
+func (o *TopOverlapScores) Limit(limit int) *TopOverlapScores {
 	o.Text += fmt.Sprintf(` LIMIT %d;`, limit)
 
 	return o

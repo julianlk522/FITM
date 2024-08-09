@@ -10,21 +10,21 @@ import (
 )
 
 const (
-	NEW_TAG_CATEGORY_LIMIT int = 5
+	NEW_TAG_CAT_LIMIT int = 10
 )
 
 var (
 	ErrInvalidPage = errors.New("invalid page provided")
 	
 	ErrNoLinkID error = errors.New("no link ID provided")
-	ErrNoCategories error = errors.New("no categories provided")
+	ErrNoCats error = errors.New("no cats provided")
 	ErrNoPeriod error = errors.New("no period provided")
 	ErrNoURL error = errors.New("no URL provided")
 	ErrNoSummaryID error = errors.New("no summary ID provided")
 	ErrNoSummaryText error = errors.New("no summary text provided")
 	ErrNoSummaryReplacementText error = errors.New("no summary replacement text provided")
 	ErrNoTagID error = errors.New("no tag ID provided")
-	ErrNoTagCategories error = errors.New("no tag category(ies) provided")
+	ErrNoTagCats error = errors.New("no tag cat(s) provided")
 	ErrNoLoginName error = errors.New("no login name provided")
 	ErrNoPassword error = errors.New("no password provided")
 
@@ -33,7 +33,7 @@ var (
 	ErrNoTagWithID error = errors.New("no tag found with given ID")
 	ErrNoUserWithLoginName error = errors.New("no user found with given login name")
 
-	ErrTooManyCategories error = fmt.Errorf("too many tag categories (%d max)", NEW_TAG_CATEGORY_LIMIT)
+	ErrTooManyCats error = fmt.Errorf("too many tag cats (%d max)", NEW_TAG_CAT_LIMIT)
 	ErrDuplicateTag error = errors.New("duplicate tag")
 	ErrDoesntOwnTag error = errors.New("cannot edit another user's tag")
 

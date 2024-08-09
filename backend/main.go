@@ -64,15 +64,10 @@ func main() {
 	r.Post("/signup", h.SignUp)
 	r.Post("/login", h.LogIn)
 
-	// LINKS
-	r.Get("/links/cat/{categories}/users", h.GetTopCategoryContributors)
-	r.Get("/links/{period}/cat/{categories}/users", h.GetTopCategoryContributorsByPeriod)
-	r.Get("/links/subcat/{categories}", h.GetSubcategories)
-	r.Get("/links/{period}/subcat/{categories}", h.GetSubcategoriesByPeriod)
-
-	// TAGS
-	r.Get("/tags/popular", h.GetTopTagCategories)
-	r.Get("/tags/popular/{period}", h.GetTopTagCategoriesByPeriod)
+	// TAG CATS
+	r.Get("/cats", h.GetTopGlobalCats)
+	r.Get("/subcats/{cats}", h.GetSubcats)
+	r.Get("/contributors/{cats}", h.GetCatsContributors)
 
 
 
@@ -83,20 +78,13 @@ func main() {
 		r.Use(m.AuthenticatorOptional(token_auth))
 		r.Use(m.JWT)
 
-		// USER ACCOUNTS
 		r.Get("/map/{login_name}", h.GetTreasureMap)
-		r.Get("/map/{login_name}/{categories}", h.GetTreasureMapByCategories)
 
-		// LINKS
 		r.Route("/links", func(r chi.Router) {
 			r.Use(m.Pagination)
-			r.Get("/", h.GetTopLinks)
-			r.Get("/{period}", h.GetTopLinksByPeriod)
-			r.Get("/cat/{categories}", h.GetTopLinksByCategories)
-			r.Get("/{period}/{categories}", h.GetTopLinksByPeriodAndCategories)	
+			r.Get("/top", h.GetLinks)
 		})
 
-		// SUMMARIES
 		r.Get("/summaries/{link_id}", h.GetSummariesForLink)
 	})
 

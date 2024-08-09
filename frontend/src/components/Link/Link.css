@@ -1,0 +1,79 @@
+.link {
+	border: 1px solid rgba(var(--accent), 25%);
+	margin: 2rem 0 0;
+}
+astro-island:first-of-type li.link {
+	margin-top: 0;
+}
+.link.single {
+	list-style: none;
+	margin-bottom: 0.5rem;
+}
+.preview {
+	display: inline-flex;
+	gap: 20px;
+	vertical-align: top;
+	overflow: scroll;
+}
+.preview img {
+	object-fit: cover;
+}
+.url {
+	font-size: 0.9rem;
+	word-wrap: break-word;
+}
+h3.url-anchor {
+	display: inline-block;
+	vertical-align: top;
+}
+.summaries a:not(:visited),
+.summaries a:visited,
+.tags .tags-page-link:not(:visited),
+.tags .tags-page-link:visited {
+	color: var(--text);
+}
+.tags {
+	max-width: calc(100% - 32px);
+
+	span:first-of-type {
+		margin-left: 5px;
+	}
+
+	a:visited {
+		color: var(--text-treasurey);
+	}
+}
+.like-btn,
+.copy-btn {
+	border-radius: 2px;
+	margin-right: 5px;
+}
+.like-btn.liked,
+.copy-btn.copied {
+	background-color: var(--sky);
+	font-weight: bold;
+}
+.like-btn,
+.copy-btn,
+.same-user-like-count {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+}
+p,
+button,
+.same-user-like-count {
+	margin-top: 0.5rem;
+}
+p {
+	margin-bottom: 0;
+}
+
+@media (min-width: 768px) {
+	.link {
+		margin-top: 50px;
+	}
+	.preview {
+		overflow: auto;
+	}
+}

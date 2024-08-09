@@ -1,0 +1,30 @@
+const API_URL = 'http://127.0.0.1:8000'
+
+const SIGNUP_ENDPOINT = API_URL + '/signup'
+const LOGIN_ENDPOINT = API_URL + '/login'
+
+const LINKS_ENDPOINT = API_URL + '/links/top'
+
+const SUMMARIES_ENDPOINT = API_URL + '/summaries'
+const TAGS_ENDPOINT = API_URL + '/tags'
+
+const CATS_ENDPOINT = API_URL + '/cats'
+const SUBCATS_ENDPOINT = API_URL + '/subcats'
+const CONTRIBUTORS_ENDPOINT = API_URL + '/contributors'
+
+const TMAP_ENDPOINT = API_URL + '/map'
+const GET_PFP_ENDPOINT = API_URL + '/pic'
+
+export {
+	API_URL,
+	CATS_ENDPOINT,
+	CONTRIBUTORS_ENDPOINT,
+	GET_PFP_ENDPOINT,
+	LINKS_ENDPOINT,
+	LOGIN_ENDPOINT,
+	SIGNUP_ENDPOINT,
+	SUBCATS_ENDPOINT,
+	SUMMARIES_ENDPOINT,
+	TAGS_ENDPOINT,
+	TMAP_ENDPOINT,
+}

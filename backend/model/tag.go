@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/http"
+	"strings"
 
 	e "oitm/error"
 	util "oitm/model/util"
@@ -20,14 +21,25 @@ type NewTagRequest struct {
 
 func (a *NewTagRequest) Bind(r *http.Request) error {
 	if a.NewTag.Categories == "" {
-		return e.ErrNoCategories
-	} else if a.NewTag.LinkID == "" {
+		return e.ErrNoCats
+	} else if _IsTooManyCats(a.NewTag.Categories) {
+		return e.ErrTooManyCats
+	}
+	
+	if a.NewTag.LinkID == "" {
 		return e.ErrNoLinkID
 	}
 
 	a.LastUpdated = util.NEW_TIMESTAMP
 
 	return nil
+}
+
+func _IsTooManyCats(cats string) bool {
+	// +1 since "a" (no commas) would be one cat
+	// and "a,b" (one comma) would be two
+	num_cats := strings.Count(cats, ",") + 1
+	return num_cats > e.NEW_TAG_CAT_LIMIT
 }
 
 type EditTagRequest struct {
@@ -41,7 +53,7 @@ func (a *EditTagRequest) Bind(r *http.Request) error {
 		return e.ErrNoTagID
 	}
 	if a.Categories == "" {
-		return e.ErrNoTagCategories
+		return e.ErrNoTagCats
 	}
 
 	a.LastUpdated = util.NEW_TIMESTAMP
@@ -72,13 +84,15 @@ func SortCategories(i, j CategoryCount) int {
 	return 1
 }
 
-type EarlyTag struct {
+// TagRanking is used to rank the top cats for a given link in order to
+// calculate global cats. Tags are ranked by submit date.
+type TagRanking struct {
 	LifeSpanOverlap float32
 	Categories string
 }
 
-type EarlyTagPublic struct {
-	EarlyTag
+type TagRankingPublic struct {
+	TagRanking
 	SubmittedBy string
 	LastUpdated string
 }
@@ -86,5 +100,5 @@ type EarlyTagPublic struct {
 type TagPage struct {
 	Link *LinkSignedIn
 	UserTag *Tag
-	EarliestTags *[]EarlyTagPublic
+	TagRankings *[]TagRankingPublic
 }

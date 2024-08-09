@@ -20,16 +20,13 @@
         -Subcategories
     -Global Categories
     -Global Subcategories
-
-    -Fix top tag cats so they are specific to page being shown?
--Improve frontend look/semantic markup
-    -A11y, responsive layouts for phones / tablets
-    -Proper color scheme
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 
 ### Code Quality
 
+-Replace tag / summary ids with UUID
+-Merge isliked/iscopied/istagged into get links queries without doubleup
 -Rebrand subcategories as category overlaps since that is a bit more accurate
 -Tests
     -<https://github.com/ory/dockertest>
@@ -38,12 +35,14 @@
     -e.g., Global Categories vs. Global Tag categories
     -Popular Categories vs. Top Categories
 -Remove repeat code wherever possible
-    -backend handlers
 
 ## To-Maybe-Dos
 
--Friends
-    -(i.e., saved users whose tmaps you can quickly access without manually typing the URL)
+-Favorite tmaps
+    -add favorites col to users table
+    -'Add to Favorites' button on other user's tmap
+    -'Favorites' link on tmap
+    -{user}'s favorite tmaps page
 -Better way to visualize how Global Cats are determined
 -Show number of copies along with number of likes in frontend
 -Edit category filters directly on top links by period/category(ies) page
@@ -58,6 +57,7 @@
     -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)
     -would help optimize GetTopTagCategories / GetTopTagCategoriesByPeriod handlers since queries could all be done in sql (as of now requires splitting global_cats field in Go)
 -Improve profile pic upload?
+-Improve frontend A11y/semantic markup/looks
 
 ## Why?
 

@@ -1,7 +1,8 @@
 ---
-import Link from '../components/Link'
+import Link from '../components/Link/Link'
 import Pagination from '../components/Pagination.astro'
 import ScrollUp from '../components/ScrollUp.astro'
+import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT, SUBCATS_ENDPOINT } from '../constants'
 import Layout from '../layouts/Layout.astro'
 import {
 Periods,
@@ -11,11 +12,11 @@ type PaginatedLinks,
 type Period,
 } from '../types'
 
-// get auth token and user if user signed in
+// Auth
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
 
-// Params:
+// Params
 let page = 1
 if (Astro.url.searchParams.get('page')) {
 	page = parseInt(Astro.url.searchParams.get('page') as string)
@@ -36,27 +37,37 @@ if (
 	other_periods = Periods.filter((other) => other !== period)
 }
 
-// Generate links endpoint
-// TODO: replace after converting API endpoints to single route using search params?
-const LINKS_BASE_ENDPOINT = 'http://127.0.0.1:8000/links'
-let links_endpoint = LINKS_BASE_ENDPOINT
+// Get links
+let links_url = LINKS_ENDPOINT
+
+let has_period = false
 if (period !== 'all') {
-	links_endpoint += `/${period}`
-} else if (categories) {
-	links_endpoint += '/cat'
+	has_period = true
+	links_url += `?period=${period}`
 }
+let has_cats = false
 if (categories) {
-	links_endpoint += `/${categories}`
+	has_cats = true
+
+	if (has_period) {
+		links_url += `&cats=${categories}`
+	} else {
+		links_url += `?cats=${categories}`
+	}
 }
-links_endpoint += `?page=${page}`
+if (has_period || has_cats) {
+	links_url += `&page=${page}`
+} else {
+	links_url += `?page=${page}`
+}
+
 const get_links_resp = await (token
-	? fetch(links_endpoint, {
+	? fetch(links_url, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
-	: fetch(links_endpoint))
+	: fetch(links_url))
 const data: PaginatedLinks = await get_links_resp.json()
 const links = data.Links
-// [{URL: 'https://example.com', LikeCount: 100}, ...]
 
 let top_cats: CategoryCount[] = []
 let top_subcats: CategoryCount[] = []
@@ -66,34 +77,28 @@ if (links && links.length) {
 
 	// Get subcategory counts and category contributors
 	if (categories) {
-		let subcats_endpoint = LINKS_BASE_ENDPOINT
-		let contributors_endpoint = LINKS_BASE_ENDPOINT
+		let subcats_url = SUBCATS_ENDPOINT + `/${categories}`
+		let contributors_url = CONTRIBUTORS_ENDPOINT + `/${categories}`
 
 		if (period !== 'all') {
-			subcats_endpoint += `/${period}`
-			contributors_endpoint += `/${period}`
+			subcats_url += `?period=${period}`
+			contributors_url += `?period=${period}`
 		}
 
-		subcats_endpoint += `/subcat/${categories}`
-		contributors_endpoint += `/cat/${categories}/users`
-
-		const subcats_resp = await fetch(subcats_endpoint)
+		const subcats_resp = await fetch(subcats_url)
 		top_subcats = await subcats_resp.json()
-		// [{Category: 'flowers', Count: 2}, ...]
 
-		const contributors_resp = await fetch(contributors_endpoint)
+		const contributors_resp = await fetch(contributors_url)
 		top_contributors = await contributors_resp.json()
-		// [{"Categories":"umvc3,2dfighters","LoginName":"bob","LinksSubmitted":"10"}]
 	
 	// Get category counts
 	} else {
-		let cats_endpoint = `http://127.0.0.1:8000/tags/popular`
-
+		let cats_url = CATS_ENDPOINT
 		if (period !== 'all') {
-			cats_endpoint += `/${period}`
+			cats_url += `?period=${period}`
 		}
 
-		const top_cats_resp = await fetch(cats_endpoint)
+		const top_cats_resp = await fetch(cats_url)
 		top_cats = await top_cats_resp.json()
 		// [{Category: 'umvc3', Count: 1}, ...]
 	}
@@ -146,7 +151,7 @@ const page_title =
 					{top_cats.length ? (
 						<section>
 							<h2>Top Categories</h2>
-							<ol id='top-categories'>
+							<ol id='top-cats'>
 								{top_cats.map((cat) => (
 									<li>
 										<a
@@ -164,16 +169,14 @@ const page_title =
 							<section>
 								<h2>Top Subcategories</h2>
 								{top_subcats.length ? (
-									<ol id='top-categories'>
+									<ol id='top-cats'>
 										{top_subcats.map((subcat) => (
 											<li>
-												<strong>
-													<a
-														href={`/top?categories=${categories + ',' + subcat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
-													>
-														{subcat.Category}
-													</a>
-												</strong>
+												<a
+													href={`/top?categories=${categories + ',' + subcat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
+												>
+													{subcat.Category}
+												</a>
 												<span> ({subcat.Count})</span>
 											</li>
 										))}
@@ -184,7 +187,7 @@ const page_title =
 							</section>
 							<section>
 								<h2>Top Contributors</h2>
-								<ol>
+								<ol id="top-contributors">
 									{top_contributors.map(
 										(contributor: CategoryContributor) => (
 											<li>
@@ -216,7 +219,7 @@ const page_title =
 						/>
 
 						{/* TODO: replace magic page limit number */}
-						<ol id='links' start={(page - 1) * 20 + 1}>
+						<ol id='top-links' start={(page - 1) * 20 + 1}>
 							{links.map((link) => (
 								<Link
 									client:load
@@ -241,14 +244,14 @@ const page_title =
 					<ScrollUp />
 				</>
 			) : (
-				<>
+				<section>
 					<p>No links found</p>
 					{user ? (
 						<p>
 							<a href={`/new`}>Add link</a>
 						</p>
 					) : null}
-				</>
+				</section>
 			)
 		}
 	</main>
@@ -269,10 +272,14 @@ const page_title =
 			margin-left: 5px;
 		}
 	}
-	#links {
+
+	#top-contributors {
+		margin: 0;
 		padding: 0;
+		list-style-position: inside;
 	}
-	li strong:has(+ span) a {
+
+	:is(li a, li strong:has(a)):has(+ span) {
 		display: inline-block;
 	}
 </style>

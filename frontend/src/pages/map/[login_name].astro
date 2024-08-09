@@ -1,109 +1,191 @@
 ---
-import EditAbout from '../../components/EditAbout'
-import Link from '../../components/Link'
-import ProfilePic from '../../components/ProfilePic'
+import Link from '../../components/Link/Link'
 import ScrollUp from '../../components/ScrollUp.astro'
+import TagCategory from '../../components/Tag/TagCategory'
+import EditAbout from '../../components/Tmap/EditAbout'
+import ProfilePic from '../../components/Tmap/ProfilePic'
+import { GET_PFP_ENDPOINT, TMAP_ENDPOINT } from '../../constants'
 import Layout from '../../layouts/Layout.astro'
-import type { Profile, TreasureMap } from '../../types'
+import type { FilteredTreasureMap, Profile, TreasureMap } from '../../types'
 import { tmap_sections } from '../../types'
 import format_date from '../../util/format_date'
 
+// Auth
+const token = Astro.cookies.get('token')?.value
+const user = Astro.cookies.get('user')?.value
+
+// Params
 const { login_name } = Astro.params
 if (!login_name) {
 	return Astro.redirect('/')
 }
+const is_signed_in_user = login_name === user
+let page_title = `${login_name}'s Treasure Map`
 
-const token = Astro.cookies.get('token')?.value
-const signed_in_user = Astro.cookies.get('user')?.value
-const is_signed_in_user = login_name === signed_in_user
+let categories: string | undefined
+let cats_split: string[] = []
+if (Astro.url.searchParams.get('cats')) {
+	categories = Astro.url.searchParams.get('cats') as string
+	cats_split = categories.split(',')
+
+	if (categories.length) {
+		page_title += ' (Filtered)'
+	}
+}
+
+// Get Tmap
+let tmap: TreasureMap | FilteredTreasureMap
+let tmap_url = TMAP_ENDPOINT + `/${login_name}`
+if (cats_split.length) {
+	tmap_url += `?cats=${cats_split[0]}`
+
+	for (let i = 1; i < cats_split.length; i++) {
+		tmap_url += `,${cats_split[i]}`
+	}
+}
 
 const tmap_resp = token
-	? await fetch(`http://127.0.0.1:8000/map/${login_name}`, {
+	? await fetch(tmap_url, {
 			headers: {
 				Authorization: `Bearer ${token}`,
 			},
 		})
-	: await fetch(`http://127.0.0.1:8000/map/${login_name}`)
+	: await fetch(tmap_url)
 if (tmap_resp.status > 399) {
 	return Astro.redirect('/404')
 }
-const tmap: TreasureMap = await tmap_resp.json()
-// Profile: {LoginName: 'bob', About: '...', PFP: '...', Created: '2022-01-01 00:00:00'},
-// Submitted: [{URL: 'https://example.com', LikeCount: 100}, ...],
-// Copied: [{URL: 'https://example.com', LikeCount: 1}, ...],
-// Tagged: [{URL: 'https://example.com', LikeCount: 2}, ...]
-// CategoryCounts: [{Category: 'umvc3', Count: 1}, ...],
+tmap = await tmap_resp.json()
 
-const profile: Profile = tmap.Profile
-const display_about = profile.About || is_signed_in_user
+// Attempt PFP fetch, display about/pfp if they are used
+let profile: Profile | undefined
+let display_about = false
+let display_profile = false
 
+if (tmap.hasOwnProperty('Profile')) {
+	profile = (tmap as TreasureMap).Profile
+
+	const has_about = profile.About !== undefined && profile.About.length > 0
+	display_about = (profile !== undefined && has_about) || is_signed_in_user
+
+	const get_pfp_url = GET_PFP_ENDPOINT + `/${profile.PFP}`
+	const found_pfp_resp = await fetch(get_pfp_url, {
+		headers: { 'Content-Type': 'image/png' },
+	})
+	const found_pfp = found_pfp_resp.status < 400
+	display_profile = profile !== undefined && (found_pfp || has_about)
+}
+
+// Get used sections
 const used_sections = tmap_sections.filter((s) => tmap[s].length)
 if (!used_sections.length) {
 	return Astro.redirect(`/404`)
 }
+
 ---
 
-<Layout Title=`${login_name}'s Treasure Map`>
+<Layout Title={page_title}>
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
-		<h2 class='subtitle'>Created: {format_date(profile.Created)}</h2>
-		<figure id='profile'>
-			<ProfilePic
-				client:load
-				PFP={profile.PFP ? profile.PFP : undefined}
-				LoginName={login_name}
-				SignedInUser={signed_in_user}
-				Token={token}
-			/>
+		<h2 class="subtitle">
+			{profile ? `created: ${format_date(profile.Created)}` : '(Filtered)'}
+		</h2>
 
-			{
-				display_about ? (
-					is_signed_in_user ? (
-						<EditAbout
-							client:load
-							token={token}
-							initial={profile.About}
-						/>
+		{categories ? <section id='cat-filter' class="flex">
+			<div>
+				<h2>Cat Filter</h2>
+				<p id='reset-cat-filter'>
+					<a href={`/map/${login_name}`}>Reset</a>
+				</p>
+			</div>
+			<ul id='cats-grid'>
+				{
+					cats_split.length > 1 ? (
+						cats_split.map((cat) => {
+							return (
+								<TagCategory
+									Category={cat}
+									EditActivated={false}
+									Deleted={undefined}
+								/>
+							)
+						})
 					) : (
-						<figcaption>{profile.About}</figcaption>
+						<TagCategory
+							Category={cats_split[0]}
+							EditActivated={false}
+							Deleted={undefined}
+						/>
 					)
-				) : null
-			}
-		</figure>
+				}
+			</ul>
+		</section> : null}
 
-		<section id='overview'>
-			<div>
-				<h2>Top Categories</h2>
-				<ol>
+		<div id="profile-overview-flex-container">
+			{profile && display_profile ? 
+			<section id="profile">
+				<ProfilePic
+						client:load
+						PFP={profile && profile.PFP ? profile.PFP : undefined}
+						LoginName={login_name}
+						SignedInUser={user}
+						Token={token}
+				/>
+				{
+					display_about ? (
+						is_signed_in_user ? (
+							<EditAbout
+								client:load
+								token={token}
+								initial={profile.About}
+							/>
+						) : (
+							<figcaption id='about'>about: {profile.About}</figcaption>
+						)
+					) : null
+				}
+			</section> : null}
+		
+			<section id='overview' class='flex'>
+				<div>
+					<h2>{categories ? 'Top Subcats' : 'Top Cats'}</h2>
 					{
-						tmap.Categories.map((cat) => (
-							<li>
-								<a href={`/map/${login_name}/${cat.Category}`}>
-									{cat.Category}
-								</a>
-								<span>({cat.Count})</span>
-							</li>
-						))
+						tmap.Categories.length ? (
+							<ol id="top-cats">
+								{tmap.Categories.map((cat) => (
+									<li>
+										<a
+											href={categories ? `/map/${login_name}?cats=${categories},${cat.Category}` : `/map/${login_name}?cats=${cat.Category}`}
+										>
+											{cat.Category}
+										</a>
+										<span>({cat.Count})</span>
+									</li>
+								))}
+							</ol>
+						) : (
+							<p>No further subcategories.</p>
+						)
 					}
-				</ol>
-			</div>
-			<div>
-				<h2>Skip to Section</h2>
-				<ul id='skip_to_link_section'>
-					{
-						used_sections.map((s) => (
-							<li>
-								<a href={`#${s}`}>{s}</a>
-							</li>
-						))
-					}
-				</ul>
-			</div>
-		</section>
+				</div>
+				<div>
+					<h2>Skip to Section</h2>
+					<ul id='skip-to-link-section'>
+						{
+							used_sections.map((s) => (
+								<li>
+									<a href={`#${s}`}>{s}</a>
+								</li>
+							))
+						}
+					</ul>
+				</div>
+			</section>
+		</div>
+
 		{
 			used_sections.map((s) => {
 				return (
-					<section id={s} class='link_section'>
+					<section id={s} class='link-section'>
 						<h2>{s}</h2>
 						<ol>
 							{tmap[s].map((link) => {
@@ -116,7 +198,7 @@ if (!used_sections.length) {
 											IsSummaryPage={false}
 											IsTagPage={false}
 											Token={token}
-											User={signed_in_user}
+											User={user}
 										/>
 									)
 								} else {
@@ -132,7 +214,7 @@ if (!used_sections.length) {
 											IsSummaryPage={false}
 											IsTagPage={false}
 											Token={token}
-											User={signed_in_user}
+											User={user}
 										/>
 									)
 								}
@@ -147,29 +229,110 @@ if (!used_sections.length) {
 </Layout>
 
 <style>
-	#profile {
-		text-align: center;
+	h1,
+	h2 {
+		text-align: left;
+	}
+	#reset-cat-filter {
+		margin: 0;
+	}
+	#cats-grid {
+		display: flex;
+		flex-wrap: wrap;
+		align-content: flex-start;
+		padding-inline-start: 0;
+		gap: 10px;
+	}
+	#profile-overview-flex-container {
+		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 
-		figcaption {
-			margin-top: 0.5rem;
+		#profile {
+			padding-top: 0;
+		}
+
+		#overview {
+			padding-top: 0.5rem;
+
+			> * {
+				max-width: 50%;
+			}
+
+			#top-cats li a {
+				display: inline-block;
+			}
+		}
+
+		#skip-to-link-section {
+			list-style: none;
+			margin: 0;
+			padding: 0;
 		}
 	}
-	#about {
-		display: inline;
-		margin-top: 20px;
+
+	.link-section {
+		padding-top: 0;
+
+		h2 {
+			position: sticky;
+			top: 0px;
+			padding: 1rem 0 0.5rem;
+			background-color: #13151a;
+		}
+
+		ol {
+			max-width: calc(100% - 1rem);
+			margin: 0;
+			margin-left: auto;
+			padding: 0;
+		}
 	}
-	#overview {
+
+	.flex {
 		display: flex;
-		gap: 50px;
+		gap: 2rem;
 	}
-	#skip_to_link_section {
-		list-style: none;
-		padding: 0;
+
+	@media (min-width: 480px) {
+		#profile-overview-flex-container {
+			#overview {
+				> * {
+					max-width: initial;
+				}
+
+				#top-cats li {
+					max-width: initial;
+				}
+			}
+		}
+
+		.flex {
+			gap: 3rem;
+		}
 	}
-	.link_section h2 {
-		position: sticky;
-		top: 0px;
-		padding: 10px 0;
-		background-color: #13151a;
+
+	@media (min-width: 680px) {
+		#profile-overview-flex-container {
+			display: flex;
+			gap: 3rem;
+
+			#overview {
+				padding-top: 1rem;
+			}
+
+			#profile {
+				padding-bottom: 1.5rem;
+			}
+
+			#profile,
+			#overview {
+				border: none;
+			}
+		}
+
+		section:not(:first-of-type).link-section {
+			padding-top: 0.5rem;
+		}
+
+
 	}
 </style>

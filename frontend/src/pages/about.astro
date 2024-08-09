@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets'
 import cornucopia from '../../public/cornucopia.png'
+import ScrollUp from '../components/ScrollUp.astro'
 import Layout from '../layouts/Layout.astro'
 ---
 
@@ -13,67 +14,65 @@ import Layout from '../layouts/Layout.astro'
 				The <strong>Open Internet Treasure Map (OITM)</strong>
 				is a tool for sharing valuable Internet content. It seeks to defeat
 				the challenges of high obscurity and resultingly low discoverability
-				of key resources; to announce the whereabouts of delicious flavors
-				throughout the web's sprawling contents.
+				of key online resources; to announce the whereabouts of delicious flavors
+				hidden in the web's sprawling contents.
 			</p>
 			<p>
-				"Treasure" is intentionally vague. This site is about sharing or
+				<em>Treasure</em> is intentionally vague. This site is about sharing or
 				discovering anything on the Internet that's worth sharing or
 				discovering.
 			</p>
+		</section>
+
+		<section>
 			<h3>"But Search Engines?"</h3>
 			<p>
 				Search engines help a bit with the problem of indexing the web,
-				but they don't think like people.
+				but they don't think like people so they&apos;re limited as personal aides.
 			</p>
 			<p>
 				For example, high SEO is not always relevant to content quality.
-				Awesome things on the web are occasionally served unencrypted,
-				or in HTML markup that is semantically barebones and therefore
-				less intelligible to assistive technologies. It may be buried in
-				search results for this, to the detriment of users who care more
-				about the content novelty than presentation.
+				Awesome things on the web are sometimes absent in search results because they are served unencrypted
+				or in semantically barebones HTML. Users who care more
+				about novelty than presentation of results don&apos;t benefit from this approach.
 			</p>
 			<p>
 				Search engines also are incentivized to promote results from the
-				highest bidders. Depending on who you ask, this may be a
-				desireable feature. But some will consider the profiles behind
-				some of their favorite links and conclude that a big budget and
-				marketing passion do not reliably indicate high quality.
+				highest bidders. Maybe this is a
+				feature and not a bug, depending on who you ask. Do big budgets and marketing passion reliably produce high quality web content? If you're not sure about that, you may be in the right place.
 			</p>
 			<p>
-				Arguably, a simple enough proxy for quality is the number of
-				people who will publicly 'like' a link. It's trivial to find
-				great content at will by simply upvoting good links and
-				filtering for the most liked.
+				Arguably, a simple enough proxy for a link's quality is the number of
+				people who decide, for one reason or another, to upvote it. It's then trivial to find good content by sorting on like count.
 			</p>
 			<p>
-				But we typically also want only results that are relevant to
-				some specific topic. In OITM, links can be tagged with one or
-				more categories. Visitors can stack desired categories in
+				But, of course, results are also usually only meant to be about a specific topic (you know, the one you searched for). In OITM, links are tagged with 1+ <em><a href="#cats">cats</a></em>. You can stack desired cats in
 				searches to efficiently and reliably find pages that match some
-				theme(s). More on that later.
+				theme(s).
 			</p>
+		</section>
+
+		<section>
 			<h3>"Reddit?"</h3>
 			<p>
 				Some might argue that this purpose has been achieved (done well,
 				and for a long time, even) by Reddit.
 			</p>
 			<p>
-				Reddit is an inspiration to OITM. It is an invaluable resource
-				and a blessing to the internet. However, these tools are
-				different in that OITM is primarily a data hub while Reddit is
-				primarily a communication hub. OITM is not meant for topical
+				Reddit is an invaluable resource
+				and a blessing to the internet. It is an inspiration to OITM. However, these tools are
+				different in that OITM is primarily a <em>data</em> hub while Reddit is
+				primarily a <em>communication</em> hub. OITM is not meant for topical
 				discussion. OITM is meant only for web resource sharing and
 				discovery.
 			</p>
 			<p>
-				Additionally, OITM aims to use category stacking to serve users
-				interested in various intersecting themes while Reddit is home
-				to communities defined by a single theme. Traditional WWW
+				OITM also aims to use cat-stacking to serve users
+				interested in <em>intersecting</em> themes while Reddit is home
+				to communities defined by a <em>single</em> theme. Traditional WWW
 				searches make it hard to find sites that appeal to multiple
 				interests at once, especially if they aren't common or obviously
-				related. For example, if you like coding and heavy metal.
+				related. For example, if you like coding and heavy metal T_T.
 				However, if such a site exists and has been catalogued on OITM,
 				you can find it very easily by adding "coding" and "heavy metal"
 				as category filters to your search.
@@ -81,90 +80,110 @@ import Layout from '../layouts/Layout.astro'
 		</section>
 
 		<section>
-			<h2>Core Treasure Hunting Actions</h2>
-			<ol id='actions'>
+			<h2>How OITM Works</h2>
+
+			<h3 id="cats" class="subsection">Cats?</h3>
+			<p>The term <em>"cats"</em> is used often here. It&apos;s a shorthand for <em><a href="#tags">tag categories</a></em> but is also meant as a nod to the <a href="https://en.wikipedia.org/wiki/I_Can_Has_Cheezburger%3F">historical prominence of cats in Internet culture</a>.</p>
+			<p>Please don't be alarmed by mention of "stacking cats" or things of that nature. No animals were harmed in the making of this site, and further <em>"cat"</em>s are written with the above intended meaning.</p>
+
+			<p>In OITM searches, the top (most frequent) cats will be listed along with returned links matching your desired parameters. Searches with cat filters return top <em>overlapping</em> cats. In other words, the most frequent cats found across the subsection of links returned in your search, not including your given cat filter(s). Tentatively these are called subcats.</p>
+
+			<h3 class="subsection">Core Actions</h3>
+			<ol>
 				<li><strong>Summarize</strong></li>
-				<li><strong>Copy to Treasure Map</strong></li>
+				<li><strong>Copy</strong></li>
 				<li><strong>Like</strong></li>
 				<li><strong>Tag</strong></li>
 			</ol>
 
 			<p>
-				These all play a useful part for Internet treasure hunters in
-				building immensely valuable Treasure Maps.
+				These will help you to develop valuable treasure maps, coveted across the lands.
 			</p>
-			<h3>Summarize</h3>
+
+			<h3 class="subsection">Summarize</h3>
 			<p>
 				Every link added to OITM has a summary page where any user can
 				submit their summary of its content. Summaries can be upvoted,
-				bringing the most liked to the top.
+				making the most liked ones the most visible.
 			</p>
 			<p>
 				A link's top summary will be shown above its URL at all times to
 				quickly give a sense for what it is.
 			</p>
-			<h3>Copy</h3>
+
+			<h3 class="subsection">Copy</h3>
 			<p>
 				<strong>Copying</strong> a link to your Treasure Map is about improving
 				discoverability via proliferation. It allows you to easily find a
 				link again or let others find it by reading your Treasure Map.
 			</p>
-			<h3>Like</h3>
+
+			<h3 class="subsection">Like</h3>
 			<p>
 				<strong>Liking</strong> is about improving discoverability via corroboration.
-				It's a way to vouch for the "goodness" (authenticity, hilarity, comprehensiveness,
-				etc.) of a link without needing to pin it to your Treasure Map.
+				It's a way to vouch for the "goodness" (comprehensiveness, authenticity, hilarity,
+				etc.) of a link without needing to pin it to your Treasure Map and take up space there.
 			</p>
 			<p>
 				Liking allows great content to filter to the top of searches,
-				helping people&mdash;even those who don't know to browse your
-				Treasure Map&mdash;find it in searches.
+				allowing other users&mdash;even those who don't know to check your
+				Treasure Map&mdash;to find it easily.
 			</p>
-			<h3>Tag</h3>
+
+			<h3 id="tags" class="subsection">Tag</h3>
 			<p>
 				<strong>Tagging</strong> a link is about improving discoverability
-				via filtration. A tag represents a user's interpretation about how
-				a link's content should be categorized. Tag categories can be used
-				to narrow searches to desired topics.
+				via filtration. A tag is a list of categories, chosen by a user, that a certain link is thought to embody. It represents that user's interpretation of the link's content. Tag cats can be used
+				to narrow searches.
 			</p>
 			<p>
 				Obviously not everyone agrees on preferred categorizations of
 				various links. Each user is invited to tag any link however they
-				see fit. Any tag, i.e., a user's categorization(s) of some link,
-				dictates how that link will be shown on their Treasure Map.
-			</p>
-		</section>
-		<section>
-			<h2>The Global Treasure Map and Global Tags</h2>
-			<p>
-				Each link is also associated with a <strong>global tag</strong>,
-				which filters the results of searches outside of any single
-				user's Treasure Map (for example, on the <a
-					href='http://localhost:4321/top'>Top Rated</a
-				> page).
+				see fit.
 			</p>
 			<p>
-				Global tags are determined automatically by the age of every
-				user-submitted tag and the frequency of each category across
-				them<sup>*</sup>. So, tagging a link not only adds it to your
-				Treasure Map but also improves Global Treasure Map accuracy.
+				Any <em>user-submitted tag</em>, i.e., a user's categorization(s) of some link,
+				dictates how that link will be indexed on <em>their</em> Treasure Map. By contrast, links are indexed using <em>global tags</em> in Global Treasure Map searches.
+			</p>
+
+			<h3 class='subsection'>The Global Treasure Map and Global Tags</h3>
+			<p>
+				Each link is also associated with a <em>global tag</em>,
+				which filters the results of searches made outside of any single
+				user's map. For example, on the <a
+				href='http://localhost:4321/top?period=week'>Top Rated (Week)</a
+			> page.
 			</p>
 			<p>
-				*Categorizations that many users agree on are more likely to be
-				universally relevant, as are those that have remained unedited
+				<em>Global tags</em> are calculated automatically by the age of every
+				<em>user-submitted tag</em> and the frequency of each cat across
+				them.
+			</p>
+			<p>
+				The assumption is that repeated categorizations are more likely to be
+				universally pleasing, and so are ones that have remained unedited
 				for a long time.
 			</p>
+			<p>A long-unedited tag may be bad, but if another user sees it and disagrees then they can submit their own tag. If more users agree with the 2nd interpretation and tag similarly, the 1st tag's cats will soon lose relevance and be stripped from the link's global tag.</p>
 		</section>
+
 		<section>
 			<h2>Additional Notes</h2>
+
 			<h3>Profile Pic Upload</h3>
 			<p>File format: .JPG, .JPEG, .PNG, .WEBP</p>
 			<p>File size: &le;10MB</p>
 			<p>
-				Aspect ratio: between 0.5:1 and 2:1 (nothing too long and
-				pointy)
+				Aspect ratio: 0.5:1 &dash; 2:1
 			</p>
+
+			<h3>Global Tag Calculation</h3>
+			<p>Note: probably will rethink this soon, so dont write too much...</p>
+			<p>To be added to a link&apos;s global tags, a cat that it has been tagged with must hold a score greater than or equal to 50% of the highest cat score for that link.</p>
+			<p>Scores for each cat are calculated by combining the weights of all occurences. Weights are calculated as lifespan overlap percentage divided by number of cats for that tag. lifespan overlap percentage is the portion of the link&apos;s lifepan during which that tag has remained in its current state with no further edits.</p>
 		</section>
+
+		<ScrollUp />
 	</main>
 </Layout>
 
@@ -172,21 +191,18 @@ import Layout from '../layouts/Layout.astro'
 	img {
 		display: flex;
 		margin: 0 auto;
+		max-height: 150px;
 	}
-	section {
-		margin: 100px 0;
-	}
-	section:first-of-type {
-		margin-top: 0;
-	}
-	h2,
-	h3 {
-		margin-top: 50px;
-		text-align: center;
+	.subsection {
+		margin-top: 1rem;
 	}
 
-	#actions {
-		list-style: none;
-		text-align: center;
+	@media (min-width: 680px) {
+		img {
+			max-height: 200px;
+		}
+		.subsection {
+			margin-top: 2rem;
+		}
 	}
 </style>

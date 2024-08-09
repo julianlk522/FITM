@@ -1,0 +1,13 @@
+#edit-about {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+	margin-top: 2rem;
+	margin-left: 2.5rem;
+}
+
+@media (min-width: 680px) {
+	#edit-about {
+		flex-direction: row;
+	}
+}

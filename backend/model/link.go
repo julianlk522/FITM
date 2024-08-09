@@ -10,30 +10,32 @@ import (
 type NewLink struct {
 	URL string `json:"url"`
 	Categories string `json:"categories"`
-	Summary string `json:"summary:omitempty"`
+	Summary string `json:"summary,omitempty"`
 }
 
 type NewLinkRequest struct {
 	*NewLink
-	ID int64
-	SubmittedBy string
 	SubmitDate string
-	Summary string
-	SummaryCount int
 	LikeCount int64
-	ImgURL string
-
-	// to be assigned by handler after processing
-	URL string
-	Categories string
+	
+	// to be assigned by handler
+	ID int64
+	URL string // potentially modified after test request(s)
+	SubmittedBy string
+	Categories string // used after sort
 	AutoSummary string
+	SummaryCount int
+	ImgURL string
 }
 
 func (a *NewLinkRequest) Bind(r *http.Request) error {
 	if a.NewLink.URL == "" {
 		return e.ErrNoURL
-	} else if a.NewLink.Categories == "" {
-		return e.ErrNoTagCategories
+	}
+	if a.NewLink.Categories == "" {
+		return e.ErrNoTagCats
+	} else if _IsTooManyCats(a.NewLink.Categories) {
+		return e.ErrTooManyCats
 	}
 
 	a.SubmitDate = util.NEW_TIMESTAMP
@@ -44,7 +46,7 @@ func (a *NewLinkRequest) Bind(r *http.Request) error {
 
 
 
-type LinkSignedOut struct {
+type Link struct {
 	ID int64
 	URL string
 	SubmittedBy string
@@ -52,26 +54,27 @@ type LinkSignedOut struct {
 	Categories string
 	Summary string
 	SummaryCount int
+	TagCount int
 	LikeCount int64
 	ImgURL string
 }
 
 type LinkSignedIn struct {
-	LinkSignedOut
+	Link
 	IsLiked bool
 	IsTagged bool
 	IsCopied bool
 }
 
-type PaginatedLinks[T LinkSignedOut | LinkSignedIn] struct {
+type PaginatedLinks[T Link | LinkSignedIn] struct {
 	Links *[]T
 	NextPage int
 }
 
 
 
-type TmapLinkSignedOut struct {
-	LinkSignedOut
+type TmapLink struct {
+	Link
 	CategoriesFromUser bool
 }
 

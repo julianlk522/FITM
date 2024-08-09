@@ -45,7 +45,7 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 
 		render.JSON(w, r, summary_page)
 	} else {
-		summary_page, err := _GetSummaryPageSignedOut(link_id)
+		summary_page, err := _GetSummaryPage(link_id)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
@@ -60,13 +60,27 @@ func GetSummariesForLink(w http.ResponseWriter, r *http.Request) {
 func _GetSummaryPageSignedIn(link_id string, req_user_id string) (*model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn], error) {
 
 	// add Isliked / IsCopied to link query
-	get_link_sql := query.NewGetSummaryPageLink(link_id).ForSignedInUser(req_user_id)
+	get_link_sql := query.
+		NewGetSummaryPageLink(link_id).
+		ForSignedInUser(req_user_id)
 	if get_link_sql.Error != nil {
 		return nil, get_link_sql.Error
 	}
 
-	var link model.LinkSignedIn
-	err := DBClient.QueryRow(get_link_sql.Text).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.ImgURL, &link.IsLiked, &link.IsCopied)
+	var l model.LinkSignedIn
+	err := DBClient.QueryRow(get_link_sql.Text).Scan(
+		&l.ID, 
+		&l.URL, 
+		&l.SubmittedBy, 
+		&l.SubmitDate, 
+		&l.Categories, 
+		&l.Summary, 
+		&l.LikeCount, 
+		&l.TagCount,
+		&l.ImgURL, 
+		&l.IsLiked, 
+		&l.IsCopied,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, e.ErrNoLinkWithID
@@ -76,7 +90,9 @@ func _GetSummaryPageSignedIn(link_id string, req_user_id string) (*model.Summary
 	}
 
 	// add IsLiked to summary query
-	get_summaries_sql := query.NewGetSummaries(link_id).ForSignedInUser(req_user_id)
+	get_summaries_sql := query.
+		NewSummariesForLink(link_id).
+		ForSignedInUser(req_user_id)
 	if get_summaries_sql.Error != nil {
 		return nil, get_summaries_sql.Error
 	}
@@ -89,31 +105,48 @@ func _GetSummaryPageSignedIn(link_id string, req_user_id string) (*model.Summary
 
 	summaries := []model.SummarySignedIn{}
 	for rows.Next() {
-		i := model.SummarySignedIn{}
-		err := rows.Scan(&i.ID, &i.Text, &i.SubmittedBy, &i.LastUpdated, &i.LikeCount, &i.IsLiked)
+		s := model.SummarySignedIn{}
+		err := rows.Scan(
+			&s.ID, 
+			&s.Text, 
+			&s.SubmittedBy, 
+			&s.LastUpdated, 
+			&s.LikeCount, 
+			&s.IsLiked,
+		)
 		if err != nil {
 			return nil, err
 		}
-		summaries = append(summaries, i)
+		summaries = append(summaries, s)
 	}
 
 	summary_page := model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn] {
-		Link: link,
+		Link: l,
 		Summaries: summaries,
 	}
 
 	return &summary_page, nil
 }
 
-func _GetSummaryPageSignedOut(link_id string) (*model.SummaryPage[model.SummarySignedOut, model.LinkSignedOut], error) {
+func _GetSummaryPage(link_id string) (*model.SummaryPage[model.Summary, model.Link], error) {
 	get_link_sql := query.NewGetSummaryPageLink(link_id)
 	if get_link_sql.Error != nil {
 		return nil, get_link_sql.Error
 
 	}
 
-	var link model.LinkSignedOut
-	err := DBClient.QueryRow(get_link_sql.Text).Scan(&link.ID, &link.URL, &link.SubmittedBy, &link.SubmitDate, &link.Categories, &link.Summary, &link.LikeCount, &link.ImgURL)
+	var l model.Link
+	err := DBClient.QueryRow(get_link_sql.Text).Scan(
+		&l.ID, 
+		&l.URL, 
+		&l.SubmittedBy, 
+		&l.SubmitDate, 
+		&l.Categories, 
+		&l.Summary, 
+		&l.LikeCount, 
+		&l.TagCount,
+		&l.ImgURL,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, e.ErrNoLinkWithID
@@ -122,7 +155,7 @@ func _GetSummaryPageSignedOut(link_id string) (*model.SummaryPage[model.SummaryS
 		}
 	}
 
-	get_summaries_sql := query.NewGetSummaries(link_id)
+	get_summaries_sql := query.NewSummariesForLink(link_id)
 	if get_summaries_sql.Error != nil {
 		return nil, get_summaries_sql.Error
 	}
@@ -133,18 +166,24 @@ func _GetSummaryPageSignedOut(link_id string) (*model.SummaryPage[model.SummaryS
 	}
 	defer rows.Close()
 
-	summaries := []model.SummarySignedOut{}
+	summaries := []model.Summary{}
 	for rows.Next() {
-		i := model.SummarySignedOut{}
-		err := rows.Scan(&i.ID, &i.Text, &i.SubmittedBy, &i.LastUpdated, &i.LikeCount)
+		s := model.Summary{}
+		err := rows.Scan(
+			&s.ID, 
+			&s.Text, 
+			&s.SubmittedBy, 
+			&s.LastUpdated, 
+			&s.LikeCount,
+		)
 		if err != nil {
 			return nil, err
 		}
-		summaries = append(summaries, i)
+		summaries = append(summaries, s)
 	}
 
-	summary_page := model.SummaryPage[model.SummarySignedOut, model.LinkSignedOut]{
-		Link: link,
+	summary_page := model.SummaryPage[model.Summary, model.Link]{
+		Link: l,
 		Summaries: summaries,
 	}
 
@@ -175,7 +214,14 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 		if err == sql.ErrNoRows {
 
 			// Create new summary
-			_, err = DBClient.Exec(`INSERT INTO Summaries VALUES (?,?,?,?,?)`, nil, summary_data.Text, summary_data.LinkID, req_user_id, summary_data.LastUpdated)
+			_, err = DBClient.Exec(
+				`INSERT INTO Summaries VALUES (?,?,?,?,?)`, 
+				nil, 
+				summary_data.Text, 
+				summary_data.LinkID, 
+				req_user_id, 
+				summary_data.LastUpdated,
+			)
 			if err != nil {
 				render.Render(w, r, e.ErrInvalidRequest(err))
 				return
@@ -189,8 +235,14 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 	} else {
 
 		// Update summary if already submitted
-		_, err = DBClient.Exec(`UPDATE Summaries SET text = ?, last_updated = ?
-		WHERE submitted_by = ? AND link_id = ?`, summary_data.Text, summary_data.LastUpdated, req_user_id, summary_data.LinkID)
+		_, err = DBClient.Exec(
+			`UPDATE Summaries SET text = ?, last_updated = ?
+			WHERE submitted_by = ? AND link_id = ?`, 
+			summary_data.Text, 
+			summary_data.LastUpdated, 
+			req_user_id, 
+			summary_data.LinkID,
+		)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
