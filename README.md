@@ -15,8 +15,7 @@
 -Fix Summaries.text UNIQUE constraint
 -Fix broken auto og:image
     -e.g., coolers.co image should not have been added
--Add realistic limits to various actions
-    -About: max very high (500 chars?) but reveal only first ~100
+-Reveal only first ~200 chars of profile about if length exceeds that
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links

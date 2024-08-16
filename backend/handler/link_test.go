@@ -116,11 +116,6 @@ func TestAddLink(t *testing.T) {
 		},
 	}
 
-	const (
-		test_user_id = "3"
-		test_login_name = "goolian"
-	)
-
 	for _, tr := range test_link_requests {
 		pl, _ := json.Marshal(tr.Payload)
 		r := httptest.NewRequest(
@@ -145,7 +140,7 @@ func TestAddLink(t *testing.T) {
 			if err != nil {
 				t.Fatal("failed but unable to read request body bytes")
 			}
-			
+
 			t.Fatalf(
 				"expected status code 201, got %d (test request %+v)\n%s", res.StatusCode, 
 				tr.Payload, 

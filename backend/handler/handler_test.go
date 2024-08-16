@@ -13,6 +13,11 @@ import (
 	"runtime"
 )
 
+const (
+	test_user_id = "3"
+	test_login_name = "goolian"
+)
+
 var TestClient *sql.DB
 
 func TestMain(m *testing.M) {
