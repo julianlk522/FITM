@@ -80,8 +80,14 @@ func (l *NewLinkRequest) Bind(r *http.Request) error {
 	
 	if l.NewLink.Categories == "" {
 		return e.ErrNoTagCats
+	} else if util.HasTooLongCats(l.NewLink.Categories) {
+		return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
 	} else if util.IsTooManyCats(l.NewLink.Categories) {
 		return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
+	}
+
+	if len(l.NewLink.Summary) > util.SUMMARY_CHAR_LIMIT {
+		return e.SummaryLengthExceedsLimit(util.SUMMARY_CHAR_LIMIT)
 	}
 
 	l.SubmitDate = util.NEW_TIMESTAMP

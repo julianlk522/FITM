@@ -214,7 +214,8 @@ func ResolveAndAssignURL(url string, request *model.NewLinkRequest) (*http.Respo
 	}
 	
 	// save updated URL after any redirects e.g., to wwww.
-	request.URL = resp.Request.URL.String()
+	// remove trailing slash
+	request.URL = strings.TrimSuffix(resp.Request.URL.String(), "/")
 
 	return resp, nil
 }

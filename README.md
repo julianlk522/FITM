@@ -12,10 +12,10 @@
 -Show global tag on tag page
 -Jump from filtered tmap to global map with same filters
 -Summaries query row limit
+-Fix Summaries.text UNIQUE constraint
 -Fix broken auto og:image
     -e.g., coolers.co image should not have been added
 -Add realistic limits to various actions
-    -URL: max idk 200 chars
     -About: max very high (500 chars?) but reveal only first ~100
 -Pagination
     -User Treasure Map
@@ -34,6 +34,7 @@
     -handler utils
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
     -more thorough coverage of query results
+    -prevent repeat cats in same tag
 -Update JWT to use actual secret
 -Enforce consistent names
     -Cats vs. Categories vs. Tag Categories

@@ -105,6 +105,7 @@ func TestResolveAndAssignURL(t *testing.T) {
 		{"abc.com", true},
 		{"www.abc.com", true},
 		{"https://www.abc.com", true},
+		{"about.google.com", true},
 		{"julianlk.com/notreal", false},
 		{"gobblety gook", false},
 	}
