@@ -66,7 +66,7 @@ func GetJWTFromLoginName(login_name string) (string, error) {
 
 func RenderJWT(token string, w http.ResponseWriter, r *http.Request) {
 	return_json := map[string]string{"token": token}
-	render.Status(r, http.StatusOK)
+	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, return_json)
 }
 

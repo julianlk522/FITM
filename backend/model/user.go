@@ -17,14 +17,22 @@ type SignUpRequest struct {
 	CreatedAt string
 }
 
-func (a *SignUpRequest) Bind(r *http.Request) error {
-	if a.Auth.LoginName == "" {
+func (s *SignUpRequest) Bind(r *http.Request) error {
+	if s.Auth.LoginName == "" {
 		return e.ErrNoLoginName
-	} else if a.Auth.Password == "" {
+	} else if len(s.Auth.LoginName) < util.LOGIN_NAME_LOWER_LIMIT {
+		return e.LoginNameExceedsLowerLimit(util.LOGIN_NAME_LOWER_LIMIT)
+	} else if len(s.Auth.LoginName) > util.LOGIN_NAME_UPPER_LIMIT {
+		return e.LoginNameExceedsUpperLimit(util.LOGIN_NAME_UPPER_LIMIT)
+	} else if s.Auth.Password == "" {
 		return e.ErrNoPassword
+	} else if len(s.Auth.Password) < util.PASSWORD_LOWER_LIMIT {
+		return e.PasswordExceedsLowerLimit(util.PASSWORD_LOWER_LIMIT)
+	} else if len(s.Auth.Password) > util.PASSWORD_UPPER_LIMIT {
+		return e.PasswordExceedsUpperLimit(util.PASSWORD_UPPER_LIMIT)
 	}
 
-	a.CreatedAt = util.NEW_TIMESTAMP
+	s.CreatedAt = util.NEW_TIMESTAMP
 	return nil
 }
 
@@ -33,10 +41,10 @@ type LogInRequest struct {
 }
 
 
-func (a *LogInRequest) Bind(r *http.Request) error {
-	if a.Auth.LoginName == "" {
+func (l *LogInRequest) Bind(r *http.Request) error {
+	if l.Auth.LoginName == "" {
 		return e.ErrNoLoginName
-	} else if a.Auth.Password == "" {
+	} else if l.Auth.Password == "" {
 		return e.ErrNoPassword
 	}
 
@@ -57,8 +65,13 @@ type EditAboutRequest struct {
 	About string `json:"about"`
 }
 
-func (a *EditAboutRequest) Bind(r *http.Request) error {
+func (ea *EditAboutRequest) Bind(r *http.Request) error {
+	if len(ea.About) > util.PROFILE_ABOUT_CHAR_LIMIT {
+		return e.ProfileAboutLengthExceedsLimit(util.PROFILE_ABOUT_CHAR_LIMIT)
+	}
+
 	return nil
+
 }
 
 type EditProfilePicRequest struct {

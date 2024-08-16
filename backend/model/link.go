@@ -71,18 +71,21 @@ type NewLinkRequest struct {
 	ImgURL string
 }
 
-func (a *NewLinkRequest) Bind(r *http.Request) error {
-	if a.NewLink.URL == "" {
+func (l *NewLinkRequest) Bind(r *http.Request) error {
+	if l.NewLink.URL == "" {
 		return e.ErrNoURL
+	} else if len(l.NewLink.URL) > util.URL_CHAR_LIMIT {
+		return e.LinkURLCharsExceedLimit(util.URL_CHAR_LIMIT)
 	}
-	if a.NewLink.Categories == "" {
+	
+	if l.NewLink.Categories == "" {
 		return e.ErrNoTagCats
-	} else if util.IsTooManyCats(a.NewLink.Categories) {
-		return e.ErrTooManyCats
+	} else if util.IsTooManyCats(l.NewLink.Categories) {
+		return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
 	}
 
-	a.SubmitDate = util.NEW_TIMESTAMP
-	a.LikeCount = 0
+	l.SubmitDate = util.NEW_TIMESTAMP
+	l.LikeCount = 0
 
 	return nil
 }

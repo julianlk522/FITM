@@ -59,18 +59,20 @@ type NewTagRequest struct {
 	LastUpdated string
 }
 
-func (a *NewTagRequest) Bind(r *http.Request) error {
-	if a.NewTag.Categories == "" {
+func (t *NewTagRequest) Bind(r *http.Request) error {
+	if t.NewTag.Categories == "" {
 		return e.ErrNoCats
-	} else if util.IsTooManyCats(a.NewTag.Categories) {
-		return e.ErrTooManyCats
+	} else if util.HasTooLongCats(t.NewTag.Categories) {
+		return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
+	} else if util.IsTooManyCats(t.NewTag.Categories) {
+		return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
 	}
 	
-	if a.NewTag.LinkID == "" {
+	if t.NewTag.LinkID == "" {
 		return e.ErrNoLinkID
 	}
 
-	a.LastUpdated = util.NEW_TIMESTAMP
+	t.LastUpdated = util.NEW_TIMESTAMP
 
 	return nil
 }
@@ -81,15 +83,15 @@ type EditTagRequest struct {
 	LastUpdated string
 }
 
-func (a *EditTagRequest) Bind(r *http.Request) error {
-	if a.ID == "" {
+func (et *EditTagRequest) Bind(r *http.Request) error {
+	if et.ID == "" {
 		return e.ErrNoTagID
 	}
-	if a.Categories == "" {
+	if et.Categories == "" {
 		return e.ErrNoTagCats
 	}
 
-	a.LastUpdated = util.NEW_TIMESTAMP
+	et.LastUpdated = util.NEW_TIMESTAMP
 
 	return nil
 }

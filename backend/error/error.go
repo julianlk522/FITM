@@ -9,10 +9,6 @@ import (
 	"github.com/go-chi/render"
 )
 
-const (
-	NEW_TAG_CAT_LIMIT int = 10
-)
-
 var (
 	ErrInvalidPage = errors.New("invalid page provided")
 	
@@ -33,12 +29,51 @@ var (
 	ErrNoTagWithID error = errors.New("no tag found with given ID")
 	ErrNoUserWithLoginName error = errors.New("no user found with given login name")
 
-	ErrTooManyCats error = fmt.Errorf("too many tag cats (%d max)", NEW_TAG_CAT_LIMIT)
 	ErrDuplicateTag error = errors.New("duplicate tag")
 	ErrDoesntOwnTag error = errors.New("cannot edit another user's tag")
 
 	ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not found."}
 )
+
+// User
+func LoginNameExceedsLowerLimit(limit int) error {
+	return fmt.Errorf("login name too short (min %d chars)", limit)
+}
+
+func LoginNameExceedsUpperLimit(limit int) error {
+	return fmt.Errorf("login name too long (max %d chars)", limit)
+}
+
+func PasswordExceedsLowerLimit(limit int) error {
+	return fmt.Errorf("password too short (min %d chars)", limit)
+}
+
+func PasswordExceedsUpperLimit(limit int) error {
+	return fmt.Errorf("password too long (max %d chars)", limit)
+}
+
+func ProfileAboutLengthExceedsLimit(limit int) error {
+	return fmt.Errorf("about text too long (max %d chars)", limit)
+}
+
+// Link
+func LinkURLCharsExceedLimit(limit int) error {
+	return fmt.Errorf("url too long (max %d chars)", limit)
+}
+
+// Summary
+func SummaryLengthExceedsLimit(limit int) error {
+	return fmt.Errorf("summary too long (max %d chars)", limit)
+}
+
+// Tag
+func CatCharsExceedLimit(limit int) error {
+	return fmt.Errorf("cat too long (max %d chars)", limit)
+}
+
+func NumCatsExceedsLimit(limit int) error {
+	return fmt.Errorf("too many tag cats (%d max)", limit)
+}
 
 type ErrResponse struct {
 	Err            error `json:"-"` // low-level runtime error

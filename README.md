@@ -17,8 +17,6 @@
 -Add realistic limits to various actions
     -Summary: max idk 100 chars
     -Tag cat: max idk 30 chars
-    -Login name: 2-15 chars
-    -Password: 8-72 chars
     -URL: max idk 200 chars
     -About: max very high (500 chars?) but reveal only first ~100
 -Pagination
@@ -40,7 +38,7 @@
     -more thorough coverage of query results
 -Update JWT to use actual secret
 -Enforce consistent names
-    -e.g., Global Categories vs. Global Tag categories
+    -Cats vs. Categories vs. Tag Categories
 -Remove repeat code wherever possible
     -GetSummaryPage / GetSummaryPageSignedIn
     -Merge TagRankings (public) / TopOverlapScores (internal) Query structs / methods
