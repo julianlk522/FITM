@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/http"
+	"strconv"
 
 	e "oitm/error"
 	util "oitm/model/util"
@@ -60,16 +61,18 @@ type NewTagRequest struct {
 }
 
 func (t *NewTagRequest) Bind(r *http.Request) error {
+	if t.NewTag.LinkID == "" {
+		return e.ErrNoLinkID
+	} else if i, err := strconv.Atoi(t.NewTag.LinkID); err != nil || i < 1 {
+		return e.ErrInvalidLinkID
+	}
+
 	if t.NewTag.Categories == "" {
 		return e.ErrNoCats
 	} else if util.HasTooLongCats(t.NewTag.Categories) {
 		return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
 	} else if util.IsTooManyCats(t.NewTag.Categories) {
 		return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
-	}
-	
-	if t.NewTag.LinkID == "" {
-		return e.ErrNoLinkID
 	}
 
 	t.LastUpdated = util.NEW_TIMESTAMP
