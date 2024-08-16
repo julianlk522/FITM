@@ -7,45 +7,6 @@ import (
 	util "oitm/model/util"
 )
 
-type NewLink struct {
-	URL string `json:"url"`
-	Categories string `json:"categories"`
-	Summary string `json:"summary,omitempty"`
-}
-
-type NewLinkRequest struct {
-	*NewLink
-	SubmitDate string
-	LikeCount int64
-	
-	// to be assigned by handler
-	ID int64
-	URL string // potentially modified after test request(s)
-	SubmittedBy string
-	Categories string // used after sort
-	AutoSummary string
-	SummaryCount int
-	ImgURL string
-}
-
-func (a *NewLinkRequest) Bind(r *http.Request) error {
-	if a.NewLink.URL == "" {
-		return e.ErrNoURL
-	}
-	if a.NewLink.Categories == "" {
-		return e.ErrNoTagCats
-	} else if _IsTooManyCats(a.NewLink.Categories) {
-		return e.ErrTooManyCats
-	}
-
-	a.SubmitDate = util.NEW_TIMESTAMP
-	a.LikeCount = 0
-
-	return nil
-}
-
-
-
 type Link struct {
 	ID int64
 	URL string
@@ -87,4 +48,41 @@ type CategoryContributor struct {
 	Categories string
 	LoginName string
 	LinksSubmitted int
+}
+
+type NewLink struct {
+	URL string `json:"url"`
+	Categories string `json:"categories"`
+	Summary string `json:"summary,omitempty"`
+}
+
+type NewLinkRequest struct {
+	*NewLink
+	SubmitDate string
+	LikeCount int64
+	
+	// to be assigned by handler
+	ID int64
+	URL string // potentially modified after test request(s)
+	SubmittedBy string
+	Categories string // used after sort
+	AutoSummary string
+	SummaryCount int
+	ImgURL string
+}
+
+func (a *NewLinkRequest) Bind(r *http.Request) error {
+	if a.NewLink.URL == "" {
+		return e.ErrNoURL
+	}
+	if a.NewLink.Categories == "" {
+		return e.ErrNoTagCats
+	} else if util.IsTooManyCats(a.NewLink.Categories) {
+		return e.ErrTooManyCats
+	}
+
+	a.SubmitDate = util.NEW_TIMESTAMP
+	a.LikeCount = 0
+
+	return nil
 }

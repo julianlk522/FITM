@@ -72,7 +72,7 @@ type TreasureMapSections[T TmapLink | TmapLinkSignedIn] struct {
 	Submitted *[]T
 	Tagged *[]T
 	Copied *[]T
-	Categories *[]CategoryCount
+	Categories *[]CatCount
 }
 
 type TreasureMap[T TmapLink | TmapLinkSignedIn] struct {

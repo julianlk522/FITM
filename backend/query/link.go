@@ -1,28 +1,38 @@
-package db
+package query
 
 import (
 	"fmt"
 	"strings"
 )
 
-// TODO: move constants to shared location, remove this duplicate
-const LINKS_PAGE_LIMIT = 20
-var LIMIT_CLAUSE = fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT)
+const (
+	LINKS_PAGE_LIMIT = 20
+	CATEGORY_CONTRIBUTORS_LIMIT int = 5
+)
 
+// Links
+var UNPAGINATED_LIMIT_CLAUSE = fmt.Sprintf(` 
+LIMIT %d;`, LINKS_PAGE_LIMIT)
 
-// LINKS
+func _PaginateLimitClause(page int) string {
+	if page == 1 {
+		return fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT + 1)
+	}
+	return fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT + 1, (page - 1) * LINKS_PAGE_LIMIT)
+}
+
 type TopLinks struct {
 	Query
 }
 
-const TOP_LINKS_BASE = `SELECT 
+var TOP_LINKS_BASE = `SELECT 
 links_id as link_id, 
 url, 
 sb, 
 sd, 
 cats, 
 summary, 
-summary_count,
+COALESCE(summary_count,0) as summary_count,
 tag_count,
 like_count, 
 img_url
@@ -61,10 +71,10 @@ LEFT JOIN
 	)
 ON tlink_id = links_id
 GROUP BY links_id 
-ORDER BY like_count DESC, summary_count DESC, link_id DESC;`
+ORDER BY like_count DESC, summary_count DESC, link_id DESC` + UNPAGINATED_LIMIT_CLAUSE
 
 func NewTopLinks() *TopLinks {
-	return (&TopLinks{Query: Query{Text: TOP_LINKS_BASE}})._Limit()
+	return (&TopLinks{Query: Query{Text: TOP_LINKS_BASE}})
 }
 
 func (l *TopLinks) FromLinkIDs(link_ids []string) *TopLinks {
@@ -89,13 +99,8 @@ func (l *TopLinks) Page(page int) *TopLinks {
 		return l
 	}
 	
-	l.Text  = strings.Replace(l.Text, LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT +1, (page - 1) * LINKS_PAGE_LIMIT), 1)
+	l.Text  = strings.Replace(l.Text, UNPAGINATED_LIMIT_CLAUSE, _PaginateLimitClause(page), 1)
 	
-	return l
-}
-
-func (l *TopLinks) _Limit() *TopLinks {
-	l.Text = strings.Replace(l.Text, ";", LIMIT_CLAUSE, 1)
 	return l
 }
 
@@ -111,8 +116,7 @@ func (l *TopLinks) _Where(clause string) *TopLinks {
 
 
 
-// LINK IDs
-// e.g., for checking if a link exists
+// Link IDs
 type LinkIDs struct {
 	Query
 }
@@ -138,7 +142,7 @@ func (l *LinkIDs) _FromCategories(categories []string) *LinkIDs {
 
 
 
-// LINK SUBCATEGORIES
+// Subcats
 type Subcats struct {
 	Query
 }
@@ -182,7 +186,7 @@ func (c *Subcats) _Where(clause string) *Subcats {
 }
 
 
-// CAT COUNTS
+// Cat counts
 type CatCount struct {
 	Query
 }
@@ -206,13 +210,14 @@ func (c *CatCount) _FromCategories(categories []string) *CatCount {
 
 
 
-// CATS CONTRIBUTORS
-// (single or multiple cats)
+// Cats contributors (single or multiple cats)
 type CatsContributors struct {
 	Query
 }
 
-const CATS_CONTRIBUTORS_BASE = `SELECT count(*), submitted_by FROM Links`
+const CATS_CONTRIBUTORS_BASE = `SELECT 
+	count(*), submitted_by 
+FROM Links`
 
 func NewCatsContributors(categories []string) *CatsContributors {
 	return (&CatsContributors{Query: Query{Text: CATS_CONTRIBUTORS_BASE}})._FromCategories(categories)
@@ -224,8 +229,10 @@ func (c *CatsContributors) _FromCategories(categories []string) *CatsContributor
 		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[i])
 	}
 	
-	c.Text +=" GROUP BY submitted_by ORDER BY count(*) DESC, submitted_by ASC;"
-
+	c.Text += fmt.Sprintf(` 
+		GROUP BY submitted_by 
+		ORDER BY count(*) DESC, submitted_by ASC
+		LIMIT %d;`, CATEGORY_CONTRIBUTORS_LIMIT)
 	return c
 }
 
@@ -235,23 +242,19 @@ func (c *CatsContributors) DuringPeriod(period string) (*CatsContributors) {
 		c.Error = err
 		return c
 	}
-	c._Where(clause)
-	return c
-}
-
-func (c *CatsContributors) Limit(limit int) *CatsContributors {
-	c.Text = strings.Replace(c.Text, ";", fmt.Sprintf(" LIMIT %d;", limit), 1)
-	return c
-}
-
-
-func (c *CatsContributors) _Where(clause string) *CatsContributors {
 
 	// Swap previous WHERE for AND, if any
 	c.Text = strings.Replace(c.Text, "WHERE", "AND", 1)
 
 	// Prepend new clause
-	c.Text = strings.Replace(c.Text, CATS_CONTRIBUTORS_BASE, fmt.Sprintf("%s WHERE %s", CATS_CONTRIBUTORS_BASE, clause), 1)
+	c.Text = strings.Replace(
+		c.Text, 
+		CATS_CONTRIBUTORS_BASE, 
+		fmt.Sprintf(
+			"%s WHERE %s", 
+			CATS_CONTRIBUTORS_BASE, 
+			clause), 
+	1)
 
 	return c
 }

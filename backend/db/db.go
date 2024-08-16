@@ -3,11 +3,15 @@ package db
 import (
 	"database/sql"
 	"log"
+	"path/filepath"
+	"runtime"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var Client *sql.DB
+var (
+	Client *sql.DB
+)
 
 func init() {
 	if err := Connect(); err != nil {
@@ -18,7 +22,10 @@ func init() {
 func Connect() error {
 	var err error
 
-	Client, err = sql.Open("sqlite3", "./db/oitm.db")
+	_, db_file, _, _ := runtime.Caller(0)
+	db_dir := filepath.Dir(db_file)
+
+	Client, err = sql.Open("sqlite3", db_dir + "/oitm.db")
 	if err != nil {
 		return err
 	}
@@ -28,7 +35,7 @@ func Connect() error {
 		return err
 	}
 
-	log.Print("Connected to database")
+	log.Print("Connected to DB")
 
 	return nil
 }

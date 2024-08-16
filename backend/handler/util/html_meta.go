@@ -47,7 +47,15 @@ func MetaFromHTMLTokens(resp io.Reader) (hm HTMLMeta) {
 	}
 }
 
-var meta_properties = []string{"description", "og:title", "og:description", "og:image", "og:author", "og:publisher", "og:site_name"}
+var meta_properties = []string{
+	"description", 
+	"og:title", 
+	"og:description", 
+	"og:image", 
+	"og:author", 
+	"og:publisher", 
+	"og:site_name",
+}
 
 func AssignTokenPropertyToHTMLMeta(t html.Token, hm *HTMLMeta) {
 	for _, prop := range meta_properties {

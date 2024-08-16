@@ -12,7 +12,6 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/lestrrat-go/jwx/v2/jwt"
-	_ "github.com/mattn/go-sqlite3"
 
 	h "oitm/handler"
 	m "oitm/middleware"
@@ -85,7 +84,7 @@ func main() {
 			r.Get("/top", h.GetLinks)
 		})
 
-		r.Get("/summaries/{link_id}", h.GetSummariesForLink)
+		r.Get("/summaries/{link_id}", h.GetSummaryPage)
 	})
 
 
@@ -109,7 +108,7 @@ func main() {
 		r.Delete("/links/{link_id}/copy", h.UncopyLink)
 
 		// TAGS
-		r.Get("/tags/{link_id}", h.GetTagsForLink)
+		r.Get("/tags/{link_id}", h.GetTagPage)
 		r.Post("/tags", h.AddTag)
 		r.Put("/tags", h.EditTag)
 

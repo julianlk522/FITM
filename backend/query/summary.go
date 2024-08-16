@@ -1,4 +1,4 @@
-package db
+package query
 
 import (
 	"fmt"
@@ -49,7 +49,7 @@ LEFT JOIN
 	)
 ON tlink_id = links_id;`
 
-func NewGetSummaryPageLink(ID string) *SummaryPageLink {
+func NewSummaryPageLink(ID string) *SummaryPageLink {
 	return (&SummaryPageLink{Query: Query{Text: SUMMARY_PAGE_LINK_BASE}})._FromID(ID)
 }
 
@@ -99,19 +99,24 @@ type Summaries struct {
 	Query
 }
 
-const SUMMARIES_BASE_FIELDS = `SELECT sumid, text, sb as submitted_by, last_updated, COALESCE(count(sl.id),0) as like_count`
+const SUMMARIES_BASE_FIELDS = `SELECT 
+	sumid, 
+	text, 
+	ln, 
+	last_updated, 
+	COALESCE(count(sl.id),0) as like_count`
 
 const SUMMARIES_BASE = SUMMARIES_BASE_FIELDS + ` 
 FROM 
 	(
-	SELECT sumid, text, Users.login_name as sb, last_updated
+	SELECT sumid, text, Users.login_name as ln, last_updated
 	FROM 
 		(
-		SELECT id as sumid, text, submitted_by, last_updated
+		SELECT id as sumid, text, submitted_by as sb, last_updated
 		FROM Summaries 
 		) 
 	JOIN Users 
-	ON Users.id = submitted_by
+	ON Users.id = sb
 	) 
 LEFT JOIN 'Summary Likes' as sl 
 ON sl.summary_id = sumid 
@@ -122,14 +127,21 @@ func NewSummariesForLink(link_id string) *Summaries {
 }
 
 func (s *Summaries) _FromID(link_id string) *Summaries {
-	s.Text = strings.Replace(s.Text, "FROM Summaries", fmt.Sprintf(`FROM Summaries 
-	WHERE link_id = '%s'`, link_id), 1)
+	s.Text = strings.Replace(
+		s.Text, 
+		"FROM Summaries", 
+		fmt.Sprintf(
+			`FROM Summaries 
+			WHERE link_id = '%s'`, 
+		link_id), 
+	1)
 
 	return s
 }
 
 func (s *Summaries) ForSignedInUser(user_id string ) *Summaries {
-	s.Text = strings.Replace(s.Text, SUMMARIES_BASE_FIELDS, SUMMARIES_BASE_FIELDS + ", COALESCE(is_liked,0) as is_liked", 1)
+	s.Text = strings.Replace(s.Text, SUMMARIES_BASE_FIELDS, SUMMARIES_BASE_FIELDS + `, 
+	COALESCE(is_liked,0) as is_liked`, 1)
 
 	s.Text = strings.Replace(s.Text, "LEFT JOIN 'Summary Likes' as sl", fmt.Sprintf(`
 	LEFT JOIN

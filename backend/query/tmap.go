@@ -1,4 +1,4 @@
-package db
+package query
 
 import (
 	"fmt"
@@ -9,8 +9,8 @@ import (
 func NewTmapProfile(login_name string) string {
 	return fmt.Sprintf(`SELECT 
 	login_name, 
-	COALESCE(about,"") as about, 
-	COALESCE(pfp,"") as pfp, 
+	COALESCE(about,'') as about, 
+	COALESCE(pfp,'') as pfp, 
 	created
 FROM Users 
 WHERE login_name = '%s';`, login_name)
@@ -24,11 +24,11 @@ const BASE_FIELDS = `SELECT
 	submit_date, 
 	cats, 
 	0 as cats_from_user,
-	COALESCE(global_summary,"") as summary, 
+	COALESCE(global_summary,'') as summary, 
 	COALESCE(summary_count,0) as summary_count, 
 	COALESCE(like_count,0) as like_count, 
-	tag_count, 
-	COALESCE(img_url,"") as img_url`
+	COALESCE(tag_count,0) as tag_count, 
+	COALESCE(img_url,'') as img_url`
 
 const BASE_ORDER = ` 
 ORDER BY like_count DESC, summary_count DESC, link_id DESC;`
@@ -36,8 +36,8 @@ ORDER BY like_count DESC, summary_count DESC, link_id DESC;`
 // Authenticated: add IsLiked, IsCopied, IsTagged
 const AUTH_FIELDS = `, 
 	COALESCE(is_liked,0) as is_liked, 
-	COALESCE(is_tagged,0) as is_tagged,
-	COALESCE(is_copied,0) as is_copied`
+	COALESCE(is_copied,0) as is_copied,
+	COALESCE(is_tagged,0) as is_tagged`
 
 const AUTH_FROM = ` 
 LEFT JOIN
@@ -129,7 +129,7 @@ var SUBMITTED_FROM_LAST_LINE = SUBMITTED_FROM_LINES[len(SUBMITTED_FROM_LINES)-1]
 
 func (q *TmapSubmitted) AsSignedInUser(req_user_id string, req_login_name string) *TmapSubmitted {
 	
-	// 2 replacers required: cannot be achieved with 1 since REQ_USER_ID/REQ_LOGIN_NAME replacements must be applied to auth fields/from after they are inserted
+	// 2 replacers required: cannot be achieved with 1 since REQ_USER_ID/REQ_LOGIN_NAME replacements must be applied to auth fields/from _after_ they are inserted
 	fields_replacer := strings.NewReplacer(BASE_FIELDS, BASE_FIELDS + AUTH_FIELDS, SUBMITTED_FROM_LAST_LINE, SUBMITTED_FROM_LAST_LINE + AUTH_FROM)
 	auth_replacer := strings.NewReplacer("REQ_USER_ID", req_user_id, "REQ_LOGIN_NAME", req_login_name)
 
@@ -217,12 +217,6 @@ func (q *TmapCopied) FromCategories(categories []string) *TmapCopied {
 	return q
 }
 
-func (q *TmapCopied) ForUser(login_name string) *TmapCopied {
-	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
-
-	return q
-}
-
 var COPIED_FROM_LINES = strings.Split(COPIED_FROM, "\n")
 var COPIED_FROM_LAST_LINE = COPIED_FROM_LINES[len(COPIED_FROM_LINES)-1]
 
@@ -269,12 +263,6 @@ func (q *TmapTagged) FromCategories(categories []string) *TmapTagged {
 	}
 
 	q.Text = strings.Replace(q.Text, BASE_ORDER, cat_clause + BASE_ORDER, 1)
-
-	return q
-}
-
-func (q *TmapTagged) ForUser(login_name string) *TmapTagged {
-	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
 
 	return q
 }

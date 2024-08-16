@@ -4,6 +4,14 @@
 
 ### Features
 
+-Favorite tmaps
+    -add favorites col to users table
+    -'Add to Favorites' button on other user's tmap
+    -'Favorites' link on tmap
+    -{user}'s favorite tmaps page
+-Show global tag on tag page
+-Jump from filtered tmap to global map with same filters
+-Summaries query row limit
 -Fix broken auto og:image
     -e.g., coolers.co image should not have been added
 -Add realistic limits to various actions
@@ -26,29 +34,35 @@
 ### Code Quality
 
 -Replace tag / summary ids with UUID
--Merge isliked/iscopied/istagged into get links queries without doubleup
--Rebrand subcategories as category overlaps since that is a bit more accurate
 -Tests
-    -<https://github.com/ory/dockertest>
+    -handler utils
+        -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
+    -more thorough coverage of query results
 -Update JWT to use actual secret
 -Enforce consistent names
     -e.g., Global Categories vs. Global Tag categories
-    -Popular Categories vs. Top Categories
 -Remove repeat code wherever possible
-
+    -GetSummaryPage / GetSummaryPageSignedIn
+    -Merge TagRankings (public) / TopOverlapScores (internal) Query structs / methods
+    -ScanLinks / RenderPaginatedLinks calls in GetLinks handler
+    -Potentially merge query.NewLinkIDs() and query.NewCatCount(), I think there is a way to make that work
+    -ScanTmapLinks tests
+-Refactors for simplicity / accuracy
+    -Move isliked/iscopied/istagged addition logic from ScanLinks into TopLinks AsSignedInUser method
+    -RenderPaginatedLinks move slicing into separate PaginateLinks func that is more easily testable
+    -ResolveAndAssignURL into just ResolveURL, assign to request in handler (so request doesn't need to be passed as 2nd arg)
+    -Use only ints for IDs except in final sql stmnt. format
+        (forces correct args order when calling funcs with, e.g., login_name and link_id or login_name and user_id)
+    -use net/url Parse() etc.
 ## To-Maybe-Dos
 
--Favorite tmaps
-    -add favorites col to users table
-    -'Add to Favorites' button on other user's tmap
-    -'Favorites' link on tmap
-    -{user}'s favorite tmaps page
 -Better way to visualize how Global Cats are determined
 -Show number of copies along with number of likes in frontend
 -Edit category filters directly on top links by period/category(ies) page
     -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads
 -Search for existing tag cats while adding/editing
     -Fuzzysort?
+-Rebrand subcategories as category overlaps since that is a bit more accurate
 -Better logging?
     (Zap)
 -Way to prevent many tags from flooding global tag
@@ -56,8 +70,12 @@
 -Separate tag categories into distinct rows in Tags table
     -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)
     -would help optimize GetTopTagCategories / GetTopTagCategoriesByPeriod handlers since queries could all be done in sql (as of now requires splitting global_cats field in Go)
+        -Scanning all rows, splitting all row cats in Go, then summing cat counts manually might be pretty expensive if there are a lot of rows...
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
+-Properly backup DB
+    -sqlite3 my_database .dump | gzip -c > my_database.dump.gz
+    zcat my_database.dump.gz | sqlite3 my_database
 
 ## Why?
 
@@ -104,3 +122,11 @@ Users can like listed links to boost them, so in theory the most univerally appr
 "There was a time I would only search in del.icio.us instead of Google because the content quality was much better. So if you go this way, please don't fill it with content from botfarms posting to reddit."
 
 "To me, Search is the number 1 need."
+
+## Challenges
+
+- Learning Go
+- Debugging Docker install
+    - edit etc/apt/sources.list.d/docker.list to add specific Ubuntu codename to retrieve correct release package
+    - repeated "dial unix /var/run/docker.sock: connect: connection refused" cryptic errors, tried editing group permissions, starting/stopping docker daemon etc. but nothing working
+    - finally got it by authenticating DockerHub acct. via CLI (docker login)

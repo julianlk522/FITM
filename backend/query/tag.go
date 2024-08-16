@@ -1,8 +1,13 @@
-package db
+package query
 
 import (
 	"fmt"
 	"strings"
+)
+
+const (
+	TAGS_PAGE_LIMIT = 20
+	TOP_OVERLAP_SCORES_LIMIT int = 20
 )
 
 // Tags Page link
@@ -32,27 +37,36 @@ FROM
 		COALESCE(global_cats,"") as cats, 
 		global_summary as summary, 
 		COALESCE(img_url,"") as img_url 
-	FROM Links`
+	FROM Links
+LEFT JOIN
+	(
+	SELECT count(*) as summary_count, link_id as slink_id
+	FROM Summaries
+	GROUP BY slink_id
+	)
+ON slink_id = links_id`
 
-func NewTagPageLink(ID string, user_id string) *TagPageLink {
-	return (&TagPageLink{Query: Query{Text: TAG_PAGE_LINK_BASE}})._FromID(ID)._ForSignedInUser(user_id)
+func NewTagPageLink(link_id string, user_id string) *TagPageLink {
+	return (&TagPageLink{Query: Query{Text: TAG_PAGE_LINK_BASE}})._FromID(link_id)._ForSignedInUser(user_id)
 }
 
-func (l *TagPageLink) _FromID(ID string) *TagPageLink {
-	l.Text += fmt.Sprintf(` WHERE id = '%s') `, ID)
+func (l *TagPageLink) _FromID(link_id string) *TagPageLink {
+	l.Text = strings.Replace(
+		l.Text, 
+		"FROM Links", 
+		fmt.Sprintf(
+			`FROM Links 
+			WHERE id = '%s'
+			)`, 
+			link_id,
+		),
+	1)
 
 	return l
 }
 
 func (l *TagPageLink) _ForSignedInUser(user_id string ) *TagPageLink {
 	l.Text += fmt.Sprintf(` 
-	LEFT JOIN
-		(
-		SELECT count(*) as summary_count, link_id as slink_id
-		FROM Summaries
-		GROUP BY slink_id
-		)
-	ON slink_id = links_id
 	LEFT JOIN 'Link Likes'
 	ON 'Link Likes'.link_id = links_id
 	LEFT JOIN
@@ -76,7 +90,43 @@ func (l *TagPageLink) _ForSignedInUser(user_id string ) *TagPageLink {
 }
 
 
-// Earliest Tags for Link
+
+// Top Tags (Internal Overlap Scores)
+type TopOverlapScores struct {
+	Query
+}
+
+const TOP_OVERLAP_SCORES_BASE = `SELECT 
+	(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, 
+	categories 
+FROM Tags 
+INNER JOIN Links 
+ON Links.id = Tags.link_id
+ORDER BY lifespan_overlap DESC`
+
+
+func NewTopOverlapScores(link_id string) *TopOverlapScores {
+	return (&TopOverlapScores{Query: Query{Text: TOP_OVERLAP_SCORES_BASE}})._FromLink(link_id)
+}
+
+func (o *TopOverlapScores) _FromLink(link_id string) *TopOverlapScores {
+	o. Text = strings.Replace(
+		o.Text, 
+		"ORDER BY lifespan_overlap DESC", 
+		fmt.Sprintf(
+			`WHERE link_id = '%s' 
+			ORDER BY lifespan_overlap DESC 
+			LIMIT %d`, 
+			link_id,
+			TOP_OVERLAP_SCORES_LIMIT,
+		), 
+	1)
+
+	return o
+}
+
+
+// Tag Rankings for Link (Public Overlap Scores)
 type TagRankings struct {
 	Query
 }
@@ -88,7 +138,7 @@ const TAG_RANKINGS_BASE = `SELECT
 	last_updated 
 FROM Tags 
 INNER JOIN Links 
-ON Links.id = Tags.link_id `
+ON Links.id = Tags.link_id`
 
 func NewTagRankingsForLink(link_id string) *TagRankings {
 	return (&TagRankings{Query: Query{Text: TAG_RANKINGS_BASE}})._FromLink(link_id)
@@ -96,15 +146,14 @@ func NewTagRankingsForLink(link_id string) *TagRankings {
 
 func (t *TagRankings) _FromLink(link_id string) *TagRankings {
 
-	t.Text += fmt.Sprintf(` WHERE link_id = '%s'
-	ORDER BY lifespan_overlap DESC`, link_id)
+	t.Text += fmt.Sprintf(` 
+		WHERE link_id = '%s'
+		ORDER BY lifespan_overlap DESC 
+		LIMIT %d`, 
+		link_id, 
+		TAGS_PAGE_LIMIT,
+	)
 
-	return t
-}
-
-func (t *TagRankings) Limit(limit int) *TagRankings {
-
-	t.Text += fmt.Sprintf(` LIMIT %d;`, limit)
 	return t
 }
 
@@ -132,35 +181,4 @@ func (t *GlobalCats) DuringPeriod(period string) *GlobalCats {
 	t.Text += fmt.Sprintf(` AND %s;`, clause)
 
 	return t
-}
-
-
-// Top Tags (Overlap Scores)
-type TopOverlapScores struct {
-	Query
-}
-
-const TOP_OVERLAP_SCORES_BASE = `SELECT 
-	(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, 
-	categories 
-FROM Tags 
-INNER JOIN Links 
-ON Links.id = Tags.link_id
-ORDER BY lifespan_overlap DESC`
-
-
-func NewTopOverlapScores(link_id string) *TopOverlapScores {
-	return (&TopOverlapScores{Query: Query{Text: TOP_OVERLAP_SCORES_BASE}})._FromLink(link_id)
-}
-
-func (o *TopOverlapScores) _FromLink(link_id string) *TopOverlapScores {
-	o. Text = strings.Replace(o.Text, "ORDER BY lifespan_overlap DESC", fmt.Sprintf("WHERE link_id = '%s' ORDER BY lifespan_overlap DESC", link_id), 1)
-
-	return o
-}
-
-func (o *TopOverlapScores) Limit(limit int) *TopOverlapScores {
-	o.Text += fmt.Sprintf(` LIMIT %d;`, limit)
-
-	return o
 }
