@@ -13,6 +13,7 @@ var (
 	ErrInvalidPage = errors.New("invalid page provided")
 	
 	ErrNoLinkID error = errors.New("no link ID provided")
+	ErrInvalidLinkID error = errors.New("invalid link ID provided")
 	ErrNoCats error = errors.New("no cats provided")
 	ErrNoPeriod error = errors.New("no period provided")
 	ErrNoURL error = errors.New("no URL provided")

@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/http"
+	"strconv"
 
 	e "oitm/error"
 	util "oitm/model/util"
@@ -35,7 +36,10 @@ type NewSummaryRequest struct {
 func (s *NewSummaryRequest) Bind(r *http.Request) error {
 	if s.LinkID == "" {
 		return e.ErrNoLinkID
+	} else if i, err := strconv.Atoi(s.LinkID); err != nil || i < 1 {
+		return e.ErrInvalidLinkID
 	}
+	
 	if s.Text == "" {
 		return e.ErrNoSummaryText
 	} else if len(s.Text) > util.SUMMARY_CHAR_LIMIT {

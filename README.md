@@ -15,7 +15,6 @@
 -Fix broken auto og:image
     -e.g., coolers.co image should not have been added
 -Add realistic limits to various actions
-    -Summary: max idk 100 chars
     -Tag cat: max idk 30 chars
     -URL: max idk 200 chars
     -About: max very high (500 chars?) but reveal only first ~100
