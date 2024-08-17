@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+const SUMMARIES_PAGE_LIMIT = 20
+
 // Summaries Page link
 type SummaryPageLink struct {
 	Query
@@ -123,7 +125,9 @@ ON sl.summary_id = sumid
 GROUP BY sumid;`
 
 func NewSummariesForLink(link_id string) *Summaries {
-	return (&Summaries{Query: Query{Text: SUMMARIES_BASE}})._FromID(link_id)
+	return (&Summaries{Query: Query{Text: SUMMARIES_BASE}}).
+	_FromID(link_id).
+	_Limit(SUMMARIES_PAGE_LIMIT)
 }
 
 func (s *Summaries) _FromID(link_id string) *Summaries {
@@ -137,6 +141,18 @@ func (s *Summaries) _FromID(link_id string) *Summaries {
 	1)
 
 	return s
+}
+
+func (l *Summaries) _Limit(limit int) *Summaries {
+	l.Text = strings.Replace(
+		l.Text, 
+		";", 
+		fmt.Sprintf(`
+LIMIT %d;`, 
+		limit), 
+	1)
+	
+	return l
 }
 
 func (s *Summaries) ForSignedInUser(user_id string ) *Summaries {

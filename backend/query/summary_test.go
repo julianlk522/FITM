@@ -157,6 +157,15 @@ func TestNewSummariesForLink(t *testing.T) {
 			t.Fatalf("column %d: got %s, want %s", i, col.Name(), test_cols[i].Want)
 		}
 	}
+
+	// Verify no more than {SUMMARY_PAGE_LIMIT} rows
+	var count int
+	for rows.Next() {
+		count++
+	}
+	if count > SUMMARIES_PAGE_LIMIT {
+		t.Fatalf("got %d, want <= %d", count, SUMMARIES_PAGE_LIMIT)
+	}
 }
 
 func Test_NewSummariesForLinkFromID(t *testing.T) {
