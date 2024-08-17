@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	"github.com/google/uuid"
 
 	"oitm/db"
 	e "oitm/error"
@@ -79,7 +80,7 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 			// Create new summary
 			_, err = db.Client.Exec(
 				`INSERT INTO Summaries VALUES (?,?,?,?,?)`, 
-				nil, 
+				summary_data.ID, 
 				summary_data.Text, 
 				summary_data.LinkID, 
 				req_user_id, 
@@ -210,7 +211,12 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.Client.Exec(`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, nil, req_user_id, summary_id)
+	_, err = db.Client.Exec(
+		`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, 
+		uuid.New().String(), 
+		req_user_id, 
+		summary_id,
+	)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return

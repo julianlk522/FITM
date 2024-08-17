@@ -6,6 +6,8 @@ import (
 
 	e "oitm/error"
 	util "oitm/model/util"
+
+	"github.com/google/uuid"
 )
 
 type Summary struct {
@@ -28,6 +30,7 @@ type SummaryPage[S SummarySignedIn | Summary, L LinkSignedIn | Link ] struct {
 
 // ADD
 type NewSummaryRequest struct {
+	ID string
 	LinkID string `json:"link_id"`
 	Text string `json:"text"`
 	LastUpdated string
@@ -46,6 +49,7 @@ func (s *NewSummaryRequest) Bind(r *http.Request) error {
 		return e.SummaryLengthExceedsLimit(util.SUMMARY_CHAR_LIMIT)
 	}
 
+	s.ID = uuid.New().String()
 	s.LastUpdated = util.NEW_TIMESTAMP
 	
 	return nil

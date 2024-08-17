@@ -4,10 +4,10 @@
 
 ### Features
 
+-Put most-liked summary up top
 -Summaries query row limit
 -Prevent repeat cats in same tag
 -Jump from filtered tmap to global map with same filters
--Fix Summaries.text UNIQUE constraint
 -Show global tag on tag page
 -Reveal only first ~200 chars of profile about if length exceeds that
 -Rethink CalculateGlobalCategories algo
@@ -29,9 +29,14 @@
 
 ### Code Quality
 
--Replace tag / summary ids with UUID
+-Replace SQL row IDs with UUID
+    -Links
+    -Link Likes
+    -Link Copies
+    -Tags
+    -Users
 -Tests
-    -handlers
+    -finish handlers
     -handler utils
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
 -Update JWT to use actual secret
@@ -59,6 +64,8 @@
 -Search for existing tag cats while adding/editing
     -Fuzzysort?
 -Properly backup DB
+    -sqlite3 backend/db/oitm.db ".backup '_oitm_backup.bak'"
+    -sqlite3 backend/db/oitm.db < _oitm_backup.bak
     -sqlite3 my_database .dump | gzip -c > my_database.dump.gz
     zcat my_database.dump.gz | sqlite3 my_database
 -Better logging?
