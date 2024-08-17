@@ -99,7 +99,7 @@ type TopOverlapScores struct {
 
 const TOP_OVERLAP_SCORES_BASE = `SELECT 
 	(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, 
-	categories 
+	cats 
 FROM Tags 
 INNER JOIN Links 
 ON Links.id = Tags.link_id
@@ -134,7 +134,7 @@ type TagRankings struct {
 
 const TAG_RANKINGS_BASE = `SELECT 
 	(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) * 100 AS lifespan_overlap, 
-	categories, 
+	cats, 
 	Tags.submitted_by, 
 	last_updated 
 FROM Tags 

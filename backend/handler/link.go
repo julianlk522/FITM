@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	"github.com/google/uuid"
 
 	"oitm/db"
 	e "oitm/error"
@@ -220,7 +221,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	// Insert tag
 	_, err = db.Client.Exec(
 		"INSERT INTO Tags VALUES(?,?,?,?,?);", 
-		nil, 
+		uuid.New().String(), 
 		request.ID, 
 		request.Categories, 
 		req_login_name, 

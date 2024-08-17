@@ -6,6 +6,8 @@ import (
 
 	e "oitm/error"
 	util "oitm/model/util"
+
+	"github.com/google/uuid"
 )
 
 type Tag struct {
@@ -56,7 +58,7 @@ type NewTag struct {
 
 type NewTagRequest struct {
 	*NewTag
-	ID int64
+	ID string
 	LastUpdated string
 }
 
@@ -77,6 +79,7 @@ func (t *NewTagRequest) Bind(r *http.Request) error {
 		return e.ErrDuplicateCats
 	}
 
+	t.ID = uuid.New().String()
 	t.LastUpdated = util.NEW_TIMESTAMP
 
 	return nil

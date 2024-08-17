@@ -76,7 +76,7 @@ func TestNewTopOverlapScores(t *testing.T) {
 	tags_sql.Text = strings.Replace(tags_sql.Text, 
 		`SELECT 
 	(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, 
-	categories`, 
+	cats`, 
 		`SELECT link_id`, 
 	1)
 	tags_sql.Text = strings.Replace(tags_sql.Text,

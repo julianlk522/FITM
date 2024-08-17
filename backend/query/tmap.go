@@ -82,7 +82,7 @@ func NewTmapSubmitted(login_name string) *TmapSubmitted {
 const SUBMITTED_FROM = ` FROM Links
 JOIN
 	(
-	SELECT categories as cats, link_id as tag_link_id
+	SELECT cats, link_id as tag_link_id
 	FROM Tags
 	WHERE submitted_by = 'LOGIN_NAME'
 	)
@@ -175,7 +175,7 @@ JOIN
 ON copy_link_id = link_id
 LEFT JOIN
 	(
-	SELECT categories as user_cats, categories IS NOT NULL as cats_from_user, link_id as tag_link_id
+	SELECT cats as user_cats, cats IS NOT NULL as cats_from_user, link_id as tag_link_id
 	FROM Tags
 	WHERE submitted_by = 'LOGIN_NAME'
 	)

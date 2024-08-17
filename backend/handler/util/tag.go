@@ -45,7 +45,7 @@ func GetUserTagForLink(login_name string, link_id string) (*model.Tag, error) {
 	var id, cats, last_updated sql.NullString
 
 	err := db.Client.
-		QueryRow("SELECT id, categories, last_updated FROM 'Tags' WHERE submitted_by = ? AND link_id = ?;", login_name, link_id).
+		QueryRow("SELECT id, cats, last_updated FROM 'Tags' WHERE submitted_by = ? AND link_id = ?;", login_name, link_id).
 		Scan(&id, &cats, &last_updated)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -137,16 +137,6 @@ func UserHasTaggedLink(login_name string, link_id string) (bool, error) {
 
 	return true, nil
 
-}
-
-func AssignNewTagIDToRequest(res sql.Result, request *model.NewTagRequest) error {
-	id, err := res.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	request.ID = id
-	return nil
 }
 
 

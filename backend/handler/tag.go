@@ -120,9 +120,9 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	tag_data.Categories = strings.ToLower(tag_data.Categories)
-	res, err := db.Client.Exec(
+	_, err = db.Client.Exec(
 		"INSERT INTO Tags VALUES(?,?,?,?,?);", 
-		nil, 
+		tag_data.ID, 
 		tag_data.LinkID, 
 		tag_data.Categories, 
 		req_login_name, 
@@ -134,11 +134,6 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = util.CalculateAndSetGlobalCats(tag_data.LinkID); err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
-	if err := util.AssignNewTagIDToRequest(res, tag_data); err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
@@ -169,7 +164,7 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 
 	_, err = db.Client.Exec(
 		`UPDATE Tags 
-		SET categories = ?, last_updated = ? 
+		SET cats = ?, last_updated = ? 
 		WHERE id = ?;`, 
 		edit_tag_data.Categories, 
 		edit_tag_data.LastUpdated, 

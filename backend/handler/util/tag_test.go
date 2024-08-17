@@ -70,7 +70,7 @@ func TestGetUserTagForLink(t *testing.T) {
 	var id, cats string
 
 	err = TestClient.QueryRow(`
-		SELECT id, categories 
+		SELECT id, cats 
 		FROM Tags 
 		WHERE submitted_by = ?
 		AND link_id = ?;`, 
@@ -325,8 +325,6 @@ func TestUserHasTaggedLink(t *testing.T) {
 		}
 	}
 }
-
-// AssignNewTagIDToRequest() is simple, no point in testing 
 
 // Edit tag
 func TestUserSubmittedTagWithID(t *testing.T) {

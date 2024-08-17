@@ -28,7 +28,6 @@
     -Links
     -Link Likes
     -Link Copies
-    -Tags
     -Users
 -Tests
     -finish handlers
@@ -51,6 +50,7 @@
     -Use only ints for IDs except in final sql stmnt. format
         (forces correct args order when calling funcs with, e.g., login_name and link_id or login_name and user_id)
     -use net/url Parse() etc.
+    -Move backend validation to /model unless using additional controller logic, e.g., JWT
 ## To-Maybe-Dos
 
 -Better way to visualize how Global Cats are determined
@@ -72,6 +72,7 @@
     -might not happen actually? would require many different cats which is not super likely i would not imagine
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
+    -Edit about causes large layout shift / squishing
 
 ## Why?
 
