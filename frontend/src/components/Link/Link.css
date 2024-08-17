@@ -22,9 +22,9 @@ astro-island:first-of-type li.link {
 	font-size: 0.9rem;
 	word-wrap: break-word;
 }
-h3.url-anchor {
-	display: inline-block;
-	vertical-align: top;
+a.url-anchor {
+	display: block;
+	width: fit-content;
 }
 .summaries a:not(:visited),
 .summaries a:visited,

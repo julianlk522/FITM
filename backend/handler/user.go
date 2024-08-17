@@ -62,6 +62,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	render.Status(r, http.StatusCreated)
 	util.RenderJWT(token, w, r)
 }
 
@@ -88,6 +89,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	render.Status(r, http.StatusOK)
 	util.RenderJWT(token, w, r)
 }
 

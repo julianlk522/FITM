@@ -16,7 +16,7 @@ if (!link_id) {
 	return Astro.redirect('/404')
 }
 
-// Get summaries
+// Get summaries + link
 const summaries_url = SUMMARIES_ENDPOINT + `/${link_id}`
 const get_summaries_resp = await (token
 	? fetch(summaries_url, {
@@ -30,6 +30,26 @@ if (get_summaries_resp.status > 399) {
 }
 let summary_data: SummaryPage = await get_summaries_resp.json()
 const { Link: link, Summaries: summaries } = summary_data
+
+// put Auto Summary last unless it has highest like count
+let hlc = 0
+let is_tie = false
+for (let i = 0; i < summaries.length; i++) {
+	if (summaries[i].LikeCount > hlc) {
+		hlc = summaries[i].LikeCount
+		is_tie = false
+	} else {
+		is_tie = true
+	}
+}
+
+for (let j = 0; j < summaries.length; j++) {
+	if ((summaries[j].SubmittedBy === 'Auto Summary' && summaries[j].LikeCount !== hlc) || is_tie) {
+		summaries.push(summaries.splice(j, 1)[0])
+		console.log('meat')
+		break
+	}
+}
 ---
 
 <Layout Title=`Summaries for ${link.Summary}`>
