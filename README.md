@@ -4,7 +4,6 @@
 
 ### Features
 
--Prevent repeat cats in same tag
 -Jump from filtered tmap to global map with same filters
 -Show global tag on tag page
 -Reveal only first ~200 chars of profile about if length exceeds that
@@ -22,12 +21,10 @@
     -'Add to Favorites' button on other user's tmap
     -'Favorites' link on tmap
     -{user}'s favorite tmaps page
--Fix broken auto og:image
-    -e.g., coolers.co image should not have been added
 
 ### Code Quality
 
--Replace SQL row IDs with UUID
+-Replace SQL Table PKs with UUID
     -Links
     -Link Likes
     -Link Copies
@@ -37,6 +34,7 @@
     -finish handlers
     -handler utils
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
+    -model utils
 -Update JWT to use actual secret
 -Enforce consistent names
     -Cats vs. Categories vs. Tag Categories
@@ -66,6 +64,8 @@
     -sqlite3 backend/db/oitm.db < _oitm_backup.bak
     -sqlite3 my_database .dump | gzip -c > my_database.dump.gz
     zcat my_database.dump.gz | sqlite3 my_database
+-Look into broken auto og:image
+    -e.g., coolers.co image should not have been added with invalid link
 -Better logging?
     (Zap)
 -Way to prevent many tags from flooding global tag

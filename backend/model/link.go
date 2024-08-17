@@ -82,8 +82,10 @@ func (l *NewLinkRequest) Bind(r *http.Request) error {
 		return e.ErrNoTagCats
 	} else if util.HasTooLongCats(l.NewLink.Categories) {
 		return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
-	} else if util.IsTooManyCats(l.NewLink.Categories) {
+	} else if util.HasTooManyCats(l.NewLink.Categories) {
 		return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
+	} else if util.HasDuplicateCats(l.NewLink.Categories) {
+		return e.ErrDuplicateCats
 	}
 
 	if len(l.NewLink.Summary) > util.SUMMARY_CHAR_LIMIT {

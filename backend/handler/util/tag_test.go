@@ -432,7 +432,6 @@ func TestCalculateAndSetGlobalCats(t *testing.T) {
 // AlphabetizeOverlapScoreCats() is simple usage of slices.Sort()
 // no point in testing
 
-// TODO: retest once in-memory DB has suitable test data
 func TestSetGlobalCats(t *testing.T) {
 	var test_link_id = "11"
 

@@ -71,8 +71,10 @@ func (t *NewTagRequest) Bind(r *http.Request) error {
 		return e.ErrNoCats
 	} else if util.HasTooLongCats(t.NewTag.Categories) {
 		return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
-	} else if util.IsTooManyCats(t.NewTag.Categories) {
+	} else if util.HasTooManyCats(t.NewTag.Categories) {
 		return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
+	} else if util.HasDuplicateCats(t.NewTag.Categories) {
+		return e.ErrDuplicateCats
 	}
 
 	t.LastUpdated = util.NEW_TIMESTAMP
@@ -92,6 +94,12 @@ func (et *EditTagRequest) Bind(r *http.Request) error {
 	}
 	if et.Categories == "" {
 		return e.ErrNoTagCats
+	} else if util.HasTooLongCats(et.Categories) {
+		return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
+	} else if util.HasTooManyCats(et.Categories) {
+		return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
+	} else if util.HasDuplicateCats(et.Categories) {
+		return e.ErrDuplicateCats
 	}
 
 	et.LastUpdated = util.NEW_TIMESTAMP
