@@ -4,18 +4,14 @@
 
 ### Features
 
--Favorite tmaps
-    -add favorites col to users table
-    -'Add to Favorites' button on other user's tmap
-    -'Favorites' link on tmap
-    -{user}'s favorite tmaps page
--Show global tag on tag page
--Jump from filtered tmap to global map with same filters
 -Summaries query row limit
+-Prevent repeat cats in same tag
+-Jump from filtered tmap to global map with same filters
 -Fix Summaries.text UNIQUE constraint
--Fix broken auto og:image
-    -e.g., coolers.co image should not have been added
+-Show global tag on tag page
 -Reveal only first ~200 chars of profile about if length exceeds that
+-Rethink CalculateGlobalCategories algo
+    -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
@@ -23,17 +19,21 @@
         -Subcategories
     -Global Categories
     -Global Subcategories
--Rethink CalculateGlobalCategories algo
-    -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
+-Favorite tmaps
+    -add favorites col to users table
+    -'Add to Favorites' button on other user's tmap
+    -'Favorites' link on tmap
+    -{user}'s favorite tmaps page
+-Fix broken auto og:image
+    -e.g., coolers.co image should not have been added
 
 ### Code Quality
 
 -Replace tag / summary ids with UUID
 -Tests
+    -handlers
     -handler utils
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
-    -more thorough coverage of query results
-    -prevent repeat cats in same tag
 -Update JWT to use actual secret
 -Enforce consistent names
     -Cats vs. Categories vs. Tag Categories
@@ -58,20 +58,15 @@
     -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads
 -Search for existing tag cats while adding/editing
     -Fuzzysort?
--Rebrand subcategories as category overlaps since that is a bit more accurate
+-Properly backup DB
+    -sqlite3 my_database .dump | gzip -c > my_database.dump.gz
+    zcat my_database.dump.gz | sqlite3 my_database
 -Better logging?
     (Zap)
 -Way to prevent many tags from flooding global tag
     -might not happen actually? would require many different cats which is not super likely i would not imagine
--Separate tag categories into distinct rows in Tags table
-    -(Simplifies add/delete and maybe global category calculations, but might not be necessary at this point?)
-    -would help optimize GetTopTagCategories / GetTopTagCategoriesByPeriod handlers since queries could all be done in sql (as of now requires splitting global_cats field in Go)
-        -Scanning all rows, splitting all row cats in Go, then summing cat counts manually might be pretty expensive if there are a lot of rows...
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
--Properly backup DB
-    -sqlite3 my_database .dump | gzip -c > my_database.dump.gz
-    zcat my_database.dump.gz | sqlite3 my_database
 
 ## Why?
 
