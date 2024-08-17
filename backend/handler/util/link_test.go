@@ -132,7 +132,7 @@ func TestURLAlreadyAdded(t *testing.T) {
 		URL string
 		Added bool
 	}{
-		{"https://www.google.com", true},
+		{"https://stackoverflow.co/", true},
 		{"https://www.ronjarzombek.com", true},
 		{"https://somethingnotonfitm", false},
 		{"jimminy jillickers", false},

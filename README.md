@@ -28,7 +28,6 @@
     -Links
     -Link Likes
     -Link Copies
-    -Users
 -Tests
     -finish handlers
     -handler utils
@@ -51,6 +50,7 @@
         (forces correct args order when calling funcs with, e.g., login_name and link_id or login_name and user_id)
     -use net/url Parse() etc.
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
+    -helpers for new user / new tag / etc.
 ## To-Maybe-Dos
 
 -Better way to visualize how Global Cats are determined

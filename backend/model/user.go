@@ -5,6 +5,8 @@ import (
 
 	e "oitm/error"
 	util "oitm/model/util"
+
+	"github.com/google/uuid"
 )
 
 // AUTH
@@ -14,6 +16,7 @@ type Auth struct {
 }
 type SignUpRequest struct {
 	*Auth
+	ID string
 	CreatedAt string
 }
 
@@ -32,6 +35,7 @@ func (s *SignUpRequest) Bind(r *http.Request) error {
 		return e.PasswordExceedsUpperLimit(util.PASSWORD_UPPER_LIMIT)
 	}
 
+	s.ID = uuid.New().String()
 	s.CreatedAt = util.NEW_TIMESTAMP
 	return nil
 }
