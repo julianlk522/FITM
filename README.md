@@ -4,7 +4,6 @@
 
 ### Features
 
--Put most-liked summary up top
 -Summaries query row limit
 -Prevent repeat cats in same tag
 -Jump from filtered tmap to global map with same filters
