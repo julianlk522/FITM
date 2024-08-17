@@ -1,10 +1,10 @@
 package handler
 
 import (
+	"database/sql"
+	"fmt"
 	"oitm/query"
-	"slices"
 	"strconv"
-	"strings"
 	"testing"
 )
 
@@ -168,62 +168,59 @@ func TestScanTagRankings(t *testing.T) {
 }
 
 // Get top global cats
-func TestScanAndSplitGlobalCats(t *testing.T) {
-	global_cats_sql := query.NewAllGlobalCats()
-	// NewAllGlobalCats already tested in query/tag_test.go
+func TestScanGlobalCatCounts(t *testing.T) {
+	global_cats_sql := query.NewTopGlobalCatCounts()
+	// GlobalCatCounts.Error already tested in query/tag_test.go
 
-	split_global_cats, err := ScanAndSplitGlobalCats(global_cats_sql)
+	counts, err := ScanGlobalCatCounts(global_cats_sql)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var found_cats []string
-	
-	for _, cat := range *split_global_cats {
-
-		// Verify split (no commas)
-		if strings.Contains(cat, ",") {
-			t.Fatalf(
-				"global cat %s contains comma, was not properly split", 
-				cat,
-			)
-
-		// Verify no duplicates
-		} else if slices.Contains(found_cats, cat) {
-			t.Fatalf(
-				"global cat %s was found more than once", 
-				cat,
-			)
-		} else {
-			found_cats = append(found_cats, cat)
-		}
-	}
-}
-
-func TestGetCatCounts(t *testing.T) {
-	counts, err := GetCatCounts(&test_multiple_cats)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Verify result length
 	if len(*counts) == 0 {
-		t.Fatalf("no counts returned")
+		t.Fatal("no counts returned for top global cats")
+	} else if len(*counts) > query.TOP_GLOBAL_CATS_LIMIT {
+		t.Fatalf(
+			"too many counts returned for top global cats (limit %d)", 
+			query.TOP_GLOBAL_CATS_LIMIT,
+		)
 	}
 
-	// Verify correct properties set
-	for i, c := range *counts {
+	// Verify count for top few cats
+	const FEW = 3
+	if len(*counts) > FEW {
+		*counts = (*counts)[0:3]
+	}
+
+	var result_count int32
+
+	for _, c := range *counts {
 		if c.Count == 0 {
 			t.Fatalf("cat %s returned count 0", c.Category)
-		} else if c.Category == "" {
-			t.Fatalf("%s returned empty category", test_multiple_cats[i])
+		}
+		
+		err = TestClient.QueryRow(
+			fmt.Sprintf(
+				`SELECT count(global_cats)
+				FROM Links
+				WHERE ','||global_cats||',' LIKE '%%,'||'%s'||',%%'`, 
+				c.Category,
+			),
+		).Scan(&result_count)
+
+		if err != nil {
+			t.Fatal(err)
+		} else if c.Count != result_count {
+			t.Fatalf(
+				"expected count for cat %s to be %d, got %d",
+				c.Category,
+				c.Count,
+				result_count,
+			)
 		}
 	}
 
-	// SortAndLimitCatCounts already tested in handler/util/subcats_test.go
-}
-
-func TestGetCatCountsDuringPeriod(t *testing.T) {
+	// DURING PERIOD
 	var test_periods = []struct{
 		Period string
 		Valid bool
@@ -236,52 +233,69 @@ func TestGetCatCountsDuringPeriod(t *testing.T) {
 		{"invalid_period", false},
 	}
 
-	var result_counts []struct{
-		Count int32
-		Cat string
-		Period string
-	}
-
 	for _, tp := range test_periods {
-		counts, err := GetCatCountsDuringPeriod(&test_multiple_cats, tp.Period)
-		if tp.Valid && err != nil {
-			t.Fatalf("unexpected error for period %s", tp.Period)
+		global_cats_sql = query.NewTopGlobalCatCounts().DuringPeriod(tp.Period)
+		// GlobalCatCounts.DuringPeriod().Error already tested
+		// in query/tag_test.go with same test cases
+		
+		counts, err := ScanGlobalCatCounts(global_cats_sql)
+		if tp.Valid && err != nil && err != sql.ErrNoRows {
+			t.Fatalf(
+				"unexpected error for period %s: %s", 
+				tp.Period,
+				err,
+			)
 		} else if !tp.Valid && err == nil {
 			t.Fatalf("expected error for period %s", tp.Period)
 		}
 
-		if tp.Valid {
-			for _, c := range *counts {
-				result := struct{
-					Count int32
-					Cat string
-					Period string
-				}{
-					Count: c.Count,
-					Cat: c.Category,
-					Period: tp.Period,
-				}
-				result_counts = append(result_counts, result)
-			}
+		// Verify counts if valid sql 
+		if !tp.Valid {
+			continue
 		}
-	}
-	
-	// Verify that wider periods do not have lower counts
-	// (can be same or more, but never less)
-	for _, cat := range test_multiple_cats {
-		var prev_highest_cat_count int32
 
-		for _, r := range result_counts {
-			if r.Cat == cat && r.Count < prev_highest_cat_count {
+		if len(*counts) > query.TOP_GLOBAL_CATS_LIMIT {
+			t.Fatalf(
+				"too many counts returned for top global cats (limit %d)", 
+				query.TOP_GLOBAL_CATS_LIMIT,
+			)
+
+		// Only top few cats
+		} else if len(*counts) > FEW {
+			*counts = (*counts)[0:3]
+		}
+
+		for _, c := range *counts {
+			if c.Count == 0 {
+				t.Fatalf("cat %s returned count 0", c.Category)
+			}
+
+			period_clause, err := query.GetPeriodClause(tp.Period)
+			if err != nil {
+				t.Fatalf("unable to get period clause: %s", err)
+			}
+
+			err = TestClient.QueryRow(
+				fmt.Sprintf(
+					`SELECT count(global_cats)
+					FROM Links
+					WHERE ','||global_cats||',' LIKE '%%,'||'%s'||',%%'
+					AND %s`, 
+					c.Category,
+					period_clause,
+				),
+			).Scan(&result_count)
+
+			if err != nil {
+				t.Fatal(err)
+			} else if c.Count != result_count {
 				t.Fatalf(
-					"cat %s had lower count (%d) in period %s than previous (%d)", 
-					cat,
-					r.Count, 
-					r.Period,
-					prev_highest_cat_count,
+					"expected count for cat %s to be %d, got %d (period %s)",
+					c.Category,
+					c.Count,
+					result_count,
+					tp.Period,
 				)
-			} else if r.Cat == cat && r.Count > prev_highest_cat_count {
-				prev_highest_cat_count = r.Count
 			}
 		}
 	}

@@ -175,17 +175,17 @@ func TestNewTagRankingsForLink(t *testing.T) {
 
 
 // All Global Cats
-func TestNewAllGlobalCats(t *testing.T) {
-	tags_sql := NewAllGlobalCats()
-	// no opportunity for tags_sql.Error to have been set so no need to check
+func TestNewTopGlobalCatCounts(t *testing.T) {
+	counts_sql := NewTopGlobalCatCounts()
+	// no opportunity for counts_sql.Error to have been set so no need to check
 
-	_, err := TestClient.Query(tags_sql.Text)
+	_, err := TestClient.Query(counts_sql.Text)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func TestNewAllGlobalCatsDuringPeriod(t *testing.T) {
+func TestNewTopGlobalCatCountsDuringPeriod(t *testing.T) {
 	var test_periods = []struct{
 		Period string
 		Valid bool
@@ -199,7 +199,7 @@ func TestNewAllGlobalCatsDuringPeriod(t *testing.T) {
 	}
 
 	for _, tp := range test_periods {
-		tags_sql := NewAllGlobalCats().DuringPeriod(tp.Period)
+		tags_sql := NewTopGlobalCatCounts().DuringPeriod(tp.Period)
 		if tp.Valid && tags_sql.Error != nil {
 			t.Fatalf("unexpected error for period %s", tp.Period)
 		} else if !tp.Valid && tags_sql.Error == nil {

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"fmt"
 	"math"
 	"slices"
 	"strings"
@@ -93,106 +92,34 @@ func ScanTagRankings(tag_rankings_sql *query.TagRankings) (*[]model.TagRankingPu
 
 
 // Get top global cats
-func ScanAndSplitGlobalCats(global_cats_sql *query.GlobalCats) (*[]string, error) {
+func ScanGlobalCatCounts(global_cats_sql *query.GlobalCatCounts) (*[]model.CatCount, error) {
+	if global_cats_sql.Error != nil {
+		return nil, global_cats_sql.Error
+	}
+	
 	rows, err := db.Client.Query(global_cats_sql.Text)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	
-	var categories []string
+	var counts []model.CatCount
 
 	for rows.Next() {
-		var cats_field string
-		err = rows.Scan(&cats_field)
+		var c model.CatCount
+		err = rows.Scan(&c.Category, &c.Count)
 		if err != nil {
 			return nil, err
 		}
-		
-		cats_field = strings.ToLower(cats_field)
-		
-		// Split each row into individual categories if multiple
-		if strings.Contains(cats_field, ",") {
-			split_cats := strings.Split(cats_field, ",")
-
-			for _, cat := range(split_cats) {
-				if !slices.Contains(categories, cat) {
-					categories = append(categories, cat)
-				}
-			}
-
-		// Single row category
-		} else {
-			if !slices.Contains(categories, cats_field) {
-				categories = append(categories, cats_field)
-			}
-		}
+		counts = append(counts, c)
 	}
 
-	return &categories, nil
+	return &counts, nil
 }
 
-func GetCatCounts(categories *[]string) (*[]model.CatCount, error) {
-	num_cats := len(*categories)
-	var category_counts []model.CatCount = make([]model.CatCount, num_cats)
-
-	for i := 0; i < num_cats; i++ {
-		category_counts[i].Category = (*categories)[i]
-
-		cat_count_sql := fmt.Sprintf(`SELECT count(*) as count_with_cat FROM (%s);`, query.NewLinkIDs((*categories)[i]).Text)
-
-		var c sql.NullInt32
-		err := db.Client.QueryRow(cat_count_sql).Scan(&c)
-		if err != nil {
-			return nil, err
-		}
-
-		category_counts[i].Count = c.Int32
-	}
-
-	SortAndLimitCatCounts(&category_counts)
-
-	return &category_counts, nil
-
-}
-
-func GetCatCountsDuringPeriod(categories *[]string, period string) (*[]model.CatCount, error) {
-	num_cats := len(*categories)
-	var category_counts []model.CatCount = make([]model.CatCount, num_cats)
-
-	period_clause, err := query.GetPeriodClause(period)
-	if err != nil {
-		return nil, err
-	}
-
-	for i := 0; i < num_cats; i++ {
-		category_counts[i].Category = (*categories)[i]
-
-		cat_count_sql := fmt.Sprintf(
-			`SELECT count(*) as count_with_cat FROM (%s) WHERE %s;`, 
-			query.NewLinkIDs((*categories)[i]).Text, 
-			period_clause,
-		)
-		cat_count_sql = strings.Replace(cat_count_sql, "SELECT id", "SELECT id, submit_date", 1)
-
-		var c sql.NullInt32
-		err := db.Client.QueryRow(cat_count_sql).Scan(&c)
-		if err != nil {
-			return nil, err
-		}
-
-		category_counts[i].Count = c.Int32
-	}
-
-	SortAndLimitCatCounts(&category_counts)
-
-	return &category_counts, nil
-
-}
-
-func RenderCategoryCounts(category_counts *[]model.CatCount, w http.ResponseWriter, r *http.Request, ) {
+func RenderCatCounts(cat_counts *[]model.CatCount, w http.ResponseWriter, r *http.Request, ) {
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, category_counts)
+	render.JSON(w, r, cat_counts)
 }
 
 

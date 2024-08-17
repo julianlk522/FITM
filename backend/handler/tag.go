@@ -73,11 +73,10 @@ func GetTagPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {	
-	global_cats_sql := query.NewAllGlobalCats()
+	global_cats_sql := query.NewTopGlobalCatCounts()
 
 	period_params := r.URL.Query().Get("period")
-	has_period := period_params != ""
-	if has_period {
+	if period_params != "" {
 		global_cats_sql = global_cats_sql.DuringPeriod(period_params)
 	}
 
@@ -86,24 +85,12 @@ func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cats, err := util.ScanAndSplitGlobalCats(global_cats_sql)
+	counts, err := util.ScanGlobalCatCounts(global_cats_sql)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
-
-	var counts *[]model.CatCount
-	if has_period {
-		counts, err = util.GetCatCountsDuringPeriod(cats, period_params)
-	} else {
-		counts, err = util.GetCatCounts(cats)
-	}
-
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-	util.RenderCategoryCounts(counts, w, r)
+	util.RenderCatCounts(counts, w, r)
 }
 
 func AddTag(w http.ResponseWriter, r *http.Request) {

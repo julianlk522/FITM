@@ -8,6 +8,7 @@ import (
 const (
 	TAGS_PAGE_LIMIT = 20
 	TOP_OVERLAP_SCORES_LIMIT int = 20
+	TOP_GLOBAL_CATS_LIMIT int = 15
 )
 
 // Tags Page link
@@ -158,27 +159,63 @@ func (t *TagRankings) _FromLink(link_id string) *TagRankings {
 }
 
 
-// All Global Cats
-type GlobalCats struct {
+// Global Cat Counts
+type GlobalCatCounts struct {
 	Query
 }
 
-const GLOBAL_CATS_BASE = `SELECT global_cats
+const GLOBAL_CAT_COUNTS_BASE = `WITH RECURSIVE split(id, global_cats, str) AS 
+	(
+	SELECT id, '', global_cats||',' 
 	FROM Links
-	WHERE global_cats != ""`
+	UNION ALL SELECT
+	id,
+	substr(str, 0, instr(str, ',')),
+	substr(str, instr(str, ',') + 1)
+	FROM split
+	WHERE str != ''
+	)
+SELECT global_cats, count(global_cats) as count
+FROM split
+WHERE global_cats != ''
+GROUP BY global_cats
+ORDER BY count DESC, global_cats ASC;`
 
-func NewAllGlobalCats() *GlobalCats {
-	return &GlobalCats{Query: Query{Text: GLOBAL_CATS_BASE}}
+func NewTopGlobalCatCounts() *GlobalCatCounts {
+	return (&GlobalCatCounts{Query: Query{Text: GLOBAL_CAT_COUNTS_BASE}})._Limit(TOP_GLOBAL_CATS_LIMIT)
 }
 
-func (t *GlobalCats) DuringPeriod(period string) *GlobalCats {
+func (t *GlobalCatCounts) DuringPeriod(period string) *GlobalCatCounts {
 	clause, err := GetPeriodClause(period)
 	if err != nil {
 		t.Error = err
 		return t
 	}
 
-	t.Text += fmt.Sprintf(` AND %s;`, clause)
+	t.Text = strings.Replace(
+		t.Text,
+		"FROM Links",
+		fmt.Sprintf(
+			`FROM Links
+			WHERE %s`,
+			clause,
+		),
+	1)
+
+	return t
+}
+
+func (t *GlobalCatCounts) _Limit(limit int) *GlobalCatCounts {
+
+	t.Text = strings.Replace(
+		t.Text,
+		";",
+		fmt.Sprintf(
+			`
+LIMIT %d;`,
+			limit,
+		),
+	1)
 
 	return t
 }

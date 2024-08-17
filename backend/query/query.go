@@ -10,6 +10,8 @@ type Query struct {
 	Error error
 }
 
+// TODO: potentially switch to this more readable syntax:
+// WHERE last_updated >= date('now', '-30 days')
 func GetPeriodClause(period string) (clause string, err error) {
 	var days int
 	switch period {
