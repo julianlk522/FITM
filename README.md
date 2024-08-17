@@ -24,10 +24,6 @@
 
 ### Code Quality
 
--Replace SQL Table PKs with UUID
-    -Links
-    -Link Likes
-    -Link Copies
 -Tests
     -finish handlers
     -handler utils
@@ -51,6 +47,8 @@
     -use net/url Parse() etc.
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
     -helpers for new user / new tag / etc.
+    -finish moving error messages to errors.go
+        -e.g. like/unlike/copy/uncopy link
 ## To-Maybe-Dos
 
 -Better way to visualize how Global Cats are determined

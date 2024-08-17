@@ -251,7 +251,8 @@ func TestAssignMetadata(t *testing.T) {
 	}
 }
 
-// IsRedirect, AssignSortedCategories, AssignNewLinkID all pretty simple, don't really need tests
+// IsRedirect / AssignSortedCategories are pretty simple
+// don't really need tests
 
 // Like / unlike link
 func TestUserSubmittedLink(t *testing.T) {

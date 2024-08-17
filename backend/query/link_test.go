@@ -106,8 +106,8 @@ func TestFromIDs(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if l.ID != 1 && l.ID != 2 && l.ID != 3 {
-			t.Fatalf("got %d, want 1, 2, or 3", l.ID)
+		if l.ID != "1" && l.ID != "2" && l.ID != "3" {
+			t.Fatalf("got %s, want 1, 2, or 3", l.ID)
 		}
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"oitm/query"
-	"strconv"
 	"testing"
 )
 
@@ -18,11 +17,10 @@ func TestScanTagPageLink(t *testing.T) {
 	}
 
 	// Verify link ID
-	var link_id_str = strconv.FormatInt(link.ID, 10)
-	if link_id_str != test_link_id {
+	if link.ID != test_link_id {
 		t.Fatalf(
 			"got link ID %s, want %s", 
-			link_id_str, 
+			link.ID, 
 			test_link_id,
 		)
 	}

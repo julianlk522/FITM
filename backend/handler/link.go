@@ -158,9 +158,9 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	util.AssignSortedCategories(unsorted_cats, request)
 	
 	// Insert link
-	res, err := db.Client.Exec(
+	_, err = db.Client.Exec(
 		"INSERT INTO Links VALUES(?,?,?,?,?,?,?);", 
-		nil, 
+		request.ID, 
 		request.URL, 
 		req_login_name, 
 		request.SubmitDate, 
@@ -172,11 +172,6 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
-	
-	if err := util.AssignNewLinkID(res, request); err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
 
 	// Insert Summary(ies)
 	// (might have user-submitted, Auto Summary, or both)
@@ -185,7 +180,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		// TODO: add constant, replace magic 15
 		_, err = db.Client.Exec(
 			"INSERT INTO Summaries VALUES(?,?,?,?,?);", 
-			nil, 
+			uuid.New().String(), 
 			request.AutoSummary, 
 			request.ID, 
 			"15", 
@@ -204,7 +199,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	if request.NewLink.Summary != "" {
 		_, err = db.Client.Exec(
 			"INSERT INTO Summaries VALUES(?,?,?,?,?);", 
-			nil, 
+			uuid.New().String(), 
 			request.NewLink.Summary, 
 			request.ID, 
 			req_user_id, 
@@ -267,18 +262,19 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := db.Client.Exec("INSERT INTO 'Link Likes' VALUES(?,?,?);", nil, req_user_id, link_id)
+	new_like_id := uuid.New().String()
+	_, err := db.Client.Exec(
+		"INSERT INTO 'Link Likes' VALUES(?,?,?);", 
+		new_like_id, 
+		link_id,
+		req_user_id, 
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var id int64
-	if id, err = res.LastInsertId(); err != nil {
-		log.Fatal(err)
-	}
-
-	like_link_data := make(map[string]int64, 1)
-	like_link_data["ID"] = id
+	like_link_data := make(map[string]string, 1)
+	like_link_data["ID"] = new_like_id
 	
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, like_link_data)
@@ -297,7 +293,11 @@ func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := db.Client.Exec("DELETE FROM 'Link Likes' WHERE user_id = ? AND link_id = ?;", req_user_id, link_id)
+	_, err := db.Client.Exec(
+		"DELETE FROM 'Link Likes' WHERE link_id = ? AND user_id = ?;",
+		link_id,
+		req_user_id, 
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -327,18 +327,20 @@ func CopyLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := db.Client.Exec("INSERT INTO 'Link Copies' VALUES(?,?,?);", nil, link_id, req_user_id)
+	new_copy_id := uuid.New().String()
+
+	_, err := db.Client.Exec(
+		"INSERT INTO 'Link Copies' VALUES(?,?,?);", 
+		new_copy_id, 
+		link_id, 
+		req_user_id,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var id int64
-	if id, err = res.LastInsertId(); err != nil {
-		log.Fatal(err)
-	}
-
-	return_json := map[string]int64{
-		"ID": id,
+	return_json := map[string]string{
+		"ID": new_copy_id,
 	}
 
 	render.Status(r, http.StatusOK)
@@ -360,7 +362,11 @@ func UncopyLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Delete
-	_, err := db.Client.Exec("DELETE FROM 'Link Copies' WHERE user_id = ? AND link_id = ?;", req_user_id, link_id)
+	_, err := db.Client.Exec(
+		"DELETE FROM 'Link Copies' WHERE link_id = ? AND user_id = ?;",
+		link_id,
+		req_user_id, 
+	)
 	if err != nil {
 		log.Fatal(err)
 	}

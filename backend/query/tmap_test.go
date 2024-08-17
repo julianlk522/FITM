@@ -38,7 +38,7 @@ func TestNewTmapProfile(t *testing.T) {
 func TestNewTmapSubmitted(t *testing.T) {
 
 	// first retrieve all IDs of links submitted by user
-	var submitted_ids []int64
+	var submitted_ids []string
 
 	submitted_ids_sql := fmt.Sprintf(
 		`SELECT id FROM Links WHERE submitted_by = '%s'`, 
@@ -52,7 +52,7 @@ func TestNewTmapSubmitted(t *testing.T) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var id int64
+		var id string
 		if err := rows.Scan(&id); err != nil {
 			t.Fatal(err)
 		}
@@ -221,7 +221,7 @@ func TestNewTmapCopied(t *testing.T) {
 		err := TestClient.QueryRow(
 			fmt.Sprintf(`SELECT id
 				FROM 'Link Copies'
-				WHERE link_id = %d
+				WHERE link_id = %s
 				AND user_id = %s`, 
 			l.ID, 
 			test_user_id),
@@ -272,7 +272,7 @@ func TestNewTmapCopiedFromCategories(t *testing.T) {
 		err := TestClient.QueryRow(
 			fmt.Sprintf(`SELECT id
 				FROM 'Link Copies'
-				WHERE link_id = %d
+				WHERE link_id = %s
 				AND user_id = %s`, 
 			l.ID, 
 			test_user_id),
@@ -360,7 +360,7 @@ func TestNewTmapTagged(t *testing.T) {
 		err := TestClient.QueryRow(
 			fmt.Sprintf(`SELECT id
 				FROM Tags
-				WHERE link_id = %d
+				WHERE link_id = %s
 				AND submitted_by = '%s'`, 
 			l.ID, 
 			test_login_name),
@@ -411,7 +411,7 @@ func TestNewTmapTaggedFromCategories(t *testing.T) {
 		err := TestClient.QueryRow(
 			fmt.Sprintf(`SELECT id
 				FROM Tags
-				WHERE link_id = %d
+				WHERE link_id = %s
 				AND submitted_by = %s`, 
 			l.ID, 
 			test_login_name),

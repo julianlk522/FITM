@@ -95,17 +95,17 @@ func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks,
 					`SELECT
 					(
 						SELECT count(*) FROM 'Link Likes'
-						WHERE link_id = '%[1]d' AND user_id = '%[2]s'
+						WHERE link_id = '%[1]s' AND user_id = '%[2]s'
 					) as is_liked,
 					(
 						SELECT count(*) FROM Tags
 						JOIN Users
 						ON Users.login_name = Tags.submitted_by
-						WHERE link_id = '%[1]d' AND Users.id = '%[2]s'
+						WHERE link_id = '%[1]s' AND Users.id = '%[2]s'
 					) AS is_tagged,
 					(
 						SELECT count(*) FROM 'Link Copies'
-						WHERE link_id = '%[1]d' AND user_id = '%[2]s'
+						WHERE link_id = '%[1]s' AND user_id = '%[2]s'
 					) as is_copied;`, 
 					i.ID, 
 					req_user_id,
@@ -262,16 +262,6 @@ func AssignSortedCategories(unsorted_cats string, link *model.NewLinkRequest) {
 	slices.Sort(split_categories)
 
 	link.Categories = strings.Join(split_categories, ",")
-}
-
-func AssignNewLinkID(res sql.Result, request *model.NewLinkRequest) error {
-	id, err := res.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	request.ID = id
-	return nil
 }
 
 

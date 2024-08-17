@@ -1,7 +1,6 @@
 package query
 
 import (
-	"strconv"
 	"strings"
 	"testing"
 
@@ -77,14 +76,9 @@ func Test_SummaryPageLinkFromID(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	
-	id_64, err := strconv.ParseInt(test_link_id, 10, 64)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	if l.ID != id_64 {
-		t.Fatalf("got %d, want %d", l.ID, id_64)
+	if l.ID != test_link_id {
+		t.Fatalf("got %s, want %s", l.ID, test_link_id)
 	}
 }
 

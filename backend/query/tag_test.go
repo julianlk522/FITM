@@ -2,7 +2,6 @@ package query
 
 import (
 	"database/sql"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -35,9 +34,8 @@ func TestNewTagPageLink(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	link_id_str := strconv.FormatInt(l.ID, 10)
-	if link_id_str != test_link_id {
-		t.Fatalf("got %d, want %s", l.ID, test_link_id)
+	if l.ID != test_link_id {
+		t.Fatalf("got %s, want %s", l.ID, test_link_id)
 	}
 }
 

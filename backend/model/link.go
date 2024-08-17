@@ -5,10 +5,12 @@ import (
 	e "oitm/error"
 
 	util "oitm/model/util"
+
+	"github.com/google/uuid"
 )
 
 type Link struct {
-	ID int64
+	ID string
 	URL string
 	SubmittedBy string
 	SubmitDate string
@@ -58,14 +60,14 @@ type NewLink struct {
 
 type NewLinkRequest struct {
 	*NewLink
+	ID string
 	SubmitDate string
 	LikeCount int64
 	
 	// to be assigned by handler
-	ID int64
 	URL string // potentially modified after test request(s)
 	SubmittedBy string
-	Categories string // used after sort
+	Categories string // potentially modified after sort
 	AutoSummary string
 	SummaryCount int
 	ImgURL string
@@ -92,6 +94,7 @@ func (l *NewLinkRequest) Bind(r *http.Request) error {
 		return e.SummaryLengthExceedsLimit(util.SUMMARY_CHAR_LIMIT)
 	}
 
+	l.ID = uuid.New().String()
 	l.SubmitDate = util.NEW_TIMESTAMP
 	l.LikeCount = 0
 
