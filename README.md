@@ -4,7 +4,6 @@
 
 ### Features
 
--Recalculate global cats button
 -Reveal only first ~200 chars of profile about if length exceeds that
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...

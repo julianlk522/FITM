@@ -32,6 +32,9 @@ func GetTagPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// refresh global cats before querying
+	util.CalculateAndSetGlobalCats(link_id)
+
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	link_sql := query.NewTagPageLink(link_id, req_user_id)
 	if link_sql.Error != nil {
