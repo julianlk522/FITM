@@ -54,7 +54,7 @@ func RenderSubcategories(subcats []string, categories []string, w http.ResponseW
 		return
 	}
 
-	SortAndLimitCatCounts(with_counts)
+	SortAndLimitCatCounts(with_counts, CATEGORY_PAGE_LIMIT)
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, with_counts)
@@ -79,10 +79,10 @@ func GetCountsOfSubcatsFromCats(subcats []string, cats []string) (*[]model.CatCo
 	return &subcat_counts, nil
 }
 
-func SortAndLimitCatCounts(cat_counts *[]model.CatCount) {
+func SortAndLimitCatCounts(cat_counts *[]model.CatCount, limit int) {
 	slices.SortFunc(*cat_counts, model.SortCategories)
 
-	if len(*cat_counts) > CATEGORY_PAGE_LIMIT {
-		*cat_counts = (*cat_counts)[:CATEGORY_PAGE_LIMIT]
+	if len(*cat_counts) > limit {
+		*cat_counts = (*cat_counts)[:limit]
 	}
 }

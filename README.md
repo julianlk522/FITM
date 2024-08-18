@@ -5,6 +5,9 @@
 ### Features
 
 -Reveal only first ~200 chars of profile about if length exceeds that
+    -\<details\> element
+-Rate limit users
+-Update profile created to Month-Day-Year format (omit hours / minutes)
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 -Pagination
@@ -14,13 +17,6 @@
         -Subcategories
     -Global Categories
     -Global Subcategories
--Favorite tmaps
-    -add favorites col to users table
-    -'Add to Favorites' button on other user's tmap
-    -'Favorites' link on tmap
-    -{user}'s favorite tmaps page
--Tmap period filter
--Rate limit users
 
 ### Code Quality
 
@@ -51,6 +47,7 @@
         -e.g. like/unlike/copy/uncopy link
 ## To-Maybe-Dos
 
+-Tmap period filter
 -Better way to visualize how Global Cats are determined
 -Show number of copies along with number of likes in frontend
 -Edit category filters directly on top links by period/category(ies) page
@@ -62,6 +59,11 @@
     -sqlite3 backend/db/oitm.db < _oitm_backup.bak
     -sqlite3 my_database .dump | gzip -c > my_database.dump.gz
     zcat my_database.dump.gz | sqlite3 my_database
+-Favorite tmaps
+    -add favorites col to users table
+    -'Add to Favorites' button on other user's tmap
+    -'Favorites' link on tmap
+    -{user}'s favorite tmaps page
 -Look into broken auto og:image
     -e.g., coolers.co image should not have been added with invalid link
 -Better logging?

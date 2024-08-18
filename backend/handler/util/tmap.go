@@ -13,6 +13,8 @@ import (
 	"strings"
 )
 
+const TMAP_CATS_PAGE_LIMIT int = 12
+
 // Get treasure map
 func UserExists(login_name string) (bool, error) {
 	var u sql.NullString
@@ -236,7 +238,7 @@ func GetTmapCatCounts[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, omi
 		}
 	}
 
-	SortAndLimitCatCounts(&counts)
+	SortAndLimitCatCounts(&counts, 12)
 
 	return &counts
 }

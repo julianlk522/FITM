@@ -68,7 +68,7 @@ func TestSortAndLimitCatCounts(t *testing.T) {
 		{Category: "octopus", Count: 1000},
 	}
 
-	SortAndLimitCatCounts(&test_cat_counts)
+	SortAndLimitCatCounts(&test_cat_counts, CATEGORY_PAGE_LIMIT)
 
 	if len(test_cat_counts) > CATEGORY_PAGE_LIMIT {
 		t.Fatalf(
