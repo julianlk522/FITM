@@ -56,15 +56,27 @@ if (tmap_resp.status > 399) {
 }
 tmap = await tmap_resp.json()
 
+// Get used sections
+const used_sections = tmap_sections.filter((s) => tmap[s].length)
+if (!used_sections.length) {
+	return Astro.redirect(`/404`)
+}
+
 // Attempt PFP fetch, display about/pfp if they are used
+// (unfiltered only)
+if (categories) {
+	return
+}
 let profile: Profile | undefined
 let display_about = false
+let abbreviated_about: string | undefined
 let display_profile = false
 
 if (tmap.hasOwnProperty('Profile')) {
 	profile = (tmap as TreasureMap).Profile
 
 	const has_about = profile.About !== undefined && profile.About.length > 0
+	abbreviated_about = profile.About.length > 200 ? `${profile.About.slice(0, 200)}...` : undefined
 	display_about = (profile !== undefined && has_about) || is_signed_in_user
 
 	const get_pfp_url = GET_PFP_ENDPOINT + `/${profile.PFP}`
@@ -73,12 +85,6 @@ if (tmap.hasOwnProperty('Profile')) {
 	})
 	const found_pfp = found_pfp_resp.status < 400
 	display_profile = profile !== undefined && (found_pfp || has_about)
-}
-
-// Get used sections
-const used_sections = tmap_sections.filter((s) => tmap[s].length)
-if (!used_sections.length) {
-	return Astro.redirect(`/404`)
 }
 
 ---
@@ -90,6 +96,41 @@ if (!used_sections.length) {
 			{profile ? `created: ${format_date(profile.Created)}` : '(Filtered)'}
 		</h2>
 
+		<!-- Profile  -->
+		 {profile && display_profile ? (
+			<section id="profile">
+				<ProfilePic 
+					client:load
+					LoginName={login_name} 
+					PFP={profile.PFP} SignedInUser={user} 
+					Token={token} 
+				/>
+
+				{
+					display_about ? 
+						is_signed_in_user ? 
+							<EditAbout
+							client:load 
+							token={token} 
+							initial={profile.About}
+						 />
+						: abbreviated_about 
+							?  <details>
+								<summary>
+									<p>{abbreviated_about}</p>
+								</summary>
+								<p>{profile.About}</p>
+							</details> 
+							: <p>{profile.About}</p>
+					: null
+				}
+			</section>
+		)
+		: null}
+			
+		
+
+		<!-- Category Filter -->
 		{categories ? <section id='cat-filter' class="flex">
 			<div>
 				<h2>Cat Filter</h2>
@@ -123,67 +164,41 @@ if (!used_sections.length) {
 			</ul>
 		</section> : null}
 
-		<div id="profile-overview-flex-container">
-			{profile && display_profile ? 
-			<section id="profile">
-				<ProfilePic
-						client:load
-						PFP={profile && profile.PFP ? profile.PFP : undefined}
-						LoginName={login_name}
-						SignedInUser={user}
-						Token={token}
-				/>
+		<section id='overview' class='flex'>
+			<div>
+				<h2>{categories ? 'Top Subcats' : 'Top Cats'}</h2>
 				{
-					display_about ? (
-						is_signed_in_user ? (
-							<EditAbout
-								client:load
-								token={token}
-								initial={profile.About}
-							/>
-						) : (
-							<figcaption id='about'>about: {profile.About}</figcaption>
-						)
-					) : null
-				}
-			</section> : null}
-		
-			<section id='overview' class='flex'>
-				<div>
-					<h2>{categories ? 'Top Subcats' : 'Top Cats'}</h2>
-					{
-						tmap.Categories.length ? (
-							<ol id="top-cats">
-								{tmap.Categories.map((cat) => (
-									<li>
-										<a
-											href={categories ? `/map/${login_name}?cats=${categories},${cat.Category}` : `/map/${login_name}?cats=${cat.Category}`}
-										>
-											{cat.Category}
-										</a>
-										<span>({cat.Count})</span>
-									</li>
-								))}
-							</ol>
-						) : (
-							<p>No further subcategories.</p>
-						)
-					}
-				</div>
-				<div>
-					<h2>Skip to Section</h2>
-					<ul id='skip-to-link-section'>
-						{
-							used_sections.map((s) => (
+					tmap.Categories.length ? (
+						<ol id="top-cats">
+							{tmap.Categories.map((cat) => (
 								<li>
-									<a href={`#${s}`}>{s}</a>
+									<a
+										href={categories ? `/map/${login_name}?cats=${categories},${cat.Category}` : `/map/${login_name}?cats=${cat.Category}`}
+									>
+										{cat.Category}
+									</a>
+									<span>({cat.Count})</span>
 								</li>
-							))
-						}
-					</ul>
-				</div>
-			</section>
-		</div>
+							))}
+						</ol>
+					) : (
+						<p>No further subcategories.</p>
+					)
+				}
+			</div>
+			<div>
+				<h2>Skip to Section</h2>
+				<ul id='skip-to-link-section'>
+					{
+						used_sections.map((s) => (
+							<li>
+								<a href={`#${s}`}>{s}</a>
+							</li>
+						))
+					}
+				</ul>
+			</div>
+		</section>
 
 		{
 			used_sections.map((s) => {
@@ -232,38 +247,41 @@ if (!used_sections.length) {
 </Layout>
 
 <style>
+	.flex {
+		display: flex;
+	}
+	
 	h1,
 	h2 {
 		text-align: left;
 	}
-	#transfer-to-global-map,
-	#reset-cat-filter {
-		margin: 0;
-	}
-	#cats-grid {
-		display: flex;
-		flex-wrap: wrap;
-		align-content: flex-start;
-		padding-inline-start: 0;
-		gap: 10px;
-	}
-	#profile-overview-flex-container {
-		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 
-		#profile {
-			padding-top: 0;
+	#cat-filter {
+		#transfer-to-global-map,
+		#reset-cat-filter {
+			margin: 0;
+		}
+		#cats-grid {
+			display: flex;
+			flex-wrap: wrap;
+			align-content: flex-start;
+			padding-inline-start: 0;
+			gap: 10px;
+		}
+	}
+
+	#profile {
+		padding-top: 0;
+		padding-bottom: 1rem;
+	}
+
+	#overview {
+		div:has(#skip-to-link-section) {
+			margin: 0 auto;
 		}
 
-		#overview {
-			padding-top: 0.5rem;
-
-			> * {
-				max-width: 50%;
-			}
-
-			#top-cats li a {
-				display: inline-block;
-			}
+		#top-cats li a {
+			display: inline-block;
 		}
 
 		#skip-to-link-section {
@@ -271,10 +289,15 @@ if (!used_sections.length) {
 			margin: 0;
 			padding: 0;
 		}
+
+		#top-cats,
+		#skip-to-link-section {
+			padding: 0.5rem;
+		}
 	}
 
 	.link-section {
-		padding-top: 0;
+		padding: 0 0 0.5rem;
 
 		h2 {
 			position: sticky;
@@ -291,52 +314,19 @@ if (!used_sections.length) {
 		}
 	}
 
-	.flex {
-		display: flex;
-		gap: 2rem;
-	}
-
 	@media (min-width: 480px) {
-		#profile-overview-flex-container {
-			#overview {
-				> * {
+	#overview {
+			#top-cats {
+				max-height: 300px;
+
+				li {
 					max-width: initial;
 				}
-
-				#top-cats li {
-					max-width: initial;
-				}
-			}
-		}
-
-		.flex {
-			gap: 3rem;
-		}
-	}
-
-	@media (min-width: 680px) {
-		#profile-overview-flex-container {
-			display: flex;
-			gap: 3rem;
-
-			#overview {
-				padding-top: 1rem;
 			}
 
-			#profile {
-				padding-bottom: 1.5rem;
-			}
-
-			#profile,
-			#overview {
-				border: none;
+			> * {
+				max-width: 50%;
 			}
 		}
-
-		section:not(:first-of-type).link-section {
-			padding-top: 0.5rem;
-		}
-
-
 	}
 </style>

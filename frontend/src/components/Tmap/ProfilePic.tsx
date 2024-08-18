@@ -69,7 +69,7 @@ export default function ProfilePic(props: Props) {
 	}
 
 	return (
-		<figure id='profile-pic'>
+		<div id='profile-pic'>
 			{error ? <p class='error'>{error}</p> : null}
 			{url ? (
 				<img
@@ -106,6 +106,6 @@ export default function ProfilePic(props: Props) {
 					/>
 				</form>
 			) : null}
-		</figure>
+		</div>
 	)
 }

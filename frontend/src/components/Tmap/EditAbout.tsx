@@ -9,6 +9,8 @@ interface Props {
 
 export default function EditAbout(props: Props) {
 	const { initial, token } = props
+	const abbreviated =
+		initial.length > 200 ? `${initial.slice(0, 200)}...` : undefined
 
 	const [editing, set_editing] = useState<boolean>(false)
 	const [error, set_error] = useState<string | undefined>(undefined)
@@ -59,10 +61,15 @@ export default function EditAbout(props: Props) {
 			{editing ? (
 				<form onSubmit={(event) => handle_finished_editing(event)}>
 					<label for='about'>About</label>
-					<textarea name='about' cols={50} rows={1}>
+					<textarea name='about' cols={100} rows={4}>
 						{initial}
 					</textarea>
-					<button class='img-btn' type='submit' value='Submit'>
+					<button
+						id='confirm-changes'
+						class='img-btn'
+						type='submit'
+						value='Submit'
+					>
 						<img
 							src='../../../check2-circle.svg'
 							height={24}
@@ -73,14 +80,22 @@ export default function EditAbout(props: Props) {
 				</form>
 			) : (
 				<>
-					{initial ? (
-						<figcaption id='about'>about: {initial}</figcaption>
+					{abbreviated ? (
+						<details>
+							<summary>
+								<p>{abbreviated}</p>
+							</summary>
+							<p>{initial}</p>
+						</details>
+					) : initial ? (
+						<p>{initial}</p>
 					) : null}
 					<button
+						id='edit-about-btn'
+						class='img-btn'
 						onClick={() => {
 							set_editing(true)
 						}}
-						class='img-btn'
 					>
 						<img
 							src='../../../edit_about.svg'

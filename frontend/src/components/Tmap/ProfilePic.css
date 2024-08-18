@@ -1,4 +1,4 @@
-figure#profile-pic.hidden {
+div#profile-pic.hidden {
 	display: none;
 }
 
@@ -12,7 +12,7 @@ img {
 
 img#pfp {
 	max-height: 150px;
-	margin-bottom: 20px;
+	width: auto;
 }
 
 #new-pic-upload-label {

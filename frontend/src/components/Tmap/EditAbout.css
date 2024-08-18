@@ -1,13 +1,15 @@
 #edit-about {
 	display: flex;
-	flex-direction: column;
-	gap: 5px;
-	margin-top: 2rem;
-	margin-left: 2.5rem;
+	flex-wrap: wrap;
+	gap: 1rem;
+	margin-top: 1rem;
 }
 
-@media (min-width: 680px) {
-	#edit-about {
-		flex-direction: row;
-	}
+button#confirm-changes {
+	display: block;
+}
+
+button#edit-about-btn,
+button#confirm-changes {
+	padding: 3px 0 0;
 }

@@ -1,6 +1,5 @@
 .link {
-	border: 1px solid rgba(var(--accent), 25%);
-	margin: 2rem 0 0;
+	margin: 1rem 0 0;
 }
 astro-island:first-of-type li.link {
 	margin-top: 0;
@@ -71,7 +70,7 @@ p {
 
 @media (min-width: 768px) {
 	.link {
-		margin-top: 50px;
+		margin-top: 2rem;
 	}
 	.preview {
 		overflow: auto;

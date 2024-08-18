@@ -4,8 +4,6 @@
 
 ### Features
 
--Reveal only first ~200 chars of profile about if length exceeds that
-    -\<details\> element
 -Rate limit users
 -Update profile created to Month-Day-Year format (omit hours / minutes)
 -Rethink CalculateGlobalCategories algo

@@ -29,7 +29,7 @@ let user = Astro.cookies.get('user')?.value
 		<slot />
 	</body>
 	<footer>
-		<a href='/feedback'>Leave Feedback</a>
+		<a href='/feedback'>Feedback</a>
 	</footer>
 
 	<style is:global>
@@ -54,7 +54,7 @@ let user = Astro.cookies.get('user')?.value
 		footer {
 			max-width: 1080px;
 			margin: 0 auto;
-			padding: 1rem;
+			padding: 0.5rem 1rem;
 
 			a,
 			a:visited {
@@ -66,7 +66,7 @@ let user = Astro.cookies.get('user')?.value
 		}
 		main {
 			margin: auto;
-			padding: 1rem;
+			padding: 0.5rem;
 			width: 800px;
 			max-width: calc(100% - 2rem);
 			color: var(--text);
@@ -107,11 +107,8 @@ let user = Astro.cookies.get('user')?.value
 			margin-bottom: 0;
 		}
 		section {
-			padding: 1rem 0;
+			padding: 0.5rem 0;
 			border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-		}
-		section:has(>h2) {
-			padding-top: 0.5rem;
 		}
 		a:not(:visited) {
 			color: var(--text-treasurey);
@@ -120,6 +117,8 @@ let user = Astro.cookies.get('user')?.value
 			color: var(--text-treasurey-dark);
 		}
 		form {
+			max-width: 100%;
+
 			label {
 				display: block;
 				margin-top: 5px;
@@ -134,6 +133,19 @@ let user = Astro.cookies.get('user')?.value
 			object-fit: contain;
 			max-width: 100%;
 		}
+		details {
+			max-width: 100%;
+
+			p {
+				word-wrap: break-word;
+			}
+		}
+		details[open] {
+			summary p { 
+				display: none;
+			}
+		}
+
 		button.img-btn {
 			padding: 3px 5px 0px;
 			margin-top: 0;
@@ -148,7 +160,11 @@ let user = Astro.cookies.get('user')?.value
 			flex-direction: column;
 			list-style-position: inside;
 			margin: 0;
-			padding: 0;
+			padding: 0.5rem 1rem;
+
+			li {
+				padding-right: 1rem;
+			}
 		}
 
 		#top-links {
@@ -161,22 +177,15 @@ let user = Astro.cookies.get('user')?.value
 		@media (min-width: 480px) {
 			#top-cats {
 				flex-wrap: wrap;
-				max-height: 350px;
-
-				li {
-					max-width: 50%
-				}
+				max-height: 250px;
 			}
 		}
 
 		@media (min-width: 680px) {
 			main {
 				padding: 2rem;
+				padding-bottom: 1rem;
 				max-width: calc(100% - 4rem);
-			}
-
-			section {
-				padding: 2rem 0;
 			}
 
 			section:has(>h2) {
@@ -184,16 +193,13 @@ let user = Astro.cookies.get('user')?.value
 			}
 
 			#top-cats {
-				max-height: 200px;
 				margin-bottom: 0;
 
 				li {
-					max-width: 33%
+					padding-right: 2rem;
 				}
 			}
 		}
 
 	</style>
-
-
 </html>
