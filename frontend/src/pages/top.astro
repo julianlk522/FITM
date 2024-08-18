@@ -223,6 +223,7 @@ const page_title =
 							{links.map((link) => (
 								<Link
 									client:load
+									CategoriesFromUser={link.TagCount === 1 && link.SubmittedBy === user ? user : undefined}
 									IsSummaryPage={false}
 									IsTagPage={false}
 									Link={link}

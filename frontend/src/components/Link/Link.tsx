@@ -30,7 +30,7 @@ export default function Link(props: Props) {
 		SummaryCount: summary_count,
 		TagCount: tag_count,
 		ImgURL: img_url,
-		IsTagged: is_tagged,
+		// IsTagged: is_tagged,
 	} = props.Link
 
 	const [is_copied, set_is_copied] = useState(props.Link.IsCopied)
@@ -225,26 +225,20 @@ export default function Link(props: Props) {
 				on {format_date(submit_date)}
 			</p>
 
+			{is_tag_page && tag_count === 1 && submitted_by === user ? null : (
+				<p class='tags'>
+					<a class='tags-page-link' href={`/tag/${id}`}>
+						{tag_attribution}
+					</a>
+					{': '}
+					{categories_html}
+				</p>
+			)}
+
 			{is_summary_page ? null : (
 				<p class='summaries'>
 					<a href={`/summary/${id}`}>Summaries ({summary_count})</a>
 				</p>
-			)}
-
-			{categories ? (
-				<p class='tags'>
-					{is_tag_page ? null : (
-						<>
-							<a class='tags-page-link' href={`/tag/${id}`}>
-								{tag_attribution}
-							</a>
-							{': '}
-							{categories_html}
-						</>
-					)}
-				</p>
-			) : (
-				<p>No tag. (fix this)</p>
 			)}
 
 			{user !== submitted_by ? (

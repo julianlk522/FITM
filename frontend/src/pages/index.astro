@@ -70,6 +70,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 					links.map((link) => (
 						<Link
 							client:load
+							CategoriesFromUser={link.TagCount === 1 && link.SubmittedBy === user ? user : undefined}
 							Link={link}
 							IsSummaryPage={false}
 							IsTagPage={false}

@@ -4,7 +4,7 @@
 
 ### Features
 
--Show global tag on tag page
+-Recalculate global cats button
 -Reveal only first ~200 chars of profile about if length exceeds that
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
@@ -21,6 +21,7 @@
     -'Favorites' link on tmap
     -{user}'s favorite tmaps page
 -Tmap period filter
+-Rate limit users
 
 ### Code Quality
 

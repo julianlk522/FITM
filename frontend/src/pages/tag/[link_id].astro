@@ -35,6 +35,7 @@ if (get_tags_resp.status > 399) {
 }
 const tag_Data: TagPage = await get_tags_resp.json()
 const { Link: link, UserTag: user_tag, TagRankings: top_tags } = tag_Data
+link.TagCount = top_tags.length
 ---
 
 <Layout Title=`Tags for ${tag_Data.Link.Summary}`>
