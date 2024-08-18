@@ -93,6 +93,9 @@ if (!used_sections.length) {
 		{categories ? <section id='cat-filter' class="flex">
 			<div>
 				<h2>Cat Filter</h2>
+				<p id="transfer-to-global-map">
+					<a href={`/top?categories=${categories}`}>Transfer to Global Treasure Map</a>
+				</p>
 				<p id='reset-cat-filter'>
 					<a href={`/map/${login_name}`}>Reset</a>
 				</p>
@@ -233,6 +236,7 @@ if (!used_sections.length) {
 	h2 {
 		text-align: left;
 	}
+	#transfer-to-global-map,
 	#reset-cat-filter {
 		margin: 0;
 	}

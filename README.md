@@ -4,7 +4,6 @@
 
 ### Features
 
--Jump from filtered tmap to global map with same filters
 -Show global tag on tag page
 -Reveal only first ~200 chars of profile about if length exceeds that
 -Rethink CalculateGlobalCategories algo
@@ -21,6 +20,7 @@
     -'Add to Favorites' button on other user's tmap
     -'Favorites' link on tmap
     -{user}'s favorite tmaps page
+-Tmap period filter
 
 ### Code Quality
 
