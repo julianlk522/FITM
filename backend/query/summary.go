@@ -57,19 +57,19 @@ func NewSummaryPageLink(ID string) *SummaryPageLink {
 
 func (l *SummaryPageLink) _FromID(ID string) *SummaryPageLink {
 	l.Text = strings.Replace(
-		l.Text, 
-		"FROM Links", 
+		l.Text,
+		"FROM Links",
 		fmt.Sprintf(
 			`FROM Links 
 			WHERE id = '%s'`,
-			ID), 
+			ID),
 		1)
 
 	return l
 }
 
-func (l *SummaryPageLink) ForSignedInUser(user_id string ) *SummaryPageLink {
-	l.Text = strings.Replace(l.Text, SUMMARY_PAGE_LINK_BASE_FIELDS, SUMMARY_PAGE_LINK_BASE_FIELDS + `, 
+func (l *SummaryPageLink) ForSignedInUser(user_id string) *SummaryPageLink {
+	l.Text = strings.Replace(l.Text, SUMMARY_PAGE_LINK_BASE_FIELDS, SUMMARY_PAGE_LINK_BASE_FIELDS+`, 
 		COALESCE(is_liked,0) as is_liked, 
 		COALESCE(is_copied,0) as is_copied`, 1)
 
@@ -90,7 +90,7 @@ func (l *SummaryPageLink) ForSignedInUser(user_id string ) *SummaryPageLink {
 				WHERE cuser_id = '%[1]s'
 				GROUP BY copy_id
 				)
-			ON copy_link_id = link_id;`, user_id), 
+			ON copy_link_id = link_id;`, user_id),
 		1)
 
 	return l
@@ -126,37 +126,37 @@ GROUP BY sumid;`
 
 func NewSummariesForLink(link_id string) *Summaries {
 	return (&Summaries{Query: Query{Text: SUMMARIES_BASE}}).
-	_FromID(link_id).
-	_Limit(SUMMARIES_PAGE_LIMIT)
+		_FromID(link_id).
+		_Limit(SUMMARIES_PAGE_LIMIT)
 }
 
 func (s *Summaries) _FromID(link_id string) *Summaries {
 	s.Text = strings.Replace(
-		s.Text, 
-		"FROM Summaries", 
+		s.Text,
+		"FROM Summaries",
 		fmt.Sprintf(
 			`FROM Summaries 
-			WHERE link_id = '%s'`, 
-		link_id), 
-	1)
+			WHERE link_id = '%s'`,
+			link_id),
+		1)
 
 	return s
 }
 
 func (l *Summaries) _Limit(limit int) *Summaries {
 	l.Text = strings.Replace(
-		l.Text, 
-		";", 
+		l.Text,
+		";",
 		fmt.Sprintf(`
-LIMIT %d;`, 
-		limit), 
-	1)
-	
+LIMIT %d;`,
+			limit),
+		1)
+
 	return l
 }
 
-func (s *Summaries) ForSignedInUser(user_id string ) *Summaries {
-	s.Text = strings.Replace(s.Text, SUMMARIES_BASE_FIELDS, SUMMARIES_BASE_FIELDS + `, 
+func (s *Summaries) ForSignedInUser(user_id string) *Summaries {
+	s.Text = strings.Replace(s.Text, SUMMARIES_BASE_FIELDS, SUMMARIES_BASE_FIELDS+`, 
 	COALESCE(is_liked,0) as is_liked`, 1)
 
 	s.Text = strings.Replace(s.Text, "LEFT JOIN 'Summary Likes' as sl", fmt.Sprintf(`

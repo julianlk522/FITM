@@ -68,8 +68,6 @@ func RenderJWT(token string, w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, map[string]string{"token": token})
 }
 
-
-
 // Upload profile pic
 func HasAcceptableAspectRatio(img image.Image) bool {
 	b := img.Bounds()

@@ -29,16 +29,16 @@ func GetSummaryPageSignedIn(link_id string, req_user_id string) (*model.SummaryP
 
 	var l model.LinkSignedIn
 	err := db.Client.QueryRow(get_link_sql.Text).Scan(
-		&l.ID, 
-		&l.URL, 
-		&l.SubmittedBy, 
-		&l.SubmitDate, 
-		&l.Categories, 
-		&l.Summary, 
-		&l.LikeCount, 
+		&l.ID,
+		&l.URL,
+		&l.SubmittedBy,
+		&l.SubmitDate,
+		&l.Categories,
+		&l.Summary,
+		&l.LikeCount,
 		&l.TagCount,
-		&l.ImgURL, 
-		&l.IsLiked, 
+		&l.ImgURL,
+		&l.IsLiked,
 		&l.IsCopied,
 	)
 	if err != nil {
@@ -67,11 +67,11 @@ func GetSummaryPageSignedIn(link_id string, req_user_id string) (*model.SummaryP
 	for rows.Next() {
 		s := model.SummarySignedIn{}
 		err := rows.Scan(
-			&s.ID, 
-			&s.Text, 
-			&s.SubmittedBy, 
-			&s.LastUpdated, 
-			&s.LikeCount, 
+			&s.ID,
+			&s.Text,
+			&s.SubmittedBy,
+			&s.LastUpdated,
+			&s.LikeCount,
 			&s.IsLiked,
 		)
 		if err != nil {
@@ -80,8 +80,8 @@ func GetSummaryPageSignedIn(link_id string, req_user_id string) (*model.SummaryP
 		summaries = append(summaries, s)
 	}
 
-	summary_page := model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn] {
-		Link: l,
+	summary_page := model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn]{
+		Link:      l,
 		Summaries: summaries,
 	}
 
@@ -97,13 +97,13 @@ func GetSummaryPage(link_id string) (*model.SummaryPage[model.Summary, model.Lin
 
 	var l model.Link
 	err := db.Client.QueryRow(get_link_sql.Text).Scan(
-		&l.ID, 
-		&l.URL, 
-		&l.SubmittedBy, 
-		&l.SubmitDate, 
-		&l.Categories, 
-		&l.Summary, 
-		&l.LikeCount, 
+		&l.ID,
+		&l.URL,
+		&l.SubmittedBy,
+		&l.SubmitDate,
+		&l.Categories,
+		&l.Summary,
+		&l.LikeCount,
 		&l.TagCount,
 		&l.ImgURL,
 	)
@@ -130,10 +130,10 @@ func GetSummaryPage(link_id string) (*model.SummaryPage[model.Summary, model.Lin
 	for rows.Next() {
 		s := model.Summary{}
 		err := rows.Scan(
-			&s.ID, 
-			&s.Text, 
-			&s.SubmittedBy, 
-			&s.LastUpdated, 
+			&s.ID,
+			&s.Text,
+			&s.SubmittedBy,
+			&s.LastUpdated,
 			&s.LikeCount,
 		)
 		if err != nil {
@@ -143,14 +143,12 @@ func GetSummaryPage(link_id string) (*model.SummaryPage[model.Summary, model.Lin
 	}
 
 	summary_page := model.SummaryPage[model.Summary, model.Link]{
-		Link: l,
+		Link:      l,
 		Summaries: summaries,
 	}
 
 	return &summary_page, nil
 }
-
-
 
 // Add summary
 func LinkExists(link_id string) (bool, error) {
@@ -174,8 +172,6 @@ func GetIDOfUserSummaryForLink(user_id string, link_id string) (string, error) {
 	return summary_id.String, nil
 }
 
-
-
 // Delete summary
 func GetLinkIDFromSummaryID(summary_id string) (string, error) {
 	var lid sql.NullString
@@ -197,8 +193,6 @@ func LinkHasOneSummaryLeft(link_id string) (bool, error) {
 
 	return c.Int32 == 1, nil
 }
-
-
 
 // Like / unlike summary
 func SummarySubmittedByUser(summary_id string, user_id string) (bool, error) {
@@ -230,8 +224,6 @@ func RenderDeleted(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, map[string]string{"message": "deleted"})
 }
 
-
-
 // Calculate global summary
 func CalculateAndSetGlobalSummary(link_id string) error {
 
@@ -261,8 +253,8 @@ func CalculateAndSetGlobalSummary(link_id string) error {
 	check_global_summary_sql := fmt.Sprintf(`
 		SELECT global_summary 
 		FROM Links 
-		WHERE id = '%s'`, 
-	link_id)
+		WHERE id = '%s'`,
+		link_id)
 	var gs string
 
 	err = db.Client.QueryRow(check_global_summary_sql).Scan(&gs)

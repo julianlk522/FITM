@@ -72,8 +72,8 @@ func TestSortAndLimitCatCounts(t *testing.T) {
 
 	if len(test_cat_counts) > CATEGORY_PAGE_LIMIT {
 		t.Fatalf(
-			"expected %d subcats, got %d", 
-			CATEGORY_PAGE_LIMIT, 
+			"expected %d subcats, got %d",
+			CATEGORY_PAGE_LIMIT,
 			len(test_cat_counts),
 		)
 	}
@@ -82,20 +82,20 @@ func TestSortAndLimitCatCounts(t *testing.T) {
 
 	if test_cat_counts[0].Category != "octopus" {
 		t.Fatalf(
-			"expected first subcat to be 'octopus' with count 1000, got %s with count %d", 
-			test_cat_counts[0].Category, 
+			"expected first subcat to be 'octopus' with count 1000, got %s with count %d",
+			test_cat_counts[0].Category,
 			test_cat_counts[0].Count)
 
-	// horse before penguin due to alphabetical order when same count
+		// horse before penguin due to alphabetical order when same count
 	} else if test_cat_counts[1].Category != "horse" {
 		t.Fatalf(
-			"expected second subcat to be 'horse' with count 10, got %s with count %d", 
-			test_cat_counts[1].Category, 
+			"expected second subcat to be 'horse' with count 10, got %s with count %d",
+			test_cat_counts[1].Category,
 			test_cat_counts[1].Count)
 	} else if test_cat_counts[2].Category != "penguin" {
 		t.Fatalf(
-			"expected third subcat to be 'penguin' with count 10, got %s with count %d", 
-			test_cat_counts[2].Category, 
+			"expected third subcat to be 'penguin' with count 10, got %s with count %d",
+			test_cat_counts[2].Category,
 			test_cat_counts[2].Count)
 	}
 }

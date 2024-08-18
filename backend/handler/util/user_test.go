@@ -12,9 +12,9 @@ import (
 )
 
 func TestLoginNameTaken(t *testing.T) {
-	var test_login_names = []struct{
+	var test_login_names = []struct {
 		login_name string
-		Taken bool
+		Taken      bool
 	}{
 		{"akjlhsdflkjhhasdf", false},
 		{"janedoe", false},
@@ -32,9 +32,9 @@ func TestLoginNameTaken(t *testing.T) {
 }
 
 func TestAuthenticateUser(t *testing.T) {
-	var test_logins = []struct{
-		LoginName string
-		Password string
+	var test_logins = []struct {
+		LoginName          string
+		Password           string
 		ShouldAuthenticate bool
 	}{
 		{"goolian", "password", false},
@@ -60,8 +60,8 @@ func TestAuthenticateUser(t *testing.T) {
 
 // Upload profile pic
 func TestHasAcceptableAspectRatio(t *testing.T) {
-	var test_image_files = []struct{
-		Name string
+	var test_image_files = []struct {
+		Name                     string
 		HasAcceptableAspectRatio bool
 	}{
 		{"test1.webp", false},

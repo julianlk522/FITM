@@ -19,8 +19,8 @@ func TestScanTagPageLink(t *testing.T) {
 	// Verify link ID
 	if link.ID != test_link_id {
 		t.Fatalf(
-			"got link ID %s, want %s", 
-			link.ID, 
+			"got link ID %s, want %s",
+			link.ID,
 			test_link_id,
 		)
 	}
@@ -42,14 +42,14 @@ func TestScanTagPageLink(t *testing.T) {
 }
 
 func TestGetUserTagForLink(t *testing.T) {
-	var test_tag = struct{
+	var test_tag = struct {
 		LoginName string
-		LinkID string
-		Cats string
+		LinkID    string
+		Cats      string
 	}{
 		LoginName: test_login_name,
-		LinkID: "22",
-		Cats: "barbie,magic,wow",
+		LinkID:    "22",
+		Cats:      "barbie,magic,wow",
 	}
 
 	tag, err := GetUserTagForLink(test_tag.LoginName, test_tag.LinkID)
@@ -57,8 +57,8 @@ func TestGetUserTagForLink(t *testing.T) {
 		t.Fatal(err)
 	} else if tag == nil {
 		t.Fatalf(
-			"no tag found for user %s and link %s, expected cats %s", 
-			test_tag.LoginName, 
+			"no tag found for user %s and link %s, expected cats %s",
+			test_tag.LoginName,
 			test_tag.LinkID,
 			test_tag.Cats,
 		)
@@ -71,26 +71,26 @@ func TestGetUserTagForLink(t *testing.T) {
 		SELECT id, cats 
 		FROM Tags 
 		WHERE submitted_by = ?
-		AND link_id = ?;`, 
-	test_tag.LoginName,
-	test_tag.LinkID).Scan(
-		&id, 
+		AND link_id = ?;`,
+		test_tag.LoginName,
+		test_tag.LinkID).Scan(
+		&id,
 		&cats,
 	)
 	if err != nil {
 		t.Fatal(err)
 	} else if tag.ID != id {
 		t.Fatalf(
-			"got tag ID %s for user %s and link %s, want %s", 
-			tag.ID, 
+			"got tag ID %s for user %s and link %s, want %s",
+			tag.ID,
 			test_tag.LoginName,
 			test_tag.LinkID,
 			id,
 		)
 	} else if tag.Categories != cats {
 		t.Fatalf(
-			"got cats %s for user %s and link %s, want %s", 
-			tag.Categories, 
+			"got cats %s for user %s and link %s, want %s",
+			tag.Categories,
 			test_tag.LoginName,
 			test_tag.LinkID,
 			cats,
@@ -99,32 +99,32 @@ func TestGetUserTagForLink(t *testing.T) {
 }
 
 func TestScanTagRankings(t *testing.T) {
-	var test_rankings = []struct{
-		Cats string
+	var test_rankings = []struct {
+		Cats        string
 		SubmittedBy string
 	}{
 		{
-			Cats: "flowers",
+			Cats:        "flowers",
 			SubmittedBy: "xyz",
 		},
 		{
-			Cats: "jungle,idk,something",
+			Cats:        "jungle,idk,something",
 			SubmittedBy: "nelson",
 		},
 		{
-			Cats: "star,wars",
+			Cats:        "star,wars",
 			SubmittedBy: "boolian",
 		},
 		{
-			Cats: "i,hate,sql",
+			Cats:        "i,hate,sql",
 			SubmittedBy: "Julian",
 		},
 		{
-			Cats: "monkeys,something",
+			Cats:        "monkeys,something",
 			SubmittedBy: "goolian",
 		},
 		{
-			Cats: "jungle,knights,monkeys,talladega",
+			Cats:        "jungle,knights,monkeys,talladega",
 			SubmittedBy: "monkey",
 		},
 	}
@@ -139,8 +139,8 @@ func TestScanTagRankings(t *testing.T) {
 	// Verify result length
 	if len(*rankings) != len(test_rankings) {
 		t.Fatalf(
-			"got %d tag rankings, want %d", 
-			len(*rankings), 
+			"got %d tag rankings, want %d",
+			len(*rankings),
 			len(test_rankings),
 		)
 	}
@@ -150,14 +150,14 @@ func TestScanTagRankings(t *testing.T) {
 		if ranking.SubmittedBy != test_rankings[i].SubmittedBy {
 			t.Fatalf(
 				"expected ranking %d to be submitted by %s, got %s",
-				i + 1,
+				i+1,
 				test_rankings[i].SubmittedBy,
 				ranking.SubmittedBy,
 			)
 		} else if ranking.Categories != test_rankings[i].Cats {
 			t.Fatalf(
 				"expected ranking %d to have cats %s, got %s",
-				i + 1,
+				i+1,
 				test_rankings[i].Cats,
 				ranking.Categories,
 			)
@@ -179,7 +179,7 @@ func TestScanGlobalCatCounts(t *testing.T) {
 		t.Fatal("no counts returned for top global cats")
 	} else if len(*counts) > query.TOP_GLOBAL_CATS_LIMIT {
 		t.Fatalf(
-			"too many counts returned for top global cats (limit %d)", 
+			"too many counts returned for top global cats (limit %d)",
 			query.TOP_GLOBAL_CATS_LIMIT,
 		)
 	}
@@ -196,12 +196,12 @@ func TestScanGlobalCatCounts(t *testing.T) {
 		if c.Count == 0 {
 			t.Fatalf("cat %s returned count 0", c.Category)
 		}
-		
+
 		err = TestClient.QueryRow(
 			fmt.Sprintf(
 				`SELECT count(global_cats)
 				FROM Links
-				WHERE ','||global_cats||',' LIKE '%%,'||'%s'||',%%'`, 
+				WHERE ','||global_cats||',' LIKE '%%,'||'%s'||',%%'`,
 				c.Category,
 			),
 		).Scan(&result_count)
@@ -219,9 +219,9 @@ func TestScanGlobalCatCounts(t *testing.T) {
 	}
 
 	// DURING PERIOD
-	var test_periods = []struct{
+	var test_periods = []struct {
 		Period string
-		Valid bool
+		Valid  bool
 	}{
 		{"day", true},
 		{"week", true},
@@ -235,11 +235,11 @@ func TestScanGlobalCatCounts(t *testing.T) {
 		global_cats_sql = query.NewTopGlobalCatCounts().DuringPeriod(tp.Period)
 		// GlobalCatCounts.DuringPeriod().Error already tested
 		// in query/tag_test.go with same test cases
-		
+
 		counts, err := ScanGlobalCatCounts(global_cats_sql)
 		if tp.Valid && err != nil && err != sql.ErrNoRows {
 			t.Fatalf(
-				"unexpected error for period %s: %s", 
+				"unexpected error for period %s: %s",
 				tp.Period,
 				err,
 			)
@@ -247,18 +247,18 @@ func TestScanGlobalCatCounts(t *testing.T) {
 			t.Fatalf("expected error for period %s", tp.Period)
 		}
 
-		// Verify counts if valid sql 
+		// Verify counts if valid sql
 		if !tp.Valid {
 			continue
 		}
 
 		if len(*counts) > query.TOP_GLOBAL_CATS_LIMIT {
 			t.Fatalf(
-				"too many counts returned for top global cats (limit %d)", 
+				"too many counts returned for top global cats (limit %d)",
 				query.TOP_GLOBAL_CATS_LIMIT,
 			)
 
-		// Only top few cats
+			// Only top few cats
 		} else if len(*counts) > FEW {
 			*counts = (*counts)[0:3]
 		}
@@ -278,7 +278,7 @@ func TestScanGlobalCatCounts(t *testing.T) {
 					`SELECT count(global_cats)
 					FROM Links
 					WHERE ','||global_cats||',' LIKE '%%,'||'%s'||',%%'
-					AND %s`, 
+					AND %s`,
 					c.Category,
 					period_clause,
 				),
@@ -300,8 +300,8 @@ func TestScanGlobalCatCounts(t *testing.T) {
 }
 
 func TestUserHasTaggedLink(t *testing.T) {
-	var test_links = []struct{
-		ID string
+	var test_links = []struct {
+		ID               string
 		TaggedByTestUser bool
 	}{
 		{"1", true},
@@ -314,7 +314,7 @@ func TestUserHasTaggedLink(t *testing.T) {
 
 	for _, l := range test_links {
 		return_true, err := UserHasTaggedLink(test_login_name, l.ID)
-		if err != nil  {
+		if err != nil {
 			t.Fatalf("failed with error: %s", err)
 		} else if l.TaggedByTestUser && !return_true {
 			t.Fatalf("expected tag with ID %s to be tagged by user", l.ID)
@@ -326,8 +326,8 @@ func TestUserHasTaggedLink(t *testing.T) {
 
 // Edit tag
 func TestUserSubmittedTagWithID(t *testing.T) {
-	var test_tags = []struct{
-		ID string
+	var test_tags = []struct {
+		ID                  string
 		SubmittedByTestUser bool
 	}{
 		{"32", true},
@@ -340,7 +340,7 @@ func TestUserSubmittedTagWithID(t *testing.T) {
 
 	for _, tag := range test_tags {
 		return_true, err := UserSubmittedTagWithID(test_login_name, tag.ID)
-		if err != nil  {
+		if err != nil {
 			t.Fatalf("failed with error: %s", err)
 		} else if tag.SubmittedByTestUser && !return_true {
 			t.Fatalf("expected tag with ID %s to be submitted by user", tag.ID)
@@ -351,11 +351,11 @@ func TestUserSubmittedTagWithID(t *testing.T) {
 }
 
 // AlphabetizeCats() is simple usage of strings.Split / string.Join / slices.Sort
-// no point in testing 
+// no point in testing
 
 func TestGetLinkIDFromTagID(t *testing.T) {
-	var test_tags = []struct{
-		ID string
+	var test_tags = []struct {
+		ID     string
 		LinkID string
 	}{
 		{"32", "1"},
@@ -368,12 +368,12 @@ func TestGetLinkIDFromTagID(t *testing.T) {
 
 	for _, tag := range test_tags {
 		return_link_id, err := GetLinkIDFromTagID(tag.ID)
-		if err != nil  {
+		if err != nil {
 			t.Fatalf("failed with error: %s", err)
 		} else if tag.LinkID != return_link_id {
 			t.Fatalf(
-				"expected tag with ID %s to have link ID %s", 
-				tag.ID, 
+				"expected tag with ID %s to have link ID %s",
+				tag.ID,
 				tag.LinkID,
 			)
 		}
@@ -381,21 +381,21 @@ func TestGetLinkIDFromTagID(t *testing.T) {
 }
 
 func TestCalculateAndSetGlobalCats(t *testing.T) {
-	
+
 	// TODO: refactor test after refactoring CalculateGlobalCatsForLink()
 
-	var test_link_ids = []struct{
-		ID string
+	var test_link_ids = []struct {
+		ID         string
 		GlobalCats string
 	}{
-		{"0","flowers"},
-		{"7","7,baby,lucky"},
-		{"11","test"},
+		{"0", "flowers"},
+		{"7", "7,baby,lucky"},
+		{"11", "test"},
 	}
 
 	for _, l := range test_link_ids {
 		err := CalculateAndSetGlobalCats(l.ID)
-		if err != nil  {
+		if err != nil {
 			t.Fatalf("failed with error: %s", err)
 		}
 
@@ -410,14 +410,14 @@ func TestCalculateAndSetGlobalCats(t *testing.T) {
 
 		if err != nil {
 			t.Fatalf(
-				"failed with error: %s for link with ID %s", 
+				"failed with error: %s for link with ID %s",
 				err,
 				l.ID,
 			)
 		} else if gc != l.GlobalCats {
 			t.Fatalf(
-				"got global cats %s for link with ID %s, want %s", 
-				gc, 
+				"got global cats %s for link with ID %s, want %s",
+				gc,
 				l.ID,
 				l.GlobalCats,
 			)
@@ -432,7 +432,7 @@ func TestSetGlobalCats(t *testing.T) {
 	var test_link_id = "11"
 
 	err := SetGlobalCats(test_link_id, "foo,bar")
-	if err != nil  {
+	if err != nil {
 		t.Fatalf("failed with error: %s", err)
 	}
 

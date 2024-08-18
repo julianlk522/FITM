@@ -79,11 +79,11 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 
 			// Create new summary
 			_, err = db.Client.Exec(
-				`INSERT INTO Summaries VALUES (?,?,?,?,?)`, 
-				summary_data.ID, 
-				summary_data.Text, 
-				summary_data.LinkID, 
-				req_user_id, 
+				`INSERT INTO Summaries VALUES (?,?,?,?,?)`,
+				summary_data.ID,
+				summary_data.Text,
+				summary_data.LinkID,
+				req_user_id,
 				summary_data.LastUpdated,
 			)
 			if err != nil {
@@ -101,10 +101,10 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 		// Update summary if already submitted
 		_, err = db.Client.Exec(
 			`UPDATE Summaries SET text = ?, last_updated = ?
-			WHERE submitted_by = ? AND link_id = ?`, 
-			summary_data.Text, 
-			summary_data.LastUpdated, 
-			req_user_id, 
+			WHERE submitted_by = ? AND link_id = ?`,
+			summary_data.Text,
+			summary_data.LastUpdated,
+			req_user_id,
 			summary_data.LinkID,
 		)
 		if err != nil {
@@ -136,7 +136,7 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
-	
+
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	owns_summary, err := util.SummarySubmittedByUser(delete_data.SummaryID, req_user_id)
 	if err != nil {
@@ -146,7 +146,7 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(errors.New("not your summary")))
 		return
 	}
-		
+
 	link_id, err := util.GetLinkIDFromSummaryID(delete_data.SummaryID)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
@@ -212,9 +212,9 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = db.Client.Exec(
-		`INSERT INTO 'Summary Likes' VALUES (?,?,?)`, 
-		uuid.New().String(), 
-		req_user_id, 
+		`INSERT INTO 'Summary Likes' VALUES (?,?,?)`,
+		uuid.New().String(),
+		req_user_id,
 		summary_id,
 	)
 	if err != nil {

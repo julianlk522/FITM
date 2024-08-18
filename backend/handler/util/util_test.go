@@ -17,12 +17,12 @@ var (
 	TestClient *sql.DB
 
 	test_login_name = "goolian"
-	test_user_id = "3"
+	test_user_id    = "3"
 
 	test_req_login_name = "bradley"
-	test_req_user_id = "13"
+	test_req_user_id    = "13"
 
-	test_single_cat = []string{"umvc3"}
+	test_single_cat    = []string{"umvc3"}
 	test_multiple_cats = []string{"umvc3", "flowers"}
 
 	test_link_id = "1"
@@ -59,7 +59,6 @@ func TestMain(m *testing.M) {
 		log.Fatalf("in-memory DB did not receive dump data: %s", err)
 	}
 	log.Printf("verified dump data added to test DB")
-
 
 	m.Run()
 }

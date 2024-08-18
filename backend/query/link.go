@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	LINKS_PAGE_LIMIT = 20
+	LINKS_PAGE_LIMIT                = 20
 	CATEGORY_CONTRIBUTORS_LIMIT int = 5
 )
 
@@ -16,9 +16,9 @@ LIMIT %d;`, LINKS_PAGE_LIMIT)
 
 func _PaginateLimitClause(page int) string {
 	if page == 1 {
-		return fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT + 1)
+		return fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT+1)
 	}
-	return fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT + 1, (page - 1) * LINKS_PAGE_LIMIT)
+	return fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, (page-1)*LINKS_PAGE_LIMIT)
 }
 
 type TopLinks struct {
@@ -84,8 +84,8 @@ func (l *TopLinks) FromLinkIDs(link_ids []string) *TopLinks {
 	return l
 }
 
-func (l *TopLinks) DuringPeriod(period string) (*TopLinks) {
-	clause , err := GetPeriodClause(period)
+func (l *TopLinks) DuringPeriod(period string) *TopLinks {
+	clause, err := GetPeriodClause(period)
 	if err != nil {
 		l.Error = err
 		return l
@@ -98,9 +98,9 @@ func (l *TopLinks) Page(page int) *TopLinks {
 	if page == 0 {
 		return l
 	}
-	
-	l.Text  = strings.Replace(l.Text, UNPAGINATED_LIMIT_CLAUSE, _PaginateLimitClause(page), 1)
-	
+
+	l.Text = strings.Replace(l.Text, UNPAGINATED_LIMIT_CLAUSE, _PaginateLimitClause(page), 1)
+
 	return l
 }
 
@@ -113,8 +113,6 @@ func (l *TopLinks) _Where(clause string) *TopLinks {
 
 	return l
 }
-
-
 
 // Link IDs
 type LinkIDs struct {
@@ -140,8 +138,6 @@ func (l *LinkIDs) _FromCategories(categories []string) *LinkIDs {
 	return l
 }
 
-
-
 // Subcats
 type Subcats struct {
 	Query
@@ -158,14 +154,14 @@ func (c *Subcats) _FromCategories(categories []string) *Subcats {
 	for i := 1; i < len(categories); i++ {
 		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[i])
 	}
-	
-	c.Text +=" GROUP BY global_cats;"
+
+	c.Text += " GROUP BY global_cats;"
 
 	return c
 }
 
-func (c *Subcats) DuringPeriod(period string) (*Subcats) {
-	clause , err := GetPeriodClause(period)
+func (c *Subcats) DuringPeriod(period string) *Subcats {
+	clause, err := GetPeriodClause(period)
 	if err != nil {
 		c.Error = err
 		return c
@@ -185,7 +181,6 @@ func (c *Subcats) _Where(clause string) *Subcats {
 	return c
 }
 
-
 // Cat counts
 type CatCount struct {
 	Query
@@ -197,18 +192,15 @@ func NewCatCount(categories []string) *CatCount {
 	return (&CatCount{Query: Query{Text: CAT_COUNT_BASE}})._FromCategories(categories)
 }
 
-
 func (c *CatCount) _FromCategories(categories []string) *CatCount {
 	c.Text += fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[0])
 	for i := 1; i < len(categories); i++ {
 		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[i])
 	}
-	c.Text +=";"
+	c.Text += ";"
 
 	return c
 }
-
-
 
 // Cats contributors (single or multiple cats)
 type CatsContributors struct {
@@ -228,7 +220,7 @@ func (c *CatsContributors) _FromCategories(categories []string) *CatsContributor
 	for i := 1; i < len(categories); i++ {
 		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[i])
 	}
-	
+
 	c.Text += fmt.Sprintf(` 
 		GROUP BY submitted_by 
 		ORDER BY count(*) DESC, submitted_by ASC
@@ -236,8 +228,8 @@ func (c *CatsContributors) _FromCategories(categories []string) *CatsContributor
 	return c
 }
 
-func (c *CatsContributors) DuringPeriod(period string) (*CatsContributors) {
-	clause , err := GetPeriodClause(period)
+func (c *CatsContributors) DuringPeriod(period string) *CatsContributors {
+	clause, err := GetPeriodClause(period)
 	if err != nil {
 		c.Error = err
 		return c
@@ -248,13 +240,13 @@ func (c *CatsContributors) DuringPeriod(period string) (*CatsContributors) {
 
 	// Prepend new clause
 	c.Text = strings.Replace(
-		c.Text, 
-		CATS_CONTRIBUTORS_BASE, 
+		c.Text,
+		CATS_CONTRIBUTORS_BASE,
 		fmt.Sprintf(
-			"%s WHERE %s", 
-			CATS_CONTRIBUTORS_BASE, 
-			clause), 
-	1)
+			"%s WHERE %s",
+			CATS_CONTRIBUTORS_BASE,
+			clause),
+		1)
 
 	return c
 }

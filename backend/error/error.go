@@ -10,29 +10,29 @@ import (
 )
 
 var (
-	ErrInvalidPage = errors.New("invalid page provided")
+	ErrInvalidPage         = errors.New("invalid page provided")
 	ErrInvalidLinkID error = errors.New("invalid link ID provided")
-	
-	ErrNoLinkID error = errors.New("no link ID provided")
-	ErrNoCats error = errors.New("no cats provided")
-	ErrNoPeriod error = errors.New("no period provided")
-	ErrNoURL error = errors.New("no URL provided")
-	ErrNoSummaryID error = errors.New("no summary ID provided")
-	ErrNoSummaryText error = errors.New("no summary text provided")
+
+	ErrNoLinkID                 error = errors.New("no link ID provided")
+	ErrNoCats                   error = errors.New("no cats provided")
+	ErrNoPeriod                 error = errors.New("no period provided")
+	ErrNoURL                    error = errors.New("no URL provided")
+	ErrNoSummaryID              error = errors.New("no summary ID provided")
+	ErrNoSummaryText            error = errors.New("no summary text provided")
 	ErrNoSummaryReplacementText error = errors.New("no summary replacement text provided")
-	ErrNoTagID error = errors.New("no tag ID provided")
-	ErrNoTagCats error = errors.New("no tag cat(s) provided")
-	ErrNoLoginName error = errors.New("no login name provided")
-	ErrNoPassword error = errors.New("no password provided")
-	
-	ErrNoLinkWithID error = errors.New("no link found with given ID")
-	ErrNoSummaryWithID error = errors.New("no summary found with given ID")
-	ErrNoTagWithID error = errors.New("no tag found with given ID")
+	ErrNoTagID                  error = errors.New("no tag ID provided")
+	ErrNoTagCats                error = errors.New("no tag cat(s) provided")
+	ErrNoLoginName              error = errors.New("no login name provided")
+	ErrNoPassword               error = errors.New("no password provided")
+
+	ErrNoLinkWithID        error = errors.New("no link found with given ID")
+	ErrNoSummaryWithID     error = errors.New("no summary found with given ID")
+	ErrNoTagWithID         error = errors.New("no tag found with given ID")
 	ErrNoUserWithLoginName error = errors.New("no user found with given login name")
 
-	ErrDuplicateTag error = errors.New("duplicate tag")
+	ErrDuplicateTag  error = errors.New("duplicate tag")
 	ErrDuplicateCats error = errors.New("tag contains duplicate cat(s)")
-	ErrDoesntOwnTag error = errors.New("cannot edit another user's tag")
+	ErrDoesntOwnTag  error = errors.New("cannot edit another user's tag")
 
 	ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not found."}
 )

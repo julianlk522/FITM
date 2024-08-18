@@ -30,8 +30,8 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	submitted_sql := query.NewTmapSubmitted(login_name)
 	copied_sql := query.NewTmapCopied(login_name)
 	tagged_sql := query.NewTmapTagged(login_name)
-	
-	cats_params := r.URL.Query().Get("cats") 
+
+	cats_params := r.URL.Query().Get("cats")
 	has_cat_filter := cats_params != ""
 
 	var cats []string
@@ -57,7 +57,7 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 
 	// Requesting user signed in: get IsLiked / IsCopied / IsTagged for each link
-	if req_user_id != "" {	
+	if req_user_id != "" {
 		submitted_sql = submitted_sql.AsSignedInUser(req_user_id, req_login_name)
 		copied_sql = copied_sql.AsSignedInUser(req_user_id, req_login_name)
 		tagged_sql = tagged_sql.AsSignedInUser(req_user_id, req_login_name)
@@ -85,20 +85,20 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	}
 
 	sections := &model.TreasureMapSections[T]{
-		Submitted: submitted,
-		Copied: copied,
-		Tagged: tagged,
+		Submitted:  submitted,
+		Copied:     copied,
+		Tagged:     tagged,
 		Categories: cat_counts,
 	}
 
 	if has_cat_filter {
-		    return model.FilteredTreasureMap[T]{
+		return model.FilteredTreasureMap[T]{
 			TreasureMapSections: sections,
 		}, nil
 
 	} else {
 		return model.TreasureMap[T]{
-			Profile: profile, 
+			Profile:             profile,
 			TreasureMapSections: sections,
 		}, nil
 	}
@@ -109,9 +109,9 @@ func ScanTmapProfile(sql string) (*model.Profile, error) {
 	err := db.Client.
 		QueryRow(sql).
 		Scan(
-			&u.LoginName, 
-			&u.About, 
-			&u.PFP, 
+			&u.LoginName,
+			&u.About,
+			&u.PFP,
 			&u.Created,
 		)
 	if err != nil {
@@ -131,70 +131,70 @@ func ScanTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](sql query.Query) (
 	var links interface{}
 
 	switch any(new(T)).(type) {
-		case *model.TmapLinkSignedIn:
-			var signed_in_links = []model.TmapLinkSignedIn{}
+	case *model.TmapLinkSignedIn:
+		var signed_in_links = []model.TmapLinkSignedIn{}
 
-			for rows.Next() {
-				l := model.TmapLinkSignedIn{}
-				err := rows.Scan(
-					&l.ID, 
-					&l.URL, 
-					&l.SubmittedBy, 
-					&l.SubmitDate, 
-					&l.Categories, 
-					&l.CategoriesFromUser, 
-					&l.Summary, 
-					&l.SummaryCount, 
-					&l.LikeCount, 
-					&l.TagCount,
-					&l.ImgURL,
-					
-					// Add IsLiked / IsCopied / IsTagged 
-					&l.IsLiked, 
-					&l.IsCopied,
-					&l.IsTagged) 
-				if err != nil {
-					return nil, err
-				}
-				signed_in_links = append(signed_in_links, l)
+		for rows.Next() {
+			l := model.TmapLinkSignedIn{}
+			err := rows.Scan(
+				&l.ID,
+				&l.URL,
+				&l.SubmittedBy,
+				&l.SubmitDate,
+				&l.Categories,
+				&l.CategoriesFromUser,
+				&l.Summary,
+				&l.SummaryCount,
+				&l.LikeCount,
+				&l.TagCount,
+				&l.ImgURL,
+
+				// Add IsLiked / IsCopied / IsTagged
+				&l.IsLiked,
+				&l.IsCopied,
+				&l.IsTagged)
+			if err != nil {
+				return nil, err
 			}
+			signed_in_links = append(signed_in_links, l)
+		}
 
-			links = &signed_in_links
+		links = &signed_in_links
 
-		case *model.TmapLink:
-			var signed_out_links = []model.TmapLink{}
+	case *model.TmapLink:
+		var signed_out_links = []model.TmapLink{}
 
-			for rows.Next() {
-				l := model.TmapLink{}
-				err := rows.Scan(
-					&l.ID, 
-					&l.URL, 
-					&l.SubmittedBy, 
-					&l.SubmitDate, 
-					&l.Categories, 
-					&l.CategoriesFromUser, 
-					&l.Summary, 
-					&l.SummaryCount, 
-					&l.LikeCount, 
-					&l.TagCount,
-					&l.ImgURL)
-				if err != nil {
-					return nil, err
-				}
-				signed_out_links = append(signed_out_links, l)
+		for rows.Next() {
+			l := model.TmapLink{}
+			err := rows.Scan(
+				&l.ID,
+				&l.URL,
+				&l.SubmittedBy,
+				&l.SubmitDate,
+				&l.Categories,
+				&l.CategoriesFromUser,
+				&l.Summary,
+				&l.SummaryCount,
+				&l.LikeCount,
+				&l.TagCount,
+				&l.ImgURL)
+			if err != nil {
+				return nil, err
 			}
+			signed_out_links = append(signed_out_links, l)
+		}
 
-			links = &signed_out_links
+		links = &signed_out_links
 	}
 
-	return links.(*[]T), nil	
+	return links.(*[]T), nil
 }
 
 // Get counts of each category found in links
 // Omit any categories passed via omitted_cats
 // (omit used to retrieve subcategories by passing directly searched categories)
 // TODO: refactor to make this clearer
-func GetTmapCatCounts[T model.TmapLink | model.TmapLinkSignedIn] (links *[]T, omitted_cats []string) *[]model.CatCount {
+func GetTmapCatCounts[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, omitted_cats []string) *[]model.CatCount {
 	counts := []model.CatCount{}
 	found_cats := []string{}
 	var found bool
@@ -202,10 +202,10 @@ func GetTmapCatCounts[T model.TmapLink | model.TmapLinkSignedIn] (links *[]T, om
 	for _, link := range *links {
 		var categories string
 		switch l := any(link).(type) {
-			case model.TmapLinkSignedIn:
-				categories = l.Categories
-			case model.TmapLink:
-				categories = l.Categories
+		case model.TmapLinkSignedIn:
+			categories = l.Categories
+		case model.TmapLink:
+			categories = l.Categories
 		}
 
 		for _, cat := range strings.Split(categories, ",") {

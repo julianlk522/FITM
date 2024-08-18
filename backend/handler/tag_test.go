@@ -14,94 +14,94 @@ import (
 func TestAddTag(t *testing.T) {
 	test_tag_requests := []struct {
 		Payload map[string]string
-		Valid bool
+		Valid   bool
 	}{
 		{
-			Payload: map[string]string {
-					"link_id":"",
-					"categories":"test",
-				},
-			Valid: false,
-		},
-		{
-			Payload: map[string]string {
-				"link_id":"-1",
-				"categories":"test",
-				},
-			Valid: false,
-		},
-		{
-			Payload: map[string]string {
-				"link_id":"101010101010101010101010101010101010101",
-				"categories":"test",
+			Payload: map[string]string{
+				"link_id":    "",
+				"categories": "test",
 			},
 			Valid: false,
 		},
 		{
-			Payload: map[string]string {
-				"link_id":"notanint",
-				"categories":"test",
+			Payload: map[string]string{
+				"link_id":    "-1",
+				"categories": "test",
 			},
 			Valid: false,
 		},
 		{
-			Payload: map[string]string {
-				"link_id":"1",
-				"categories":"",
+			Payload: map[string]string{
+				"link_id":    "101010101010101010101010101010101010101",
+				"categories": "test",
 			},
 			Valid: false,
 		},
 		{
-			Payload: map[string]string {
-				"link_id":"1",
-				"categories":"0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123",
+			Payload: map[string]string{
+				"link_id":    "notanint",
+				"categories": "test",
+			},
+			Valid: false,
+		},
+		{
+			Payload: map[string]string{
+				"link_id":    "1",
+				"categories": "",
+			},
+			Valid: false,
+		},
+		{
+			Payload: map[string]string{
+				"link_id":    "1",
+				"categories": "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123",
 			},
 			Valid: false,
 		},
 		// too many cats
 		{
-			Payload: map[string]string {
-				"link_id":"1",
-				"categories":"0,1,2,3,4,5,6,7,8,9,0,1,2",
+			Payload: map[string]string{
+				"link_id":    "1",
+				"categories": "0,1,2,3,4,5,6,7,8,9,0,1,2",
 			},
 			Valid: false,
 		},
 		// duplicate cats
 		{
-			Payload: map[string]string {
-				"link_id":"1",
-				"categories":"0,1,2,3,3",
+			Payload: map[string]string{
+				"link_id":    "1",
+				"categories": "0,1,2,3,3",
 			},
 			Valid: false,
 		},
 		// should fail because user goolian has already tagged link with ID 1
 		{
-			Payload: map[string]string {
-				"link_id":"1",
-				"categories":"testtest",
+			Payload: map[string]string{
+				"link_id":    "1",
+				"categories": "testtest",
 			},
 			Valid: false,
 		},
 		// should pass because goolian has _not_ tagged link with ID 10
 		{
-			Payload: map[string]string {
-				"link_id":"10",
-				"categories":"testtest",
+			Payload: map[string]string{
+				"link_id":    "10",
+				"categories": "testtest",
 			},
 			Valid: true,
 		},
 	}
 
 	const (
-		test_user_id = "3"
+		test_user_id    = "3"
 		test_login_name = "goolian"
 	)
 
 	for _, tr := range test_tag_requests {
 		pl, _ := json.Marshal(tr.Payload)
 		r := httptest.NewRequest(
-			http.MethodPost, 
-			"/tags", 
+			http.MethodPost,
+			"/tags",
 			bytes.NewReader(pl),
 		)
 		r.Header.Set("Content-Type", "application/json")
@@ -122,8 +122,8 @@ func TestAddTag(t *testing.T) {
 				t.Fatal("failed but unable to read request body bytes")
 			} else {
 				t.Fatalf(
-					"expected status code 201, got %d (test request %+v)\n%s", res.StatusCode, 
-					tr.Payload, 
+					"expected status code 201, got %d (test request %+v)\n%s", res.StatusCode,
+					tr.Payload,
 					text,
 				)
 			}
@@ -136,66 +136,66 @@ func TestAddTag(t *testing.T) {
 func TestEditTag(t *testing.T) {
 	test_tag_requests := []struct {
 		Payload map[string]string
-		Valid bool
+		Valid   bool
 	}{
 		{
-			Payload: map[string]string {
-				"tag_id":"1",
-				"categories":"",
+			Payload: map[string]string{
+				"tag_id":     "1",
+				"categories": "",
 			},
 			Valid: false,
 		},
 		{
-			Payload: map[string]string {
-				"tag_id":"1",
-				"categories":"0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123",
+			Payload: map[string]string{
+				"tag_id":     "1",
+				"categories": "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123",
 			},
 			Valid: false,
 		},
 		// too many cats
 		{
-			Payload: map[string]string {
-				"tag_id":"1",
-				"categories":"0,1,2,3,4,5,6,7,8,9,0,1,2",
+			Payload: map[string]string{
+				"tag_id":     "1",
+				"categories": "0,1,2,3,4,5,6,7,8,9,0,1,2",
 			},
 			Valid: false,
 		},
 		// duplicate cats
 		{
-			Payload: map[string]string {
-				"tag_id":"1",
-				"categories":"0,1,2,3,3",
+			Payload: map[string]string{
+				"tag_id":     "1",
+				"categories": "0,1,2,3,3",
 			},
 			Valid: false,
 		},
 		// should fail because user goolian _did not_ submit tag with ID 10
 		{
-			Payload: map[string]string {
-				"tag_id":"10",
-				"categories":"testtest",
+			Payload: map[string]string{
+				"tag_id":     "10",
+				"categories": "testtest",
 			},
 			Valid: false,
 		},
 		// should pass because user goolian _has_ submitted tag with ID 32
 		{
-			Payload: map[string]string {
-				"tag_id":"32",
-				"categories":"hello,kitty",
+			Payload: map[string]string{
+				"tag_id":     "32",
+				"categories": "hello,kitty",
 			},
 			Valid: true,
 		},
 	}
 
 	const (
-		test_user_id = "3"
+		test_user_id    = "3"
 		test_login_name = "goolian"
 	)
 
 	for _, tr := range test_tag_requests {
 		pl, _ := json.Marshal(tr.Payload)
 		r := httptest.NewRequest(
-			http.MethodPut, 
-			"/tags", 
+			http.MethodPut,
+			"/tags",
 			bytes.NewReader(pl),
 		)
 		r.Header.Set("Content-Type", "application/json")
@@ -216,8 +216,8 @@ func TestEditTag(t *testing.T) {
 				t.Fatal("failed but unable to read request body bytes")
 			} else {
 				t.Fatalf(
-					"expected status code 200, got %d (test request %+v)\n%s", res.StatusCode, 
-					tr.Payload, 
+					"expected status code 200, got %d (test request %+v)\n%s", res.StatusCode,
+					tr.Payload,
 					text,
 				)
 			}

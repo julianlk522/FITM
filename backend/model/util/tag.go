@@ -8,7 +8,7 @@ import (
 func HasTooLongCats(cats string) bool {
 	split_cats := strings.Split(cats, ",")
 
-	for _, cat := range(split_cats) {
+	for _, cat := range split_cats {
 		if len(cat) > CAT_CHAR_LIMIT {
 			return true
 		}

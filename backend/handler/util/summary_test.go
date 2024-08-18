@@ -12,16 +12,16 @@ func TestGetSummaryPage(t *testing.T) {
 	}
 
 	// Check that summaries are all for link provided
-	for _, summary := range(summary_page.Summaries) {
+	for _, summary := range summary_page.Summaries {
 		var link_id string
 		err := TestClient.QueryRow(`
 			SELECT link_id 
 			FROM Summaries 
-			WHERE id = ?`, 
-		summary.ID).Scan(&link_id)
+			WHERE id = ?`,
+			summary.ID).Scan(&link_id)
 		if err != nil {
 			t.Fatalf(
-				"failed to verify summary link: %s (summary ID %s)", 
+				"failed to verify summary link: %s (summary ID %s)",
 				err,
 				summary.ID,
 			)
@@ -36,13 +36,13 @@ func TestGetSummaryPage(t *testing.T) {
 
 	// Verify like count
 	var lc int64
-	var tc int 
+	var tc int
 
 	err = TestClient.QueryRow(`
 		SELECT count(*)
 		FROM 'Link Likes'
 		WHERE link_id = ?`,
-	test_link_id).Scan(&lc)
+		test_link_id).Scan(&lc)
 
 	if err != nil {
 		t.Fatalf("failed to get link LikeCount: %s", err)
@@ -55,7 +55,7 @@ func TestGetSummaryPage(t *testing.T) {
 		SELECT count(*)
 		FROM Tags
 		WHERE link_id = ?`,
-	test_link_id).Scan(&tc)
+		test_link_id).Scan(&tc)
 
 	if err != nil {
 		t.Fatalf("failed to get link tag count: %s", err)
@@ -69,8 +69,8 @@ func TestGetSummaryPage(t *testing.T) {
 
 // Add summary
 func TestLinkExists(t *testing.T) {
-	var test_link_ids = []struct{
-		ID string
+	var test_link_ids = []struct {
+		ID     string
 		Exists bool
 	}{
 		{"1", true},
@@ -83,7 +83,7 @@ func TestLinkExists(t *testing.T) {
 
 	for _, l := range test_link_ids {
 		return_true, err := LinkExists(l.ID)
-		if err != nil  {
+		if err != nil {
 			t.Fatalf("failed with error: %s", err)
 		} else if l.Exists && !return_true {
 			t.Fatalf("expected link with ID %s to exist", l.ID)
@@ -121,8 +121,8 @@ func TestLinkHasOneSummaryLeft(t *testing.T) {
 	// var multiple_summaries = "1"
 	// var no_summaries = "81"
 
-	var test_link_ids = []struct{
-		ID string
+	var test_link_ids = []struct {
+		ID            string
 		SingleSummary bool
 	}{
 		{"0", true},
@@ -132,7 +132,7 @@ func TestLinkHasOneSummaryLeft(t *testing.T) {
 
 	for _, l := range test_link_ids {
 		return_true, err := LinkHasOneSummaryLeft(l.ID)
-		if err != nil  {
+		if err != nil {
 			t.Fatalf("failed with error: %s", err)
 		} else if l.SingleSummary && !return_true {
 			t.Fatalf("expected link with ID %s to have one summary left", l.ID)
@@ -144,8 +144,8 @@ func TestLinkHasOneSummaryLeft(t *testing.T) {
 
 // Like / unlike summary
 func TestSummarySubmittedByuser(t *testing.T) {
-	var test_summary_ids = []struct{
-		ID string
+	var test_summary_ids = []struct {
+		ID                  string
 		SubmittedByTestUser bool
 	}{
 		{"7", true},
@@ -158,7 +158,7 @@ func TestSummarySubmittedByuser(t *testing.T) {
 
 	for _, l := range test_summary_ids {
 		return_true, err := SummarySubmittedByUser(l.ID, test_user_id)
-		if err != nil  {
+		if err != nil {
 			t.Fatalf("failed with error: %s", err)
 		} else if l.SubmittedByTestUser && !return_true {
 			t.Fatalf("expected summary with ID %s to be submitted by user", l.ID)
@@ -169,8 +169,8 @@ func TestSummarySubmittedByuser(t *testing.T) {
 }
 
 func TestUserHasLikedSummary(t *testing.T) {
-	var test_summary_ids = []struct{
-		ID string
+	var test_summary_ids = []struct {
+		ID              string
 		LikedByTestUser bool
 	}{
 		{"1", true},
@@ -183,7 +183,7 @@ func TestUserHasLikedSummary(t *testing.T) {
 
 	for _, l := range test_summary_ids {
 		return_true, err := UserHasLikedSummary(test_user_id, l.ID)
-		if err != nil  {
+		if err != nil {
 			t.Fatalf("failed with error: %s", err)
 		} else if l.LikedByTestUser && !return_true {
 			t.Fatalf("expected summary with ID %s to be liked by user", l.ID)
@@ -195,18 +195,18 @@ func TestUserHasLikedSummary(t *testing.T) {
 
 // Calculate global summary
 func TestCalculateAndSetGlobalSummary(t *testing.T) {
-	var test_link_ids = []struct{
-		ID string
+	var test_link_ids = []struct {
+		ID            string
 		GlobalSummary string
 	}{
-		{"1","xyz"},
-		{"7","a great summary"},
-		{"8","Jarvy init"},
+		{"1", "xyz"},
+		{"7", "a great summary"},
+		{"8", "Jarvy init"},
 	}
 
 	for _, l := range test_link_ids {
 		err := CalculateAndSetGlobalSummary(l.ID)
-		if err != nil  {
+		if err != nil {
 			t.Fatalf("failed with error: %s", err)
 		}
 
@@ -221,14 +221,14 @@ func TestCalculateAndSetGlobalSummary(t *testing.T) {
 
 		if err != nil {
 			t.Fatalf(
-				"failed with error: %s for link with ID %s", 
+				"failed with error: %s for link with ID %s",
 				err,
 				l.ID,
 			)
 		} else if gs != l.GlobalSummary {
 			t.Fatalf(
-				"got global summary %s for link with ID %s, want %s", 
-				gs, 
+				"got global summary %s for link with ID %s, want %s",
+				gs,
 				l.ID,
 				l.GlobalSummary,
 			)

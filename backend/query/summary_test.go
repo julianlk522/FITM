@@ -32,7 +32,7 @@ func TestNewSummaryPageLink(t *testing.T) {
 		t.Fatal("too few columns")
 	}
 
-	var test_cols = []struct{
+	var test_cols = []struct {
 		Want string
 	}{
 		{"link_id"},
@@ -109,8 +109,6 @@ func TestSummaryPageLinkForSignedInUser(t *testing.T) {
 	}
 }
 
-
-
 // Summaries for Link
 func TestNewSummariesForLink(t *testing.T) {
 	var test_link_id = "1"
@@ -136,7 +134,7 @@ func TestNewSummariesForLink(t *testing.T) {
 		t.Fatalf("wrong column count (got %d, want 5)", len(cols))
 	}
 
-	var test_cols = []struct{
+	var test_cols = []struct {
 		Want string
 	}{
 		{"sumid"},
@@ -167,7 +165,7 @@ func Test_NewSummariesForLinkFromID(t *testing.T) {
 	summaries_sql := NewSummariesForLink(test_link_id)
 
 	summaries_sql.Text = strings.Replace(summaries_sql.Text, SUMMARIES_BASE_FIELDS, "SELECT sumid", 1)
-	
+
 	rows, err := TestClient.Query(summaries_sql.Text)
 	if err != nil {
 		t.Fatal(err)
@@ -224,7 +222,7 @@ func TestNewSummariesForSignedInUser(t *testing.T) {
 	// only necessary to test first row since they will all be the same
 	if rows.Next() {
 		var s model.SummarySignedIn
-		
+
 		if err := rows.Scan(
 			&s.ID,
 			&s.Text,

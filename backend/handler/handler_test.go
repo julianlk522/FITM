@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	test_user_id = "3"
+	test_user_id    = "3"
 	test_login_name = "goolian"
 )
 
@@ -51,7 +51,6 @@ func TestMain(m *testing.M) {
 		log.Fatalf("in-memory DB did not receive dump data: %s", err)
 	}
 	log.Printf("verified dump data added to test DB")
-
 
 	m.Run()
 }

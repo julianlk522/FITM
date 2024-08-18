@@ -38,7 +38,7 @@ func ScanSubcats(get_subcats_sql *query.Subcats, search_categories []string) []s
 			}
 		}
 	}
-	
+
 	return subcats
 }
 
@@ -64,7 +64,7 @@ func GetCountsOfSubcatsFromCats(subcats []string, cats []string) (*[]model.CatCo
 	subcat_counts := make([]model.CatCount, len(subcats))
 	for i := 0; i < len(subcats); i++ {
 		subcat_counts[i].Category = subcats[i]
-		
+
 		all_cats := append(cats, subcats[i])
 		get_link_count_sql := query.NewCatCount(all_cats)
 		if get_link_count_sql.Error != nil {

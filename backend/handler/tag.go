@@ -68,14 +68,14 @@ func GetTagPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tag_page := model.TagPage{
-		Link: link,
-		UserTag: user_tag,
+		Link:        link,
+		UserTag:     user_tag,
 		TagRankings: tag_rankings,
 	}
 	render.JSON(w, r, tag_page)
 }
 
-func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {	
+func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {
 	global_cats_sql := query.NewTopGlobalCatCounts()
 
 	period_params := r.URL.Query().Get("period")
@@ -102,7 +102,7 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
-	
+
 	link_exists, err := util.LinkExists(tag_data.LinkID)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
@@ -121,14 +121,14 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrDuplicateTag))
 		return
 	}
-	
+
 	tag_data.Categories = strings.ToLower(tag_data.Categories)
 	_, err = db.Client.Exec(
-		"INSERT INTO Tags VALUES(?,?,?,?,?);", 
-		tag_data.ID, 
-		tag_data.LinkID, 
-		tag_data.Categories, 
-		req_login_name, 
+		"INSERT INTO Tags VALUES(?,?,?,?,?);",
+		tag_data.ID,
+		tag_data.LinkID,
+		tag_data.Categories,
+		req_login_name,
 		tag_data.LastUpdated,
 	)
 	if err != nil {
@@ -168,9 +168,9 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 	_, err = db.Client.Exec(
 		`UPDATE Tags 
 		SET cats = ?, last_updated = ? 
-		WHERE id = ?;`, 
-		edit_tag_data.Categories, 
-		edit_tag_data.LastUpdated, 
+		WHERE id = ?;`,
+		edit_tag_data.Categories,
+		edit_tag_data.LastUpdated,
 		edit_tag_data.ID,
 	)
 	if err != nil {

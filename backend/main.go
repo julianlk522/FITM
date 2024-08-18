@@ -36,26 +36,22 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedOrigins: []string{"https://*", "http://*"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
-		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{
-			// "Accept", 
-			"Authorization", 
-			"Content-Type", 
+		AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{
+			// "Accept",
+			"Authorization",
+			"Content-Type",
 			// "X-CSRF-Token",
 		},
 		MaxAge: 300, // Maximum value not ignored by any of major browsers
-	  }))
-
-
+	}))
 
 	// Home - check if server running
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Hello World!")
 	})
-
-
 
 	// PUBLIC
 	// USER ACCOUNTS
@@ -67,8 +63,6 @@ func main() {
 	r.Get("/cats", h.GetTopGlobalCats)
 	r.Get("/subcats/{cats}", h.GetSubcats)
 	r.Get("/contributors/{cats}", h.GetCatsContributors)
-
-
 
 	// OPTIONAL AUTHENTICATION
 	// (bearer token used optionally to get IsLiked / IsCopied / IsTagged for links)
@@ -86,8 +80,6 @@ func main() {
 
 		r.Get("/summaries/{link_id}", h.GetSummaryPage)
 	})
-
-
 
 	// PROTECTED
 	// (bearer token required)

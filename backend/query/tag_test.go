@@ -39,7 +39,6 @@ func TestNewTagPageLink(t *testing.T) {
 	}
 }
 
-
 // Top Overlap Scores (Internal)
 func TestNewTopOverlapScores(t *testing.T) {
 	test_link_id := "1"
@@ -71,16 +70,16 @@ func TestNewTopOverlapScores(t *testing.T) {
 	// reset and modify fields to check for correct link_id (test _FromLink())
 	tags_sql = NewTopOverlapScores(test_link_id)
 
-	tags_sql.Text = strings.Replace(tags_sql.Text, 
+	tags_sql.Text = strings.Replace(tags_sql.Text,
 		`SELECT 
 	(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, 
-	cats`, 
-		`SELECT link_id`, 
-	1)
+	cats`,
+		`SELECT link_id`,
+		1)
 	tags_sql.Text = strings.Replace(tags_sql.Text,
 		"ORDER BY lifespan_overlap DESC",
 		"",
-	1)
+		1)
 
 	rows, err = TestClient.Query(tags_sql.Text)
 	if err != nil {
@@ -101,8 +100,6 @@ func TestNewTopOverlapScores(t *testing.T) {
 		t.Fatalf("failed link_id check with modified query: no overlap scores for test link %s", test_link_id)
 	}
 }
-
-
 
 // Tag Rankings (Public Overlap Scores)
 func TestNewTagRankingsForLink(t *testing.T) {
@@ -136,19 +133,19 @@ func TestNewTagRankingsForLink(t *testing.T) {
 	}
 
 	// Verify link_id (test _FromLink())
-	// reset and modify fields 
+	// reset and modify fields
 	tags_sql = NewTagRankingsForLink(test_link_id)
-	tags_sql.Text = strings.Replace(tags_sql.Text, 
+	tags_sql.Text = strings.Replace(tags_sql.Text,
 		TAG_RANKINGS_BASE,
 		`SELECT link_id 
 		FROM Tags 
 		INNER JOIN Links 
-		ON Links.id = Tags.link_id`, 
-	1)
+		ON Links.id = Tags.link_id`,
+		1)
 	tags_sql.Text = strings.Replace(tags_sql.Text,
 		"ORDER BY lifespan_overlap DESC",
 		"",
-	1)
+		1)
 
 	rows, err = TestClient.Query(tags_sql.Text)
 	if err != nil {
@@ -170,8 +167,6 @@ func TestNewTagRankingsForLink(t *testing.T) {
 	}
 }
 
-
-
 // All Global Cats
 func TestNewTopGlobalCatCounts(t *testing.T) {
 	counts_sql := NewTopGlobalCatCounts()
@@ -184,9 +179,9 @@ func TestNewTopGlobalCatCounts(t *testing.T) {
 }
 
 func TestNewTopGlobalCatCountsDuringPeriod(t *testing.T) {
-	var test_periods = []struct{
+	var test_periods = []struct {
 		Period string
-		Valid bool
+		Valid  bool
 	}{
 		{"day", true},
 		{"week", true},
@@ -207,6 +202,6 @@ func TestNewTopGlobalCatCountsDuringPeriod(t *testing.T) {
 		_, err := TestClient.Query(tags_sql.Text)
 		if err != nil && err != sql.ErrNoRows {
 			t.Fatal(err)
-		} 
+		}
 	}
 }

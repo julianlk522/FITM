@@ -11,16 +11,16 @@ import (
 )
 
 type Tag struct {
-	ID string
-	LinkID string
-	Categories string
+	ID          string
+	LinkID      string
+	Categories  string
 	SubmittedBy string
 	LastUpdated string
 }
 
 type CatCount struct {
 	Category string
-	Count int32
+	Count    int32
 }
 
 func SortCategories(i, j CatCount) int {
@@ -34,7 +34,7 @@ func SortCategories(i, j CatCount) int {
 
 type TagRanking struct {
 	LifeSpanOverlap float32
-	Categories string
+	Categories      string
 }
 
 type TagRankingPublic struct {
@@ -44,21 +44,19 @@ type TagRankingPublic struct {
 }
 
 type TagPage struct {
-	Link *LinkSignedIn
-	UserTag *Tag
+	Link        *LinkSignedIn
+	UserTag     *Tag
 	TagRankings *[]TagRankingPublic
 }
 
-
-
 type NewTag struct {
-	LinkID string `json:"link_id"`
+	LinkID     string `json:"link_id"`
 	Categories string `json:"categories"`
 }
 
 type NewTagRequest struct {
 	*NewTag
-	ID string
+	ID          string
 	LastUpdated string
 }
 
@@ -86,8 +84,8 @@ func (t *NewTagRequest) Bind(r *http.Request) error {
 }
 
 type EditTagRequest struct {
-	ID string `json:"tag_id"`
-	Categories string `json:"categories"`
+	ID          string `json:"tag_id"`
+	Categories  string `json:"categories"`
 	LastUpdated string
 }
 

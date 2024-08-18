@@ -26,15 +26,15 @@ func TestGetIDsOfLinksHavingCategories(t *testing.T) {
 		err = TestClient.QueryRow(`
 			SELECT global_cats 
 			FROM Links 
-			WHERE id = ?`, 
-		lid).Scan(&link_cats)
+			WHERE id = ?`,
+			lid).Scan(&link_cats)
 		if err != nil {
 			t.Fatal(err)
 		} else if !strings.Contains(link_cats, test_cats_str) {
 			t.Fatalf(
-				"link %s cats (%s) do not contain %s", 
+				"link %s cats (%s) do not contain %s",
 				lid,
-				link_cats, 
+				link_cats,
 				test_cats_str,
 			)
 		}
@@ -57,15 +57,15 @@ func TestGetIDsOfLinksHavingCategories(t *testing.T) {
 		err = TestClient.QueryRow(`
 			SELECT global_cats 
 			FROM Links 
-			WHERE id = ?`, 
-		lid).Scan(&link_cats)
+			WHERE id = ?`,
+			lid).Scan(&link_cats)
 		if err != nil {
 			t.Fatal(err)
 		} else if !strings.Contains(link_cats, test_multiple_cats[0]) || !strings.Contains(link_cats, test_multiple_cats[1]) {
 			t.Fatalf(
-				"link %s cats (%s) do not contain all test cats: %s", 
+				"link %s cats (%s) do not contain all test cats: %s",
 				lid,
-				link_cats, 
+				link_cats,
 				test_cats_str,
 			)
 		}
@@ -75,14 +75,14 @@ func TestGetIDsOfLinksHavingCategories(t *testing.T) {
 func TestScanLinks(t *testing.T) {
 	links_sql := query.NewTopLinks()
 	// NewTopLinks().Error tested in query/link_test.go
-	
+
 	// signed out
 	links_signed_out, err := ScanLinks[model.Link](links_sql, "")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(*links_signed_out) == 0 { 
+	if len(*links_signed_out) == 0 {
 		t.Fatal("no links")
 	}
 
@@ -92,14 +92,14 @@ func TestScanLinks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(*links_signed_in) == 0 { 
+	if len(*links_signed_in) == 0 {
 		t.Fatal("no links")
 	}
 }
 
 func TestResolveAndAssignURL(t *testing.T) {
-	var test_urls = []struct{
-		URL string
+	var test_urls = []struct {
+		URL   string
 		Valid bool
 	}{
 		{"abc.com", true},
@@ -111,9 +111,9 @@ func TestResolveAndAssignURL(t *testing.T) {
 	}
 	test_request := &model.NewLinkRequest{
 		NewLink: &model.NewLink{
-			URL: "",
+			URL:        "",
 			Categories: "",
-			Summary: "",
+			Summary:    "",
 		},
 	}
 
@@ -128,8 +128,8 @@ func TestResolveAndAssignURL(t *testing.T) {
 }
 
 func TestURLAlreadyAdded(t *testing.T) {
-	var test_urls = []struct{
-		URL string
+	var test_urls = []struct {
+		URL   string
 		Added bool
 	}{
 		{"https://stackoverflow.co/", true},
@@ -212,41 +212,41 @@ func TestAssignMetadata(t *testing.T) {
 	for i, meta := range mock_metas {
 		mock_request := &model.NewLinkRequest{
 			NewLink: &model.NewLink{
-				URL: "",
+				URL:        "",
 				Categories: "",
-				Summary: "",
+				Summary:    "",
 			},
 		}
 
 		AssignMetadata(meta, mock_request)
 
 		switch i {
-			case 0:
-				if mock_request.AutoSummary != "og:description" {
-					t.Fatalf("og:description provided but auto summary set to: %s", mock_request.AutoSummary)
-				} else if mock_request.ImgURL != "https://i.ytimg.com/vi/L4gaqVH0QHU/maxresdefault.jpg" {
-					t.Fatal("expected og:image to be set")
-				}
-			case 1:
-				if mock_request.AutoSummary != "description" {
-					t.Fatalf("description provided but auto summary set to: %s", mock_request.AutoSummary)
-				}
-			case 2:
-				if mock_request.AutoSummary != "og:title" {
-					t.Fatalf("og:title provided but auto summary set to: %s", mock_request.AutoSummary)
-				}
-			case 3:
-				if mock_request.AutoSummary != "title" {
-					t.Fatalf("title provided but auto summary set to: %s", mock_request.AutoSummary)
-				}
-			case 4:
-				if mock_request.AutoSummary != "goopis" {
-					t.Fatalf("goopis provided but auto summary set to: %s", mock_request.AutoSummary)
-				} else if mock_request.ImgURL != "https://i.ytimg.com/vi/XdfoXdzGmr0/maxresdefault.jpg" {
-					t.Fatal("expected og:image to be set")
-				}
-			default:
-				t.Fatal("unhandled case, you f'ed up dawg")
+		case 0:
+			if mock_request.AutoSummary != "og:description" {
+				t.Fatalf("og:description provided but auto summary set to: %s", mock_request.AutoSummary)
+			} else if mock_request.ImgURL != "https://i.ytimg.com/vi/L4gaqVH0QHU/maxresdefault.jpg" {
+				t.Fatal("expected og:image to be set")
+			}
+		case 1:
+			if mock_request.AutoSummary != "description" {
+				t.Fatalf("description provided but auto summary set to: %s", mock_request.AutoSummary)
+			}
+		case 2:
+			if mock_request.AutoSummary != "og:title" {
+				t.Fatalf("og:title provided but auto summary set to: %s", mock_request.AutoSummary)
+			}
+		case 3:
+			if mock_request.AutoSummary != "title" {
+				t.Fatalf("title provided but auto summary set to: %s", mock_request.AutoSummary)
+			}
+		case 4:
+			if mock_request.AutoSummary != "goopis" {
+				t.Fatalf("goopis provided but auto summary set to: %s", mock_request.AutoSummary)
+			} else if mock_request.ImgURL != "https://i.ytimg.com/vi/XdfoXdzGmr0/maxresdefault.jpg" {
+				t.Fatal("expected og:image to be set")
+			}
+		default:
+			t.Fatal("unhandled case, you f'ed up dawg")
 		}
 	}
 }
@@ -256,8 +256,8 @@ func TestAssignMetadata(t *testing.T) {
 
 // Like / unlike link
 func TestUserSubmittedLink(t *testing.T) {
-	var test_links = []struct{
-		ID string
+	var test_links = []struct {
+		ID                  string
 		SubmittedByTestUser bool
 	}{
 		// user goolian submitted links with ID 7, 13, 23
@@ -281,8 +281,8 @@ func TestUserSubmittedLink(t *testing.T) {
 }
 
 func TestUserHasLikedLink(t *testing.T) {
-	var test_links = []struct{
-		ID string
+	var test_links = []struct {
+		ID              string
 		LikedByTestUser bool
 	}{
 		// user goolian liked links with ID 21, 24, 32
@@ -307,8 +307,8 @@ func TestUserHasLikedLink(t *testing.T) {
 
 // Copy link
 func TestUserHasCopiedLink(t *testing.T) {
-	var test_links = []struct{
-		ID string
+	var test_links = []struct {
+		ID               string
 		CopiedByTestUser bool
 	}{
 		// user goolian copied links with ID 19, 31, 32

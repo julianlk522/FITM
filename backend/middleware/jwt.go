@@ -56,7 +56,7 @@ func AuthenticatorOptional(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler 
 				http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
 
-			// Invalid token
+				// Invalid token
 			} else if token != nil && jwt.Validate(token, ja.ValidateOptions()...) != nil {
 				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 				return
@@ -88,7 +88,7 @@ func JWT(next http.Handler) http.Handler {
 				login_name = ""
 			}
 		}
-				
+
 		ctx := context.WithValue(r.Context(), UserIDKey, user_id)
 		ctx = context.WithValue(ctx, LoginNameKey, login_name)
 

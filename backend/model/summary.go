@@ -11,11 +11,11 @@ import (
 )
 
 type Summary struct {
-	ID string
-	Text string
+	ID          string
+	Text        string
 	SubmittedBy string
 	LastUpdated string
-	LikeCount int
+	LikeCount   int
 }
 
 type SummarySignedIn struct {
@@ -23,16 +23,16 @@ type SummarySignedIn struct {
 	IsLiked bool
 }
 
-type SummaryPage[S SummarySignedIn | Summary, L LinkSignedIn | Link ] struct {
-	Link L
+type SummaryPage[S SummarySignedIn | Summary, L LinkSignedIn | Link] struct {
+	Link      L
 	Summaries []S
 }
 
 // ADD
 type NewSummaryRequest struct {
-	ID string
-	LinkID string `json:"link_id"`
-	Text string `json:"text"`
+	ID          string
+	LinkID      string `json:"link_id"`
+	Text        string `json:"text"`
 	LastUpdated string
 }
 
@@ -42,7 +42,7 @@ func (s *NewSummaryRequest) Bind(r *http.Request) error {
 	} else if i, err := strconv.Atoi(s.LinkID); err != nil || i < 1 {
 		return e.ErrInvalidLinkID
 	}
-	
+
 	if s.Text == "" {
 		return e.ErrNoSummaryText
 	} else if len(s.Text) > util.SUMMARY_CHAR_LIMIT {
@@ -51,7 +51,7 @@ func (s *NewSummaryRequest) Bind(r *http.Request) error {
 
 	s.ID = uuid.New().String()
 	s.LastUpdated = util.NEW_TIMESTAMP
-	
+
 	return nil
 
 }
@@ -71,7 +71,7 @@ func (ds *DeleteSummaryRequest) Bind(r *http.Request) error {
 // EDIT
 type EditSummaryRequest struct {
 	SummaryID string `json:"summary_id"`
-	Text string `json:"text"`
+	Text      string `json:"text"`
 }
 
 func (es *EditSummaryRequest) Bind(r *http.Request) error {

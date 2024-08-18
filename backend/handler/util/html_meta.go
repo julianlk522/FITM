@@ -19,41 +19,41 @@ type HTMLMeta struct {
 
 func MetaFromHTMLTokens(resp io.Reader) (hm HTMLMeta) {
 	z := html.NewTokenizer(resp)
-	
+
 	title_tag := false
 	title_found := false
 
 	for {
 		token_type := z.Next()
 		switch token_type {
-			case html.ErrorToken:
-				return
-			case html.SelfClosingTagToken, html.StartTagToken:
+		case html.ErrorToken:
+			return
+		case html.SelfClosingTagToken, html.StartTagToken:
+			t := z.Token()
+			if t.Data == "title" && !title_found {
+				title_tag = true
+			} else if t.Data == "meta" {
+				AssignTokenPropertyToHTMLMeta(t, &hm)
+			}
+		case html.TextToken:
+			if title_tag {
 				t := z.Token()
-				if t.Data == "title" && !title_found {
-					title_tag = true
-				} else if t.Data == "meta" {
-					AssignTokenPropertyToHTMLMeta(t, &hm)
-				}
-			case html.TextToken:
-				if title_tag {
-					t := z.Token()
-					hm.Title = t.Data
+				hm.Title = t.Data
 
-					title_tag = false
-					title_found = true
-				}
+				title_tag = false
+				title_found = true
+			}
 		}
 	}
 }
 
 var meta_properties = []string{
-	"description", 
-	"og:title", 
-	"og:description", 
-	"og:image", 
-	"og:author", 
-	"og:publisher", 
+	"description",
+	"og:title",
+	"og:description",
+	"og:image",
+	"og:author",
+	"og:publisher",
 	"og:site_name",
 }
 
@@ -62,20 +62,20 @@ func AssignTokenPropertyToHTMLMeta(t html.Token, hm *HTMLMeta) {
 		m, ok := ExtractMetaProperty(t, prop)
 		if ok {
 			switch prop {
-				case "description":
-					hm.Description = m
-				case "og:title":
-					hm.OGTitle = m
-				case "og:description":
-					hm.OGDescription = m
-				case "og:image":
-					hm.OGImage = m
-				case "og:author":
-					hm.OGAuthor = m
-				case "og:publisher":
-					hm.OGPublisher = m
-				case "og:site_name":
-					hm.OGSiteName = m
+			case "description":
+				hm.Description = m
+			case "og:title":
+				hm.OGTitle = m
+			case "og:description":
+				hm.OGDescription = m
+			case "og:image":
+				hm.OGImage = m
+			case "og:author":
+				hm.OGAuthor = m
+			case "og:publisher":
+				hm.OGPublisher = m
+			case "og:site_name":
+				hm.OGSiteName = m
 			}
 		}
 	}

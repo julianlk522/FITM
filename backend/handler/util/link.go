@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	LINKS_PAGE_LIMIT int = 20
+	LINKS_PAGE_LIMIT    int = 20
 	CATEGORY_PAGE_LIMIT int = 15
 )
 
@@ -35,7 +35,7 @@ func GetIDsOfLinksHavingCategories(categories_str string) (link_ids []string, er
 		log.Fatal(err)
 	}
 	defer rows.Close()
-	
+
 	for rows.Next() {
 		var lid string
 		if err := rows.Scan(&lid); err != nil {
@@ -65,19 +65,19 @@ func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks,
 	switch any(new(T)).(type) {
 	case *model.LinkSignedIn:
 		var signed_in_links = []model.LinkSignedIn{}
-	
+
 		for rows.Next() {
 			i := model.LinkSignedIn{}
 			err := rows.Scan(
-				&i.ID, 
-				&i.URL, 
-				&i.SubmittedBy, 
-				&i.SubmitDate, 
-				&i.Categories, 
-				&i.Summary, 
-				&i.SummaryCount, 
+				&i.ID,
+				&i.URL,
+				&i.SubmittedBy,
+				&i.SubmitDate,
+				&i.Categories,
+				&i.Summary,
+				&i.SummaryCount,
 				&i.TagCount,
-				&i.LikeCount, 
+				&i.LikeCount,
 				&i.ImgURL,
 			)
 			if err != nil {
@@ -88,8 +88,7 @@ func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks,
 			var l sql.NullInt32
 			var t sql.NullInt32
 			var c sql.NullInt32
-	
-			
+
 			err = db.Client.QueryRow(
 				fmt.Sprintf(
 					`SELECT
@@ -106,39 +105,39 @@ func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks,
 					(
 						SELECT count(*) FROM 'Link Copies'
 						WHERE link_id = '%[1]s' AND user_id = '%[2]s'
-					) as is_copied;`, 
-					i.ID, 
+					) as is_copied;`,
+					i.ID,
 					req_user_id,
 				),
-			).Scan(&l,&t, &c)
+			).Scan(&l, &t, &c)
 			if err != nil {
 				return nil, err
 			}
-	
+
 			i.IsLiked = l.Int32 > 0
 			i.IsTagged = t.Int32 > 0
 			i.IsCopied = c.Int32 > 0
 
 			signed_in_links = append(signed_in_links, i)
 		}
-	
+
 		links = &signed_in_links
-			
+
 	case *model.Link:
 		var signed_out_links = []model.Link{}
-	
+
 		for rows.Next() {
 			i := model.Link{}
 			err := rows.Scan(
-				&i.ID, 
-				&i.URL, 
-				&i.SubmittedBy, 
-				&i.SubmitDate, 
-				&i.Categories, 
-				&i.Summary, 
-				&i.SummaryCount, 
+				&i.ID,
+				&i.URL,
+				&i.SubmittedBy,
+				&i.SubmitDate,
+				&i.Categories,
+				&i.Summary,
+				&i.SummaryCount,
 				&i.TagCount,
-				&i.LikeCount, 
+				&i.LikeCount,
 				&i.ImgURL,
 			)
 			if err != nil {
@@ -146,39 +145,37 @@ func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks,
 			}
 			signed_out_links = append(signed_out_links, i)
 		}
-	
+
 		links = &signed_out_links
 	}
-	
+
 	return links.(*[]T), nil
 }
 
 func RenderPaginatedLinks[T model.LinkSignedIn | model.Link](links *[]T, page int, w http.ResponseWriter, r *http.Request) {
 	if len(*links) == 0 {
 		RenderZeroLinks(w, r)
-	} else if len(*links) == LINKS_PAGE_LIMIT + 1 {
+	} else if len(*links) == LINKS_PAGE_LIMIT+1 {
 		sliced := (*links)[:LINKS_PAGE_LIMIT]
 		render.JSON(w, r, &model.PaginatedLinks[T]{
-			Links: &sliced, 
+			Links:    &sliced,
 			NextPage: page + 1,
 		})
 	} else {
 		render.JSON(w, r, &model.PaginatedLinks[T]{
-			Links: links, 
+			Links:    links,
 			NextPage: -1,
 		})
 	}
 }
 
-
-
 // Add link
-func ResolveAndAssignURL(url string, request *model.NewLinkRequest) (*http.Response, error) {	
+func ResolveAndAssignURL(url string, request *model.NewLinkRequest) (*http.Response, error) {
 	has_protocol_regex, err := regexp.Compile(`^(http(s?)\:\/\/)`)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var resp *http.Response
 	var ErrRedirect error = errors.New("invalid link destination: redirect detected")
 
@@ -190,8 +187,8 @@ func ResolveAndAssignURL(url string, request *model.NewLinkRequest) (*http.Respo
 		} else if IsRedirect(resp.StatusCode) {
 			return nil, ErrRedirect
 		}
-		
-	// Protocol not specified: try https then http
+
+		// Protocol not specified: try https then http
 	} else {
 
 		// https
@@ -212,7 +209,7 @@ func ResolveAndAssignURL(url string, request *model.NewLinkRequest) (*http.Respo
 			return nil, ErrRedirect
 		}
 	}
-	
+
 	// save updated URL after any redirects e.g., to wwww.
 	// remove trailing slash
 	request.URL = strings.TrimSuffix(resp.Request.URL.String(), "/")
@@ -222,7 +219,7 @@ func ResolveAndAssignURL(url string, request *model.NewLinkRequest) (*http.Respo
 
 func InvalidURLError(url string) error {
 	return fmt.Errorf("invalid URL: %s", url)
-} 
+}
 
 func URLAlreadyAdded(url string) bool {
 	var u sql.NullString
@@ -233,16 +230,16 @@ func URLAlreadyAdded(url string) bool {
 
 func AssignMetadata(meta HTMLMeta, link_data *model.NewLinkRequest) {
 	switch {
-		case meta.OGDescription != "":
-			link_data.AutoSummary = meta.OGDescription
-		case meta.Description != "":
-			link_data.AutoSummary = meta.Description
-		case meta.OGTitle != "":
-			link_data.AutoSummary = meta.OGTitle
-		case meta.Title != "":
-			link_data.AutoSummary = meta.Title
-		case meta.OGSiteName != "":
-			link_data.AutoSummary = meta.OGSiteName
+	case meta.OGDescription != "":
+		link_data.AutoSummary = meta.OGDescription
+	case meta.Description != "":
+		link_data.AutoSummary = meta.Description
+	case meta.OGTitle != "":
+		link_data.AutoSummary = meta.OGTitle
+	case meta.Title != "":
+		link_data.AutoSummary = meta.Title
+	case meta.OGSiteName != "":
+		link_data.AutoSummary = meta.OGSiteName
 	}
 
 	if meta.OGImage != "" {
@@ -264,8 +261,6 @@ func AssignSortedCategories(unsorted_cats string, link *model.NewLinkRequest) {
 	link.Categories = strings.Join(split_categories, ",")
 }
 
-
-
 // Like / unlike link
 func UserSubmittedLink(login_name string, link_id string) bool {
 	var sb sql.NullString
@@ -280,12 +275,10 @@ func UserSubmittedLink(login_name string, link_id string) bool {
 
 func UserHasLikedLink(user_id string, link_id string) bool {
 	var l sql.NullString
-	err := db.Client.QueryRow("SELECT id FROM 'Link Likes' WHERE user_id = ? AND link_id = ?;",user_id, link_id).Scan(&l)
+	err := db.Client.QueryRow("SELECT id FROM 'Link Likes' WHERE user_id = ? AND link_id = ?;", user_id, link_id).Scan(&l)
 
 	return err == nil && l.Valid
 }
-
-
 
 // Copy link
 func UserHasCopiedLink(user_id string, link_id string) bool {

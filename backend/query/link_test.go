@@ -12,14 +12,14 @@ import (
 
 // Links
 func Test_PaginateLimitClause(t *testing.T) {
-	var test_cases = []struct{
+	var test_cases = []struct {
 		Page int
 		Want string
 	}{
-		{1, fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT + 1)},
-		{2, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT + 1, LINKS_PAGE_LIMIT)},
-		{3, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT + 1, 2*LINKS_PAGE_LIMIT)},
-		{4, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT + 1, 3*LINKS_PAGE_LIMIT)},
+		{1, fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT+1)},
+		{2, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, LINKS_PAGE_LIMIT)},
+		{3, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, 2*LINKS_PAGE_LIMIT)},
+		{4, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, 3*LINKS_PAGE_LIMIT)},
 	}
 
 	for _, tc := range test_cases {
@@ -54,7 +54,7 @@ func TestNewTopLinks(t *testing.T) {
 		t.Fatal("too few columns")
 	}
 
-	var test_cols = []struct{
+	var test_cols = []struct {
 		Want string
 	}{
 		{"link_id"},
@@ -113,9 +113,9 @@ func TestFromIDs(t *testing.T) {
 }
 
 func TestLinksDuringPeriod(t *testing.T) {
-	var test_periods = []struct{
+	var test_periods = []struct {
 		Period string
-		Valid bool
+		Valid  bool
 	}{
 		{"day", true},
 		{"week", true},
@@ -145,11 +145,11 @@ func TestLinksDuringPeriod(t *testing.T) {
 func TestPage(t *testing.T) {
 	var links_sql = NewTopLinks()
 
-	want1 := strings.Replace(links_sql.Text, UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT + 1), 1)
-	want2 := strings.Replace(links_sql.Text, UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT + 1, LINKS_PAGE_LIMIT), 1)
-	want3 := strings.Replace(links_sql.Text, UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT + 1, 2*LINKS_PAGE_LIMIT), 1)
+	want1 := strings.Replace(links_sql.Text, UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT+1), 1)
+	want2 := strings.Replace(links_sql.Text, UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, LINKS_PAGE_LIMIT), 1)
+	want3 := strings.Replace(links_sql.Text, UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, 2*LINKS_PAGE_LIMIT), 1)
 
-	var test_cases = []struct{
+	var test_cases = []struct {
 		Page int
 		Want string
 	}{
@@ -191,8 +191,6 @@ func Test_LinksWhere(t *testing.T) {
 	}
 	defer rows2.Close()
 }
-
-
 
 // Link IDs
 func TestNewLinkIDs(t *testing.T) {
@@ -245,8 +243,6 @@ func Test_LinkIDsFromCategories(t *testing.T) {
 	}
 }
 
-
-
 // Subcats
 func TestNewSubcats(t *testing.T) {
 	subcats_sql := NewSubcats([]string{"umvc3"})
@@ -272,9 +268,9 @@ func TestNewSubcats(t *testing.T) {
 }
 
 func TestSubcatsDuringPeriod(t *testing.T) {
-	var test_periods = [7]struct{
+	var test_periods = [7]struct {
 		Period string
-		Valid bool
+		Valid  bool
 	}{
 		{"day", true},
 		{"week", true},
@@ -314,8 +310,6 @@ func Test_SubcatsWhere(t *testing.T) {
 	defer rows.Close()
 }
 
-
-
 // Cats counts
 func TestNewCatCount(t *testing.T) {
 	var count int
@@ -346,10 +340,10 @@ func Test_CatCountsFromCategories(t *testing.T) {
 		t.Fatal(cc_sql.Error)
 	}
 	cc_sql.Text = strings.Replace(
-		cc_sql.Text, 
-		"count(*) as link_count", 
-		"count(*) as link_count, global_cats", 
-	1)
+		cc_sql.Text,
+		"count(*) as link_count",
+		"count(*) as link_count, global_cats",
+		1)
 
 	err := TestClient.QueryRow(cc_sql.Text).Scan(&single_cat_count, &cats)
 	if err != nil && err != sql.ErrNoRows {
@@ -361,34 +355,32 @@ func Test_CatCountsFromCategories(t *testing.T) {
 	// multiple cats
 	cc_sql = NewCatCount(test_cats)
 	cc_sql.Text = strings.Replace(
-		cc_sql.Text, 
-		"count(*) as link_count", 
-		"count(*) as link_count, global_cats", 
-	1)
+		cc_sql.Text,
+		"count(*) as link_count",
+		"count(*) as link_count, global_cats",
+		1)
 
 	err = TestClient.QueryRow(cc_sql.Text).Scan(&multiple_cats_count, &cats)
 	if err != nil {
 		t.Fatal(err)
 	} else if !(strings.Contains(cats, "umvc3") && strings.Contains(cats, "flowers")) {
 		t.Fatalf(
-			"got %s, should contain %s and %s", 
-			cats, 
-			"umvc3", 
+			"got %s, should contain %s and %s",
+			cats,
+			"umvc3",
 			"flowers",
 		)
 	}
 
 	if multiple_cats_count >= single_cat_count {
 		t.Fatalf(
-			"got same counts (%s only: %d, %s: %d), multiple cat counts should be fewer", test_cats[0], 
-			single_cat_count, 
-			strings.Join(test_cats, ","), 
+			"got same counts (%s only: %d, %s: %d), multiple cat counts should be fewer", test_cats[0],
+			single_cat_count,
+			strings.Join(test_cats, ","),
 			multiple_cats_count,
 		)
 	}
 }
-
-
 
 // Cats contributors
 func TestNewCatsContributors(t *testing.T) {
@@ -414,7 +406,7 @@ func TestNewCatsContributors(t *testing.T) {
 		t.Fatalf("wrong columns (got %d, want 2)", len(cols))
 	}
 
-	var test_cols = []struct{
+	var test_cols = []struct {
 		Want string
 	}{
 		{"count(*)"},
@@ -431,10 +423,10 @@ func TestNewCatsContributors(t *testing.T) {
 func Test_ContributorsFromCats(t *testing.T) {
 	contributors_sql := NewCatsContributors([]string{"umvc3"})
 	contributors_sql.Text = strings.Replace(
-		contributors_sql.Text, 
-		"count(*), submitted_by", 
-		"global_cats", 
-	1)
+		contributors_sql.Text,
+		"count(*), submitted_by",
+		"global_cats",
+		1)
 
 	rows, err := TestClient.Query(contributors_sql.Text)
 	if err != nil && err != sql.ErrNoRows {
@@ -454,9 +446,9 @@ func Test_ContributorsFromCats(t *testing.T) {
 }
 
 func TestContributorsDuringPeriod(t *testing.T) {
-	var test_periods = [7]struct{
+	var test_periods = [7]struct {
 		Period string
-		Valid bool
+		Valid  bool
 	}{
 		{"day", true},
 		{"week", true},

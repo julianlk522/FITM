@@ -10,10 +10,10 @@ import (
 
 var (
 	test_login_name = "goolian"
-	test_user_id = "3"
-	test_categories = []string{"go","coding"}
+	test_user_id    = "3"
+	test_categories = []string{"go", "coding"}
 
-	test_req_user_id = "13"
+	test_req_user_id    = "13"
 	test_req_login_name = "bradley"
 )
 
@@ -23,16 +23,14 @@ func TestNewTmapProfile(t *testing.T) {
 
 	var profile model.Profile
 	if err := TestClient.QueryRow(profile_sql).Scan(
-		&profile.LoginName, 
-		&profile.About, 
-		&profile.PFP, 
+		&profile.LoginName,
+		&profile.About,
+		&profile.PFP,
 		&profile.Created,
 	); err != nil {
 		t.Fatal(err)
 	}
 }
-
-
 
 // Submitted
 func TestNewTmapSubmitted(t *testing.T) {
@@ -41,10 +39,10 @@ func TestNewTmapSubmitted(t *testing.T) {
 	var submitted_ids []string
 
 	submitted_ids_sql := fmt.Sprintf(
-		`SELECT id FROM Links WHERE submitted_by = '%s'`, 
+		`SELECT id FROM Links WHERE submitted_by = '%s'`,
 		test_login_name,
 	)
-	
+
 	rows, err := TestClient.Query(submitted_ids_sql)
 	if err != nil {
 		t.Fatal(err)
@@ -181,8 +179,6 @@ func TestNewTmapSubmittedAsSignedInUser(t *testing.T) {
 	}
 }
 
-
-
 // Copied
 func TestNewTmapCopied(t *testing.T) {
 	copied_sql := NewTmapCopied(test_login_name)
@@ -222,9 +218,9 @@ func TestNewTmapCopied(t *testing.T) {
 			fmt.Sprintf(`SELECT id
 				FROM 'Link Copies'
 				WHERE link_id = %s
-				AND user_id = %s`, 
-			l.ID, 
-			test_user_id),
+				AND user_id = %s`,
+				l.ID,
+				test_user_id),
 		).Scan(&link_id)
 
 		if err != nil {
@@ -273,9 +269,9 @@ func TestNewTmapCopiedFromCategories(t *testing.T) {
 			fmt.Sprintf(`SELECT id
 				FROM 'Link Copies'
 				WHERE link_id = %s
-				AND user_id = %s`, 
-			l.ID, 
-			test_user_id),
+				AND user_id = %s`,
+				l.ID,
+				test_user_id),
 		).Scan(&link_id)
 
 		if err != nil {
@@ -320,8 +316,6 @@ func TestNewTmapCopiedAsSignedInUser(t *testing.T) {
 	}
 }
 
-
-
 // Tagged
 func TestNewTmapTagged(t *testing.T) {
 	tagged_sql := NewTmapTagged(test_login_name)
@@ -361,9 +355,9 @@ func TestNewTmapTagged(t *testing.T) {
 			fmt.Sprintf(`SELECT id
 				FROM Tags
 				WHERE link_id = %s
-				AND submitted_by = '%s'`, 
-			l.ID, 
-			test_login_name),
+				AND submitted_by = '%s'`,
+				l.ID,
+				test_login_name),
 		).Scan(&link_id)
 
 		if err != nil {
@@ -412,9 +406,9 @@ func TestNewTmapTaggedFromCategories(t *testing.T) {
 			fmt.Sprintf(`SELECT id
 				FROM Tags
 				WHERE link_id = %s
-				AND submitted_by = %s`, 
-			l.ID, 
-			test_login_name),
+				AND submitted_by = %s`,
+				l.ID,
+				test_login_name),
 		).Scan(&link_id)
 
 		if err != nil {

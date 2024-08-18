@@ -23,16 +23,16 @@ func ScanTagPageLink(link_sql *query.TagPageLink) (*model.LinkSignedIn, error) {
 	err := db.Client.
 		QueryRow(link_sql.Text).
 		Scan(
-			&l.ID, 
-			&l.URL, 
-			&l.SubmittedBy, 
-			&l.SubmitDate, 
-			&l.Categories, 
-			&l.Summary, 
+			&l.ID,
+			&l.URL,
+			&l.SubmittedBy,
+			&l.SubmitDate,
+			&l.Categories,
+			&l.Summary,
 			&l.SummaryCount,
-			&l.LikeCount, 
-			&l.ImgURL, 
-			&l.IsLiked, 
+			&l.LikeCount,
+			&l.ImgURL,
+			&l.IsLiked,
 			&l.IsCopied,
 		)
 	if err != nil {
@@ -56,10 +56,10 @@ func GetUserTagForLink(login_name string, link_id string) (*model.Tag, error) {
 	}
 
 	return &model.Tag{
-		ID: id.String,
-		Categories: cats.String,
+		ID:          id.String,
+		Categories:  cats.String,
 		LastUpdated: last_updated.String,
-		LinkID: link_id,
+		LinkID:      link_id,
 		SubmittedBy: login_name,
 	}, nil
 }
@@ -76,9 +76,9 @@ func ScanTagRankings(tag_rankings_sql *query.TagRankings) (*[]model.TagRankingPu
 	for rows.Next() {
 		var tag model.TagRankingPublic
 		err = rows.Scan(
-			&tag.LifeSpanOverlap, 
-			&tag.Categories, 
-			&tag.SubmittedBy, 
+			&tag.LifeSpanOverlap,
+			&tag.Categories,
+			&tag.SubmittedBy,
 			&tag.LastUpdated,
 		)
 		if err != nil {
@@ -90,20 +90,18 @@ func ScanTagRankings(tag_rankings_sql *query.TagRankings) (*[]model.TagRankingPu
 	return &tag_rankings, nil
 }
 
-
-
 // Get top global cats
 func ScanGlobalCatCounts(global_cats_sql *query.GlobalCatCounts) (*[]model.CatCount, error) {
 	if global_cats_sql.Error != nil {
 		return nil, global_cats_sql.Error
 	}
-	
+
 	rows, err := db.Client.Query(global_cats_sql.Text)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	
+
 	var counts []model.CatCount
 
 	for rows.Next() {
@@ -118,12 +116,10 @@ func ScanGlobalCatCounts(global_cats_sql *query.GlobalCatCounts) (*[]model.CatCo
 	return &counts, nil
 }
 
-func RenderCatCounts(cat_counts *[]model.CatCount, w http.ResponseWriter, r *http.Request, ) {
+func RenderCatCounts(cat_counts *[]model.CatCount, w http.ResponseWriter, r *http.Request) {
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, cat_counts)
 }
-
-
 
 // Add tag
 func UserHasTaggedLink(login_name string, link_id string) (bool, error) {
@@ -139,8 +135,6 @@ func UserHasTaggedLink(login_name string, link_id string) (bool, error) {
 	return true, nil
 
 }
-
-
 
 // Edit tag
 func UserSubmittedTagWithID(login_name string, tag_id string) (bool, error) {
@@ -174,8 +168,6 @@ func GetLinkIDFromTagID(tag_id string) (string, error) {
 	return link_id.String, nil
 }
 
-
-
 // Calculate global cats
 func CalculateAndSetGlobalCats(link_id string) error {
 	overlap_scores_sql := query.NewTopOverlapScores(link_id)
@@ -203,11 +195,11 @@ func CalculateAndSetGlobalCats(link_id string) error {
 	var max_cat_score float32
 
 	for _, tag := range tag_rankings {
-		
+
 		// square root lifespan overlap to smooth out scores
 		// (allows brand-new tags to still have some influence)
 		tag.LifeSpanOverlap = float32(math.Sqrt(float64(tag.LifeSpanOverlap)))
-		
+
 		cat_field_lc := strings.ToLower(tag.Categories)
 
 		// multiple categories
@@ -221,7 +213,7 @@ func CalculateAndSetGlobalCats(link_id string) error {
 				}
 			}
 
-		// single category
+			// single category
 		} else {
 			overlap_scores[cat_field_lc] += tag.LifeSpanOverlap
 
@@ -235,12 +227,11 @@ func CalculateAndSetGlobalCats(link_id string) error {
 
 	// Alphabetize so global categories are assigned in order
 	alphabetized_cats := AlphabetizeOverlapScoreCats(overlap_scores)
-	
-	
+
 	// Assign to global cats if >= 25% of max category score
 	var global_cats string
 	for _, cat := range alphabetized_cats {
-		if overlap_scores[cat] >= max_cat_score * 0.25 {
+		if overlap_scores[cat] >= max_cat_score*0.25 {
 			global_cats += cat + ","
 		}
 	}
@@ -254,7 +245,7 @@ func CalculateAndSetGlobalCats(link_id string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -268,14 +259,13 @@ func AlphabetizeOverlapScoreCats(scores map[string]float32) []string {
 	return cats
 }
 
-
 func SetGlobalCats(link_id string, text string) error {
 	_, err := db.Client.Exec(`
 		UPDATE Links 
 		SET global_cats = ? 
-		WHERE id = ?`, 
-	text, 
-	link_id)
+		WHERE id = ?`,
+		text,
+		link_id)
 	if err != nil {
 		return err
 	}

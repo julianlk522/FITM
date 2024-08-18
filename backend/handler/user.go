@@ -52,12 +52,12 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = db.Client.Exec(
-		`INSERT INTO users VALUES (?,?,?,?,?,?)`, 
-		signup_data.ID, 
-		signup_data.Auth.LoginName, 
-		pw_hash, 
-		nil, 
-		nil, 
+		`INSERT INTO users VALUES (?,?,?,?,?,?)`,
+		signup_data.ID,
+		signup_data.Auth.LoginName,
+		pw_hash,
+		nil,
+		nil,
 		signup_data.CreatedAt,
 	)
 	if err != nil {
@@ -114,7 +114,7 @@ func EditAbout(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, edit_about_data)
 }
@@ -124,25 +124,25 @@ func GetProfilePic(w http.ResponseWriter, r *http.Request) {
 
 	var file_name string = chi.URLParam(r, "file_name")
 	path := pic_dir + "/" + file_name
-	
+
 	if _, err := os.Stat(path); err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(errors.New("profile pic not found")))
 		return
 	}
-	
+
 	http.ServeFile(w, r, path)
 }
 
 func UploadNewProfilePic(w http.ResponseWriter, r *http.Request) {
 
 	// Get file (up to 10MB)
-	r.ParseMultipartForm( 10 << 20 )
+	r.ParseMultipartForm(10 << 20)
 	file, handler, err := r.FormFile("pic")
-    if err != nil {
+	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
-        return
-    }
-    defer file.Close()
+		return
+	}
+	defer file.Close()
 
 	// Valid image
 	if !strings.Contains(handler.Header.Get("Content-Type"), "image") {
@@ -155,7 +155,7 @@ func UploadNewProfilePic(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
-	
+
 	// Aspect ratio is no more than 2:1 and no less than 0.5:1
 	if !util.HasAcceptableAspectRatio(img) {
 		render.Render(w, r, e.ErrInvalidRequest(errors.New("profile pic aspect ratio must be no more than 2:1 and no less than 0.5:1")))
@@ -178,7 +178,7 @@ func UploadNewProfilePic(w http.ResponseWriter, r *http.Request) {
 
 	// Restore img file cursor to start
 	file.Seek(0, 0)
-	
+
 	// Save to new file
 	if _, err := io.Copy(dst, file); err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(errors.New("could not copy profile pic to new file")))
@@ -224,6 +224,6 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
-	
+
 	render.JSON(w, r, tmap)
 }

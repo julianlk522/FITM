@@ -12,11 +12,11 @@ import (
 // AUTH
 type Auth struct {
 	LoginName string `json:"login_name"`
-	Password string `json:"password"`
+	Password  string `json:"password"`
 }
 type SignUpRequest struct {
 	*Auth
-	ID string
+	ID        string
 	CreatedAt string
 }
 
@@ -44,7 +44,6 @@ type LogInRequest struct {
 	*Auth
 }
 
-
 func (l *LogInRequest) Bind(r *http.Request) error {
 	if l.Auth.LoginName == "" {
 		return e.ErrNoLoginName
@@ -55,14 +54,12 @@ func (l *LogInRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-
-
 // PROFILE
 type Profile struct {
 	LoginName string
-	About string
-	PFP string
-	Created string
+	About     string
+	PFP       string
+	Created   string
 }
 
 type EditAboutRequest struct {
@@ -82,13 +79,11 @@ type EditProfilePicRequest struct {
 	ProfilePic string `json:"pfp,omitempty"`
 }
 
-
-
 // TREASURE MAP
 type TreasureMapSections[T TmapLink | TmapLinkSignedIn] struct {
-	Submitted *[]T
-	Tagged *[]T
-	Copied *[]T
+	Submitted  *[]T
+	Tagged     *[]T
+	Copied     *[]T
 	Categories *[]CatCount
 }
 

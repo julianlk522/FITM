@@ -48,7 +48,7 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(links_sql.Error))
 		return
 	}
-	
+
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if req_user_id != "" {
 		links, err := util.ScanLinks[model.LinkSignedIn](links_sql, req_user_id)
@@ -86,7 +86,7 @@ func GetCatsContributors(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(contributors_sql.Error))
 		return
 	}
-	
+
 	contributors := util.ScanCatsContributors(contributors_sql, cats_params)
 	util.RenderCatsContributors(contributors, w, r)
 }
@@ -104,12 +104,12 @@ func GetSubcats(w http.ResponseWriter, r *http.Request) {
 	cats_params = strings.ToLower(cats_params)
 	categories := strings.Split(cats_params, ",")
 	subcats_sql := query.NewSubcats(categories)
-	
+
 	period_params := r.URL.Query().Get("period")
 	if period_params != "" {
 		subcats_sql = subcats_sql.DuringPeriod(period_params)
 	}
-	
+
 	if subcats_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(subcats_sql.Error))
 		return
@@ -123,8 +123,6 @@ func GetSubcats(w http.ResponseWriter, r *http.Request) {
 	util.RenderSubcategories(subcats, categories, w, r)
 }
 
-
-
 func AddLink(w http.ResponseWriter, r *http.Request) {
 	request := &model.NewLinkRequest{}
 	if err := render.Bind(r, request); err != nil {
@@ -133,7 +131,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check URL is valid
-    resp, err := util.ResolveAndAssignURL(request.NewLink.URL, request)
+	resp, err := util.ResolveAndAssignURL(request.NewLink.URL, request)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
@@ -150,22 +148,22 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	request.SubmittedBy = req_login_name
-	
+
 	meta := util.MetaFromHTMLTokens(resp.Body)
 	util.AssignMetadata(meta, request)
 
 	unsorted_cats := request.NewLink.Categories
 	util.AssignSortedCategories(unsorted_cats, request)
-	
+
 	// Insert link
 	_, err = db.Client.Exec(
-		"INSERT INTO Links VALUES(?,?,?,?,?,?,?);", 
-		request.ID, 
-		request.URL, 
-		req_login_name, 
-		request.SubmitDate, 
-		request.Categories, 
-		request.NewLink.Summary, 
+		"INSERT INTO Links VALUES(?,?,?,?,?,?,?);",
+		request.ID,
+		request.URL,
+		req_login_name,
+		request.SubmitDate,
+		request.Categories,
+		request.NewLink.Summary,
 		request.ImgURL,
 	)
 	if err != nil {
@@ -179,11 +177,11 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		// Note: UserID 15 is AutoSummary
 		// TODO: add constant, replace magic 15
 		_, err = db.Client.Exec(
-			"INSERT INTO Summaries VALUES(?,?,?,?,?);", 
-			uuid.New().String(), 
-			request.AutoSummary, 
-			request.ID, 
-			"15", 
+			"INSERT INTO Summaries VALUES(?,?,?,?,?);",
+			uuid.New().String(),
+			request.AutoSummary,
+			request.ID,
+			"15",
 			request.SubmitDate,
 		)
 		if err != nil {
@@ -198,11 +196,11 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if request.NewLink.Summary != "" {
 		_, err = db.Client.Exec(
-			"INSERT INTO Summaries VALUES(?,?,?,?,?);", 
-			uuid.New().String(), 
-			request.NewLink.Summary, 
-			request.ID, 
-			req_user_id, 
+			"INSERT INTO Summaries VALUES(?,?,?,?,?);",
+			uuid.New().String(),
+			request.NewLink.Summary,
+			request.ID,
+			req_user_id,
 			request.SubmitDate,
 		)
 		if err != nil {
@@ -215,11 +213,11 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	// Insert tag
 	_, err = db.Client.Exec(
-		"INSERT INTO Tags VALUES(?,?,?,?,?);", 
-		uuid.New().String(), 
-		request.ID, 
-		request.Categories, 
-		req_login_name, 
+		"INSERT INTO Tags VALUES(?,?,?,?,?);",
+		uuid.New().String(),
+		request.ID,
+		request.Categories,
+		req_login_name,
 		request.SubmitDate,
 	)
 	if err != nil {
@@ -229,14 +227,14 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	// Return new link
 	new_link := model.Link{
-		ID: request.ID,
-		URL: request.URL,
-		SubmittedBy: req_login_name,
-		SubmitDate: request.SubmitDate,
-		Categories: request.Categories,
-		Summary: request.NewLink.Summary,
+		ID:           request.ID,
+		URL:          request.URL,
+		SubmittedBy:  req_login_name,
+		SubmitDate:   request.SubmitDate,
+		Categories:   request.Categories,
+		Summary:      request.NewLink.Summary,
 		SummaryCount: request.SummaryCount,
-		ImgURL: request.ImgURL,
+		ImgURL:       request.ImgURL,
 	}
 
 	render.Status(r, http.StatusCreated)
@@ -264,10 +262,10 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 
 	new_like_id := uuid.New().String()
 	_, err := db.Client.Exec(
-		"INSERT INTO 'Link Likes' VALUES(?,?,?);", 
-		new_like_id, 
+		"INSERT INTO 'Link Likes' VALUES(?,?,?);",
+		new_like_id,
 		link_id,
-		req_user_id, 
+		req_user_id,
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -275,7 +273,7 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 
 	like_link_data := make(map[string]string, 1)
 	like_link_data["ID"] = new_like_id
-	
+
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, like_link_data)
 }
@@ -296,7 +294,7 @@ func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 	_, err := db.Client.Exec(
 		"DELETE FROM 'Link Likes' WHERE link_id = ? AND user_id = ?;",
 		link_id,
-		req_user_id, 
+		req_user_id,
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -330,9 +328,9 @@ func CopyLink(w http.ResponseWriter, r *http.Request) {
 	new_copy_id := uuid.New().String()
 
 	_, err := db.Client.Exec(
-		"INSERT INTO 'Link Copies' VALUES(?,?,?);", 
-		new_copy_id, 
-		link_id, 
+		"INSERT INTO 'Link Copies' VALUES(?,?,?);",
+		new_copy_id,
+		link_id,
 		req_user_id,
 	)
 	if err != nil {
@@ -365,7 +363,7 @@ func UncopyLink(w http.ResponseWriter, r *http.Request) {
 	_, err := db.Client.Exec(
 		"DELETE FROM 'Link Copies' WHERE link_id = ? AND user_id = ?;",
 		link_id,
-		req_user_id, 
+		req_user_id,
 	)
 	if err != nil {
 		log.Fatal(err)

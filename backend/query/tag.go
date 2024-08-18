@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	TAGS_PAGE_LIMIT = 20
+	TAGS_PAGE_LIMIT              = 20
 	TOP_OVERLAP_SCORES_LIMIT int = 20
-	TOP_GLOBAL_CATS_LIMIT int = 15
+	TOP_GLOBAL_CATS_LIMIT    int = 15
 )
 
 // Tags Page link
@@ -53,20 +53,20 @@ func NewTagPageLink(link_id string, user_id string) *TagPageLink {
 
 func (l *TagPageLink) _FromID(link_id string) *TagPageLink {
 	l.Text = strings.Replace(
-		l.Text, 
-		"FROM Links", 
+		l.Text,
+		"FROM Links",
 		fmt.Sprintf(
 			`FROM Links 
 			WHERE id = '%s'
-			)`, 
+			)`,
 			link_id,
 		),
-	1)
+		1)
 
 	return l
 }
 
-func (l *TagPageLink) _ForSignedInUser(user_id string ) *TagPageLink {
+func (l *TagPageLink) _ForSignedInUser(user_id string) *TagPageLink {
 	l.Text += fmt.Sprintf(` 
 	LEFT JOIN 'Link Likes'
 	ON 'Link Likes'.link_id = links_id
@@ -90,8 +90,6 @@ func (l *TagPageLink) _ForSignedInUser(user_id string ) *TagPageLink {
 	return l
 }
 
-
-
 // Top Tags (Internal Overlap Scores)
 type TopOverlapScores struct {
 	Query
@@ -105,27 +103,25 @@ INNER JOIN Links
 ON Links.id = Tags.link_id
 ORDER BY lifespan_overlap DESC`
 
-
 func NewTopOverlapScores(link_id string) *TopOverlapScores {
 	return (&TopOverlapScores{Query: Query{Text: TOP_OVERLAP_SCORES_BASE}})._FromLink(link_id)
 }
 
 func (o *TopOverlapScores) _FromLink(link_id string) *TopOverlapScores {
-	o. Text = strings.Replace(
-		o.Text, 
-		"ORDER BY lifespan_overlap DESC", 
+	o.Text = strings.Replace(
+		o.Text,
+		"ORDER BY lifespan_overlap DESC",
 		fmt.Sprintf(
 			`WHERE link_id = '%s' 
 			ORDER BY lifespan_overlap DESC 
-			LIMIT %d`, 
+			LIMIT %d`,
 			link_id,
 			TOP_OVERLAP_SCORES_LIMIT,
-		), 
-	1)
+		),
+		1)
 
 	return o
 }
-
 
 // Tag Rankings for Link (Public Overlap Scores)
 type TagRankings struct {
@@ -150,14 +146,13 @@ func (t *TagRankings) _FromLink(link_id string) *TagRankings {
 	t.Text += fmt.Sprintf(` 
 		WHERE link_id = '%s'
 		ORDER BY lifespan_overlap DESC 
-		LIMIT %d`, 
-		link_id, 
+		LIMIT %d`,
+		link_id,
 		TAGS_PAGE_LIMIT,
 	)
 
 	return t
 }
-
 
 // Global Cat Counts
 type GlobalCatCounts struct {
@@ -200,7 +195,7 @@ func (t *GlobalCatCounts) DuringPeriod(period string) *GlobalCatCounts {
 			WHERE %s`,
 			clause,
 		),
-	1)
+		1)
 
 	return t
 }
@@ -215,7 +210,7 @@ func (t *GlobalCatCounts) _Limit(limit int) *GlobalCatCounts {
 LIMIT %d;`,
 			limit,
 		),
-	1)
+		1)
 
 	return t
 }
