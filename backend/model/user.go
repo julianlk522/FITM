@@ -5,8 +5,6 @@ import (
 
 	e "oitm/error"
 	util "oitm/model/util"
-
-	"github.com/google/uuid"
 )
 
 // AUTH
@@ -21,21 +19,23 @@ type SignUpRequest struct {
 }
 
 func (s *SignUpRequest) Bind(r *http.Request) error {
-	if s.Auth.LoginName == "" {
-		return e.ErrNoLoginName
-	} else if len(s.Auth.LoginName) < util.LOGIN_NAME_LOWER_LIMIT {
-		return e.LoginNameExceedsLowerLimit(util.LOGIN_NAME_LOWER_LIMIT)
-	} else if len(s.Auth.LoginName) > util.LOGIN_NAME_UPPER_LIMIT {
-		return e.LoginNameExceedsUpperLimit(util.LOGIN_NAME_UPPER_LIMIT)
-	} else if s.Auth.Password == "" {
-		return e.ErrNoPassword
-	} else if len(s.Auth.Password) < util.PASSWORD_LOWER_LIMIT {
-		return e.PasswordExceedsLowerLimit(util.PASSWORD_LOWER_LIMIT)
-	} else if len(s.Auth.Password) > util.PASSWORD_UPPER_LIMIT {
-		return e.PasswordExceedsUpperLimit(util.PASSWORD_UPPER_LIMIT)
+	switch {
+		case s.Auth.LoginName == "":
+			return e.ErrNoLoginName
+		case len(s.Auth.LoginName) < util.LOGIN_NAME_LOWER_LIMIT:
+			return e.LoginNameExceedsLowerLimit(util.LOGIN_NAME_LOWER_LIMIT)
+		case len(s.Auth.LoginName) > util.LOGIN_NAME_UPPER_LIMIT:
+			return e.LoginNameExceedsUpperLimit(util.LOGIN_NAME_UPPER_LIMIT)
+
+		case s.Auth.Password == "":
+			return e.ErrNoPassword	
+		case len(s.Auth.Password) < util.PASSWORD_LOWER_LIMIT:
+			return e.PasswordExceedsLowerLimit(util.PASSWORD_LOWER_LIMIT)
+		case len(s.Auth.Password) > util.PASSWORD_UPPER_LIMIT:
+			return e.PasswordExceedsUpperLimit(util.PASSWORD_UPPER_LIMIT)
 	}
 
-	s.ID = uuid.New().String()
+	s.ID = util.NEW_UUID
 	s.CreatedAt = util.NEW_TIMESTAMP
 	return nil
 }

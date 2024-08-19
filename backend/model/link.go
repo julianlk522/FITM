@@ -5,8 +5,6 @@ import (
 	e "oitm/error"
 
 	util "oitm/model/util"
-
-	"github.com/google/uuid"
 )
 
 type Link struct {
@@ -78,21 +76,22 @@ func (l *NewLinkRequest) Bind(r *http.Request) error {
 		return e.LinkURLCharsExceedLimit(util.URL_CHAR_LIMIT)
 	}
 
-	if l.NewLink.Categories == "" {
-		return e.ErrNoTagCats
-	} else if util.HasTooLongCats(l.NewLink.Categories) {
-		return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
-	} else if util.HasTooManyCats(l.NewLink.Categories) {
-		return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
-	} else if util.HasDuplicateCats(l.NewLink.Categories) {
-		return e.ErrDuplicateCats
+	switch {
+		case l.NewLink.Categories == "":
+			return e.ErrNoTagCats
+		case util.HasTooLongCats(l.NewLink.Categories):
+			return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
+		case util.HasTooManyCats(l.NewLink.Categories):
+			return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
+		case util.HasDuplicateCats(l.NewLink.Categories):
+			return e.ErrDuplicateCats
 	}
 
 	if len(l.NewLink.Summary) > util.SUMMARY_CHAR_LIMIT {
 		return e.SummaryLengthExceedsLimit(util.SUMMARY_CHAR_LIMIT)
 	}
 
-	l.ID = uuid.New().String()
+	l.ID = util.NEW_UUID
 	l.SubmitDate = util.NEW_TIMESTAMP
 	l.LikeCount = 0
 
