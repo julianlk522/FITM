@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 
@@ -33,11 +33,31 @@ func main() {
 		}
 	}()
 
+	// Router-wide middleware
+	httprate_options := httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusTooManyRequests)
+		w.Write([]byte(`{"message": "too many requests"}`))
+	})
+
 	r.Use(middleware.Logger)
+	r.Use(httprate.Limit(
+		20, 
+		1*time.Minute,
+		httprate.WithKeyFuncs(httprate.KeyByIP),
+	))
+	r.Use(
+		httprate.Limit(
+			20,
+			time.Minute,
+			httprate.WithKeyFuncs(func(r *http.Request) (string, error) {
+				return r.Header.Get("Authorization"), nil
+			}),
+			httprate_options,
+	))
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"https://*", "http://*"},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{
 			// "Accept",
@@ -48,18 +68,14 @@ func main() {
 		MaxAge: 300, // Maximum value not ignored by any of major browsers
 	}))
 
-	// Home - check if server running
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "Hello World!")
-	})
-
+	// ROUTES
 	// PUBLIC
-	// USER ACCOUNTS
+	// Users
 	r.Get("/pic/{file_name}", h.GetProfilePic)
 	r.Post("/signup", h.SignUp)
 	r.Post("/login", h.LogIn)
 
-	// TAG CATS
+	// Cats
 	r.Get("/cats", h.GetTopGlobalCats)
 	r.Get("/subcats/{cats}", h.GetSubcats)
 	r.Get("/contributors/{cats}", h.GetCatsContributors)
@@ -88,27 +104,26 @@ func main() {
 		r.Use(jwtauth.Authenticator(token_auth))
 		r.Use(m.JWT)
 
-		// USER ACCOUNTS
+		// Users
 		r.Put("/users/about", h.EditAbout)
 		r.Post("/pic", h.UploadNewProfilePic)
 
-		// LINKS
+		// Links
 		r.Post("/links", h.AddLink)
 		r.Post("/links/{link_id}/like", h.LikeLink)
 		r.Delete("/links/{link_id}/like", h.UnlikeLink)
 		r.Post("/links/{link_id}/copy", h.CopyLink)
 		r.Delete("/links/{link_id}/copy", h.UncopyLink)
 
-		// TAGS
+		// Tags
 		r.Get("/tags/{link_id}", h.GetTagPage)
 		r.Post("/tags", h.AddTag)
 		r.Put("/tags", h.EditTag)
 
-		// SUMMARIES
+		// Summaries
 		r.Post("/summaries", h.AddSummary)
 		r.Delete("/summaries", h.DeleteSummary)
 		r.Post("/summaries/{summary_id}/like", h.LikeSummary)
 		r.Delete("/summaries/{summary_id}/like", h.UnlikeSummary)
-
 	})
 }

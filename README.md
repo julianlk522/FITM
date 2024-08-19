@@ -4,7 +4,6 @@
 
 ### Features
 
--Rate limit users
 -Update profile created to Month-Day-Year format (omit hours / minutes)
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
