@@ -5,7 +5,7 @@ import TagCategory from '../../components/Tag/TagCategory'
 import { TAGS_ENDPOINT } from '../../constants'
 import Layout from '../../layouts/Layout.astro'
 import type { TagPage } from '../../types'
-import format_date from '../../util/format_date'
+import { format_long_date } from '../../util/format_date'
 
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
@@ -83,7 +83,7 @@ link.TagCount = top_tags.length
 										{tag.SubmittedBy}
 									</a>
 								</p>
-								<p>{format_date(tag.LastUpdated)}</p>
+								<p>{format_long_date(tag.LastUpdated)}</p>
 								<p>
 									Lifespan Overlap:{' '}
 									{tag.LifeSpanOverlap.toFixed(2)}%

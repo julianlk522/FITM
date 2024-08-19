@@ -48,7 +48,7 @@ func (s *NewSummaryRequest) Bind(r *http.Request) error {
 	}
 
 	s.ID = util.NEW_UUID
-	s.LastUpdated = util.NEW_TIMESTAMP
+	s.LastUpdated = util.NEW_LONG_TIMESTAMP
 
 	return nil
 

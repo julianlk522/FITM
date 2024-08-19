@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import * as types from '../../types'
-import format_date from '../../util/format_date'
+import { format_long_date } from '../../util/format_date'
 import './Link.css'
 
 interface Props {
@@ -222,7 +222,7 @@ export default function Link(props: Props) {
 				<a href={`/map/${submitted_by}`} class='submitted-by'>
 					{submitted_by}
 				</a>{' '}
-				on {format_date(submit_date)}
+				on {format_long_date(submit_date)}
 			</p>
 
 			{is_tag_page && tag_count === 1 && submitted_by === user ? null : (

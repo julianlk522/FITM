@@ -83,12 +83,12 @@ export default function EditAbout(props: Props) {
 					{abbreviated ? (
 						<details>
 							<summary>
-								<p>{abbreviated}</p>
+								<p>about: {abbreviated}</p>
 							</summary>
-							<p>{initial}</p>
+							<p>about: {initial}</p>
 						</details>
 					) : initial ? (
-						<p>{initial}</p>
+						<p>about: {initial}</p>
 					) : null}
 					<button
 						id='edit-about-btn'

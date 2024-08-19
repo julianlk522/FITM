@@ -8,7 +8,7 @@ import { GET_PFP_ENDPOINT, TMAP_ENDPOINT } from '../../constants'
 import Layout from '../../layouts/Layout.astro'
 import type { FilteredTreasureMap, Profile, TreasureMap } from '../../types'
 import { tmap_sections } from '../../types'
-import format_date from '../../util/format_date'
+import { format_short_date } from '../../util/format_date'
 
 // Auth
 const token = Astro.cookies.get('token')?.value
@@ -64,15 +64,12 @@ if (!used_sections.length) {
 
 // Attempt PFP fetch, display about/pfp if they are used
 // (unfiltered only)
-if (categories) {
-	return
-}
 let profile: Profile | undefined
 let display_about = false
 let abbreviated_about: string | undefined
 let display_profile = false
 
-if (tmap.hasOwnProperty('Profile')) {
+if (!categories && tmap.hasOwnProperty('Profile')) {
 	profile = (tmap as TreasureMap).Profile
 
 	const has_about = profile.About !== undefined && profile.About.length > 0
@@ -93,7 +90,7 @@ if (tmap.hasOwnProperty('Profile')) {
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
 		<h2 class="subtitle">
-			{profile ? `created: ${format_date(profile.Created)}` : '(Filtered)'}
+			{profile ? `created: ${format_short_date(profile.Created)}` : '(Filtered)'}
 		</h2>
 
 		<!-- Profile  -->
@@ -117,11 +114,11 @@ if (tmap.hasOwnProperty('Profile')) {
 						: abbreviated_about 
 							?  <details>
 								<summary>
-									<p>{abbreviated_about}</p>
+									<p>about: {abbreviated_about}</p>
 								</summary>
-								<p>{profile.About}</p>
+								<p>about: {profile.About}</p>
 							</details> 
-							: <p>{profile.About}</p>
+							: <p>about: {profile.About}</p>
 					: null
 				}
 			</section>
@@ -246,21 +243,21 @@ if (tmap.hasOwnProperty('Profile')) {
 	</main>
 </Layout>
 
-<style>
-	.flex {
-		display: flex;
-	}
-	
+<style>	
 	h1,
 	h2 {
 		text-align: left;
 	}
 
 	#cat-filter {
+		display: flex;
+		flex-direction: column;
+
 		#transfer-to-global-map,
 		#reset-cat-filter {
 			margin: 0;
 		}
+
 		#cats-grid {
 			display: flex;
 			flex-wrap: wrap;
@@ -276,6 +273,8 @@ if (tmap.hasOwnProperty('Profile')) {
 	}
 
 	#overview {
+		display: flex;
+		
 		div:has(#skip-to-link-section) {
 			margin: 0 auto;
 		}
@@ -315,7 +314,20 @@ if (tmap.hasOwnProperty('Profile')) {
 	}
 
 	@media (min-width: 480px) {
-	#overview {
+		#cat-filter {
+			flex-direction: row;
+
+			#transfer-to-global-map,
+			#reset-cat-filter {
+				margin: 0;
+			}
+			
+			#cats-grid {
+				margin: 0 auto;
+				align-content: center;
+			}
+		}
+		#overview {
 			#top-cats {
 				max-height: 300px;
 

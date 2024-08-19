@@ -2,7 +2,7 @@ import { effect, useSignal } from '@preact/signals'
 import { useState } from 'preact/hooks'
 import type { Tag } from '../../types'
 import { is_error_response } from '../../types'
-import format_date from '../../util/format_date'
+import { format_long_date } from '../../util/format_date'
 import './EditTag.css'
 import TagCategory from './TagCategory'
 interface Props {
@@ -169,7 +169,7 @@ export default function EditTag(props: Props) {
 			) : null}
 
 			{tag ? (
-				<p>(Last Updated: {format_date(tag.LastUpdated)})</p>
+				<p>(Last Updated: {format_long_date(tag.LastUpdated)})</p>
 			) : editing ? null : (
 				<p>(Not tagged.)</p>
 			)}

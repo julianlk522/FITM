@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks'
-import format_date from '../../util/format_date'
+import { format_long_date } from '../../util/format_date'
 import './Summary.css'
 
 interface Props {
@@ -104,7 +104,7 @@ export default function Summary(props: Props) {
 				</strong>
 			</p>
 			<p>
-				<strong>Last Update</strong>: {format_date(last_updated)}
+				<strong>Last Updated</strong>: {format_long_date(last_updated)}
 			</p>
 			{user !== submitted_by ? (
 				<button

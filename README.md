@@ -4,7 +4,7 @@
 
 ### Features
 
--Update profile created to Month-Day-Year format (omit hours / minutes)
+-Fix tmap profile when no links
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 -Pagination

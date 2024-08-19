@@ -92,7 +92,7 @@ func (l *NewLinkRequest) Bind(r *http.Request) error {
 	}
 
 	l.ID = util.NEW_UUID
-	l.SubmitDate = util.NEW_TIMESTAMP
+	l.SubmitDate = util.NEW_LONG_TIMESTAMP
 	l.LikeCount = 0
 
 	return nil
