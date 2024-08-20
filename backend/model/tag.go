@@ -3,6 +3,7 @@ package model
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	e "oitm/error"
 	util "oitm/model/util"
@@ -24,7 +25,7 @@ type CatCount struct {
 func SortCategories(i, j CatCount) int {
 	if i.Count > j.Count {
 		return -1
-	} else if i.Count == j.Count && i.Category < j.Category {
+	} else if i.Count == j.Count && strings.ToLower(i.Category) < strings.ToLower(j.Category) {
 		return -1
 	}
 	return 1

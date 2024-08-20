@@ -200,11 +200,9 @@ func CalculateAndSetGlobalCats(link_id string) error {
 		// (allows brand-new tags to still have some influence)
 		tag.LifeSpanOverlap = float32(math.Sqrt(float64(tag.LifeSpanOverlap)))
 
-		cat_field_lc := strings.ToLower(tag.Categories)
-
 		// multiple categories
-		if strings.Contains(cat_field_lc, ",") {
-			cats := strings.Split(cat_field_lc, ",")
+		if strings.Contains(tag.Categories, ",") {
+			cats := strings.Split(tag.Categories, ",")
 			for _, cat := range cats {
 				overlap_scores[cat] += tag.LifeSpanOverlap
 
@@ -215,10 +213,10 @@ func CalculateAndSetGlobalCats(link_id string) error {
 
 			// single category
 		} else {
-			overlap_scores[cat_field_lc] += tag.LifeSpanOverlap
+			overlap_scores[tag.Categories] += tag.LifeSpanOverlap
 
-			if overlap_scores[cat_field_lc] > max_cat_score {
-				max_cat_score = overlap_scores[cat_field_lc]
+			if overlap_scores[tag.Categories] > max_cat_score {
+				max_cat_score = overlap_scores[tag.Categories]
 			}
 		}
 	}

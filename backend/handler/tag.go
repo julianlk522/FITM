@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -122,7 +121,6 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tag_data.Categories = strings.ToLower(tag_data.Categories)
 	_, err = db.Client.Exec(
 		"INSERT INTO Tags VALUES(?,?,?,?,?);",
 		tag_data.ID,

@@ -15,7 +15,7 @@ import (
 )
 
 // Subcats
-func ScanSubcats(get_subcats_sql *query.Subcats, search_categories []string) []string {
+func ScanSubcats(get_subcats_sql *query.Subcats, search_cats []string) []string {
 	rows, err := db.Client.Query(get_subcats_sql.Text)
 	if err != nil {
 		log.Fatal(err)
@@ -31,10 +31,8 @@ func ScanSubcats(get_subcats_sql *query.Subcats, search_categories []string) []s
 
 		cats := strings.Split(row_cats, ",")
 		for i := 0; i < len(cats); i++ {
-			cat_lc := strings.ToLower(cats[i])
-
-			if !slices.Contains(search_categories, cat_lc) && !slices.Contains(subcats, cat_lc) {
-				subcats = append(subcats, cat_lc)
+			if !slices.Contains(search_cats, cats[i]) && !slices.Contains(subcats, cats[i]) {
+				subcats = append(subcats, cats[i])
 			}
 		}
 	}

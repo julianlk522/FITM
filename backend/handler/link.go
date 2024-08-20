@@ -98,12 +98,8 @@ func GetSubcats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: replace with middleware that converts all URLs to lowercase
-	// maybe encode uppercase chars another way?
-	// TODO: figure out how other sites do that
-	cats_params = strings.ToLower(cats_params)
-	categories := strings.Split(cats_params, ",")
-	subcats_sql := query.NewSubcats(categories)
+	cats := strings.Split(cats_params, ",")
+	subcats_sql := query.NewSubcats(cats)
 
 	period_params := r.URL.Query().Get("period")
 	if period_params != "" {
@@ -115,12 +111,12 @@ func GetSubcats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	subcats := util.ScanSubcats(subcats_sql, categories)
+	subcats := util.ScanSubcats(subcats_sql, cats)
 	if len(subcats) == 0 {
 		util.RenderZeroSubcategories(w, r)
 		return
 	}
-	util.RenderSubcategories(subcats, categories, w, r)
+	util.RenderSubcategories(subcats, cats, w, r)
 }
 
 func AddLink(w http.ResponseWriter, r *http.Request) {

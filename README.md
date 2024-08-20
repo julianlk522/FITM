@@ -4,8 +4,6 @@
 
 ### Features
 
--Fix cat sort (placing uppercase before all lowercase regardless of alphabetical)
-    -top links only...not tmap
 -Fix tmap profile when no links
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
