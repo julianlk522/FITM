@@ -78,9 +78,16 @@ func NewTopLinks() *TopLinks {
 }
 
 func (l *TopLinks) FromLinkIDs(link_ids []string) *TopLinks {
+	
+	// surround in quotes so sql will read as string array
+	for i, id := range link_ids {
+		id = fmt.Sprintf(`'%s'`, id)
+		link_ids[i] = id
+	}
 	link_ids_str := strings.Join(link_ids, ",")
 
 	l._Where(fmt.Sprintf(`links_id IN (%s)`, link_ids_str))
+
 	return l
 }
 

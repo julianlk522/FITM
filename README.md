@@ -12,10 +12,10 @@
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
-        -Categories
-        -Subcategories
-    -Global Categories
-    -Global Subcategories
+        -Cats
+        -Subcats
+    -Global Cats
+    -Global Subcats
 
 ### Code Quality
 
@@ -32,6 +32,7 @@
     -GetSummaryPage / GetSummaryPageSignedIn
     -Merge TagRankings (public) / TopOverlapScores (internal) Query structs / methods
     -ScanLinks / RenderPaginatedLinks calls in GetLinks handler
+    -combine .GetIDsOfLinksHavingCategories() + .FromLinkIDs()
     -Potentially merge query.NewLinkIDs() and query.NewCatCount(), I think there is a way to make that work
     -ScanTmapLinks tests
     -shared TestClient?
