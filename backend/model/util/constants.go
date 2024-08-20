@@ -13,7 +13,7 @@ const PROFILE_ABOUT_CHAR_LIMIT = 500
 const URL_CHAR_LIMIT = 200
 
 // Summary
-const SUMMARY_CHAR_LIMIT = 300
+const SUMMARY_CHAR_LIMIT = 400
 
 // Tag
 const NUM_CATS_LIMIT = 10

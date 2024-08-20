@@ -4,6 +4,8 @@
 
 ### Features
 
+-Fix cat sort (placing uppercase before all lowercase regardless of alphabetical)
+    -top links only...not tmap
 -Fix tmap profile when no links
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
@@ -17,29 +19,29 @@
 
 ### Code Quality
 
+***-Update JWT to use actual secret
+-Consistent names
+    -Cats vs. Categories vs. Tag Categories
 -Tests
     -finish handlers
+        -new link timestamp
     -handler utils
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
     -model utils
--Update JWT to use actual secret
--Enforce consistent names
-    -Cats vs. Categories vs. Tag Categories
 -Remove repeat code wherever possible
     -GetSummaryPage / GetSummaryPageSignedIn
     -Merge TagRankings (public) / TopOverlapScores (internal) Query structs / methods
     -ScanLinks / RenderPaginatedLinks calls in GetLinks handler
     -Potentially merge query.NewLinkIDs() and query.NewCatCount(), I think there is a way to make that work
     -ScanTmapLinks tests
+    -shared TestClient?
 -Refactors for simplicity / accuracy
-    -Move isliked/iscopied/istagged addition logic from ScanLinks into TopLinks AsSignedInUser method
+    *** -Move isliked/iscopied/istagged addition logic from ScanLinks into TopLinks AsSignedInUser method
+    ***-helpers for new user / new tag / etc.
     -RenderPaginatedLinks move slicing into separate PaginateLinks func that is more easily testable
     -ResolveAndAssignURL into just ResolveURL, assign to request in handler (so request doesn't need to be passed as 2nd arg)
-    -Use only ints for IDs except in final sql stmnt. format
-        (forces correct args order when calling funcs with, e.g., login_name and link_id or login_name and user_id)
     -use net/url Parse() etc.
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
-    -helpers for new user / new tag / etc.
     -finish moving error messages to errors.go
         -e.g. like/unlike/copy/uncopy link
 ## To-Maybe-Dos
