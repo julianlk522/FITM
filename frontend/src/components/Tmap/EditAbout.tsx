@@ -38,7 +38,7 @@ export default function EditAbout(props: Props) {
 			return (window.location.href = '/login')
 		}
 
-		const resp = await fetch('http://127.0.0.1:8000/users/about', {
+		const resp = await fetch('http://127.0.0.1:8000/about', {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',

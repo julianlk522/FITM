@@ -133,7 +133,7 @@ func GetProfilePic(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, path)
 }
 
-func UploadNewProfilePic(w http.ResponseWriter, r *http.Request) {
+func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 
 	// Get file (up to 10MB)
 	r.ParseMultipartForm(10 << 20)

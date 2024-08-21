@@ -21,7 +21,6 @@ import (
 var token_auth *jwtauth.JWTAuth
 
 func init() {
-	// new JWT for protected/optional routes (6h expiration)
 	token_auth = jwtauth.New("HS256", []byte(os.Getenv("FITM_JWT_SECRET")), nil, jwt.WithAcceptableSkew(6*time.Hour))
 }
 
@@ -56,24 +55,23 @@ func main() {
 			httprate_options,
 		))
 	r.Use(cors.Handler(cors.Options{
-		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"https://*", "http://*"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{
-			// "Accept",
 			"Authorization",
 			"Content-Type",
-			// "X-CSRF-Token",
 		},
-		MaxAge: 300, // Maximum value not ignored by any of major browsers
+		MaxAge: 300,
+		Debug: true,
 	}))
 
 	// ROUTES
 	// PUBLIC
 	// Users
-	r.Get("/pic/{file_name}", h.GetProfilePic)
 	r.Post("/signup", h.SignUp)
 	r.Post("/login", h.LogIn)
+
+	r.Get("/pic/{file_name}", h.GetProfilePic)
 
 	// Cats
 	r.Get("/cats", h.GetTopGlobalCats)
@@ -105,8 +103,8 @@ func main() {
 		r.Use(m.JWT)
 
 		// Users
-		r.Put("/users/about", h.EditAbout)
-		r.Post("/pic", h.UploadNewProfilePic)
+		r.Put("/about", h.EditAbout)
+		r.Post("/pic", h.UploadProfilePic)
 
 		// Links
 		r.Post("/links", h.AddLink)

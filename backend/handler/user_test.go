@@ -135,7 +135,7 @@ func TestEditAbout(t *testing.T) {
 		pl, _ := json.Marshal(tr.Payload)
 		r := httptest.NewRequest(
 			http.MethodPut,
-			"/users/about",
+			"/about",
 			bytes.NewReader(pl),
 		)
 		r.Header.Set("Content-Type", "application/json")
