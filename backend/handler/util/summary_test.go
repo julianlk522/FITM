@@ -1,71 +1,82 @@
 package handler
 
 import (
+	"context"
+	"net/http"
+	m "oitm/middleware"
+	"oitm/model"
 	"testing"
 )
 
 // Get summaries
-func TestGetSummaryPage(t *testing.T) {
-	summary_page, err := GetSummaryPage(test_link_id)
+func TestBuildSummaryPageForLink(t *testing.T) {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, m.UserIDKey, test_user_id)
+	ctx = context.WithValue(ctx, m.LoginNameKey, test_login_name)
+	r := (&http.Request{}).WithContext(ctx)
+
+	summary_page, err := BuildSummaryPageForLink(test_link_id, r)
 	if err != nil {
 		t.Fatalf("could not get summary page: %s", err)
 	}
 
-	// Check that summaries are all for link provided
-	for _, summary := range summary_page.Summaries {
-		var link_id string
-		err := TestClient.QueryRow(`
-			SELECT link_id 
-			FROM Summaries 
-			WHERE id = ?`,
-			summary.ID).Scan(&link_id)
-		if err != nil {
-			t.Fatalf(
-				"failed to verify summary link: %s (summary ID %s)",
-				err,
-				summary.ID,
-			)
-		} else if link_id != test_link_id {
-			t.Fatalf(
-				"summary %s does not belong to link %s",
-				summary.ID,
-				test_link_id,
-			)
+	if summary_page, ok := summary_page.(model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn]); ok {
+
+		// Check that summaries are all for link provided
+		for _, summary := range summary_page.Summaries {
+			var link_id string
+			err := TestClient.QueryRow(`
+				SELECT link_id 
+				FROM Summaries 
+				WHERE id = ?`,
+				summary.ID).Scan(&link_id)
+			if err != nil {
+				t.Fatalf(
+					"failed to verify summary link: %s (summary ID %s)",
+					err,
+					summary.ID,
+				)
+			} else if link_id != test_link_id {
+				t.Fatalf(
+					"summary %s does not belong to link %s",
+					summary.ID,
+					test_link_id,
+				)
+			}
 		}
-	}
 
-	// Verify like count
-	var lc int64
-	var tc int
+		// Verify like count
+		var lc int64
+		var tc int
 
-	err = TestClient.QueryRow(`
-		SELECT count(*)
-		FROM 'Link Likes'
-		WHERE link_id = ?`,
-		test_link_id).Scan(&lc)
+		err = TestClient.QueryRow(`
+			SELECT count(*)
+			FROM 'Link Likes'
+			WHERE link_id = ?`,
+			test_link_id).Scan(&lc)
 
-	if err != nil {
-		t.Fatalf("failed to get link LikeCount: %s", err)
-	} else if lc != summary_page.Link.LikeCount {
-		t.Fatalf("got link like count %d, want %d", lc, summary_page.Link.LikeCount)
-	}
+		if err != nil {
+			t.Fatalf("failed to get link LikeCount: %s", err)
+		} else if lc != summary_page.Link.LikeCount {
+			t.Fatalf("got link like count %d, want %d", lc, summary_page.Link.LikeCount)
+		}
 
-	// Verify tag count
-	err = TestClient.QueryRow(`
-		SELECT count(*)
-		FROM Tags
-		WHERE link_id = ?`,
-		test_link_id).Scan(&tc)
+		// Verify tag count
+		err = TestClient.QueryRow(`
+			SELECT count(*)
+			FROM Tags
+			WHERE link_id = ?`,
+			test_link_id).Scan(&tc)
 
-	if err != nil {
-		t.Fatalf("failed to get link tag count: %s", err)
-	} else if tc != summary_page.Link.TagCount {
-		t.Fatalf("got link tag count %d, want %d", tc, summary_page.Link.TagCount)
+		if err != nil {
+			t.Fatalf("failed to get link tag count: %s", err)
+		} else if tc != summary_page.Link.TagCount {
+			t.Fatalf("got link tag count %d, want %d", tc, summary_page.Link.TagCount)
+		}
+	} else {
+		t.Fatalf("unexpected summary page shape")
 	}
 }
-
-// holding back on testing GetSummaryPageSignedIn for now since
-// hopefully will be refactored soon
 
 // Add summary
 func TestLinkExists(t *testing.T) {

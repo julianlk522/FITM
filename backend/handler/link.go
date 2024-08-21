@@ -58,7 +58,8 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: use interface so no repeat code needed
+	// TODO: if possible, refactor to remove repeat
+	// tricky to dynamically build tmap while using interface{} for links...
 	if req_user_id != "" {
 		links, err := util.ScanLinks[model.LinkSignedIn](links_sql, req_user_id)
 		if err != nil {

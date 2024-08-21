@@ -20,6 +20,11 @@ var (
 	ErrNoSummaryID              error = errors.New("no summary ID provided")
 	ErrNoSummaryText            error = errors.New("no summary text provided")
 	ErrNoSummaryReplacementText error = errors.New("no summary replacement text provided")
+	ErrDoesntOwnSummary         error = errors.New("not your summary")
+	ErrLastSummary               error = errors.New("last summary for link: cannot delete")
+	ErrCannotLikeOwnSummary            error = errors.New("cannot like your own summary")
+	ErrSummaryAlreadyLiked             error = errors.New("summary already liked")
+	ErrSummaryNotLiked                 error = errors.New("summary not already liked")
 	ErrNoTagID                  error = errors.New("no tag ID provided")
 	ErrNoTagCats                error = errors.New("no tag cat(s) provided")
 	ErrNoLoginName              error = errors.New("no login name provided")
@@ -32,7 +37,7 @@ var (
 
 	ErrDuplicateTag  error = errors.New("duplicate tag")
 	ErrDuplicateCats error = errors.New("tag contains duplicate cat(s)")
-	ErrDoesntOwnTag  error = errors.New("cannot edit another user's tag")
+	ErrDoesntOwnTag  error = errors.New("not your tag")
 
 	ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not found."}
 )

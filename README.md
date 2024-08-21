@@ -24,17 +24,19 @@
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
     -model utils
 -Remove repeat code wherever possible
-    -GetSummaryPage / GetSummaryPageSignedIn
     -Merge TagRankings (public) / TopOverlapScores (internal) Query structs / methods
-    -ScanLinks / RenderPaginatedLinks calls in GetLinks handler
-    -combine .GetIDsOfLinksHavingCategories() + .FromLinkIDs()
+    ***-combine .GetIDsOfLinksHavingCategories() + .FromLinkIDs()
     -Potentially merge query.NewLinkIDs() and query.NewCatCount(), I think there is a way to make that work
     -ScanTmapLinks tests
     -shared TestClient?
+    -ScanLinks / RenderPaginatedLinks calls in GetLinks handler
+        -this is hard.. come back later
 -Refactors for simplicity / accuracy
     ***-helpers for new user / new tag / etc.
+        -new summary
+        -update summary
     -RenderPaginatedLinks move slicing into separate PaginateLinks func that is more easily testable
-    -ResolveAndAssignURL into just ResolveURL, assign to request in handler (so request doesn't need to be passed as 2nd arg)
+    ***-ResolveAndAssignURL into just ResolveURL, assign to request in handler (so request doesn't need to be passed as 2nd arg)
     -use net/url Parse() etc.
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
     -finish moving error messages to errors.go

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -27,32 +26,18 @@ func GetSummaryPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
-	}
-	if !link_exists {
+	} else if !link_exists {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLinkWithID))
 		return
 	}
 
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
-	if req_user_id != "" {
-		summary_page, err := util.GetSummaryPageSignedIn(link_id, req_user_id)
-		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
-			return
-		}
-
-		render.JSON(w, r, summary_page)
-	} else {
-		summary_page, err := util.GetSummaryPage(link_id)
-		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
-			return
-		}
-
-		render.JSON(w, r, summary_page)
+	summary_page, err := util.BuildSummaryPageForLink(link_id, r)
+	if err != nil {
+		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
 	}
 
-	render.Status(r, http.StatusOK)
+	render.JSON(w, r, summary_page)
 }
 
 func AddSummary(w http.ResponseWriter, r *http.Request) {
@@ -67,8 +52,7 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
-	}
-	if !link_exists {
+	} else if !link_exists {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLinkWithID))
 		return
 	}
@@ -100,8 +84,7 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 
 		// Update summary if already submitted
 		_, err = db.Client.Exec(
-			`UPDATE Summaries SET text = ?, last_updated = ?
-			WHERE submitted_by = ? AND link_id = ?`,
+			`UPDATE Summaries SET text = ?, last_updated = ? WHERE submitted_by = ? AND link_id = ?`,
 			summary_data.Text,
 			summary_data.LastUpdated,
 			req_user_id,
@@ -113,7 +96,10 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Reset Summary Likes
-		_, err = db.Client.Exec(`DELETE FROM 'Summary Likes' WHERE summary_id = ?`, summary_id)
+		_, err = db.Client.Exec(
+			`DELETE FROM 'Summary Likes' WHERE summary_id = ?`, 
+			summary_id,
+		)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
@@ -143,7 +129,7 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if !owns_summary {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("not your summary")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrDoesntOwnSummary))
 		return
 	}
 
@@ -157,13 +143,15 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
-	}
-	if is_last_summary_for_link {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("last summary for link, cannot delete")))
+	} else if is_last_summary_for_link {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrLastSummary))
 		return
 	}
 
-	_, err = db.Client.Exec(`DELETE FROM Summaries WHERE id = ?`, delete_data.SummaryID)
+	_, err = db.Client.Exec(
+		`DELETE FROM Summaries WHERE id = ?`, 
+		delete_data.SummaryID,
+	)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
@@ -186,7 +174,10 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var link_id sql.NullString
-	err := db.Client.QueryRow("SELECT link_id FROM Summaries WHERE id = ?", summary_id).Scan(&link_id)
+	err := db.Client.QueryRow(
+		"SELECT link_id FROM Summaries WHERE id = ?", 
+		summary_id,
+	).Scan(&link_id)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoSummaryWithID))
 		return
@@ -198,7 +189,7 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if owns_summary {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("cannot like your own summary")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrCannotLikeOwnSummary))
 		return
 	}
 
@@ -207,7 +198,7 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if already_liked {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("already liked")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrSummaryAlreadyLiked))
 		return
 	}
 
@@ -245,19 +236,26 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if !already_liked {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("not liked")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrSummaryNotLiked))
 		return
 	}
 
-	// Get link ID (needed to update global summary after unlike)
+	// save link id before delete
+	// so global summary can be updated
 	var link_id sql.NullString
-	err = db.Client.QueryRow("SELECT link_id FROM Summaries WHERE id = ?", summary_id).Scan(&link_id)
+	err = db.Client.QueryRow(
+		"SELECT link_id FROM Summaries WHERE id = ?", 
+		summary_id,
+	).Scan(&link_id)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoSummaryWithID))
 		return
 	}
 
-	_, err = db.Client.Exec(`DELETE FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?`, req_user_id, summary_id)
+	_, err = db.Client.Exec(
+		`DELETE FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?`, req_user_id, 
+		summary_id,
+	)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoSummaryWithID))
 		return

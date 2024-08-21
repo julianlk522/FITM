@@ -12,142 +12,131 @@ import (
 
 	"oitm/db"
 	e "oitm/error"
+	m "oitm/middleware"
 	"oitm/model"
 	"oitm/query"
 )
 
-// Get summaries
-func GetSummaryPageSignedIn(link_id string, req_user_id string) (*model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn], error) {
-
-	// add Isliked / IsCopied to link query
-	get_link_sql := query.
-		NewSummaryPageLink(link_id).
-		ForSignedInUser(req_user_id)
-	if get_link_sql.Error != nil {
-		return nil, get_link_sql.Error
-	}
-
-	var l model.LinkSignedIn
-	err := db.Client.QueryRow(get_link_sql.Text).Scan(
-		&l.ID,
-		&l.URL,
-		&l.SubmittedBy,
-		&l.SubmitDate,
-		&l.Cats,
-		&l.Summary,
-		&l.LikeCount,
-		&l.TagCount,
-		&l.ImgURL,
-		&l.IsLiked,
-		&l.IsCopied,
-	)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, e.ErrNoLinkWithID
-		} else {
-			return nil, err
-		}
-	}
-
-	// add IsLiked to summary query
-	get_summaries_sql := query.
-		NewSummariesForLink(link_id).
-		ForSignedInUser(req_user_id)
-	if get_summaries_sql.Error != nil {
-		return nil, get_summaries_sql.Error
-	}
-
-	rows, err := db.Client.Query(get_summaries_sql.Text)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	summaries := []model.SummarySignedIn{}
-	for rows.Next() {
-		s := model.SummarySignedIn{}
-		err := rows.Scan(
-			&s.ID,
-			&s.Text,
-			&s.SubmittedBy,
-			&s.LastUpdated,
-			&s.LikeCount,
-			&s.IsLiked,
-		)
-		if err != nil {
-			return nil, err
-		}
-		summaries = append(summaries, s)
-	}
-
-	summary_page := model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn]{
-		Link:      l,
-		Summaries: summaries,
-	}
-
-	return &summary_page, nil
-}
-
-func GetSummaryPage(link_id string) (*model.SummaryPage[model.Summary, model.Link], error) {
+func BuildSummaryPageForLink(link_id string, r *http.Request) (interface{}, error) {
 	get_link_sql := query.NewSummaryPageLink(link_id)
+	get_summaries_sql := query.NewSummariesForLink(link_id)
+	
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	if req_user_id != "" {
+		get_link_sql = get_link_sql.ForSignedInUser(req_user_id)
+		get_summaries_sql = get_summaries_sql.ForSignedInUser(req_user_id)
+	}
+		
 	if get_link_sql.Error != nil {
 		return nil, get_link_sql.Error
-
-	}
-
-	var l model.Link
-	err := db.Client.QueryRow(get_link_sql.Text).Scan(
-		&l.ID,
-		&l.URL,
-		&l.SubmittedBy,
-		&l.SubmitDate,
-		&l.Cats,
-		&l.Summary,
-		&l.LikeCount,
-		&l.TagCount,
-		&l.ImgURL,
-	)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, e.ErrNoLinkWithID
-		} else {
-			return nil, err
-		}
-	}
-
-	get_summaries_sql := query.NewSummariesForLink(link_id)
-	if get_summaries_sql.Error != nil {
+	} else if get_summaries_sql.Error != nil {
 		return nil, get_summaries_sql.Error
 	}
 
-	rows, err := db.Client.Query(get_summaries_sql.Text)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+	if req_user_id != "" {
+		var l model.LinkSignedIn
+		
+		err := db.Client.QueryRow(get_link_sql.Text).Scan(
+			&l.ID,
+			&l.URL,
+			&l.SubmittedBy,
+			&l.SubmitDate,
+			&l.Cats,
+			&l.Summary,
+			&l.LikeCount,
+			&l.TagCount,
+			&l.ImgURL,
 
-	summaries := []model.Summary{}
-	for rows.Next() {
-		s := model.Summary{}
-		err := rows.Scan(
-			&s.ID,
-			&s.Text,
-			&s.SubmittedBy,
-			&s.LastUpdated,
-			&s.LikeCount,
+			// added auth fields
+			&l.IsLiked,
+			&l.IsCopied,
 		)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return nil, e.ErrNoLinkWithID
+			} else {
+				return nil, err
+			}
+		}
+
+		rows, err := db.Client.Query(get_summaries_sql.Text)
 		if err != nil {
 			return nil, err
 		}
-		summaries = append(summaries, s)
-	}
+		defer rows.Close()
 
-	summary_page := model.SummaryPage[model.Summary, model.Link]{
-		Link:      l,
-		Summaries: summaries,
-	}
+		summaries := []model.SummarySignedIn{}
+		for rows.Next() {
+			s := model.SummarySignedIn{}
+			err := rows.Scan(
+				&s.ID,
+				&s.Text,
+				&s.SubmittedBy,
+				&s.LastUpdated,
+				&s.LikeCount,
 
-	return &summary_page, nil
+				// added auth field
+				&s.IsLiked,
+			)
+			if err != nil {
+				return nil, err
+			}
+			summaries = append(summaries, s)
+		}
+	
+		return model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn]{
+			Link:      l,
+			Summaries: summaries,
+		}, nil
+
+	} else {
+		var l model.Link
+		err := db.Client.QueryRow(get_link_sql.Text).Scan(
+			&l.ID,
+			&l.URL,
+			&l.SubmittedBy,
+			&l.SubmitDate,
+			&l.Cats,
+			&l.Summary,
+			&l.LikeCount,
+			&l.TagCount,
+			&l.ImgURL,
+		)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return nil, e.ErrNoLinkWithID
+			} else {
+				return nil, err
+			}
+		}
+
+		rows, err := db.Client.Query(get_summaries_sql.Text)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		summaries := []model.Summary{}
+		for rows.Next() {
+			s := model.Summary{}
+			err := rows.Scan(
+				&s.ID,
+				&s.Text,
+				&s.SubmittedBy,
+				&s.LastUpdated,
+				&s.LikeCount,
+			)
+			if err != nil {
+				return nil, err
+			}
+			summaries = append(summaries, s)
+		}
+
+		return model.SummaryPage[model.Summary, model.Link]{
+			Link:      l,
+			Summaries: summaries,
+		}, nil
+	}
 }
 
 // Add summary
