@@ -22,6 +22,7 @@ import (
 func GetLinks(w http.ResponseWriter, r *http.Request) {
 	links_sql := query.NewTopLinks()
 
+	// cats
 	cats_params := r.URL.Query().Get("cats")
 	if cats_params != "" {
 		link_ids, err := util.GetIDsOfLinksHavingCategories(cats_params)
@@ -36,11 +37,19 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 		links_sql = links_sql.FromLinkIDs(link_ids)
 	}
 
+	// period
 	period_params := r.URL.Query().Get("period")
 	if period_params != "" {
 		links_sql = links_sql.DuringPeriod(period_params)
 	}
 
+	// auth fields
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	if req_user_id != "" {
+		links_sql = links_sql.AsSignedInUser(req_user_id)
+	}
+
+	// pagination
 	page := r.Context().Value(m.PageKey).(int)
 	links_sql = links_sql.Page(page)
 
@@ -49,7 +58,7 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	// TODO: use interface so no repeat code needed
 	if req_user_id != "" {
 		links, err := util.ScanLinks[model.LinkSignedIn](links_sql, req_user_id)
 		if err != nil {

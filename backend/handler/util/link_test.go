@@ -87,6 +87,7 @@ func TestScanLinks(t *testing.T) {
 	}
 
 	// signed in
+	links_sql = links_sql.AsSignedInUser(test_req_user_id)
 	links_signed_in, err := ScanLinks[model.LinkSignedIn](links_sql, test_req_user_id)
 	if err != nil {
 		t.Fatal(err)

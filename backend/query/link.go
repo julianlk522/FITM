@@ -25,7 +25,7 @@ type TopLinks struct {
 	Query
 }
 
-var TOP_LINKS_BASE = `SELECT 
+const LINKS_BASE_FIELDS = `SELECT 
 links_id as link_id, 
 url, 
 sb, 
@@ -35,7 +35,14 @@ summary,
 COALESCE(summary_count,0) as summary_count,
 tag_count,
 like_count, 
-img_url
+img_url`
+
+const LINKS_AUTH_FIELDS = `,
+COALESCE(is_liked,0) as is_liked,
+COALESCE(is_copied,0) as is_copied,
+COALESCE(is_tagged,0) as is_tagged`
+
+const LINKS_BASE_FROM = `
 FROM 
 	(
 	SELECT 
@@ -62,19 +69,57 @@ LEFT JOIN
 	FROM Summaries
 	GROUP BY slink_id
 	)
-ON slink_id = links_id
+ON slink_id = link_id
 LEFT JOIN 
 	(
 	SELECT count(*) as tag_count, link_id as tlink_id
 	FROM Tags
 	GROUP BY tlink_id
 	)
-ON tlink_id = links_id
-GROUP BY links_id 
-ORDER BY like_count DESC, summary_count DESC, link_id DESC` + UNPAGINATED_LIMIT_CLAUSE
+ON tlink_id = link_id`
 
+var LINKS_BASE_FROM_LINES = strings.Split(LINKS_BASE_FROM, "\n")
+var LINKS_BASE_FROM_LAST_LINE = LINKS_BASE_FROM_LINES[len(LINKS_BASE_FROM_LINES)-1]
+
+const LINKS_AUTH_FROM = `
+LEFT JOIN 
+	(
+	SELECT link_id as likes_link_id2, count(*) as is_liked, user_id
+	FROM 'Link Likes'
+	WHERE user_id = 'REQ_USER_ID'
+	GROUP BY likes_link_id2
+	)
+ON likes_link_id2 = link_id
+LEFT JOIN
+	(
+	SELECT link_id as copy_link_id, count(*) as is_copied, user_id
+	FROM 'Link Copies'
+	WHERE user_id = 'REQ_USER_ID'
+	GROUP BY copy_link_id
+	)
+ON copy_link_id = link_id
+LEFT JOIN
+	(
+	SELECT link_id as tlink_id2, count(*) as is_tagged
+	FROM Tags
+	JOIN Users
+	ON Tags.submitted_by = Users.login_name
+	WHERE Users.id = 'REQ_USER_ID'
+	GROUP BY tlink_id2
+	)
+ON tlink_id2 = link_id
+`
+
+const LINKS_BASE_GROUP_BY_ORDER_BY = `
+GROUP BY link_id 
+ORDER BY like_count DESC, summary_count DESC, link_id DESC`
+	
 func NewTopLinks() *TopLinks {
-	return (&TopLinks{Query: Query{Text: TOP_LINKS_BASE}})
+	return (&TopLinks{Query: Query{Text: 
+		LINKS_BASE_FIELDS + 
+		LINKS_BASE_FROM + 
+		LINKS_BASE_GROUP_BY_ORDER_BY +
+		UNPAGINATED_LIMIT_CLAUSE}})
 }
 
 func (l *TopLinks) FromLinkIDs(link_ids []string) *TopLinks {
@@ -98,6 +143,33 @@ func (l *TopLinks) DuringPeriod(period string) *TopLinks {
 		return l
 	}
 	l._Where(clause)
+
+	return l
+}
+
+func (l *TopLinks) AsSignedInUser(req_user_id string) *TopLinks {
+
+	// append auth fields
+	l.Text = strings.Replace(
+		l.Text,
+		LINKS_BASE_FIELDS,
+		LINKS_BASE_FIELDS + LINKS_AUTH_FIELDS,
+	1)
+
+	// append auth from
+	l.Text = strings.Replace(
+		l.Text,
+		LINKS_BASE_FROM_LAST_LINE,
+		LINKS_BASE_FROM_LAST_LINE + LINKS_AUTH_FROM,
+	1)
+
+	// swap all "REQ_USER_ID" with req_user_id
+	l.Text = strings.ReplaceAll(
+		l.Text, 
+		"REQ_USER_ID", 
+		req_user_id,
+	)
+
 	return l
 }
 

@@ -4,6 +4,7 @@
 
 ### Features
 
+-Remove profile about if nothing there and not your profile
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 -Pagination
@@ -33,7 +34,6 @@
     -ScanTmapLinks tests
     -shared TestClient?
 -Refactors for simplicity / accuracy
-    *** -Move isliked/iscopied/istagged addition logic from ScanLinks into TopLinks AsSignedInUser method
     ***-helpers for new user / new tag / etc.
     -RenderPaginatedLinks move slicing into separate PaginateLinks func that is more easily testable
     -ResolveAndAssignURL into just ResolveURL, assign to request in handler (so request doesn't need to be passed as 2nd arg)

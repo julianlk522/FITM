@@ -68,7 +68,7 @@ func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks,
 
 		for rows.Next() {
 			i := model.LinkSignedIn{}
-			err := rows.Scan(
+			if err := rows.Scan(
 				&i.ID,
 				&i.URL,
 				&i.SubmittedBy,
@@ -79,44 +79,12 @@ func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks,
 				&i.TagCount,
 				&i.LikeCount,
 				&i.ImgURL,
-			)
-			if err != nil {
+				&i.IsLiked,
+				&i.IsCopied,
+				&i.IsTagged,
+			); err != nil {
 				return nil, err
 			}
-
-			// Add IsLiked / IsCopied / IsTagged
-			var l sql.NullInt32
-			var t sql.NullInt32
-			var c sql.NullInt32
-
-			err = db.Client.QueryRow(
-				fmt.Sprintf(
-					`SELECT
-					(
-						SELECT count(*) FROM 'Link Likes'
-						WHERE link_id = '%[1]s' AND user_id = '%[2]s'
-					) as is_liked,
-					(
-						SELECT count(*) FROM Tags
-						JOIN Users
-						ON Users.login_name = Tags.submitted_by
-						WHERE link_id = '%[1]s' AND Users.id = '%[2]s'
-					) AS is_tagged,
-					(
-						SELECT count(*) FROM 'Link Copies'
-						WHERE link_id = '%[1]s' AND user_id = '%[2]s'
-					) as is_copied;`,
-					i.ID,
-					req_user_id,
-				),
-			).Scan(&l, &t, &c)
-			if err != nil {
-				return nil, err
-			}
-
-			i.IsLiked = l.Int32 > 0
-			i.IsTagged = t.Int32 > 0
-			i.IsCopied = c.Int32 > 0
 
 			signed_in_links = append(signed_in_links, i)
 		}
