@@ -7,7 +7,7 @@ let user = Astro.cookies.get('user')?.value
 
 if (!token || !user) {
 	Astro.cookies.set('redirect_to', Astro.url.pathname, {
-		maxAge: 3600,
+		maxAge: 21600,
 		path: '/login',
 		sameSite: 'strict',
 		secure: true,

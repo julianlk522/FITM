@@ -32,8 +32,8 @@ export default function Summary(props: Props) {
 	async function handle_like() {
 		if (!token) {
 			const encoded_url = window.location.pathname.replaceAll('/', '%2F')
-			document.cookie = `redirect_to=${encoded_url}; path=/login; max-age=3600; SameSite=strict; Secure;`
-			document.cookie = `redirect_action=like summary ${ID}; path=${window.location.pathname}; max-age=3600; SameSite=strict; Secure`
+			document.cookie = `redirect_to=${encoded_url}; path=/login; max-age=21600; SameSite=strict; Secure;`
+			document.cookie = `redirect_action=like summary ${ID}; path=${window.location.pathname}; max-age=21600; SameSite=strict; Secure`
 			return (window.location.href = '/login')
 		}
 

@@ -37,7 +37,7 @@ export default function NewSummary(props: Props) {
 			document.cookie = `redirect_to=${window.location.pathname.replaceAll(
 				'/',
 				'%2F'
-			)}; path=/login; max-age=3600; SameSite=strict; Secure`
+			)}; path=/login; max-age=21600; SameSite=strict; Secure`
 			window.location.href = '/login'
 		}
 		let new_summary_data = await new_summary_resp.json()
