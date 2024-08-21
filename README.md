@@ -16,7 +16,6 @@
 
 ### Code Quality
 
-***-Update JWT to use actual secret
 -Consistent names
     -Cats vs. Categories vs. Tag Categories
 -Tests

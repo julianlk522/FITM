@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"time"
 
@@ -20,9 +21,8 @@ import (
 var token_auth *jwtauth.JWTAuth
 
 func init() {
-	// new JWT for protected/optional routes (1-day exiration)
-	// TODO: shorten expiration to idk, 6h
-	token_auth = jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(24*time.Hour))
+	// new JWT for protected/optional routes (6h expiration)
+	token_auth = jwtauth.New("HS256", []byte(os.Getenv("FITM_JWT_SECRET")), nil, jwt.WithAcceptableSkew(6*time.Hour))
 }
 
 func main() {

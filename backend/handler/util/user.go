@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"oitm/db"
+	"os"
 
 	"image"
 	_ "image/jpeg"
@@ -54,8 +55,7 @@ func GetJWTFromLoginName(login_name string) (string, error) {
 
 	claims := map[string]interface{}{"user_id": id.String, "login_name": login_name}
 
-	// TODO: change jwt secret
-	auth := jwtauth.New("HS256", []byte("secret"), nil, jwt.WithAcceptableSkew(24*time.Hour))
+	auth := jwtauth.New("HS256", []byte(os.Getenv("FITM_JWT_SECRET")), nil, jwt.WithAcceptableSkew(6*time.Hour))
 	_, token, err := auth.Encode(claims)
 	if err != nil {
 		return "", err

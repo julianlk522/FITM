@@ -15,32 +15,36 @@ async function handle_jwt_auth(
 	// authenticate token cookie if found
 	if (req_token) {
 		try {
-			// TODO: add real jwt password
-			jwt.verify(req_token, 'secret', function <
-				JwtPayload
-			>(err: VerifyErrors | null, decoded: JwtPayload | undefined) {
-				// delete cookies and redirect to login if invalid
-				// @ts-ignore
-				if (err || !decoded || !decoded.login_name) {
-					context.cookies.delete('token')
-					context.cookies.delete('user')
-
-					return Response.redirect(
-						new URL('/login', context.request.url),
-						302
-					)
-
-					// set user cookie if verified
-				} else {
+			jwt.verify(
+				req_token,
+				import.meta.env.VITE_FITM_JWT_SECRET,
+				function <JwtPayload>(
+					err: VerifyErrors | null,
+					decoded: JwtPayload | undefined
+				) {
+					// delete cookies and redirect to login if invalid
 					// @ts-ignore
-					context.cookies.set('user', decoded.login_name, {
-						path: '/',
-						maxAge: 3600,
-						sameSite: 'strict',
-						secure: true,
-					})
+					if (err || !decoded || !decoded.login_name) {
+						context.cookies.delete('token')
+						context.cookies.delete('user')
+
+						return Response.redirect(
+							new URL('/login', context.request.url),
+							302
+						)
+
+						// set user cookie if verified
+					} else {
+						// @ts-ignore
+						context.cookies.set('user', decoded.login_name, {
+							path: '/',
+							maxAge: 21600,
+							sameSite: 'strict',
+							secure: true,
+						})
+					}
 				}
-			})
+			)
 		} catch (err) {
 			// TODO: add (saved) logging
 			console.log('jwt errors: ', err)
