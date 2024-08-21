@@ -24,8 +24,8 @@ const (
 )
 
 // Get Links
-func GetIDsOfLinksHavingCategories(categories_str string) (link_ids []string, err error) {
-	link_ids_sql := query.NewLinkIDs(categories_str)
+func GetIDsOfLinksHavingCats(cats_str string) (link_ids []string, err error) {
+	link_ids_sql := query.NewLinkIDs(cats_str)
 	if link_ids_sql.Error != nil {
 		err = link_ids_sql.Error
 	}
@@ -73,7 +73,7 @@ func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks,
 				&i.URL,
 				&i.SubmittedBy,
 				&i.SubmitDate,
-				&i.Categories,
+				&i.Cats,
 				&i.Summary,
 				&i.SummaryCount,
 				&i.TagCount,
@@ -101,7 +101,7 @@ func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks,
 				&i.URL,
 				&i.SubmittedBy,
 				&i.SubmitDate,
-				&i.Categories,
+				&i.Cats,
 				&i.Summary,
 				&i.SummaryCount,
 				&i.TagCount,
@@ -222,11 +222,11 @@ func IsRedirect(status_code int) bool {
 	return status_code > 299 && status_code < 400
 }
 
-func AssignSortedCategories(unsorted_cats string, link *model.NewLinkRequest) {
-	split_categories := strings.Split(unsorted_cats, ",")
-	slices.Sort(split_categories)
+func AssignSortedCats(unsorted_cats string, link *model.NewLinkRequest) {
+	split_cats := strings.Split(unsorted_cats, ",")
+	slices.Sort(split_cats)
 
-	link.Categories = strings.Join(split_categories, ",")
+	link.Cats = strings.Join(split_cats, ",")
 }
 
 // Like / unlike link

@@ -21,9 +21,9 @@ let page = 1
 if (Astro.url.searchParams.get('page')) {
 	page = parseInt(Astro.url.searchParams.get('page') as string)
 }
-let categories: string | undefined
-if (Astro.url.searchParams.get('categories')) {
-	categories = Astro.url.searchParams.get('categories') as string
+let cats: string | undefined
+if (Astro.url.searchParams.get('cats')) {
+	cats = Astro.url.searchParams.get('cats') as string
 }
 let period: Period = 'all'
 let other_periods: Period[] = Periods.filter((other) => other !== 'all')
@@ -46,13 +46,13 @@ if (period !== 'all') {
 	links_url += `?period=${period}`
 }
 let has_cats = false
-if (categories) {
+if (cats) {
 	has_cats = true
 
 	if (has_period) {
-		links_url += `&cats=${categories}`
+		links_url += `&cats=${cats}`
 	} else {
-		links_url += `?cats=${categories}`
+		links_url += `?cats=${cats}`
 	}
 }
 if (has_period || has_cats) {
@@ -76,9 +76,9 @@ let top_contributors: CategoryContributor[] = []
 if (links && links.length) {
 
 	// Get subcategory counts and category contributors
-	if (categories) {
-		let subcats_url = SUBCATS_ENDPOINT + `/${categories}`
-		let contributors_url = CONTRIBUTORS_ENDPOINT + `/${categories}`
+	if (cats) {
+		let subcats_url = SUBCATS_ENDPOINT + `/${cats}`
+		let contributors_url = CONTRIBUTORS_ENDPOINT + `/${cats}`
 
 		if (period !== 'all') {
 			subcats_url += `?period=${period}`
@@ -105,8 +105,8 @@ if (links && links.length) {
 }
 
 const page_title =
-	categories
-		? categories
+	cats
+		? cats
 		: 'Top Rated'
 ---
 
@@ -124,7 +124,7 @@ const page_title =
 					other_periods.map((other) => (
 						<a
 							class='period'
-							href={`/top?period=${other}${categories ? `&categories=${categories}` : ''}`}
+							href={`/top?period=${other}${cats ? `&cats=${cats}` : ''}`}
 						>
 							{other}
 						</a>
@@ -132,12 +132,12 @@ const page_title =
 				}
 			</div>
 			{
-				categories ? (
+				cats ? (
 					<div>
 						<p>
-							{categories.includes(',')
-								? 'Categories: '
-								: 'Category: '}
+							{cats.includes(',')
+								? 'Cats: '
+								: 'Cat: '}
 						</p>
 						<a href={`/top${period !== 'all' ? `?period=${period}` : ''}`}>Reset</a>
 					</div>
@@ -150,12 +150,12 @@ const page_title =
 				<>
 					{top_cats.length ? (
 						<section>
-							<h2>Top Categories</h2>
+							<h2>Top Cats</h2>
 							<ol id='top-cats'>
 								{top_cats.map((cat) => (
 									<li>
 										<a
-											href={`/top?categories=${cat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
+											href={`/top?cats=${cat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
 										>
 											{cat.Category}
 										</a>
@@ -167,13 +167,13 @@ const page_title =
 					) : (
 						<>
 							<section>
-								<h2>Top Subcategories</h2>
+								<h2>Top Subcats</h2>
 								{top_subcats.length ? (
 									<ol id='top-cats'>
 										{top_subcats.map((subcat) => (
 											<li>
 												<a
-													href={`/top?categories=${categories + ',' + subcat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
+													href={`/top?cats=${cats + ',' + subcat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
 												>
 													{subcat.Category}
 												</a>
@@ -182,7 +182,7 @@ const page_title =
 										))}
 									</ol>
 								) : (
-									<p>No further subcategories</p>
+									<p>No further subcats</p>
 								)}
 							</section>
 							<section>
@@ -223,7 +223,7 @@ const page_title =
 							{links.map((link) => (
 								<Link
 									client:load
-									CategoriesFromUser={link.TagCount === 1 && link.SubmittedBy === user ? user : undefined}
+									CatsFromUser={link.TagCount === 1 && link.SubmittedBy === user ? user : undefined}
 									IsSummaryPage={false}
 									IsTagPage={false}
 									Link={link}

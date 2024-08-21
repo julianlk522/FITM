@@ -11,7 +11,7 @@ import (
 var (
 	test_login_name = "goolian"
 	test_user_id    = "3"
-	test_categories = []string{"go", "coding"}
+	test_cats       = []string{"go", "coding"}
 
 	test_req_user_id    = "13"
 	test_req_login_name = "bradley"
@@ -76,8 +76,8 @@ func TestNewTmapSubmitted(t *testing.T) {
 			&l.URL,
 			&l.SubmittedBy,
 			&l.SubmitDate,
-			&l.Categories,
-			&l.CategoriesFromUser,
+			&l.Cats,
+			&l.CatsFromUser,
 			&l.Summary,
 			&l.SummaryCount,
 			&l.LikeCount,
@@ -107,8 +107,8 @@ func TestNewTmapSubmitted(t *testing.T) {
 	}
 }
 
-func TestNewTmapSubmittedFromCategories(t *testing.T) {
-	submitted_sql := NewTmapSubmitted(test_login_name).FromCategories(test_categories)
+func TestNewTmapSubmittedFromCats(t *testing.T) {
+	submitted_sql := NewTmapSubmitted(test_login_name).FromCats(test_cats)
 	if submitted_sql.Error != nil {
 		t.Fatal(submitted_sql.Error)
 	}
@@ -126,8 +126,8 @@ func TestNewTmapSubmittedFromCategories(t *testing.T) {
 			&l.URL,
 			&l.SubmittedBy,
 			&l.SubmitDate,
-			&l.Categories,
-			&l.CategoriesFromUser,
+			&l.Cats,
+			&l.CatsFromUser,
 			&l.Summary,
 			&l.SummaryCount,
 			&l.LikeCount,
@@ -135,8 +135,8 @@ func TestNewTmapSubmittedFromCategories(t *testing.T) {
 			&l.ImgURL,
 		); err != nil {
 			t.Fatal(err)
-		} else if !strings.Contains(l.Categories, test_categories[0]) || !strings.Contains(l.Categories, test_categories[1]) {
-			t.Fatalf("got %s, should contain %s", l.Categories, test_categories)
+		} else if !strings.Contains(l.Cats, test_cats[0]) || !strings.Contains(l.Cats, test_cats[1]) {
+			t.Fatalf("got %s, should contain %s", l.Cats, test_cats)
 		} else if l.TagCount == 0 {
 			t.Fatal("TagCount == 0")
 		}
@@ -163,8 +163,8 @@ func TestNewTmapSubmittedAsSignedInUser(t *testing.T) {
 			&l.URL,
 			&l.SubmittedBy,
 			&l.SubmitDate,
-			&l.Categories,
-			&l.CategoriesFromUser,
+			&l.Cats,
+			&l.CatsFromUser,
 			&l.Summary,
 			&l.SummaryCount,
 			&l.TagCount,
@@ -199,8 +199,8 @@ func TestNewTmapCopied(t *testing.T) {
 			&l.URL,
 			&l.SubmittedBy,
 			&l.SubmitDate,
-			&l.Categories,
-			&l.CategoriesFromUser,
+			&l.Cats,
+			&l.CatsFromUser,
 			&l.Summary,
 			&l.SummaryCount,
 			&l.LikeCount,
@@ -229,8 +229,8 @@ func TestNewTmapCopied(t *testing.T) {
 	}
 }
 
-func TestNewTmapCopiedFromCategories(t *testing.T) {
-	copied_sql := NewTmapCopied(test_login_name).FromCategories(test_categories)
+func TestNewTmapCopiedFromCats(t *testing.T) {
+	copied_sql := NewTmapCopied(test_login_name).FromCats(test_cats)
 	if copied_sql.Error != nil {
 		t.Fatal(copied_sql.Error)
 	}
@@ -248,8 +248,8 @@ func TestNewTmapCopiedFromCategories(t *testing.T) {
 			&l.URL,
 			&l.SubmittedBy,
 			&l.SubmitDate,
-			&l.Categories,
-			&l.CategoriesFromUser,
+			&l.Cats,
+			&l.CatsFromUser,
 			&l.Summary,
 			&l.SummaryCount,
 			&l.LikeCount,
@@ -257,8 +257,8 @@ func TestNewTmapCopiedFromCategories(t *testing.T) {
 			&l.ImgURL,
 		); err != nil {
 			t.Fatal(err)
-		} else if !strings.Contains(l.Categories, test_categories[0]) || !strings.Contains(l.Categories, test_categories[1]) {
-			t.Fatalf("got %s, should contain %s", l.Categories, test_categories)
+		} else if !strings.Contains(l.Cats, test_cats[0]) || !strings.Contains(l.Cats, test_cats[1]) {
+			t.Fatalf("got %s, should contain %s", l.Cats, test_cats)
 		} else if l.TagCount == 0 {
 			t.Fatal("TagCount == 0")
 		}
@@ -300,8 +300,8 @@ func TestNewTmapCopiedAsSignedInUser(t *testing.T) {
 			&l.URL,
 			&l.SubmittedBy,
 			&l.SubmitDate,
-			&l.Categories,
-			&l.CategoriesFromUser,
+			&l.Cats,
+			&l.CatsFromUser,
 			&l.Summary,
 			&l.SummaryCount,
 			&l.TagCount,
@@ -336,8 +336,8 @@ func TestNewTmapTagged(t *testing.T) {
 			&l.URL,
 			&l.SubmittedBy,
 			&l.SubmitDate,
-			&l.Categories,
-			&l.CategoriesFromUser,
+			&l.Cats,
+			&l.CatsFromUser,
 			&l.Summary,
 			&l.SummaryCount,
 			&l.LikeCount,
@@ -366,8 +366,8 @@ func TestNewTmapTagged(t *testing.T) {
 	}
 }
 
-func TestNewTmapTaggedFromCategories(t *testing.T) {
-	tagged_sql := NewTmapTagged(test_login_name).FromCategories(test_categories)
+func TestNewTmapTaggedFromCats(t *testing.T) {
+	tagged_sql := NewTmapTagged(test_login_name).FromCats(test_cats)
 	if tagged_sql.Error != nil {
 		t.Fatal(tagged_sql.Error)
 	}
@@ -385,8 +385,8 @@ func TestNewTmapTaggedFromCategories(t *testing.T) {
 			&l.URL,
 			&l.SubmittedBy,
 			&l.SubmitDate,
-			&l.Categories,
-			&l.CategoriesFromUser,
+			&l.Cats,
+			&l.CatsFromUser,
 			&l.Summary,
 			&l.SummaryCount,
 			&l.LikeCount,
@@ -394,8 +394,8 @@ func TestNewTmapTaggedFromCategories(t *testing.T) {
 			&l.ImgURL,
 		); err != nil {
 			t.Fatal(err)
-		} else if !strings.Contains(l.Categories, test_categories[0]) || !strings.Contains(l.Categories, test_categories[1]) {
-			t.Fatalf("got %s, should contain %s", l.Categories, test_categories)
+		} else if !strings.Contains(l.Cats, test_cats[0]) || !strings.Contains(l.Cats, test_cats[1]) {
+			t.Fatalf("got %s, should contain %s", l.Cats, test_cats)
 		} else if l.TagCount == 0 {
 			t.Fatal("TagCount == 0")
 		}
@@ -437,8 +437,8 @@ func TestNewTmapTaggedAsSignedInUser(t *testing.T) {
 			&l.URL,
 			&l.SubmittedBy,
 			&l.SubmitDate,
-			&l.Categories,
-			&l.CategoriesFromUser,
+			&l.Cats,
+			&l.CatsFromUser,
 			&l.Summary,
 			&l.SummaryCount,
 			&l.TagCount,

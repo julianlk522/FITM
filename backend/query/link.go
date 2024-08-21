@@ -113,17 +113,16 @@ ON tlink_id2 = link_id
 const LINKS_BASE_GROUP_BY_ORDER_BY = `
 GROUP BY link_id 
 ORDER BY like_count DESC, summary_count DESC, link_id DESC`
-	
+
 func NewTopLinks() *TopLinks {
-	return (&TopLinks{Query: Query{Text: 
-		LINKS_BASE_FIELDS + 
-		LINKS_BASE_FROM + 
+	return (&TopLinks{Query: Query{Text: LINKS_BASE_FIELDS +
+		LINKS_BASE_FROM +
 		LINKS_BASE_GROUP_BY_ORDER_BY +
 		UNPAGINATED_LIMIT_CLAUSE}})
 }
 
 func (l *TopLinks) FromLinkIDs(link_ids []string) *TopLinks {
-	
+
 	// surround in quotes so sql will read as string array
 	for i, id := range link_ids {
 		id = fmt.Sprintf(`'%s'`, id)
@@ -153,20 +152,20 @@ func (l *TopLinks) AsSignedInUser(req_user_id string) *TopLinks {
 	l.Text = strings.Replace(
 		l.Text,
 		LINKS_BASE_FIELDS,
-		LINKS_BASE_FIELDS + LINKS_AUTH_FIELDS,
-	1)
+		LINKS_BASE_FIELDS+LINKS_AUTH_FIELDS,
+		1)
 
 	// append auth from
 	l.Text = strings.Replace(
 		l.Text,
 		LINKS_BASE_FROM_LAST_LINE,
-		LINKS_BASE_FROM_LAST_LINE + LINKS_AUTH_FROM,
-	1)
+		LINKS_BASE_FROM_LAST_LINE+LINKS_AUTH_FROM,
+		1)
 
 	// swap all "REQ_USER_ID" with req_user_id
 	l.Text = strings.ReplaceAll(
-		l.Text, 
-		"REQ_USER_ID", 
+		l.Text,
+		"REQ_USER_ID",
 		req_user_id,
 	)
 
@@ -200,16 +199,16 @@ type LinkIDs struct {
 
 const LINK_IDS_BASE = "SELECT id FROM Links"
 
-func NewLinkIDs(categories_str string) *LinkIDs {
-	categories := strings.Split(categories_str, ",")
+func NewLinkIDs(cats_str string) *LinkIDs {
+	cats := strings.Split(cats_str, ",")
 
-	return (&LinkIDs{Query: Query{Text: LINK_IDS_BASE}})._FromCategories(categories)
+	return (&LinkIDs{Query: Query{Text: LINK_IDS_BASE}})._FromCats(cats)
 }
 
-func (l *LinkIDs) _FromCategories(categories []string) *LinkIDs {
-	l.Text += fmt.Sprintf(` WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'`, categories[0])
-	for i := 1; i < len(categories); i++ {
-		l.Text += fmt.Sprintf(` AND ',' || global_cats || ',' LIKE '%%,%s,%%'`, categories[i])
+func (l *LinkIDs) _FromCats(cats []string) *LinkIDs {
+	l.Text += fmt.Sprintf(` WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'`, cats[0])
+	for i := 1; i < len(cats); i++ {
+		l.Text += fmt.Sprintf(` AND ',' || global_cats || ',' LIKE '%%,%s,%%'`, cats[i])
 	}
 
 	l.Text += ` GROUP BY id`
@@ -224,14 +223,14 @@ type Subcats struct {
 
 const SUBCATS_BASE = "SELECT global_cats FROM Links"
 
-func NewSubcats(categories []string) *Subcats {
-	return (&Subcats{Query: Query{Text: SUBCATS_BASE}})._FromCategories(categories)
+func NewSubcats(cats []string) *Subcats {
+	return (&Subcats{Query: Query{Text: SUBCATS_BASE}})._FromCats(cats)
 }
 
-func (c *Subcats) _FromCategories(categories []string) *Subcats {
-	c.Text += fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[0])
-	for i := 1; i < len(categories); i++ {
-		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[i])
+func (c *Subcats) _FromCats(cats []string) *Subcats {
+	c.Text += fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", cats[0])
+	for i := 1; i < len(cats); i++ {
+		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", cats[i])
 	}
 
 	c.Text += " GROUP BY global_cats;"
@@ -267,14 +266,14 @@ type CatCount struct {
 
 const CAT_COUNT_BASE = "SELECT count(*) as link_count FROM Links"
 
-func NewCatCount(categories []string) *CatCount {
-	return (&CatCount{Query: Query{Text: CAT_COUNT_BASE}})._FromCategories(categories)
+func NewCatsCount(cats []string) *CatCount {
+	return (&CatCount{Query: Query{Text: CAT_COUNT_BASE}})._FromCats(cats)
 }
 
-func (c *CatCount) _FromCategories(categories []string) *CatCount {
-	c.Text += fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[0])
-	for i := 1; i < len(categories); i++ {
-		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[i])
+func (c *CatCount) _FromCats(cats []string) *CatCount {
+	c.Text += fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", cats[0])
+	for i := 1; i < len(cats); i++ {
+		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", cats[i])
 	}
 	c.Text += ";"
 
@@ -290,14 +289,14 @@ const CATS_CONTRIBUTORS_BASE = `SELECT
 	count(*), submitted_by 
 FROM Links`
 
-func NewCatsContributors(categories []string) *CatsContributors {
-	return (&CatsContributors{Query: Query{Text: CATS_CONTRIBUTORS_BASE}})._FromCategories(categories)
+func NewCatsContributors(cats []string) *CatsContributors {
+	return (&CatsContributors{Query: Query{Text: CATS_CONTRIBUTORS_BASE}})._FromCats(cats)
 }
 
-func (c *CatsContributors) _FromCategories(categories []string) *CatsContributors {
-	c.Text += fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[0])
-	for i := 1; i < len(categories); i++ {
-		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", categories[i])
+func (c *CatsContributors) _FromCats(cats []string) *CatsContributors {
+	c.Text += fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", cats[0])
+	for i := 1; i < len(cats); i++ {
+		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", cats[i])
 	}
 
 	c.Text += fmt.Sprintf(` 

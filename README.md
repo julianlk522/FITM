@@ -17,8 +17,6 @@
 
 ### Code Quality
 
--Consistent names
-    -Cats vs. Categories vs. Tag Categories
 -Tests
     -finish handlers
         -new link timestamp

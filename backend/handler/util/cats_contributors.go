@@ -12,17 +12,20 @@ import (
 )
 
 // Cats Contributors
-func ScanCatsContributors(contributors_sql *query.CatsContributors, categories_str string) *[]model.CategoryContributor {
+func ScanCatsContributors(contributors_sql *query.CatsContributors, cats_str string) *[]model.CatsContributor {
 	rows, err := db.Client.Query(contributors_sql.Text)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 
-	contributors := []model.CategoryContributor{}
+	contributors := []model.CatsContributor{}
 	for rows.Next() {
-		contributor := model.CategoryContributor{Categories: categories_str}
-		err := rows.Scan(&contributor.LinksSubmitted, &contributor.LoginName)
+		contributor := model.CatsContributor{Cats: cats_str}
+		err := rows.Scan(
+			&contributor.LinksSubmitted,
+			&contributor.LoginName,
+		)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -32,7 +35,7 @@ func ScanCatsContributors(contributors_sql *query.CatsContributors, categories_s
 	return &contributors
 }
 
-func RenderCatsContributors(contributors *[]model.CategoryContributor, w http.ResponseWriter, r *http.Request) {
+func RenderCatsContributors(contributors *[]model.CatsContributor, w http.ResponseWriter, r *http.Request) {
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, contributors)
 }

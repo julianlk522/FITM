@@ -28,13 +28,13 @@ export default function NewLinks(props: Props) {
 		if (summary) {
 			resp_body = JSON.stringify({
 				url,
-				categories: cats.join(','),
+				cats: cats.join(','),
 				summary,
 			})
 		} else {
 			resp_body = JSON.stringify({
 				url,
-				categories: cats.join(','),
+				cats: cats.join(','),
 			})
 		}
 

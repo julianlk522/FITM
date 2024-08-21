@@ -27,7 +27,7 @@ func ScanTagPageLink(link_sql *query.TagPageLink) (*model.LinkSignedIn, error) {
 			&l.URL,
 			&l.SubmittedBy,
 			&l.SubmitDate,
-			&l.Categories,
+			&l.Cats,
 			&l.Summary,
 			&l.SummaryCount,
 			&l.LikeCount,
@@ -57,7 +57,7 @@ func GetUserTagForLink(login_name string, link_id string) (*model.Tag, error) {
 
 	return &model.Tag{
 		ID:          id.String,
-		Categories:  cats.String,
+		Cats:        cats.String,
 		LastUpdated: last_updated.String,
 		LinkID:      link_id,
 		SubmittedBy: login_name,
@@ -77,7 +77,7 @@ func ScanTagRankings(tag_rankings_sql *query.TagRankings) (*[]model.TagRankingPu
 		var tag model.TagRankingPublic
 		err = rows.Scan(
 			&tag.LifeSpanOverlap,
-			&tag.Categories,
+			&tag.Cats,
 			&tag.SubmittedBy,
 			&tag.LastUpdated,
 		)
@@ -152,10 +152,10 @@ func UserSubmittedTagWithID(login_name string, tag_id string) (bool, error) {
 }
 
 func AlphabetizeCats(cats string) string {
-	split_categories := strings.Split(cats, ",")
-	slices.Sort(split_categories)
+	split_cats := strings.Split(cats, ",")
+	slices.Sort(split_cats)
 
-	return strings.Join(split_categories, ",")
+	return strings.Join(split_cats, ",")
 }
 
 func GetLinkIDFromTagID(tag_id string) (string, error) {
@@ -184,7 +184,7 @@ func CalculateAndSetGlobalCats(link_id string) error {
 	tag_rankings := []model.TagRanking{}
 	for rows.Next() {
 		var t model.TagRanking
-		err = rows.Scan(&t.LifeSpanOverlap, &t.Categories)
+		err = rows.Scan(&t.LifeSpanOverlap, &t.Cats)
 		if err != nil {
 			return err
 		}
@@ -200,9 +200,9 @@ func CalculateAndSetGlobalCats(link_id string) error {
 		// (allows brand-new tags to still have some influence)
 		tag.LifeSpanOverlap = float32(math.Sqrt(float64(tag.LifeSpanOverlap)))
 
-		// multiple categories
-		if strings.Contains(tag.Categories, ",") {
-			cats := strings.Split(tag.Categories, ",")
+		// multiple cats
+		if strings.Contains(tag.Cats, ",") {
+			cats := strings.Split(tag.Cats, ",")
 			for _, cat := range cats {
 				overlap_scores[cat] += tag.LifeSpanOverlap
 
@@ -213,17 +213,17 @@ func CalculateAndSetGlobalCats(link_id string) error {
 
 			// single category
 		} else {
-			overlap_scores[tag.Categories] += tag.LifeSpanOverlap
+			overlap_scores[tag.Cats] += tag.LifeSpanOverlap
 
-			if overlap_scores[tag.Categories] > max_cat_score {
-				max_cat_score = overlap_scores[tag.Categories]
+			if overlap_scores[tag.Cats] > max_cat_score {
+				max_cat_score = overlap_scores[tag.Cats]
 			}
 		}
 	}
 
 	log.Printf("overlap_scores: %v", overlap_scores)
 
-	// Alphabetize so global categories are assigned in order
+	// Alphabetize so global cats are assigned in order
 	alphabetized_cats := AlphabetizeOverlapScoreCats(overlap_scores)
 
 	// Assign to global cats if >= 25% of max category score

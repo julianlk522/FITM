@@ -40,13 +40,13 @@ func ScanSubcats(get_subcats_sql *query.Subcats, search_cats []string) []string 
 	return subcats
 }
 
-func RenderZeroSubcategories(w http.ResponseWriter, r *http.Request) {
+func RenderZeroSubcats(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, []model.CatCount{})
 	render.Status(r, http.StatusOK)
 }
 
-func RenderSubcategories(subcats []string, categories []string, w http.ResponseWriter, r *http.Request) {
-	with_counts, err := GetCountsOfSubcatsFromCats(subcats, categories)
+func RenderSubcats(subcats []string, cats []string, w http.ResponseWriter, r *http.Request) {
+	with_counts, err := GetCountsOfSubcatsFromCats(subcats, cats)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
@@ -64,7 +64,7 @@ func GetCountsOfSubcatsFromCats(subcats []string, cats []string) (*[]model.CatCo
 		subcat_counts[i].Category = subcats[i]
 
 		all_cats := append(cats, subcats[i])
-		get_link_count_sql := query.NewCatCount(all_cats)
+		get_link_count_sql := query.NewCatsCount(all_cats)
 		if get_link_count_sql.Error != nil {
 			return nil, get_link_count_sql.Error
 		}
@@ -78,7 +78,7 @@ func GetCountsOfSubcatsFromCats(subcats []string, cats []string) (*[]model.CatCo
 }
 
 func SortAndLimitCatCounts(cat_counts *[]model.CatCount, limit int) {
-	slices.SortFunc(*cat_counts, model.SortCategories)
+	slices.SortFunc(*cat_counts, model.SortCats)
 
 	if len(*cat_counts) > limit {
 		*cat_counts = (*cat_counts)[:limit]

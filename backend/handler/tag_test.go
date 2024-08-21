@@ -18,75 +18,75 @@ func TestAddTag(t *testing.T) {
 	}{
 		{
 			Payload: map[string]string{
-				"link_id":    "",
-				"categories": "test",
+				"link_id": "",
+				"cats":    "test",
 			},
 			Valid: false,
 		},
 		{
 			Payload: map[string]string{
-				"link_id":    "-1",
-				"categories": "test",
+				"link_id": "-1",
+				"cats":    "test",
 			},
 			Valid: false,
 		},
 		{
 			Payload: map[string]string{
-				"link_id":    "101010101010101010101010101010101010101",
-				"categories": "test",
+				"link_id": "101010101010101010101010101010101010101",
+				"cats":    "test",
 			},
 			Valid: false,
 		},
 		{
 			Payload: map[string]string{
-				"link_id":    "notanint",
-				"categories": "test",
+				"link_id": "notanint",
+				"cats":    "test",
 			},
 			Valid: false,
 		},
 		{
 			Payload: map[string]string{
-				"link_id":    "1",
-				"categories": "",
+				"link_id": "1",
+				"cats":    "",
 			},
 			Valid: false,
 		},
 		{
 			Payload: map[string]string{
-				"link_id":    "1",
-				"categories": "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123",
+				"link_id": "1",
+				"cats":    "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123",
 			},
 			Valid: false,
 		},
 		// too many cats
 		{
 			Payload: map[string]string{
-				"link_id":    "1",
-				"categories": "0,1,2,3,4,5,6,7,8,9,0,1,2",
+				"link_id": "1",
+				"cats":    "0,1,2,3,4,5,6,7,8,9,0,1,2",
 			},
 			Valid: false,
 		},
 		// duplicate cats
 		{
 			Payload: map[string]string{
-				"link_id":    "1",
-				"categories": "0,1,2,3,3",
+				"link_id": "1",
+				"cats":    "0,1,2,3,3",
 			},
 			Valid: false,
 		},
 		// should fail because user goolian has already tagged link with ID 1
 		{
 			Payload: map[string]string{
-				"link_id":    "1",
-				"categories": "testtest",
+				"link_id": "1",
+				"cats":    "testtest",
 			},
 			Valid: false,
 		},
 		// should pass because goolian has _not_ tagged link with ID 10
 		{
 			Payload: map[string]string{
-				"link_id":    "10",
-				"categories": "testtest",
+				"link_id": "10",
+				"cats":    "testtest",
 			},
 			Valid: true,
 		},
@@ -140,47 +140,47 @@ func TestEditTag(t *testing.T) {
 	}{
 		{
 			Payload: map[string]string{
-				"tag_id":     "1",
-				"categories": "",
+				"tag_id": "1",
+				"cats":   "",
 			},
 			Valid: false,
 		},
 		{
 			Payload: map[string]string{
-				"tag_id":     "1",
-				"categories": "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123",
+				"tag_id": "1",
+				"cats":   "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123",
 			},
 			Valid: false,
 		},
 		// too many cats
 		{
 			Payload: map[string]string{
-				"tag_id":     "1",
-				"categories": "0,1,2,3,4,5,6,7,8,9,0,1,2",
+				"tag_id": "1",
+				"cats":   "0,1,2,3,4,5,6,7,8,9,0,1,2",
 			},
 			Valid: false,
 		},
 		// duplicate cats
 		{
 			Payload: map[string]string{
-				"tag_id":     "1",
-				"categories": "0,1,2,3,3",
+				"tag_id": "1",
+				"cats":   "0,1,2,3,3",
 			},
 			Valid: false,
 		},
 		// should fail because user goolian _did not_ submit tag with ID 10
 		{
 			Payload: map[string]string{
-				"tag_id":     "10",
-				"categories": "testtest",
+				"tag_id": "10",
+				"cats":   "testtest",
 			},
 			Valid: false,
 		},
 		// should pass because user goolian _has_ submitted tag with ID 32
 		{
 			Payload: map[string]string{
-				"tag_id":     "32",
-				"categories": "hello,kitty",
+				"tag_id": "32",
+				"cats":   "hello,kitty",
 			},
 			Valid: true,
 		},

@@ -22,7 +22,7 @@ type Link = {
 	URL: string
 	SubmittedBy: string
 	SubmitDate: string
-	Categories: string | null
+	Cats: string | null
 	ImgURL: string | undefined
 	Summary: string | null
 	SummaryCount: number
@@ -44,7 +44,7 @@ type Period = (typeof Periods)[number]
 // TAG
 type Tag = {
 	ID: number
-	Categories: string
+	Cats: string
 	SubmittedBy: string
 	LastUpdated: string
 }
@@ -85,13 +85,13 @@ type SummaryPage = {
 }
 
 // TREASURE MAP
-type TmapLink = Link & { CategoriesFromUser: boolean | undefined }
+type TmapLink = Link & { CatsFromUser: boolean | undefined }
 
 type FilteredTreasureMap = {
 	Submitted: TmapLink[]
 	Copied: TmapLink[]
 	Tagged: TmapLink[]
-	Categories: CategoryCount[]
+	Cats: CategoryCount[]
 }
 
 type TreasureMap = FilteredTreasureMap & { Profile: Profile }

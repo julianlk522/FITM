@@ -25,7 +25,7 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 	// cats
 	cats_params := r.URL.Query().Get("cats")
 	if cats_params != "" {
-		link_ids, err := util.GetIDsOfLinksHavingCategories(cats_params)
+		link_ids, err := util.GetIDsOfLinksHavingCats(cats_params)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
@@ -122,10 +122,10 @@ func GetSubcats(w http.ResponseWriter, r *http.Request) {
 
 	subcats := util.ScanSubcats(subcats_sql, cats)
 	if len(subcats) == 0 {
-		util.RenderZeroSubcategories(w, r)
+		util.RenderZeroSubcats(w, r)
 		return
 	}
-	util.RenderSubcategories(subcats, cats, w, r)
+	util.RenderSubcats(subcats, cats, w, r)
 }
 
 func AddLink(w http.ResponseWriter, r *http.Request) {
@@ -157,8 +157,8 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	meta := util.MetaFromHTMLTokens(resp.Body)
 	util.AssignMetadata(meta, request)
 
-	unsorted_cats := request.NewLink.Categories
-	util.AssignSortedCategories(unsorted_cats, request)
+	unsorted_cats := request.NewLink.Cats
+	util.AssignSortedCats(unsorted_cats, request)
 
 	// Insert link
 	_, err = db.Client.Exec(
@@ -167,7 +167,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		request.URL,
 		req_login_name,
 		request.SubmitDate,
-		request.Categories,
+		request.Cats,
 		request.NewLink.Summary,
 		request.ImgURL,
 	)
@@ -221,7 +221,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		"INSERT INTO Tags VALUES(?,?,?,?,?);",
 		uuid.New().String(),
 		request.ID,
-		request.Categories,
+		request.Cats,
 		req_login_name,
 		request.SubmitDate,
 	)
@@ -236,7 +236,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		URL:          request.URL,
 		SubmittedBy:  req_login_name,
 		SubmitDate:   request.SubmitDate,
-		Categories:   request.Categories,
+		Cats:         request.Cats,
 		Summary:      request.NewLink.Summary,
 		SummaryCount: request.SummaryCount,
 		ImgURL:       request.ImgURL,

@@ -87,10 +87,10 @@ func TestGetUserTagForLink(t *testing.T) {
 			test_tag.LinkID,
 			id,
 		)
-	} else if tag.Categories != cats {
+	} else if tag.Cats != cats {
 		t.Fatalf(
 			"got cats %s for user %s and link %s, want %s",
-			tag.Categories,
+			tag.Cats,
 			test_tag.LoginName,
 			test_tag.LinkID,
 			cats,
@@ -154,12 +154,12 @@ func TestScanTagRankings(t *testing.T) {
 				test_rankings[i].SubmittedBy,
 				ranking.SubmittedBy,
 			)
-		} else if ranking.Categories != test_rankings[i].Cats {
+		} else if ranking.Cats != test_rankings[i].Cats {
 			t.Fatalf(
 				"expected ranking %d to have cats %s, got %s",
 				i+1,
 				test_rankings[i].Cats,
-				ranking.Categories,
+				ranking.Cats,
 			)
 		}
 	}

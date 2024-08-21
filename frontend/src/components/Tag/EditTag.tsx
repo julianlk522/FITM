@@ -13,18 +13,18 @@ interface Props {
 
 export default function EditTag(props: Props) {
 	const { LinkID: link_id, Token: token, UserTag: tag } = props
-	const initial_cats = tag ? tag.Categories.split(',') : []
+	const initial_cats = tag ? tag.Cats.split(',') : []
 
-	const [categories, set_categories] = useState<string[]>(initial_cats)
+	const [cats, set_cats] = useState<string[]>(initial_cats)
 
 	// Pass deleted_cat signal to children TagCategory.tsx
 	// to allow removing their category in this EditTag.tsx parent
 	const deleted_cat = useSignal<string | undefined>(undefined)
 
-	// Check for deleted category and set categories accordingly
+	// Check for deleted category and set cats accordingly
 	effect(() => {
 		if (deleted_cat.value) {
-			set_categories((c) => c.filter((cat) => cat !== deleted_cat.value))
+			set_cats((c) => c.filter((cat) => cat !== deleted_cat.value))
 			deleted_cat.value = undefined
 		}
 	})
@@ -44,12 +44,12 @@ export default function EditTag(props: Props) {
 			return
 		}
 
-		if (categories.includes(category)) {
+		if (cats.includes(category)) {
 			set_error('Category already added')
 			return
 		}
 
-		set_categories([...categories, category])
+		set_cats([...cats, category])
 		set_error(undefined)
 
 		const cat_field = document.getElementById(
@@ -76,7 +76,7 @@ export default function EditTag(props: Props) {
 				},
 				body: JSON.stringify({
 					link_id: link_id,
-					categories: categories.join(','),
+					cats: cats.join(','),
 				}),
 			})
 
@@ -90,7 +90,7 @@ export default function EditTag(props: Props) {
 				},
 				body: JSON.stringify({
 					tag_id: tag.ID,
-					categories: categories.join(','),
+					cats: cats.join(','),
 				}),
 			})
 		}
@@ -116,15 +116,13 @@ export default function EditTag(props: Props) {
 
 				<button
 					onClick={() => {
-						set_categories(categories.sort())
+						set_cats(cats.sort())
 
 						// update if changes detected, else skip
 						if (
 							editing &&
-							(categories.length !== initial_cats.length ||
-								categories.some(
-									(c, i) => c !== initial_cats[i]
-								))
+							(cats.length !== initial_cats.length ||
+								cats.some((c, i) => c !== initial_cats[i]))
 						) {
 							confirm_changes()
 						}
@@ -148,7 +146,7 @@ export default function EditTag(props: Props) {
 			{error ? <p class='error'>{`Error: ${error}`}</p> : null}
 
 			<ol id='cat_list'>
-				{categories.map((cat) => (
+				{cats.map((cat) => (
 					<TagCategory
 						Category={cat}
 						EditActivated={editing}

@@ -110,9 +110,9 @@ ON summary_link_id = link_id`
 const SUBMITTED_WHERE = ` 
 WHERE submitted_by = 'LOGIN_NAME'`
 
-func (q *TmapSubmitted) FromCategories(categories []string) *TmapSubmitted {
+func (q *TmapSubmitted) FromCats(cats []string) *TmapSubmitted {
 	var cat_clause string
-	for _, cat := range categories {
+	for _, cat := range cats {
 		cat_clause += fmt.Sprintf(` 
 		AND ',' || cats || ',' LIKE '%%,%s,%%'`, cat)
 	}
@@ -201,10 +201,10 @@ ON summary_link_id = link_id`
 const COPIED_WHERE = ` 
 WHERE submitted_by != 'LOGIN_NAME'`
 
-func (q *TmapCopied) FromCategories(categories []string) *TmapCopied {
+func (q *TmapCopied) FromCats(cats []string) *TmapCopied {
 	var cat_clause string
 
-	for _, cat := range categories {
+	for _, cat := range cats {
 		cat_clause += fmt.Sprintf(` 
 		AND ',' || cats || ',' LIKE '%%,%s,%%'`, cat)
 	}
@@ -249,9 +249,9 @@ const TAGGED_WHERE = ` WHERE submitted_by != 'LOGIN_NAME'
 		WHERE Users.login_name = 'LOGIN_NAME'
 		)`
 
-func (q *TmapTagged) FromCategories(categories []string) *TmapTagged {
+func (q *TmapTagged) FromCats(cats []string) *TmapTagged {
 	var cat_clause string
-	for _, cat := range categories {
+	for _, cat := range cats {
 		cat_clause += fmt.Sprintf(` 
 		AND ',' || cats || ',' LIKE '%%,%s,%%'`, cat)
 	}

@@ -50,9 +50,9 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	}
 
 	if has_cat_filter {
-		submitted_sql = submitted_sql.FromCategories(cats)
-		copied_sql = copied_sql.FromCategories(cats)
-		tagged_sql = tagged_sql.FromCategories(cats)
+		submitted_sql = submitted_sql.FromCats(cats)
+		copied_sql = copied_sql.FromCats(cats)
+		tagged_sql = tagged_sql.FromCats(cats)
 	}
 
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
@@ -87,10 +87,10 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	}
 
 	sections := &model.TreasureMapSections[T]{
-		Submitted:  submitted,
-		Copied:     copied,
-		Tagged:     tagged,
-		Categories: cat_counts,
+		Submitted: submitted,
+		Copied:    copied,
+		Tagged:    tagged,
+		Cats:      cat_counts,
 	}
 
 	if has_cat_filter {
@@ -143,8 +143,8 @@ func ScanTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](sql query.Query) (
 				&l.URL,
 				&l.SubmittedBy,
 				&l.SubmitDate,
-				&l.Categories,
-				&l.CategoriesFromUser,
+				&l.Cats,
+				&l.CatsFromUser,
 				&l.Summary,
 				&l.SummaryCount,
 				&l.LikeCount,
@@ -173,8 +173,8 @@ func ScanTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](sql query.Query) (
 				&l.URL,
 				&l.SubmittedBy,
 				&l.SubmitDate,
-				&l.Categories,
-				&l.CategoriesFromUser,
+				&l.Cats,
+				&l.CatsFromUser,
 				&l.Summary,
 				&l.SummaryCount,
 				&l.LikeCount,
@@ -193,8 +193,8 @@ func ScanTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](sql query.Query) (
 }
 
 // Get counts of each category found in links
-// Omit any categories passed via omitted_cats
-// (omit used to retrieve subcategories by passing directly searched categories)
+// Omit any cats passed via omitted_cats
+// (omit used to retrieve subcats by passing directly searched cats)
 // TODO: refactor to make this clearer
 func GetTmapCatCounts[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, omitted_cats []string) *[]model.CatCount {
 	counts := []model.CatCount{}
@@ -202,15 +202,15 @@ func GetTmapCatCounts[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, omi
 	var found bool
 
 	for _, link := range *links {
-		var categories string
+		var cats string
 		switch l := any(link).(type) {
 		case model.TmapLinkSignedIn:
-			categories = l.Categories
+			cats = l.Cats
 		case model.TmapLink:
-			categories = l.Categories
+			cats = l.Cats
 		}
 
-		for _, cat := range strings.Split(categories, ",") {
+		for _, cat := range strings.Split(cats, ",") {
 			if omitted_cats != nil && slices.Contains(omitted_cats, cat) {
 				continue
 			}
@@ -232,7 +232,7 @@ func GetTmapCatCounts[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, omi
 			if !found {
 				counts = append(counts, model.CatCount{Category: cat, Count: 1})
 
-				// add to found categories
+				// add to found cats
 				found_cats = append(found_cats, cat)
 			}
 		}

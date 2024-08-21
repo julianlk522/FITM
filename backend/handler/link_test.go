@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+
 	m "oitm/middleware"
 	"testing"
 )
@@ -18,89 +19,89 @@ func TestAddLink(t *testing.T) {
 	}{
 		{
 			Payload: map[string]string{
-				"url":        "",
-				"categories": "test",
-				"summary":    "test",
+				"url":     "",
+				"cats":    "test",
+				"summary": "test",
 			},
 			Valid: false,
 		},
 		{
 			Payload: map[string]string{
-				"url":        "https://www.google.com/wholebunchofextracharswholebunchofextracharswholebunchofextracharswholebunchofextracharswholebunchofextracharswholebunchofextracharswholebunchofextracharswholebunchofextracharswholebunchofextrachars",
-				"categories": "test",
-				"summary":    "test",
+				"url":     "https://www.google.com/wholebunchofextracharswholebunchofextracharswholebunchofextracharswholebunchofextracharswholebunchofextracharswholebunchofextracharswholebunchofextracharswholebunchofextracharswholebunchofextrachars",
+				"cats":    "test",
+				"summary": "test",
 			},
 			Valid: false,
 		},
 		{
 			Payload: map[string]string{
-				"url":        "notreal",
-				"categories": "test",
-				"summary":    "bob",
+				"url":     "notreal",
+				"cats":    "test",
+				"summary": "bob",
 			},
 			Valid: false,
 		},
 		{
 			Payload: map[string]string{
-				"url":        "https://www.google.com",
-				"categories": "",
-				"summary":    "",
+				"url":     "https://www.google.com",
+				"cats":    "",
+				"summary": "",
 			},
 			Valid: false,
 		},
 		{
 			Payload: map[string]string{
-				"url":        "https://www.google.com",
-				"categories": "01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
-				"summary":    "",
+				"url":     "https://www.google.com",
+				"cats":    "01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
+				"summary": "",
 			},
 			Valid: false,
 		},
 		{
 			Payload: map[string]string{
-				"url":        "https://www.google.com",
-				"categories": "0,1,2,3,4,5,6,7,8,9,0,1,2",
-				"summary":    "",
+				"url":     "https://www.google.com",
+				"cats":    "0,1,2,3,4,5,6,7,8,9,0,1,2",
+				"summary": "",
 			},
 			Valid: false,
 		},
 		{
 			Payload: map[string]string{
-				"url":        "https://www.google.com",
-				"categories": "testtest",
-				"summary":    "01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789",
+				"url":     "https://www.google.com",
+				"cats":    "testtest",
+				"summary": "01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789",
 			},
 			Valid: false,
 		},
 		{
 			Payload: map[string]string{
-				"url":        "google.com",
-				"categories": "test",
-				"summary":    "test",
+				"url":     "google.com",
+				"cats":    "test",
+				"summary": "test",
 			},
 			Valid: true,
 		},
 		{
 			Payload: map[string]string{
-				"url":        "about.google.com",
-				"categories": "test",
-				"summary":    "testy",
+				"url":     "about.google.com",
+				"cats":    "test",
+				"summary": "testy",
 			},
 			Valid: true,
 		},
 		{
 			Payload: map[string]string{
-				"url":        "https://www.google.com/search/howsearchworks/?fg=1",
-				"categories": "test",
-				"summary":    "testiest",
+				"url":     "https://www.google.com/search/howsearchworks/?fg=1",
+				"cats":    "test",
+				"summary": "testiest",
 			},
 			Valid: true,
 		},
 		{
 			Payload: map[string]string{
-				"url":        "https://www.google.com/search/howsearchworks/features/",
-				"categories": "test",
-				"summary":    "",
+				"url":     "https://www.google.com/search/howsearchworks/features/",
+				"cats":    "test",
+				"summary": "",
 			},
 			Valid: true,
 		},
@@ -108,9 +109,9 @@ func TestAddLink(t *testing.T) {
 		// should fail due to duplicate from previous test with url "google.com"
 		{
 			Payload: map[string]string{
-				"url":        "https://www.google.com",
-				"categories": "test",
-				"summary":    "",
+				"url":     "https://www.google.com",
+				"cats":    "test",
+				"summary": "",
 			},
 			Valid: false,
 		},

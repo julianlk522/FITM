@@ -96,7 +96,7 @@ func TestFromIDs(t *testing.T) {
 			&l.URL,
 			&l.SubmittedBy,
 			&l.SubmitDate,
-			&l.Categories,
+			&l.Cats,
 			&l.Summary,
 			&l.SummaryCount,
 			&l.TagCount,
@@ -222,7 +222,7 @@ func TestNewLinkIDs(t *testing.T) {
 	}
 }
 
-func Test_LinkIDsFromCategories(t *testing.T) {
+func Test_LinkIDsFromCats(t *testing.T) {
 	ids_sql := NewLinkIDs("umvc3")
 	ids_sql.Text = strings.Replace(ids_sql.Text, "id", "global_cats", 1)
 
@@ -314,7 +314,7 @@ func Test_SubcatsWhere(t *testing.T) {
 func TestNewCatCount(t *testing.T) {
 	var count int
 
-	cc_sql := NewCatCount([]string{"umvc3"})
+	cc_sql := NewCatsCount([]string{"umvc3"})
 	if cc_sql.Error != nil {
 		t.Fatal(cc_sql.Error)
 	}
@@ -329,13 +329,13 @@ func TestNewCatCount(t *testing.T) {
 	// rewriting the query verbatim
 }
 
-func Test_CatCountsFromCategories(t *testing.T) {
+func Test_CatCountsFromCats(t *testing.T) {
 	var test_cats = []string{"umvc3", "flowers"}
 	var single_cat_count, multiple_cats_count int
 	var cats string
 
 	// single cat
-	cc_sql := NewCatCount(test_cats[:1])
+	cc_sql := NewCatsCount(test_cats[:1])
 	if cc_sql.Error != nil {
 		t.Fatal(cc_sql.Error)
 	}
@@ -353,7 +353,7 @@ func Test_CatCountsFromCategories(t *testing.T) {
 	}
 
 	// multiple cats
-	cc_sql = NewCatCount(test_cats)
+	cc_sql = NewCatsCount(test_cats)
 	cc_sql.Text = strings.Replace(
 		cc_sql.Text,
 		"count(*) as link_count",

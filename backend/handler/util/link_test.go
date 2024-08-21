@@ -7,11 +7,11 @@ import (
 	"testing"
 )
 
-func TestGetIDsOfLinksHavingCategories(t *testing.T) {
+func TestGetIDsOfLinksHavingCats(t *testing.T) {
 
 	// single cat
 	test_cats_str := test_single_cat[0]
-	link_ids, err := GetIDsOfLinksHavingCategories(test_cats_str)
+	link_ids, err := GetIDsOfLinksHavingCats(test_cats_str)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func TestGetIDsOfLinksHavingCategories(t *testing.T) {
 
 	// multiple cats
 	test_cats_str = strings.Join(test_multiple_cats, ",")
-	link_ids, err = GetIDsOfLinksHavingCategories(test_cats_str)
+	link_ids, err = GetIDsOfLinksHavingCats(test_cats_str)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,9 +112,9 @@ func TestResolveAndAssignURL(t *testing.T) {
 	}
 	test_request := &model.NewLinkRequest{
 		NewLink: &model.NewLink{
-			URL:        "",
-			Categories: "",
-			Summary:    "",
+			URL:     "",
+			Cats:    "",
+			Summary: "",
 		},
 	}
 
@@ -213,9 +213,9 @@ func TestAssignMetadata(t *testing.T) {
 	for i, meta := range mock_metas {
 		mock_request := &model.NewLinkRequest{
 			NewLink: &model.NewLink{
-				URL:        "",
-				Categories: "",
-				Summary:    "",
+				URL:     "",
+				Cats:    "",
+				Summary: "",
 			},
 		}
 
@@ -252,7 +252,7 @@ func TestAssignMetadata(t *testing.T) {
 	}
 }
 
-// IsRedirect / AssignSortedCategories are pretty simple
+// IsRedirect / AssignSortedCats are pretty simple
 // don't really need tests
 
 // Like / unlike link

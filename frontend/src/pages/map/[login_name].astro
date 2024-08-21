@@ -22,13 +22,13 @@ if (!login_name) {
 const is_signed_in_user = login_name === user
 let page_title = `${login_name}'s Treasure Map`
 
-let categories: string | undefined
+let cats: string | undefined
 let cats_split: string[] = []
 if (Astro.url.searchParams.get('cats')) {
-	categories = Astro.url.searchParams.get('cats') as string
-	cats_split = categories.split(',')
+	cats = Astro.url.searchParams.get('cats') as string
+	cats_split = cats.split(',')
 
-	if (categories.length) {
+	if (cats.length) {
 		page_title += ' (Filtered)'
 	}
 }
@@ -64,7 +64,7 @@ let display_about = false
 let abbreviated_about: string | undefined
 let display_pfp = false
 
-if (!categories && tmap.hasOwnProperty('Profile')) {
+if (!cats && tmap.hasOwnProperty('Profile')) {
 	profile = (tmap as TreasureMap).Profile
 
 	const has_about = profile.About !== undefined && profile.About.length > 0
@@ -131,11 +131,11 @@ if (!categories && tmap.hasOwnProperty('Profile')) {
 		
 
 		<!-- Category Filter -->
-		{categories ? <section id='cat-filter' class="flex">
+		{cats ? <section id='cat-filter' class="flex">
 			<div>
 				<h2>Cat Filter</h2>
 				<p id="transfer-to-global-map">
-					<a href={`/top?categories=${categories}`}>Transfer to Global Treasure Map</a>
+					<a href={`/top?cats=${cats}`}>Transfer to Global Treasure Map</a>
 				</p>
 				<p id='reset-cat-filter'>
 					<a href={`/map/${login_name}`}>Reset</a>
@@ -168,14 +168,14 @@ if (!categories && tmap.hasOwnProperty('Profile')) {
 			<>
 				<section id='overview' class='flex'>
 					<div>
-						<h2>{categories ? 'Top Subcats' : 'Top Cats'}</h2>
+						<h2>{cats ? 'Top Subcats' : 'Top Cats'}</h2>
 						{
-							tmap.Categories.length ? (
+							tmap.Cats.length ? (
 								<ol id="top-cats">
-									{tmap.Categories.map((cat) => (
+									{tmap.Cats.map((cat) => (
 										<li>
 											<a
-												href={categories ? `/map/${login_name}?cats=${categories},${cat.Category}` : `/map/${login_name}?cats=${cat.Category}`}
+												href={cats ? `/map/${login_name}?cats=${cats},${cat.Category}` : `/map/${login_name}?cats=${cat.Category}`}
 											>
 												{cat.Category}
 											</a>
@@ -184,7 +184,7 @@ if (!categories && tmap.hasOwnProperty('Profile')) {
 									))}
 								</ol>
 							) : (
-								<p>No further subcategories.</p>
+								<p>No further subcats.</p>
 							)
 						}
 					</div>
@@ -214,7 +214,7 @@ if (!categories && tmap.hasOwnProperty('Profile')) {
 											<Link
 												client:load
 												Link={link}
-												CategoriesFromUser={login_name}
+												CatsFromUser={login_name}
 												IsSummaryPage={false}
 												IsTagPage={false}
 												Token={token}
@@ -226,8 +226,8 @@ if (!categories && tmap.hasOwnProperty('Profile')) {
 											<Link
 												client:load
 												Link={link}
-												CategoriesFromUser={
-													link.CategoriesFromUser
+												CatsFromUser={
+													link.CatsFromUser
 														? login_name
 														: undefined
 												}

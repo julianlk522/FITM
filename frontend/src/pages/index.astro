@@ -9,7 +9,7 @@ import { Periods, type CategoryCount, type PaginatedLinks } from '../types'
 const token = Astro.cookies.get('token')?.value
 const user: string | undefined = Astro.cookies.get('user')?.value
 
-// Get top categories
+// Get top cats
 const top_cats_resp = await (token
 	? fetch(CATS_ENDPOINT, {
 			headers: { Authorization: `Bearer ${token}` },
@@ -47,7 +47,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 				{
 					top_cats.map((cat) => (
 						<li>
-							<a href={`/top?categories=${cat.Category}`}>{cat.Category}</a>
+							<a href={`/top?cats=${cat.Category}`}>{cat.Category}</a>
 							<span>({cat.Count})</span>
 						</li>
 					))
@@ -70,7 +70,7 @@ const other_periods = Periods.filter((other) => other !== 'month')
 					links.map((link) => (
 						<Link
 							client:load
-							CategoriesFromUser={link.TagCount === 1 && link.SubmittedBy === user ? user : undefined}
+							CatsFromUser={link.TagCount === 1 && link.SubmittedBy === user ? user : undefined}
 							Link={link}
 							IsSummaryPage={false}
 							IsTagPage={false}

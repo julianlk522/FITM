@@ -5,6 +5,8 @@ import (
 	e "oitm/error"
 
 	util "oitm/model/util"
+
+	"github.com/google/uuid"
 )
 
 type Link struct {
@@ -12,7 +14,7 @@ type Link struct {
 	URL          string
 	SubmittedBy  string
 	SubmitDate   string
-	Categories   string
+	Cats         string
 	Summary      string
 	SummaryCount int
 	TagCount     int
@@ -34,24 +36,24 @@ type PaginatedLinks[T Link | LinkSignedIn] struct {
 
 type TmapLink struct {
 	Link
-	CategoriesFromUser bool
+	CatsFromUser bool
 }
 
 type TmapLinkSignedIn struct {
 	LinkSignedIn
-	CategoriesFromUser bool
+	CatsFromUser bool
 }
 
-type CategoryContributor struct {
-	Categories     string
+type CatsContributor struct {
+	Cats           string
 	LoginName      string
 	LinksSubmitted int
 }
 
 type NewLink struct {
-	URL        string `json:"url"`
-	Categories string `json:"categories"`
-	Summary    string `json:"summary,omitempty"`
+	URL     string `json:"url"`
+	Cats    string `json:"cats"`
+	Summary string `json:"summary,omitempty"`
 }
 
 type NewLinkRequest struct {
@@ -63,7 +65,7 @@ type NewLinkRequest struct {
 	// to be assigned by handler
 	URL          string // potentially modified after test request(s)
 	SubmittedBy  string
-	Categories   string // potentially modified after sort
+	Cats         string // potentially modified after sort
 	AutoSummary  string
 	SummaryCount int
 	ImgURL       string
@@ -77,21 +79,21 @@ func (l *NewLinkRequest) Bind(r *http.Request) error {
 	}
 
 	switch {
-		case l.NewLink.Categories == "":
-			return e.ErrNoTagCats
-		case util.HasTooLongCats(l.NewLink.Categories):
-			return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
-		case util.HasTooManyCats(l.NewLink.Categories):
-			return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
-		case util.HasDuplicateCats(l.NewLink.Categories):
-			return e.ErrDuplicateCats
+	case l.NewLink.Cats == "":
+		return e.ErrNoTagCats
+	case util.HasTooLongCats(l.NewLink.Cats):
+		return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
+	case util.HasTooManyCats(l.NewLink.Cats):
+		return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
+	case util.HasDuplicateCats(l.NewLink.Cats):
+		return e.ErrDuplicateCats
 	}
 
 	if len(l.NewLink.Summary) > util.SUMMARY_CHAR_LIMIT {
 		return e.SummaryLengthExceedsLimit(util.SUMMARY_CHAR_LIMIT)
 	}
 
-	l.ID = util.NEW_UUID
+	l.ID = uuid.New().String()
 	l.SubmitDate = util.NEW_LONG_TIMESTAMP
 	l.LikeCount = 0
 

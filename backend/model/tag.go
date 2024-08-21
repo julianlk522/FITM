@@ -7,12 +7,14 @@ import (
 
 	e "oitm/error"
 	util "oitm/model/util"
+
+	"github.com/google/uuid"
 )
 
 type Tag struct {
 	ID          string
 	LinkID      string
-	Categories  string
+	Cats        string
 	SubmittedBy string
 	LastUpdated string
 }
@@ -22,7 +24,7 @@ type CatCount struct {
 	Count    int32
 }
 
-func SortCategories(i, j CatCount) int {
+func SortCats(i, j CatCount) int {
 	if i.Count > j.Count {
 		return -1
 	} else if i.Count == j.Count && strings.ToLower(i.Category) < strings.ToLower(j.Category) {
@@ -33,7 +35,7 @@ func SortCategories(i, j CatCount) int {
 
 type TagRanking struct {
 	LifeSpanOverlap float32
-	Categories      string
+	Cats            string
 }
 
 type TagRankingPublic struct {
@@ -49,8 +51,8 @@ type TagPage struct {
 }
 
 type NewTag struct {
-	LinkID     string `json:"link_id"`
-	Categories string `json:"categories"`
+	LinkID string `json:"link_id"`
+	Cats   string `json:"cats"`
 }
 
 type NewTagRequest struct {
@@ -67,17 +69,17 @@ func (t *NewTagRequest) Bind(r *http.Request) error {
 	}
 
 	switch {
-		case t.NewTag.Categories == "":
-			return e.ErrNoCats
-		case util.HasTooLongCats(t.NewTag.Categories):
-			return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
-		case util.HasTooManyCats(t.NewTag.Categories):
-			return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
-		case util.HasDuplicateCats(t.NewTag.Categories):
-			return e.ErrDuplicateCats
+	case t.NewTag.Cats == "":
+		return e.ErrNoCats
+	case util.HasTooLongCats(t.NewTag.Cats):
+		return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
+	case util.HasTooManyCats(t.NewTag.Cats):
+		return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
+	case util.HasDuplicateCats(t.NewTag.Cats):
+		return e.ErrDuplicateCats
 	}
 
-	t.ID = util.NEW_UUID
+	t.ID = uuid.New().String()
 	t.LastUpdated = util.NEW_LONG_TIMESTAMP
 
 	return nil
@@ -85,7 +87,7 @@ func (t *NewTagRequest) Bind(r *http.Request) error {
 
 type EditTagRequest struct {
 	ID          string `json:"tag_id"`
-	Categories  string `json:"categories"`
+	Cats        string `json:"cats"`
 	LastUpdated string
 }
 
@@ -95,14 +97,14 @@ func (et *EditTagRequest) Bind(r *http.Request) error {
 	}
 
 	switch {
-		case et.Categories == "":
-			return e.ErrNoCats
-		case util.HasTooLongCats(et.Categories):
-			return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
-		case util.HasTooManyCats(et.Categories):
-			return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
-		case util.HasDuplicateCats(et.Categories):
-			return e.ErrDuplicateCats
+	case et.Cats == "":
+		return e.ErrNoCats
+	case util.HasTooLongCats(et.Cats):
+		return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
+	case util.HasTooManyCats(et.Cats):
+		return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
+	case util.HasDuplicateCats(et.Cats):
+		return e.ErrDuplicateCats
 	}
 
 	et.LastUpdated = util.NEW_LONG_TIMESTAMP

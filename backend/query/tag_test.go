@@ -23,7 +23,7 @@ func TestNewTagPageLink(t *testing.T) {
 		&l.URL,
 		&l.SubmittedBy,
 		&l.SubmitDate,
-		&l.Categories,
+		&l.Cats,
 		&l.Summary,
 		&l.SummaryCount,
 		&l.LikeCount,
@@ -59,7 +59,7 @@ func TestNewTopOverlapScores(t *testing.T) {
 		var tr model.TagRanking
 		if err := rows.Scan(
 			&tr.LifeSpanOverlap,
-			&tr.Categories,
+			&tr.Cats,
 		); err != nil {
 			t.Fatal(err)
 		}
@@ -122,7 +122,7 @@ func TestNewTagRankingsForLink(t *testing.T) {
 
 		if err := rows.Scan(
 			&tr.LifeSpanOverlap,
-			&tr.Categories,
+			&tr.Cats,
 			&tr.SubmittedBy,
 			&tr.LastUpdated,
 		); err != nil {

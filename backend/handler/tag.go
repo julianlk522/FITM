@@ -125,7 +125,7 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 		"INSERT INTO Tags VALUES(?,?,?,?,?);",
 		tag_data.ID,
 		tag_data.LinkID,
-		tag_data.Categories,
+		tag_data.Cats,
 		req_login_name,
 		tag_data.LastUpdated,
 	)
@@ -161,13 +161,13 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	edit_tag_data.Categories = util.AlphabetizeCats(edit_tag_data.Categories)
+	edit_tag_data.Cats = util.AlphabetizeCats(edit_tag_data.Cats)
 
 	_, err = db.Client.Exec(
 		`UPDATE Tags 
 		SET cats = ?, last_updated = ? 
 		WHERE id = ?;`,
-		edit_tag_data.Categories,
+		edit_tag_data.Cats,
 		edit_tag_data.LastUpdated,
 		edit_tag_data.ID,
 	)

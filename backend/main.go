@@ -42,7 +42,7 @@ func main() {
 
 	r.Use(middleware.Logger)
 	r.Use(httprate.Limit(
-		20, 
+		20,
 		1*time.Minute,
 		httprate.WithKeyFuncs(httprate.KeyByIP),
 	))
@@ -54,7 +54,7 @@ func main() {
 				return r.Header.Get("Authorization"), nil
 			}),
 			httprate_options,
-	))
+		))
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"https://*", "http://*"},
