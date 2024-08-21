@@ -55,33 +55,32 @@ if (tmap_resp.status > 399) {
 	return Astro.redirect('/404')
 }
 tmap = await tmap_resp.json()
-
-// Get used sections
 const used_sections = tmap_sections.filter((s) => tmap[s].length)
-if (!used_sections.length) {
-	return Astro.redirect(`/404`)
-}
 
 // Attempt PFP fetch, display about/pfp if they are used
 // (unfiltered only)
 let profile: Profile | undefined
 let display_about = false
 let abbreviated_about: string | undefined
-let display_profile = false
+let display_pfp = false
 
 if (!categories && tmap.hasOwnProperty('Profile')) {
 	profile = (tmap as TreasureMap).Profile
 
 	const has_about = profile.About !== undefined && profile.About.length > 0
-	abbreviated_about = profile.About.length > 200 ? `${profile.About.slice(0, 200)}...` : undefined
 	display_about = (profile !== undefined && has_about) || is_signed_in_user
+	if (!has_about && is_signed_in_user) {
+		profile.About = `(optional)`
+	}
+
+	abbreviated_about = profile.About.length > 200 ? `${profile.About.slice(0, 200)}...` : undefined
 
 	const get_pfp_url = GET_PFP_ENDPOINT + `/${profile.PFP}`
 	const found_pfp_resp = await fetch(get_pfp_url, {
 		headers: { 'Content-Type': 'image/png' },
 	})
 	const found_pfp = found_pfp_resp.status < 400
-	display_profile = profile !== undefined && (found_pfp || has_about)
+	display_pfp = profile !== undefined && found_pfp
 }
 
 ---
@@ -94,23 +93,27 @@ if (!categories && tmap.hasOwnProperty('Profile')) {
 		</h2>
 
 		<!-- Profile  -->
-		 {profile && display_profile ? (
+		 {profile ? (
 			<section id="profile">
-				<ProfilePic 
-					client:load
-					LoginName={login_name} 
-					PFP={profile.PFP} SignedInUser={user} 
-					Token={token} 
-				/>
+				{
+					display_pfp ? (
+						<ProfilePic 
+							client:load
+							LoginName={login_name} 
+							PFP={profile.PFP} SignedInUser={user} 
+							Token={token} 
+						/>
+					) : null
+				}
 
 				{
 					display_about ? 
 						is_signed_in_user ? 
 							<EditAbout
-							client:load 
-							token={token} 
-							initial={profile.About}
-						 />
+								client:load 
+								token={token} 
+								initial={profile.About}
+							/>
 						: abbreviated_about 
 							?  <details>
 								<summary>
@@ -161,84 +164,89 @@ if (!categories && tmap.hasOwnProperty('Profile')) {
 			</ul>
 		</section> : null}
 
-		<section id='overview' class='flex'>
-			<div>
-				<h2>{categories ? 'Top Subcats' : 'Top Cats'}</h2>
-				{
-					tmap.Categories.length ? (
-						<ol id="top-cats">
-							{tmap.Categories.map((cat) => (
-								<li>
-									<a
-										href={categories ? `/map/${login_name}?cats=${categories},${cat.Category}` : `/map/${login_name}?cats=${cat.Category}`}
-									>
-										{cat.Category}
-									</a>
-									<span>({cat.Count})</span>
-								</li>
-							))}
-						</ol>
-					) : (
-						<p>No further subcategories.</p>
-					)
-				}
-			</div>
-			<div>
-				<h2>Skip to Section</h2>
-				<ul id='skip-to-link-section'>
-					{
-						used_sections.map((s) => (
-							<li>
-								<a href={`#${s}`}>{s}</a>
-							</li>
-						))
-					}
-				</ul>
-			</div>
-		</section>
+		{used_sections.length ? 
+			<>
+				<section id='overview' class='flex'>
+					<div>
+						<h2>{categories ? 'Top Subcats' : 'Top Cats'}</h2>
+						{
+							tmap.Categories.length ? (
+								<ol id="top-cats">
+									{tmap.Categories.map((cat) => (
+										<li>
+											<a
+												href={categories ? `/map/${login_name}?cats=${categories},${cat.Category}` : `/map/${login_name}?cats=${cat.Category}`}
+											>
+												{cat.Category}
+											</a>
+											<span>({cat.Count})</span>
+										</li>
+									))}
+								</ol>
+							) : (
+								<p>No further subcategories.</p>
+							)
+						}
+					</div>
+					<div>
+						<h2>Skip to Section</h2>
+						<ul id='skip-to-link-section'>
+							{
+								used_sections.map((s) => (
+									<li>
+										<a href={`#${s}`}>{s}</a>
+									</li>
+								))
+							}
+						</ul>
+					</div>
+				</section>
 
-		{
-			used_sections.map((s) => {
-				return (
-					<section id={s} class='link-section'>
-						<h2>{s}</h2>
-						<ol>
-							{tmap[s].map((link) => {
-								if (s === 'Submitted' || s === 'Tagged') {
-									return (
-										<Link
-											client:load
-											Link={link}
-											CategoriesFromUser={login_name}
-											IsSummaryPage={false}
-											IsTagPage={false}
-											Token={token}
-											User={user}
-										/>
-									)
-								} else {
-									return (
-										<Link
-											client:load
-											Link={link}
-											CategoriesFromUser={
-												link.CategoriesFromUser
-													? login_name
-													: undefined
-											}
-											IsSummaryPage={false}
-											IsTagPage={false}
-											Token={token}
-											User={user}
-										/>
-									)
-								}
-							})}
-						</ol>
-					</section>
-				)
-			})
-		}
+			{
+				used_sections.map((s) => {
+					return (
+						<section id={s} class='link-section'>
+							<h2>{s}</h2>
+							<ol>
+								{tmap[s].map((link) => {
+									if (s === 'Submitted' || s === 'Tagged') {
+										return (
+											<Link
+												client:load
+												Link={link}
+												CategoriesFromUser={login_name}
+												IsSummaryPage={false}
+												IsTagPage={false}
+												Token={token}
+												User={user}
+											/>
+										)
+									} else {
+										return (
+											<Link
+												client:load
+												Link={link}
+												CategoriesFromUser={
+													link.CategoriesFromUser
+														? login_name
+														: undefined
+												}
+												IsSummaryPage={false}
+												IsTagPage={false}
+												Token={token}
+												User={user}
+											/>
+										)
+									}
+								})}
+							</ol>
+						</section>
+					)
+				})
+			}
+			</>
+		: null}
+
 		<ScrollUp />
 	</main>
 </Layout>
