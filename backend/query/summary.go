@@ -68,7 +68,7 @@ func (l *SummaryPageLink) _FromID(ID string) *SummaryPageLink {
 	return l
 }
 
-func (l *SummaryPageLink) ForSignedInUser(user_id string) *SummaryPageLink {
+func (l *SummaryPageLink) AsSignedInUser(user_id string) *SummaryPageLink {
 	l.Text = strings.Replace(l.Text, SUMMARY_PAGE_LINK_BASE_FIELDS, SUMMARY_PAGE_LINK_BASE_FIELDS+`, 
 		COALESCE(is_liked,0) as is_liked, 
 		COALESCE(is_copied,0) as is_copied`, 1)
@@ -155,7 +155,7 @@ LIMIT %d;`,
 	return l
 }
 
-func (s *Summaries) ForSignedInUser(user_id string) *Summaries {
+func (s *Summaries) AsSignedInUser(user_id string) *Summaries {
 	s.Text = strings.Replace(s.Text, SUMMARIES_BASE_FIELDS, SUMMARIES_BASE_FIELDS+`, 
 	COALESCE(is_liked,0) as is_liked`, 1)
 

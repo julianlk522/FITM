@@ -7,8 +7,8 @@ import (
 
 const (
 	TAGS_PAGE_LIMIT              = 20
-	TOP_OVERLAP_SCORES_LIMIT int = 20
-	TOP_GLOBAL_CATS_LIMIT    int = 15
+	TOP_OVERLAP_SCORES_LIMIT     = 20
+	TOP_GLOBAL_CATS_LIMIT        = 15
 )
 
 // Tags Page link
@@ -48,7 +48,7 @@ LEFT JOIN
 ON slink_id = links_id`
 
 func NewTagPageLink(link_id string, user_id string) *TagPageLink {
-	return (&TagPageLink{Query: Query{Text: TAG_PAGE_LINK_BASE}})._FromID(link_id)._ForSignedInUser(user_id)
+	return (&TagPageLink{Query: Query{Text: TAG_PAGE_LINK_BASE}})._FromID(link_id)._AsSignedInUser(user_id)
 }
 
 func (l *TagPageLink) _FromID(link_id string) *TagPageLink {
@@ -66,7 +66,7 @@ func (l *TagPageLink) _FromID(link_id string) *TagPageLink {
 	return l
 }
 
-func (l *TagPageLink) _ForSignedInUser(user_id string) *TagPageLink {
+func (l *TagPageLink) _AsSignedInUser(user_id string) *TagPageLink {
 	l.Text += fmt.Sprintf(` 
 	LEFT JOIN 'Link Likes'
 	ON 'Link Likes'.link_id = links_id
