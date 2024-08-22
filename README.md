@@ -30,7 +30,6 @@
     ***-helpers for new user / new tag / etc.
         -new summary
         -update summary
-    ***-ResolveAndAssignURL into just ResolveURL, assign to request in handler (so request doesn't need to be passed as 2nd arg)
     -finish moving error messages to errors.go
         -e.g. like/unlike/copy/uncopy link
     -RenderPaginatedLinks move slicing into separate PaginateLinks func that is more easily testable

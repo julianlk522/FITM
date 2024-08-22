@@ -77,13 +77,17 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check URL is valid
-	resp, err := util.ResolveAndAssignURL(request.NewLink.URL, request)
+	// Check URL is valid and update
+	resp, err := util.ResolveURL(request.NewLink.URL)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 	defer resp.Body.Close()
+
+	// save updated URL (after any redirects e.g., to wwww.)
+	// remove trailing slash
+	request.URL = strings.TrimSuffix(resp.Request.URL.String(), "/")
 
 	// Check URL is unique
 	// Note: this comes after ResolveAndAssignURL() because

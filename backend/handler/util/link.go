@@ -111,7 +111,7 @@ func RenderPaginatedLinks[T model.LinkSignedIn | model.Link](links *[]T, page in
 }
 
 // Add link
-func ResolveAndAssignURL(url string, request *model.NewLinkRequest) (*http.Response, error) {
+func ResolveURL(url string) (*http.Response, error) {
 	protocols := []string{"", "https://", "http://"}
 	
 	for _, prefix := range protocols {
@@ -124,9 +124,7 @@ func ResolveAndAssignURL(url string, request *model.NewLinkRequest) (*http.Respo
 			return nil, e.ErrRedirect
 		}
 		
-		// URL is valid: save updated (after any redirects e.g., to wwww.) and return
-		// also remove trailing slash
-		request.URL = strings.TrimSuffix(resp.Request.URL.String(), "/")
+		// URL is valid:  and return
 		return resp, nil
 	}
 	

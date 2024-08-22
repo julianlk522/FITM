@@ -32,7 +32,7 @@ func TestScanLinks(t *testing.T) {
 	}
 }
 
-func TestResolveAndAssignURL(t *testing.T) {
+func TestResolveURL(t *testing.T) {
 	var test_urls = []struct {
 		URL   string
 		Valid bool
@@ -44,16 +44,9 @@ func TestResolveAndAssignURL(t *testing.T) {
 		{"julianlk.com/notreal", false},
 		{"gobblety gook", false},
 	}
-	test_request := &model.NewLinkRequest{
-		NewLink: &model.NewLink{
-			URL:     "",
-			Cats:    "",
-			Summary: "",
-		},
-	}
 
 	for _, u := range test_urls {
-		_, err := ResolveAndAssignURL(u.URL, test_request)
+		_, err := ResolveURL(u.URL)
 		if u.Valid && err != nil {
 			t.Fatal(err)
 		} else if !u.Valid && err == nil {
