@@ -70,29 +70,6 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func GetCatsContributors(w http.ResponseWriter, r *http.Request) {
-	cats_params := chi.URLParam(r, "cats")
-	if cats_params == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCats))
-		return
-	}
-	cats := strings.Split(cats_params, ",")
-	contributors_sql := query.NewCatsContributors(cats)
-
-	period_params := r.URL.Query().Get("period")
-	if period_params != "" {
-		contributors_sql = contributors_sql.DuringPeriod(period_params)
-	}
-
-	if contributors_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(contributors_sql.Error))
-		return
-	}
-
-	contributors := util.ScanCatsContributors(contributors_sql, cats_params)
-	util.RenderCatsContributors(contributors, w, r)
-}
-
 func AddLink(w http.ResponseWriter, r *http.Request) {
 	request := &model.NewLinkRequest{}
 	if err := render.Bind(r, request); err != nil {
@@ -110,7 +87,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	// Check URL is unique
 	// Note: this comes after ResolveAndAssignURL() because
-	// the URL may be mutated, e.g., add www.
+	// the URL may be mutated, e.g., to add www.
 	if util.URLAlreadyAdded(request.URL) {
 		render.Render(w, r, e.ErrInvalidRequest(fmt.Errorf("duplicate URL: %s", request.URL)))
 		return
