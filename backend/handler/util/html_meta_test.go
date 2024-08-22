@@ -29,7 +29,7 @@ func TestTitle(t *testing.T) {
 	title := "foo bar"
 	mp := NewMockPage("<html><head><title>" + title + "</title></head></html>")
 
-	hm := MetaFromHTMLTokens(&mp)
+	hm := GetMetaFromHTMLTokens(&mp)
 
 	if hm.Title != title {
 		t.Error("Expected title to be", title, ", but was:", hm.Title)
@@ -40,7 +40,7 @@ func TestDescription(t *testing.T) {
 	desc := "foo bar"
 	mp := NewMockPage("<html><head><meta property=\"description\" content=\"" + desc + "\"></head></html>")
 
-	hm := MetaFromHTMLTokens(&mp)
+	hm := GetMetaFromHTMLTokens(&mp)
 
 	if hm.Description != desc {
 		t.Error("Expected desc to be", desc, ", but was:", hm.Description)
@@ -51,7 +51,7 @@ func TestOGTitle(t *testing.T) {
 	title := "foo bar"
 	mp := NewMockPage("<html><head><meta property=\"og:title\" content=\"" + title + "\"></head></html>")
 
-	hm := MetaFromHTMLTokens(&mp)
+	hm := GetMetaFromHTMLTokens(&mp)
 
 	if hm.OGTitle != title {
 		t.Error("Expected og:title to be", title, ", but was:", hm.OGTitle)
@@ -62,7 +62,7 @@ func TestOGDescription(t *testing.T) {
 	desc := "foo bar"
 	mp := NewMockPage("<html><head><meta property=\"og:description\" content=\"" + desc + "\"></head></html>")
 
-	hm := MetaFromHTMLTokens(&mp)
+	hm := GetMetaFromHTMLTokens(&mp)
 
 	if hm.OGDescription != desc {
 		t.Error("Expected og:description to be", desc, ", but was:", hm.OGDescription)
@@ -73,7 +73,7 @@ func TestOGImage(t *testing.T) {
 	image := "http://google.com/images/blah.jpg"
 	mp := NewMockPage("<html><head><meta property=\"og:image\" content=\"" + image + "\"></head></html>")
 
-	hm := MetaFromHTMLTokens(&mp)
+	hm := GetMetaFromHTMLTokens(&mp)
 
 	if hm.OGImage != image {
 		t.Error("Expected og:image to be", image, ", but was:", hm.OGImage)
@@ -84,7 +84,7 @@ func TestOGAuthor(t *testing.T) {
 	author := "jonlaing"
 	mp := NewMockPage("<html><head><meta property=\"og:author\" content=\"" + author + "\"></head></html>")
 
-	hm := MetaFromHTMLTokens(&mp)
+	hm := GetMetaFromHTMLTokens(&mp)
 
 	if hm.OGAuthor != author {
 		t.Error("Expected og:author to be", author, ", but was:", hm.OGAuthor)
@@ -95,7 +95,7 @@ func TestOGPublisher(t *testing.T) {
 	publisher := "jonlaing"
 	mp := NewMockPage("<html><head><meta property=\"og:publisher\" content=\"" + publisher + "\"></head></html>")
 
-	hm := MetaFromHTMLTokens(&mp)
+	hm := GetMetaFromHTMLTokens(&mp)
 
 	if hm.OGPublisher != publisher {
 		t.Error("Expected og:publisher to be", publisher, ", but was:", hm.OGPublisher)
@@ -106,7 +106,7 @@ func TestOGSiteName(t *testing.T) {
 	sitename := "Google"
 	mp := NewMockPage("<html><head><meta property=\"og:site_name\" content=\"" + sitename + "\"></head></html>")
 
-	hm := MetaFromHTMLTokens(&mp)
+	hm := GetMetaFromHTMLTokens(&mp)
 
 	if hm.OGSiteName != sitename {
 		t.Error("Expected og:site_name to be", sitename, ", but was:", hm.OGSiteName)
@@ -137,7 +137,7 @@ func TestFullExtraction(t *testing.T) {
 		</head>
 	</html>`)
 
-	hm := MetaFromHTMLTokens(&mp)
+	hm := GetMetaFromHTMLTokens(&mp)
 
 	if hm.Description != description {
 		t.Error("Expected description to be", description, ", but was:", hm.Description)

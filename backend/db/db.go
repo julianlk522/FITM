@@ -13,6 +13,8 @@ var (
 	Client *sql.DB
 )
 
+const AUTO_SUMMARY_USER_ID = "ca39e263-2ac7-4d70-abc5-b9b8f1bff332"
+
 func init() {
 	if err := Connect(); err != nil {
 		log.Fatal(err)

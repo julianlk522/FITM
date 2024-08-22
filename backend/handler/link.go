@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -90,17 +89,17 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	request.URL = strings.TrimSuffix(resp.Request.URL.String(), "/")
 
 	// Check URL is unique
-	// Note: this comes after ResolveAndAssignURL() because
-	// the URL may be mutated, e.g., to add www.
+	// Note: this comes after ResolveURL() because
+	// the URL may be mutated slightly
 	if util.URLAlreadyAdded(request.URL) {
-		render.Render(w, r, e.ErrInvalidRequest(fmt.Errorf("duplicate URL: %s", request.URL)))
+		render.Render(w, r, e.ErrInvalidRequest(e.DuplicateURL(request.URL)))
 		return
 	}
 
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	request.SubmittedBy = req_login_name
 
-	meta := util.MetaFromHTMLTokens(resp.Body)
+	meta := util.GetMetaFromHTMLTokens(resp.Body)
 	util.AssignMetadata(meta, request)
 
 	unsorted_cats := request.NewLink.Cats
@@ -111,7 +110,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		"INSERT INTO Links VALUES(?,?,?,?,?,?,?);",
 		request.ID,
 		request.URL,
-		req_login_name,
+		request.SubmittedBy,
 		request.SubmitDate,
 		request.Cats,
 		request.NewLink.Summary,
@@ -125,14 +124,12 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	// Insert Summary(ies)
 	// (might have user-submitted, Auto Summary, or both)
 	if request.AutoSummary != "" {
-		// Note: UserID 15 is AutoSummary
-		// TODO: add constant, replace magic 15
 		_, err = db.Client.Exec(
 			"INSERT INTO Summaries VALUES(?,?,?,?,?);",
 			uuid.New().String(),
 			request.AutoSummary,
 			request.ID,
-			"15",
+			db.AUTO_SUMMARY_USER_ID,
 			request.SubmitDate,
 		)
 		if err != nil {
@@ -168,7 +165,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		uuid.New().String(),
 		request.ID,
 		request.Cats,
-		req_login_name,
+		request.SubmittedBy,
 		request.SubmitDate,
 	)
 	if err != nil {
@@ -180,7 +177,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	new_link := model.Link{
 		ID:           request.ID,
 		URL:          request.URL,
-		SubmittedBy:  req_login_name,
+		SubmittedBy:  request.SubmittedBy,
 		SubmitDate:   request.SubmitDate,
 		Cats:         request.Cats,
 		Summary:      request.NewLink.Summary,

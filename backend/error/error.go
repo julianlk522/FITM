@@ -71,6 +71,10 @@ func LinkURLCharsExceedLimit(limit int) error {
 	return fmt.Errorf("url too long (max %d chars)", limit)
 }
 
+func DuplicateURL(url string) error {
+	return fmt.Errorf("duplicate URL: %s", url)
+}
+
 // Summary
 func SummaryLengthExceedsLimit(limit int) error {
 	return fmt.Errorf("summary too long (max %d chars)", limit)
