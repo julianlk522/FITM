@@ -4,7 +4,7 @@
 
 ### Features
 
--Remove profile about if nothing there and not your profile
+-Prevent empty space/line summary
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 -Pagination
@@ -25,7 +25,7 @@
     -model utils
 -Remove repeat code wherever possible
     -Merge TagRankings (public) / TopOverlapScores (internal) Query structs / methods
-    ***-combine .GetIDsOfLinksHavingCategories() + .FromLinkIDs()
+    ***-combine .GetIDsOfLinksHavingCats() + .FromLinkIDs()
     -Potentially merge query.NewLinkIDs() and query.NewCatCount(), I think there is a way to make that work
     -ScanTmapLinks tests
     -shared TestClient?

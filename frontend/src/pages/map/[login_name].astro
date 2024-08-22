@@ -121,7 +121,9 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 								</summary>
 								<p>about: {profile.About}</p>
 							</details> 
-							: <p>about: {profile.About}</p>
+							: profile.About.length > 0 ?
+							<p>about: {profile.About}</p>
+							: null
 					: null
 				}
 			</section>
