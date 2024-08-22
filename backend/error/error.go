@@ -25,6 +25,7 @@ var (
 	ErrCannotLikeOwnSummary            error = errors.New("cannot like your own summary")
 	ErrSummaryAlreadyLiked             error = errors.New("summary already liked")
 	ErrSummaryNotLiked                 error = errors.New("summary not already liked")
+	ErrRedirect                 error = errors.New("invalid link destination: redirect detected")
 	ErrNoTagID                  error = errors.New("no tag ID provided")
 	ErrNoTagCats                error = errors.New("no tag cat(s) provided")
 	ErrNoLoginName              error = errors.New("no login name provided")

@@ -1,11 +1,10 @@
 package handler
 
 import (
-	"errors"
 	"oitm/db"
+	e "oitm/error"
 	"oitm/model"
 	"oitm/query"
-	"regexp"
 	"slices"
 	"strings"
 
@@ -113,50 +112,25 @@ func RenderPaginatedLinks[T model.LinkSignedIn | model.Link](links *[]T, page in
 
 // Add link
 func ResolveAndAssignURL(url string, request *model.NewLinkRequest) (*http.Response, error) {
-	has_protocol_regex, err := regexp.Compile(`^(http(s?)\:\/\/)`)
-	if err != nil {
-		return nil, err
-	}
-
-	var resp *http.Response
-	var ErrRedirect error = errors.New("invalid link destination: redirect detected")
-
-	// Protocol specified: check as-is
-	if has_protocol_regex.MatchString(url) {
-		resp, err = http.Get(url)
-		if err != nil || resp.StatusCode == 404 {
-			return nil, InvalidURLError(url)
+	protocols := []string{"", "https://", "http://"}
+	
+	for _, prefix := range protocols {
+		fullURL := prefix + url
+		resp, err := http.Get(fullURL)
+		
+		if err != nil || resp.StatusCode == http.StatusNotFound {
+			continue
 		} else if IsRedirect(resp.StatusCode) {
-			return nil, ErrRedirect
+			return nil, e.ErrRedirect
 		}
-
-		// Protocol not specified: try https then http
-	} else {
-
-		// https
-		modified_url := "https://" + url
-		resp, err = http.Get(modified_url)
-		if err != nil || resp.StatusCode == 404 {
-
-			// http
-			modified_url = "http://" + url
-			resp, err = http.Get(modified_url)
-			if err != nil || resp.StatusCode == 404 {
-				return nil, InvalidURLError(modified_url)
-			} else if IsRedirect(resp.StatusCode) {
-				return nil, ErrRedirect
-			}
-
-		} else if IsRedirect(resp.StatusCode) {
-			return nil, ErrRedirect
-		}
+		
+		// URL is valid: save updated (after any redirects e.g., to wwww.) and return
+		// also remove trailing slash
+		request.URL = strings.TrimSuffix(resp.Request.URL.String(), "/")
+		return resp, nil
 	}
-
-	// save updated URL after any redirects e.g., to wwww.
-	// remove trailing slash
-	request.URL = strings.TrimSuffix(resp.Request.URL.String(), "/")
-
-	return resp, nil
+	
+	return nil, InvalidURLError(url)
 }
 
 func InvalidURLError(url string) error {

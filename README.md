@@ -22,20 +22,19 @@
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
     -model utils
 -Remove repeat code wherever possible
-    -ScanTmapLinks tests
     -shared TestClient?
+    -ScanTmapLinks tests
     -ScanLinks / RenderPaginatedLinks calls in GetLinks handler
-        -this is hard.. come back later
+        -this is hard.. need a Go expert lol
 -Refactors for simplicity / accuracy
     ***-helpers for new user / new tag / etc.
         -new summary
         -update summary
-    -RenderPaginatedLinks move slicing into separate PaginateLinks func that is more easily testable
     ***-ResolveAndAssignURL into just ResolveURL, assign to request in handler (so request doesn't need to be passed as 2nd arg)
-    -use net/url Parse() etc.
-    -Move backend validation to /model unless using additional controller logic, e.g., JWT
     -finish moving error messages to errors.go
         -e.g. like/unlike/copy/uncopy link
+    -RenderPaginatedLinks move slicing into separate PaginateLinks func that is more easily testable
+    -Move backend validation to /model unless using additional controller logic, e.g., JWT
     -GetTmapCatCounts probably possible in all sql
 ## To-Maybe-Dos
 
@@ -56,10 +55,10 @@
     -'Add to Favorites' button on other user's tmap
     -'Favorites' link on tmap
     -{user}'s favorite tmaps page
--Look into broken auto og:image
-    -e.g., coolers.co image should not have been added with invalid link
 -Better logging?
     (Zap)
+-Look into broken auto og:image
+    -e.g., coolers.co image should not have been added with invalid link
 -Way to prevent many tags from flooding global tag
     -might not happen actually? would require many different cats which is not super likely i would not imagine
 -Improve profile pic upload?
