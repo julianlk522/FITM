@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/http"
+	"regexp"
 
 	e "oitm/error"
 	util "oitm/model/util"
@@ -71,6 +72,8 @@ type EditAboutRequest struct {
 func (ea *EditAboutRequest) Bind(r *http.Request) error {
 	if len(ea.About) > util.PROFILE_ABOUT_CHAR_LIMIT {
 		return e.ProfileAboutLengthExceedsLimit(util.PROFILE_ABOUT_CHAR_LIMIT)
+	} else if len(ea.About) > 0 && !regexp.MustCompile(`[^\n\r\s\p{C}]`).MatchString(ea.About) {
+		return e.ErrAboutHasInvalidChars
 	}
 
 	return nil

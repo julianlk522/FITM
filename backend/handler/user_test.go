@@ -129,6 +129,13 @@ func TestEditAbout(t *testing.T) {
 			},
 			Valid: true,
 		},
+		// not allowed: must have chars if not empty
+		{
+			Payload: map[string]string{
+				"about": "\n\r",
+			},
+			Valid: false,
+		},
 	}
 
 	for _, tr := range test_edit_about_requests {

@@ -39,6 +39,8 @@ var (
 	ErrDuplicateCats error = errors.New("tag contains duplicate cat(s)")
 	ErrDoesntOwnTag  error = errors.New("not your tag")
 
+	ErrAboutHasInvalidChars error = errors.New("be more descriptive. (not just \\n or \\r)")
+
 	ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not found."}
 )
 

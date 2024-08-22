@@ -4,7 +4,6 @@
 
 ### Features
 
--Prevent empty space/line summary
 -Rethink CalculateGlobalCategories algo
     -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 -Pagination

@@ -110,7 +110,11 @@ func EditAbout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
-	_, err := db.Client.Exec(`UPDATE Users SET about = ? WHERE id = ?`, edit_about_data.About, req_user_id)
+	_, err := db.Client.Exec(
+		`UPDATE Users SET about = ? WHERE id = ?`, 
+		edit_about_data.About, 
+		req_user_id,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
