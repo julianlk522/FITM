@@ -3,74 +3,8 @@ package handler
 import (
 	"oitm/model"
 	"oitm/query"
-	"strings"
 	"testing"
 )
-
-func TestGetIDsOfLinksHavingCats(t *testing.T) {
-
-	// single cat
-	test_cats_str := test_single_cat[0]
-	link_ids, err := GetIDsOfLinksHavingCats(test_cats_str)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(link_ids) == 0 {
-		t.Fatalf("no link IDs returned for cat %s", test_cats_str)
-	}
-
-	// confirm that links with IDs have cat
-	for _, lid := range link_ids {
-		var link_cats string
-		err = TestClient.QueryRow(`
-			SELECT global_cats 
-			FROM Links 
-			WHERE id = ?`,
-			lid).Scan(&link_cats)
-		if err != nil {
-			t.Fatal(err)
-		} else if !strings.Contains(link_cats, test_cats_str) {
-			t.Fatalf(
-				"link %s cats (%s) do not contain %s",
-				lid,
-				link_cats,
-				test_cats_str,
-			)
-		}
-	}
-
-	// multiple cats
-	test_cats_str = strings.Join(test_multiple_cats, ",")
-	link_ids, err = GetIDsOfLinksHavingCats(test_cats_str)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(link_ids) == 0 {
-		t.Fatalf("no link IDs returned for cats %s", test_cats_str)
-	}
-
-	// confirm that links with IDs have cat
-	for _, lid := range link_ids {
-		var link_cats string
-		err = TestClient.QueryRow(`
-			SELECT global_cats 
-			FROM Links 
-			WHERE id = ?`,
-			lid).Scan(&link_cats)
-		if err != nil {
-			t.Fatal(err)
-		} else if !strings.Contains(link_cats, test_multiple_cats[0]) || !strings.Contains(link_cats, test_multiple_cats[1]) {
-			t.Fatalf(
-				"link %s cats (%s) do not contain all test cats: %s",
-				lid,
-				link_cats,
-				test_cats_str,
-			)
-		}
-	}
-}
 
 func TestScanLinks(t *testing.T) {
 	links_sql := query.NewTopLinks()

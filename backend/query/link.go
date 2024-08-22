@@ -121,17 +121,19 @@ func NewTopLinks() *TopLinks {
 		UNPAGINATED_LIMIT_CLAUSE}})
 }
 
-func (l *TopLinks) FromLinkIDs(link_ids []string) *TopLinks {
-
-	// surround in quotes so sql will read as string array
-	for i, id := range link_ids {
-		id = fmt.Sprintf(`'%s'`, id)
-		link_ids[i] = id
+func (l *TopLinks) FromCats(cats []string) *TopLinks {
+	if len(cats) == 0 || cats[0] == "" {
+		l.Error = fmt.Errorf("no cats provided")
+		return l
 	}
-	link_ids_str := strings.Join(link_ids, ",")
 
-	l._Where(fmt.Sprintf(`links_id IN (%s)`, link_ids_str))
+	clause := fmt.Sprintf(`',' || cats || ',' LIKE '%%,%s,%%'`, cats[0])
+	for i := 1; i < len(cats); i++ {
+		clause += fmt.Sprintf(` 
+		AND ',' || cats || ',' LIKE '%%,%s,%%'`, cats[i])
+	}
 
+	l._Where(clause)
 	return l
 }
 
@@ -187,31 +189,15 @@ func (l *TopLinks) _Where(clause string) *TopLinks {
 	// Swap previous WHERE for AND, if any
 	l.Text = strings.Replace(l.Text, "WHERE", "AND", 1)
 
-	l.Text = strings.Replace(l.Text, "ON Links.id = likes_link_id", fmt.Sprintf("ON Links.id = likes_link_id WHERE %s", clause), 1)
-
-	return l
-}
-
-// Link IDs
-type LinkIDs struct {
-	Query
-}
-
-const LINK_IDS_BASE = "SELECT id FROM Links"
-
-func NewLinkIDs(cats_str string) *LinkIDs {
-	cats := strings.Split(cats_str, ",")
-
-	return (&LinkIDs{Query: Query{Text: LINK_IDS_BASE}})._FromCats(cats)
-}
-
-func (l *LinkIDs) _FromCats(cats []string) *LinkIDs {
-	l.Text += fmt.Sprintf(` WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'`, cats[0])
-	for i := 1; i < len(cats); i++ {
-		l.Text += fmt.Sprintf(` AND ',' || global_cats || ',' LIKE '%%,%s,%%'`, cats[i])
-	}
-
-	l.Text += ` GROUP BY id`
+	l.Text = strings.Replace(
+		l.Text, 
+		"ON Links.id = likes_link_id", 
+		fmt.Sprintf(
+			`ON Links.id = likes_link_id 
+			WHERE %s`, 
+			clause,
+		), 
+	1)
 
 	return l
 }

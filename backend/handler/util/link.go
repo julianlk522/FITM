@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"log"
 	"oitm/db"
 	"oitm/model"
 	"oitm/query"
@@ -22,31 +21,6 @@ const (
 	LINKS_PAGE_LIMIT    int = 20
 	CATEGORY_PAGE_LIMIT int = 15
 )
-
-// Get Links
-func GetIDsOfLinksHavingCats(cats_str string) (link_ids []string, err error) {
-	link_ids_sql := query.NewLinkIDs(cats_str)
-	if link_ids_sql.Error != nil {
-		err = link_ids_sql.Error
-	}
-
-	rows, err := db.Client.Query(link_ids_sql.Text)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var lid string
-		if err := rows.Scan(&lid); err != nil {
-			log.Fatal(err)
-		}
-
-		link_ids = append(link_ids, lid)
-	}
-
-	return link_ids, err
-}
 
 func RenderZeroLinks(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, &model.PaginatedLinks[model.Link]{NextPage: -1})
@@ -228,6 +202,8 @@ func AssignSortedCats(unsorted_cats string, link *model.NewLinkRequest) {
 
 	link.Cats = strings.Join(split_cats, ",")
 }
+
+// Add link
 
 // Like / unlike link
 func UserSubmittedLink(login_name string, link_id string) bool {

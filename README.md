@@ -23,7 +23,6 @@
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
     -model utils
 -Remove repeat code wherever possible
-    ***-combine .GetIDsOfLinksHavingCats() + .FromLinkIDs()
     -Potentially merge query.NewLinkIDs() and query.NewCatCount(), I think there is a way to make that work
     -ScanTmapLinks tests
     -shared TestClient?

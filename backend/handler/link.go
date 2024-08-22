@@ -25,16 +25,8 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 	// cats
 	cats_params := r.URL.Query().Get("cats")
 	if cats_params != "" {
-		link_ids, err := util.GetIDsOfLinksHavingCats(cats_params)
-		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
-			return
-		} else if len(link_ids) == 0 {
-			util.RenderZeroLinks(w, r)
-			return
-		}
-
-		links_sql = links_sql.FromLinkIDs(link_ids)
+		cats := strings.Split(cats_params, ",")
+		links_sql = links_sql.FromCats(cats)
 	}
 
 	// period
