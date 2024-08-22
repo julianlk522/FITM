@@ -62,20 +62,16 @@ func main() {
 			"Content-Type",
 		},
 		MaxAge: 300,
-		Debug: true,
+		// Debug: true,
 	}))
 
 	// ROUTES
 	// PUBLIC
-	// Users
 	r.Post("/signup", h.SignUp)
 	r.Post("/login", h.LogIn)
-
 	r.Get("/pic/{file_name}", h.GetProfilePic)
 
-	// Cats
-	r.Get("/cats", h.GetTopGlobalCats)
-	r.Get("/subcats/{cats}", h.GetSubcats)
+	r.Get("/cats", h.GetTopGlobalCats) // includes subcats
 	r.Get("/contributors/{cats}", h.GetCatsContributors)
 
 	// OPTIONAL AUTHENTICATION

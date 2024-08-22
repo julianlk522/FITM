@@ -18,12 +18,10 @@
 
 -Tests
     -finish handlers
-        -new link timestamp
     -handler utils
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
     -model utils
 -Remove repeat code wherever possible
-    -Potentially merge query.NewLinkIDs() and query.NewCatCount(), I think there is a way to make that work
     -ScanTmapLinks tests
     -shared TestClient?
     -ScanLinks / RenderPaginatedLinks calls in GetLinks handler
@@ -38,6 +36,7 @@
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
     -finish moving error messages to errors.go
         -e.g. like/unlike/copy/uncopy link
+    -GetTmapCatCounts probably possible in all sql
 ## To-Maybe-Dos
 
 -Tmap period filter

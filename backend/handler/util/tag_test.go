@@ -166,6 +166,7 @@ func TestScanTagRankings(t *testing.T) {
 }
 
 // Get top global cats
+// (and subcats of cats)
 func TestScanGlobalCatCounts(t *testing.T) {
 	global_cats_sql := query.NewTopGlobalCatCounts()
 	// GlobalCatCounts.Error already tested in query/tag_test.go
@@ -258,7 +259,7 @@ func TestScanGlobalCatCounts(t *testing.T) {
 				query.TOP_GLOBAL_CATS_LIMIT,
 			)
 
-			// Only top few cats
+		// Only top few cats
 		} else if len(*counts) > FEW {
 			*counts = (*counts)[0:3]
 		}

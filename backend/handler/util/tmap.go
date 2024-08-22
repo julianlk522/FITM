@@ -242,3 +242,11 @@ func GetTmapCatCounts[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, omi
 
 	return &counts
 }
+
+func SortAndLimitCatCounts(cat_counts *[]model.CatCount, limit int) {
+	slices.SortFunc(*cat_counts, model.SortCats)
+
+	if len(*cat_counts) > limit {
+		*cat_counts = (*cat_counts)[:limit]
+	}
+}
