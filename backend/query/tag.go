@@ -90,68 +90,50 @@ func (l *TagPageLink) _ForSignedInUser(user_id string) *TagPageLink {
 	return l
 }
 
-// Top Tags (Internal Overlap Scores)
-type TopOverlapScores struct {
+// Tag Rankings (cat overlap scores)
+type TagRankings struct {
 	Query
 }
 
-const TOP_OVERLAP_SCORES_BASE = `SELECT 
-	(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, 
-	cats 
+const TOP_OVERLAP_SCORES_BASE_FIELDS = `SELECT
+(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, 
+cats`
+
+const TOP_OVERLAP_SCORES_PUBLIC_FIELDS = `, 
+Tags.submitted_by, 
+last_updated `
+
+var TOP_OVERLAP_SCORES_BASE = TOP_OVERLAP_SCORES_BASE_FIELDS + ` 
 FROM Tags 
 INNER JOIN Links 
 ON Links.id = Tags.link_id
-ORDER BY lifespan_overlap DESC`
+WHERE link_id = 'LINK_ID'
+ORDER BY lifespan_overlap DESC` + fmt.Sprintf(`
+LIMIT %d`, TOP_OVERLAP_SCORES_LIMIT)
 
-func NewTopOverlapScores(link_id string) *TopOverlapScores {
-	return (&TopOverlapScores{Query: Query{Text: TOP_OVERLAP_SCORES_BASE}})._FromLink(link_id)
+func NewTagRankings(link_id string) *TagRankings {
+	return (&TagRankings{Query: Query{Text: TOP_OVERLAP_SCORES_BASE}})._ForLink(link_id)
 }
 
-func (o *TopOverlapScores) _FromLink(link_id string) *TopOverlapScores {
+func (o *TagRankings) _ForLink(link_id string) *TagRankings {
 	o.Text = strings.Replace(
 		o.Text,
-		"ORDER BY lifespan_overlap DESC",
-		fmt.Sprintf(
-			`WHERE link_id = '%s' 
-			ORDER BY lifespan_overlap DESC 
-			LIMIT %d`,
-			link_id,
-			TOP_OVERLAP_SCORES_LIMIT,
-		),
+		"LINK_ID",
+		link_id,
 		1)
 
 	return o
 }
 
-// Tag Rankings for Link (Public Overlap Scores)
-type TagRankings struct {
-	Query
-}
-
-const TAG_RANKINGS_BASE = `SELECT 
-	(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) * 100 AS lifespan_overlap, 
-	cats, 
-	Tags.submitted_by, 
-	last_updated 
-FROM Tags 
-INNER JOIN Links 
-ON Links.id = Tags.link_id`
-
-func NewTagRankingsForLink(link_id string) *TagRankings {
-	return (&TagRankings{Query: Query{Text: TAG_RANKINGS_BASE}})._FromLink(link_id)
-}
-
-func (t *TagRankings) _FromLink(link_id string) *TagRankings {
-
-	t.Text += fmt.Sprintf(` 
-		WHERE link_id = '%s'
-		ORDER BY lifespan_overlap DESC 
-		LIMIT %d`,
-		link_id,
-		TAGS_PAGE_LIMIT,
+func (o *TagRankings) Public() *TagRankings {
+	o.Text = strings.Replace(
+		o.Text,
+		TOP_OVERLAP_SCORES_BASE_FIELDS,
+		TOP_OVERLAP_SCORES_BASE_FIELDS + TOP_OVERLAP_SCORES_PUBLIC_FIELDS,
+		1,
 	)
 
-	return t
+	return o
 }
 
 // Global Cat Counts

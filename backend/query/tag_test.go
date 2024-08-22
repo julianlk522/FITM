@@ -39,11 +39,11 @@ func TestNewTagPageLink(t *testing.T) {
 	}
 }
 
-// Top Overlap Scores (Internal)
-func TestNewTopOverlapScores(t *testing.T) {
+// Tag Rankings (cat overlap scores)
+func TestNewTagRankings(t *testing.T) {
 	test_link_id := "1"
 
-	tags_sql := NewTopOverlapScores(test_link_id)
+	tags_sql := NewTagRankings(test_link_id)
 	if tags_sql.Error != nil {
 		t.Fatal(tags_sql.Error)
 	}
@@ -54,7 +54,7 @@ func TestNewTopOverlapScores(t *testing.T) {
 	}
 	defer rows.Close()
 
-	// test first row only, rest are same
+	// verify first row columns only (rest are same)
 	if rows.Next() {
 		var tr model.TagRanking
 		if err := rows.Scan(
@@ -67,13 +67,12 @@ func TestNewTopOverlapScores(t *testing.T) {
 		t.Fatalf("no overlap scores for test link %s", test_link_id)
 	}
 
-	// reset and modify fields to check for correct link_id (test _FromLink())
-	tags_sql = NewTopOverlapScores(test_link_id)
+	// verify correct link_id (test _FromLink())
+	// reset and modify fields
+	tags_sql = NewTagRankings(test_link_id)
 
 	tags_sql.Text = strings.Replace(tags_sql.Text,
-		`SELECT 
-	(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, 
-	cats`,
+		TOP_OVERLAP_SCORES_BASE_FIELDS,
 		`SELECT link_id`,
 		1)
 	tags_sql.Text = strings.Replace(tags_sql.Text,
@@ -97,26 +96,22 @@ func TestNewTopOverlapScores(t *testing.T) {
 			t.Fatalf("got %s, want %s", link_id, test_link_id)
 		}
 	} else {
-		t.Fatalf("failed link_id check with modified query: no overlap scores for test link %s", test_link_id)
+		t.Fatalf("failed link_id check with modified query: test link %s NOT returned", test_link_id)
 	}
-}
 
-// Tag Rankings (Public Overlap Scores)
-func TestNewTagRankingsForLink(t *testing.T) {
-	test_link_id := "1"
-
-	tags_sql := NewTagRankingsForLink(test_link_id)
+	// Public rankings
+	tags_sql = NewTagRankings(test_link_id).Public()
 	if tags_sql.Error != nil {
 		t.Fatal(tags_sql.Error)
 	}
 
-	rows, err := TestClient.Query(tags_sql.Text)
+	rows, err = TestClient.Query(tags_sql.Text)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer rows.Close()
 
-	// only necessary to test first row cols since they will all be the same
+	// verify columns
 	if rows.Next() {
 		var tr model.TagRankingPublic
 
@@ -129,41 +124,7 @@ func TestNewTagRankingsForLink(t *testing.T) {
 			t.Fatal(err)
 		}
 	} else {
-		t.Fatalf("no tag rankings for test link %s", test_link_id)
-	}
-
-	// Verify link_id (test _FromLink())
-	// reset and modify fields
-	tags_sql = NewTagRankingsForLink(test_link_id)
-	tags_sql.Text = strings.Replace(tags_sql.Text,
-		TAG_RANKINGS_BASE,
-		`SELECT link_id 
-		FROM Tags 
-		INNER JOIN Links 
-		ON Links.id = Tags.link_id`,
-		1)
-	tags_sql.Text = strings.Replace(tags_sql.Text,
-		"ORDER BY lifespan_overlap DESC",
-		"",
-		1)
-
-	rows, err = TestClient.Query(tags_sql.Text)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer rows.Close()
-
-	if rows.Next() {
-		var row_link_id string
-
-		if err := rows.Scan(&row_link_id); err != nil {
-			t.Fatal(err)
-		}
-		if row_link_id != test_link_id {
-			t.Fatalf("got %s, want %s", row_link_id, test_link_id)
-		}
-	} else {
-		t.Fatalf("failed link_id check with modified query: no tag rankings for test link %s", test_link_id)
+		t.Fatalf("no public tag rankings for test link %s", test_link_id)
 	}
 }
 

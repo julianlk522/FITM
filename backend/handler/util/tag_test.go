@@ -128,10 +128,10 @@ func TestScanTagRankings(t *testing.T) {
 			SubmittedBy: "monkey",
 		},
 	}
-	tag_rankings_sql := query.NewTagRankingsForLink(test_link_id)
-	// NewTagRankingsForLink().Error already tested in query/tag_test.go
+	tag_rankings_sql := query.NewTagRankings(test_link_id).Public()
+	// NewTagRankings(link_id).Public().Error already tested in query/tag_test.go
 
-	rankings, err := ScanTagRankings(tag_rankings_sql)
+	rankings, err := ScanPublicTagRankings(tag_rankings_sql)
 	if err != nil {
 		t.Fatal(err)
 	}

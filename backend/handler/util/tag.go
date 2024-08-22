@@ -64,7 +64,7 @@ func GetUserTagForLink(login_name string, link_id string) (*model.Tag, error) {
 	}, nil
 }
 
-func ScanTagRankings(tag_rankings_sql *query.TagRankings) (*[]model.TagRankingPublic, error) {
+func ScanPublicTagRankings(tag_rankings_sql *query.TagRankings) (*[]model.TagRankingPublic, error) {
 	rows, err := db.Client.Query(tag_rankings_sql.Text)
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func GetLinkIDFromTagID(tag_id string) (string, error) {
 
 // Calculate global cats
 func CalculateAndSetGlobalCats(link_id string) error {
-	overlap_scores_sql := query.NewTopOverlapScores(link_id)
+	overlap_scores_sql := query.NewTagRankings(link_id)
 	if overlap_scores_sql.Error != nil {
 		return overlap_scores_sql.Error
 	}
