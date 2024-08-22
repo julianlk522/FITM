@@ -162,7 +162,9 @@ func NewTopGlobalCatCounts() *GlobalCatCounts {
 	return (&GlobalCatCounts{Query: Query{Text: GLOBAL_CAT_COUNTS_BASE}})._Limit(TOP_GLOBAL_CATS_LIMIT)
 }
 
-func (t *GlobalCatCounts) SubcatsOfCats(cats []string) *GlobalCatCounts {
+func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
+	cats := strings.Split(cats_params, ",")
+
 	filter_clause := fmt.Sprintf(
 		`WHERE global_cats LIKE '%%%s%%'`,
 		cats[0],

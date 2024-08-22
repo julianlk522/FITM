@@ -80,7 +80,7 @@ func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {
 	// cats_params used to query subcats of cats
 	cats_params := r.URL.Query().Get("cats")
 	if cats_params != "" {
-		global_cats_sql = global_cats_sql.SubcatsOfCats(strings.Split(cats_params, ","))
+		global_cats_sql = global_cats_sql.SubcatsOfCats(cats_params)
 	}
 
 	period_params := r.URL.Query().Get("period")
