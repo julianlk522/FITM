@@ -139,6 +139,18 @@ func TestNewTopGlobalCatCounts(t *testing.T) {
 	}
 }
 
+func TestNewTopGlobalCatCountsSubcatsOfCats(t *testing.T) {
+	counts_sql := NewTopGlobalCatCounts().SubcatsOfCats(test_cats)
+	if counts_sql.Error != nil {
+		t.Fatal(counts_sql.Error)
+	}
+
+	_, err := TestClient.Query(counts_sql.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestNewTopGlobalCatCountsDuringPeriod(t *testing.T) {
 	var test_periods = []struct {
 		Period string
@@ -163,6 +175,18 @@ func TestNewTopGlobalCatCountsDuringPeriod(t *testing.T) {
 		_, err := TestClient.Query(tags_sql.Text)
 		if err != nil && err != sql.ErrNoRows {
 			t.Fatal(err)
+		}
+	}
+
+	// verify no conflict with .SubcatsOfCats()
+	for _, tp := range test_periods {
+		tags_sql := NewTopGlobalCatCounts().
+			SubcatsOfCats(test_cats).
+			DuringPeriod(tp.Period)
+		if tp.Valid && tags_sql.Error != nil {
+			t.Fatalf("unexpected error for period %s", tp.Period)
+		} else if !tp.Valid && tags_sql.Error == nil {
+			t.Fatalf("expected error for period %s", tp.Period)
 		}
 	}
 }

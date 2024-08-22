@@ -93,34 +93,6 @@ func GetCatsContributors(w http.ResponseWriter, r *http.Request) {
 	util.RenderCatsContributors(contributors, w, r)
 }
 
-func GetSubcats(w http.ResponseWriter, r *http.Request) {
-	cats_params := chi.URLParam(r, "cats")
-	if cats_params == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCats))
-		return
-	}
-
-	cats := strings.Split(cats_params, ",")
-	subcats_sql := query.NewSubcats(cats)
-
-	period_params := r.URL.Query().Get("period")
-	if period_params != "" {
-		subcats_sql = subcats_sql.DuringPeriod(period_params)
-	}
-
-	if subcats_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(subcats_sql.Error))
-		return
-	}
-
-	subcats := util.ScanSubcats(subcats_sql, cats)
-	if len(subcats) == 0 {
-		util.RenderZeroSubcats(w, r)
-		return
-	}
-	util.RenderSubcats(subcats, cats, w, r)
-}
-
 func AddLink(w http.ResponseWriter, r *http.Request) {
 	request := &model.NewLinkRequest{}
 	if err := render.Bind(r, request); err != nil {

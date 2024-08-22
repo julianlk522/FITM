@@ -156,10 +156,46 @@ SELECT global_cats, count(global_cats) as count
 FROM split
 WHERE global_cats != ''
 GROUP BY global_cats
-ORDER BY count DESC, global_cats ASC;`
+ORDER BY count DESC, LOWER(global_cats) ASC;`
 
 func NewTopGlobalCatCounts() *GlobalCatCounts {
 	return (&GlobalCatCounts{Query: Query{Text: GLOBAL_CAT_COUNTS_BASE}})._Limit(TOP_GLOBAL_CATS_LIMIT)
+}
+
+func (t *GlobalCatCounts) SubcatsOfCats(cats []string) *GlobalCatCounts {
+	filter_clause := fmt.Sprintf(
+		`WHERE global_cats LIKE '%%%s%%'`,
+		cats[0],
+	)
+	for i := 1; i < len(cats); i++ {
+		filter_clause += fmt.Sprintf(
+			` 
+			OR global_cats LIKE '%%%s%%'`,
+			cats[i],
+		)
+	}
+
+	for i := range(cats) {
+		cats[i] = "'" + cats[i] + "'"
+	}
+
+	t.Text = strings.Replace(
+		t.Text,
+		"WHERE global_cats != ''",
+		fmt.Sprintf(
+			`WHERE global_cats != ''
+			AND global_cats NOT IN (%s)
+			AND id IN (
+				SELECT id 
+				FROM split 
+				%s
+			)`,
+			strings.Join(cats, ","),
+			filter_clause,
+		),
+	1)
+
+	return t
 }
 
 func (t *GlobalCatCounts) DuringPeriod(period string) *GlobalCatCounts {
