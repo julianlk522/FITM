@@ -28,6 +28,71 @@ func TestScanLinks(t *testing.T) {
 	}
 }
 
+func TestPaginateLinks(t *testing.T) {
+	
+	// no links
+	links_sql := query.NewTopLinks().FromCats([]string{"umvc3"}).DuringPeriod("day").Page(1)
+
+	links, err := ScanLinks[model.Link](links_sql, "")
+	if err != nil {
+		t.Fatal(err)
+	} else if len(*links) != 0 {
+		t.Fatal("expected no links")
+	}
+
+	res := PaginateLinks(links, 0)
+	if l, ok := res.(*model.PaginatedLinks[model.Link]); ok {
+		if l.Links != nil {
+			t.Fatal("expected no links")
+		} else if l.NextPage != -1 {
+			t.Fatal("expected no more pages")
+		}
+	} else {
+		t.Fatalf("expected type %T, got %T (no links)", model.PaginatedLinks[model.Link]{}, res)
+	}
+	
+	// single page
+	links_sql = query.NewTopLinks().FromCats([]string{"umvc3","flowers"}).Page(1)
+	links, err = ScanLinks[model.Link](links_sql, "")
+	if err != nil {
+		t.Fatal(err)
+	} else if len(*links) == 0 {
+		t.Fatal("expected links")
+	}
+
+	res = PaginateLinks(links, 1)
+	if l, ok := res.(*model.PaginatedLinks[model.Link]); ok {
+		if len(*l.Links) == 0 {
+			t.Fatal("expected links")
+		} else if l.NextPage != -1 {
+			t.Fatal("expected no more pages")
+		}
+	} else {
+		t.Fatalf("expected type %T, got %T (single page)", model.PaginatedLinks[model.Link]{}, res)
+	}
+
+	// multiple pages
+	links_sql = query.NewTopLinks().Page(1)
+
+	links, err = ScanLinks[model.Link](links_sql, "")
+	if err != nil {
+		t.Fatal(err)
+	} else if len(*links) == 0 {
+		t.Fatal("expected links")
+	}
+
+	res = PaginateLinks(links, 1)
+	if l, ok := res.(*model.PaginatedLinks[model.Link]); ok {
+		if len(*l.Links) == 0 {
+			t.Fatal("expected links")
+		} else if l.NextPage != 2 {
+			t.Fatalf("expected next page to be 2, got %d (%d links)", l.NextPage, len(*l.Links))
+		}
+	} else {
+		t.Fatalf("expected type %T, got %T (multiple pages)", model.PaginatedLinks[model.Link]{}, res)
+	}
+}
+
 func TestResolveURL(t *testing.T) {
 	var test_urls = []struct {
 		URL   string
