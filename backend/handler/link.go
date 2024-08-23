@@ -49,20 +49,19 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// scan
-	var links interface{}
-	var err error
 	if req_user_id != "" {
-		links, err = util.ScanLinks[model.LinkSignedIn](links_sql, req_user_id)
+		links, err := util.ScanLinks[model.LinkSignedIn](links_sql, req_user_id)
+		if err != nil {
+			render.Render(w, r, e.ErrInvalidRequest(err))
+		}
+		render.JSON(w, r, util.PaginateLinks(links, page))
 	} else {
-		links, err = util.ScanLinks[model.Link](links_sql, req_user_id)
+		links, err := util.ScanLinks[model.Link](links_sql, req_user_id)
+		if err != nil {
+			render.Render(w, r, e.ErrInvalidRequest(err))
+		}
+		render.JSON(w, r, util.PaginateLinks(links, page))
 	}
-
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
-	util.RenderPaginatedLinks(links, page, w, r)
 }
 
 func AddLink(w http.ResponseWriter, r *http.Request) {

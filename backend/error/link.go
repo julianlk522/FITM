@@ -14,8 +14,6 @@ var (
 	ErrNoLinkWithID  error = errors.New("no link found with given ID")
 	ErrNoCats        error = errors.New("no cats provided")
 	ErrNoPeriod      error = errors.New("no period provided")
-	ErrCouldNotScanLinks error = errors.New("could not scan links")
-	ErrCouldNotPaginateLinks error = errors.New("could not paginate links")
 	// Add link
 	ErrNoURL             error = errors.New("no URL provided")
 	ErrRedirect          error = errors.New("invalid link destination: redirect detected")

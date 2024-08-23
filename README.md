@@ -14,12 +14,8 @@
 
 ### Code Quality
 
--Remove repeat code wherever possible
-    -RenderPaginatedLinks possibly, but requires either runtime reflection
-     (icky, hard to read) or repeat code in the handler to handle a generic
 -Refactors for simplicity / accuracy
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
-    -RenderPaginatedLinks move slicing into separate PaginateLinks func that can be tested
     -GetTmapCatCounts probably possible in all sql
 
 ## To-Maybe-Dos

@@ -26,12 +26,14 @@ func RenderZeroLinks(w http.ResponseWriter, r *http.Request) {
 	render.Status(r, http.StatusOK)
 }
 
-func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks, req_user_id string) (interface{}, error) {
+func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks, req_user_id string) (*[]T, error) {
 	rows, err := db.Client.Query(get_links_sql.Text)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+
+	var links interface{}
 
 	switch any(new(T)).(type) {
 	case *model.LinkSignedIn:
@@ -60,7 +62,7 @@ func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks,
 			signed_in_links = append(signed_in_links, i)
 		}
 
-		return &signed_in_links, nil
+		links = &signed_in_links
 
 	case *model.Link:
 		var signed_out_links = []model.Link{}
@@ -85,58 +87,29 @@ func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks,
 			signed_out_links = append(signed_out_links, i)
 		}
 
-		return &signed_out_links, nil
+		links = &signed_out_links
 	}
 
-	return nil, e.ErrCouldNotScanLinks
+	return links.(*[]T), nil
 }
 
-func RenderPaginatedLinks(li interface{}, page int, w http.ResponseWriter, r *http.Request) () {
+func PaginateLinks[T model.LinkSignedIn | model.Link](links *[]T, page int) (interface{}) {
+	if len(*links) == 0 {
+		return &model.PaginatedLinks[model.Link]{NextPage: -1}
+	}
 
-	// Note: this could be generic, and the duplicate code could be removed,
-	// but that requires duplicating code in the GetLinks handler to handle
-	// the generic
-    switch l := li.(type) {
-    case *[]model.LinkSignedIn:
-		if len(*l) == 0 {
-			RenderZeroLinks(w, r)
+	if len(*links) == LINKS_PAGE_LIMIT+1 {
+		sliced := (*links)[0:LINKS_PAGE_LIMIT]
+		return &model.PaginatedLinks[T]{
+			NextPage: page + 1,
+			Links:    &sliced,
 		}
-
-		if len(*l) == LINKS_PAGE_LIMIT+1 {
-			sliced := (*l)[0:LINKS_PAGE_LIMIT]
-			paginated_links := &model.PaginatedLinks[model.LinkSignedIn]{
-				NextPage: page + 1,
-				Links: &sliced,
-			}
-			render.JSON(w, r, paginated_links)
-		} else {
-			render.JSON(w, r, &model.PaginatedLinks[model.LinkSignedIn]{
-				NextPage: -1,
-				Links:    l,
-			})
+	} else {
+		return &model.PaginatedLinks[T]{
+			NextPage: -1,
+			Links:    links,
 		}
-    case *[]model.Link:
-		if len(*l) == 0 {
-			RenderZeroLinks(w, r)
-		}
-
-		if len(*l) == LINKS_PAGE_LIMIT+1 {
-			sliced := (*l)[0:LINKS_PAGE_LIMIT]
-			paginated_links := &model.PaginatedLinks[model.Link]{
-				NextPage: page + 1,
-				Links: &sliced,
-			}
-			render.JSON(w, r, paginated_links)
-		} else {
-			render.JSON(w, r, &model.PaginatedLinks[model.Link]{
-				NextPage: -1,
-				Links:    l,
-			})
-		}
-    default:
-        render.Render(w, r, e.ErrInvalidRequest(e.ErrCouldNotPaginateLinks))
-        return
-    }
+	}
 }
 
 // Add link
