@@ -76,7 +76,7 @@ func TestNewTopLinks(t *testing.T) {
 
 func TestFromCats(t *testing.T) {
 	var test_cats = []struct {
-		Cats []string
+		Cats  []string
 		Valid bool
 	}{
 		{[]string{}, false},

@@ -259,7 +259,7 @@ func TestScanGlobalCatCounts(t *testing.T) {
 				query.TOP_GLOBAL_CATS_LIMIT,
 			)
 
-		// Only top few cats
+			// Only top few cats
 		} else if len(*counts) > FEW {
 			*counts = (*counts)[0:3]
 		}

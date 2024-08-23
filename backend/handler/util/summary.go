@@ -20,13 +20,13 @@ import (
 func BuildSummaryPageForLink(link_id string, r *http.Request) (interface{}, error) {
 	get_link_sql := query.NewSummaryPageLink(link_id)
 	get_summaries_sql := query.NewSummariesForLink(link_id)
-	
+
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if req_user_id != "" {
 		get_link_sql = get_link_sql.AsSignedInUser(req_user_id)
 		get_summaries_sql = get_summaries_sql.AsSignedInUser(req_user_id)
 	}
-		
+
 	if get_link_sql.Error != nil {
 		return nil, get_link_sql.Error
 	} else if get_summaries_sql.Error != nil {
@@ -35,7 +35,7 @@ func BuildSummaryPageForLink(link_id string, r *http.Request) (interface{}, erro
 
 	if req_user_id != "" {
 		var l model.LinkSignedIn
-		
+
 		err := db.Client.QueryRow(get_link_sql.Text).Scan(
 			&l.ID,
 			&l.URL,
@@ -83,7 +83,7 @@ func BuildSummaryPageForLink(link_id string, r *http.Request) (interface{}, erro
 			}
 			summaries = append(summaries, s)
 		}
-	
+
 		return model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn]{
 			Link:      l,
 			Summaries: summaries,

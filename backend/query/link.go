@@ -190,14 +190,14 @@ func (l *TopLinks) _Where(clause string) *TopLinks {
 	l.Text = strings.Replace(l.Text, "WHERE", "AND", 1)
 
 	l.Text = strings.Replace(
-		l.Text, 
-		"ON Links.id = likes_link_id", 
+		l.Text,
+		"ON Links.id = likes_link_id",
 		fmt.Sprintf(
 			`ON Links.id = likes_link_id 
-			WHERE %s`, 
+			WHERE %s`,
 			clause,
-		), 
-	1)
+		),
+		1)
 
 	return l
 }

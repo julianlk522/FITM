@@ -97,7 +97,7 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 
 		// Reset Summary Likes
 		_, err = db.Client.Exec(
-			`DELETE FROM 'Summary Likes' WHERE summary_id = ?`, 
+			`DELETE FROM 'Summary Likes' WHERE summary_id = ?`,
 			summary_id,
 		)
 		if err != nil {
@@ -149,7 +149,7 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = db.Client.Exec(
-		`DELETE FROM Summaries WHERE id = ?`, 
+		`DELETE FROM Summaries WHERE id = ?`,
 		delete_data.SummaryID,
 	)
 	if err != nil {
@@ -175,7 +175,7 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 
 	var link_id sql.NullString
 	err := db.Client.QueryRow(
-		"SELECT link_id FROM Summaries WHERE id = ?", 
+		"SELECT link_id FROM Summaries WHERE id = ?",
 		summary_id,
 	).Scan(&link_id)
 	if err != nil {
@@ -244,7 +244,7 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 	// so global summary can be updated
 	var link_id sql.NullString
 	err = db.Client.QueryRow(
-		"SELECT link_id FROM Summaries WHERE id = ?", 
+		"SELECT link_id FROM Summaries WHERE id = ?",
 		summary_id,
 	).Scan(&link_id)
 	if err != nil {
@@ -253,7 +253,7 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = db.Client.Exec(
-		`DELETE FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?`, req_user_id, 
+		`DELETE FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?`, req_user_id,
 		summary_id,
 	)
 	if err != nil {

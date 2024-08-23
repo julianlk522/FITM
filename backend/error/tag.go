@@ -1,0 +1,24 @@
+package error
+
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	ErrNoTagID             error = errors.New("no tag ID provided")
+	ErrNoTagCats           error = errors.New("no tag cat(s) provided")
+	ErrNoTagWithID         error = errors.New("no tag found with given ID")
+	ErrNoUserWithLoginName error = errors.New("no user found with given login name")
+	ErrDuplicateTag        error = errors.New("duplicate tag")
+	ErrDuplicateCats       error = errors.New("tag contains duplicate cat(s)")
+	ErrDoesntOwnTag        error = errors.New("not your tag")
+)
+
+func CatCharsExceedLimit(limit int) error {
+	return fmt.Errorf("cat too long (max %d chars)", limit)
+}
+
+func NumCatsExceedsLimit(limit int) error {
+	return fmt.Errorf("too many tag cats (%d max)", limit)
+}

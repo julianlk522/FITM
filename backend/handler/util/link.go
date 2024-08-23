@@ -113,21 +113,21 @@ func RenderPaginatedLinks[T model.LinkSignedIn | model.Link](links *[]T, page in
 // Add link
 func ResolveURL(url string) (*http.Response, error) {
 	protocols := []string{"", "https://", "http://"}
-	
+
 	for _, prefix := range protocols {
 		fullURL := prefix + url
 		resp, err := http.Get(fullURL)
-		
+
 		if err != nil || resp.StatusCode == http.StatusNotFound {
 			continue
 		} else if IsRedirect(resp.StatusCode) {
 			return nil, e.ErrRedirect
 		}
-		
+
 		// URL is valid:  and return
 		return resp, nil
 	}
-	
+
 	return nil, InvalidURLError(url)
 }
 

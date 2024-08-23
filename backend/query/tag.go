@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	TAGS_PAGE_LIMIT              = 20
-	TOP_OVERLAP_SCORES_LIMIT     = 20
-	TOP_GLOBAL_CATS_LIMIT        = 15
+	TAGS_PAGE_LIMIT          = 20
+	TOP_OVERLAP_SCORES_LIMIT = 20
+	TOP_GLOBAL_CATS_LIMIT    = 15
 )
 
 // Tags Page link
@@ -129,7 +129,7 @@ func (o *TagRankings) Public() *TagRankings {
 	o.Text = strings.Replace(
 		o.Text,
 		TOP_OVERLAP_SCORES_BASE_FIELDS,
-		TOP_OVERLAP_SCORES_BASE_FIELDS + TOP_OVERLAP_SCORES_PUBLIC_FIELDS,
+		TOP_OVERLAP_SCORES_BASE_FIELDS+TOP_OVERLAP_SCORES_PUBLIC_FIELDS,
 		1,
 	)
 
@@ -177,7 +177,7 @@ func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
 		)
 	}
 
-	for i := range(cats) {
+	for i := range cats {
 		cats[i] = "'" + cats[i] + "'"
 	}
 
@@ -195,7 +195,7 @@ func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
 			strings.Join(cats, ","),
 			filter_clause,
 		),
-	1)
+		1)
 
 	return t
 }
