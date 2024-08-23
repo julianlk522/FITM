@@ -4,8 +4,6 @@
 
 ### Features
 
--Rethink CalculateGlobalCategories algo
-    -currently makes it impossible, unless submitting first tag, to affect global cats unless extremely new link and fast tag submission...
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
@@ -22,16 +20,9 @@
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
     -model utils
 -Remove repeat code wherever possible
-    -shared TestClient?
-    -ScanTmapLinks tests
     -ScanLinks / RenderPaginatedLinks calls in GetLinks handler
         -this is hard.. need a Go expert lol
 -Refactors for simplicity / accuracy
-    ***-helpers for new user / new tag / etc.
-        -new summary
-        -update summary
-    -finish moving error messages to errors.go
-        -e.g. like/unlike/copy/uncopy link
     -RenderPaginatedLinks move slicing into separate PaginateLinks func that is more easily testable
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
     -GetTmapCatCounts probably possible in all sql
@@ -49,6 +40,10 @@
     -sqlite3 backend/db/oitm.db < _oitm_backup.bak
     -sqlite3 my_database .dump | gzip -c > my_database.dump.gz
     zcat my_database.dump.gz | sqlite3 my_database
+-Rethink CalculateGlobalCategories algo
+    -currently makes it difficult, unless submitting first tag or soon after first, to affect global cats
+    -might allow many user-submitted tags to flood global tag ... but probably not since would require different cats from many users
+        -(could also always just limit to top, idk, 10 cats)
 -Favorite tmaps
     -add favorites col to users table
     -'Add to Favorites' button on other user's tmap
@@ -56,10 +51,13 @@
     -{user}'s favorite tmaps page
 -Better logging?
     (Zap)
+-Purge other repeat code that doesn't matter as much
+    -shared TestClient?
+    -helpers for DB actions
+        -(new link, new summary, update summary, etc.)
+    -ScanTmapLinks tests
 -Look into broken auto og:image
     -e.g., coolers.co image should not have been added with invalid link
--Way to prevent many tags from flooding global tag
-    -might not happen actually? would require many different cats which is not super likely i would not imagine
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
     -Edit about causes large layout shift / squishing

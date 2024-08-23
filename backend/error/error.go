@@ -12,7 +12,9 @@ import (
 var (
 	ErrInvalidPage         = errors.New("invalid page provided")
 	ErrInvalidLinkID error = errors.New("invalid link ID provided")
-
+	ErrInvalidLogin        error = errors.New("invalid login provided")
+	ErrInvalidPeriod = errors.New("invalid period provided")
+	ErrIncorrectPassword = errors.New("incorrect password")
 	ErrNoLinkID                 error = errors.New("no link ID provided")
 	ErrNoCats                   error = errors.New("no cats provided")
 	ErrNoPeriod                 error = errors.New("no period provided")
@@ -22,6 +24,12 @@ var (
 	ErrNoSummaryReplacementText error = errors.New("no summary replacement text provided")
 	ErrDoesntOwnSummary         error = errors.New("not your summary")
 	ErrLastSummary               error = errors.New("last summary for link: cannot delete")
+	ErrCannotLikeOwnLink            error = errors.New("cannot like your own link")
+	ErrLinkAlreadyLiked             error = errors.New("link already liked")
+	ErrLinkNotLiked                 error = errors.New("link not already liked")
+	ErrCannotCopyOwnLink            error = errors.New("cannot copy your own link to your treasure map")
+	ErrLinkAlreadyCopied            error = errors.New("link already copied to treasure map")
+	ErrLinkNotCopied                error = errors.New("link not already copied")
 	ErrCannotLikeOwnSummary            error = errors.New("cannot like your own summary")
 	ErrSummaryAlreadyLiked             error = errors.New("summary already liked")
 	ErrSummaryNotLiked                 error = errors.New("summary not already liked")
@@ -29,18 +37,22 @@ var (
 	ErrNoTagID                  error = errors.New("no tag ID provided")
 	ErrNoTagCats                error = errors.New("no tag cat(s) provided")
 	ErrNoLoginName              error = errors.New("no login name provided")
+	ErrLoginNameTaken            error = errors.New("login name taken")
 	ErrNoPassword               error = errors.New("no password provided")
-
 	ErrNoLinkWithID        error = errors.New("no link found with given ID")
 	ErrNoSummaryWithID     error = errors.New("no summary found with given ID")
 	ErrNoTagWithID         error = errors.New("no tag found with given ID")
 	ErrNoUserWithLoginName error = errors.New("no user found with given login name")
-
 	ErrDuplicateTag  error = errors.New("duplicate tag")
 	ErrDuplicateCats error = errors.New("tag contains duplicate cat(s)")
 	ErrDoesntOwnTag  error = errors.New("not your tag")
-
 	ErrAboutHasInvalidChars error = errors.New("be more descriptive. (not just \\n or \\r)")
+	ErrProfilePicNotFound    error = errors.New("profile pic not found")
+	ErrInvalidFileType = errors.New("invalid file provided (accepted image formats: .jpg, .jpeg, .png, .webp)")
+	ErrInvalidProfilePicAspectRatio = errors.New("profile pic aspect ratio must be no more than 2:1 and no less than 0.5:1")
+	ErrCouldNotCreateProfilePic = errors.New("could not create new profile pic file")
+	ErrCouldNotCopyProfilePic = errors.New("could not save profile pic to file")
+	ErrCouldNotSaveProfilePic = errors.New("could not assign profile pic to user")
 
 	ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not found."}
 )

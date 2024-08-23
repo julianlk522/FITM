@@ -2,9 +2,9 @@ package handler
 
 import (
 	"database/sql"
-	"errors"
 	"net/http"
 	"oitm/db"
+	e "oitm/error"
 	"os"
 
 	"image"
@@ -34,13 +34,13 @@ func AuthenticateUser(login_name string, password string) (bool, error) {
 	var id, p sql.NullString
 	if err := db.Client.QueryRow("SELECT id, password FROM Users WHERE login_name = ?", login_name).Scan(&id, &p); err != nil {
 		if err == sql.ErrNoRows {
-			return false, errors.New("user not found")
+			return false, e.ErrInvalidLogin
 		}
 		return false, err
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(p.String), []byte(password)); err != nil {
-		return false, errors.New("incorrect password")
+		return false, e.ErrIncorrectPassword
 	}
 
 	return true, nil

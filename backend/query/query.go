@@ -1,8 +1,8 @@
 package query
 
 import (
-	"errors"
 	"fmt"
+	e "oitm/error"
 )
 
 type Query struct {
@@ -24,7 +24,7 @@ func GetPeriodClause(period string) (clause string, err error) {
 	case "year":
 		days = 365
 	default:
-		return "", errors.New("invalid period")
+		return "", e.ErrInvalidPeriod
 	}
 
 	return fmt.Sprintf("julianday('now') - julianday(submit_date) < %d", days), nil

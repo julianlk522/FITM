@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"log"
 	"net/http"
 	"strings"
@@ -198,13 +197,13 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	if util.UserSubmittedLink(req_login_name, link_id) {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("cannot like your own link")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrCannotLikeOwnLink))
 		return
 	}
 
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if util.UserHasLikedLink(req_user_id, link_id) {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("already liked")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrLinkAlreadyLiked))
 		return
 	}
 
@@ -235,7 +234,7 @@ func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if !util.UserHasLikedLink(req_user_id, link_id) {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("link like not found")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrLinkNotLiked))
 		return
 	}
 
@@ -262,14 +261,14 @@ func CopyLink(w http.ResponseWriter, r *http.Request) {
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	owns_link := util.UserSubmittedLink(req_login_name, link_id)
 	if owns_link {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("cannot copy your own link to your treasure map")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrCannotCopyOwnLink))
 		return
 	}
 
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	already_copied := util.UserHasCopiedLink(req_user_id, link_id)
 	if already_copied {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("link already copied to treasure map")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrLinkAlreadyCopied))
 		return
 	}
 
@@ -303,7 +302,7 @@ func UncopyLink(w http.ResponseWriter, r *http.Request) {
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	already_copied := util.UserHasCopiedLink(req_user_id, link_id)
 	if !already_copied {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("link copy does not exist")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrLinkNotCopied))
 		return
 	}
 

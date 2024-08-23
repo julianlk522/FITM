@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"image"
 	"io"
 	"log"
@@ -42,7 +41,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if util.LoginNameTaken(signup_data.Auth.LoginName) {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("login name taken")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrLoginNameTaken))
 		return
 	}
 
@@ -87,7 +86,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if !is_authenticated {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("invalid login")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrInvalidLogin))
 		return
 	}
 
@@ -130,7 +129,7 @@ func GetProfilePic(w http.ResponseWriter, r *http.Request) {
 	path := pic_dir + "/" + file_name
 
 	if _, err := os.Stat(path); err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("profile pic not found")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrProfilePicNotFound))
 		return
 	}
 
@@ -148,9 +147,8 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Valid image
 	if !strings.Contains(handler.Header.Get("Content-Type"), "image") {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("invalid file provided (accepted image formats: .jpg, .jpeg, .png, .webp)")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrInvalidFileType))
 		return
 	}
 
@@ -160,9 +158,10 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Aspect ratio is no more than 2:1 and no less than 0.5:1
 	if !util.HasAcceptableAspectRatio(img) {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("profile pic aspect ratio must be no more than 2:1 and no less than 0.5:1")))
+		render.Render(
+			w, r, e.ErrInvalidRequest(e.ErrInvalidProfilePicAspectRatio),
+		)
 		return
 	}
 
@@ -175,7 +174,7 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 		// Note: if, for some reason, the directory at pic_dir's path
 		// doesn't exist, this will fail
 		// shouldn't matter but just for posterity
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("could not create new file")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrCouldNotCreateProfilePic))
 		return
 	}
 	defer dst.Close()
@@ -185,14 +184,14 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 
 	// Save to new file
 	if _, err := io.Copy(dst, file); err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("could not copy profile pic to new file")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrCouldNotCopyProfilePic))
 		return
 	}
 
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	_, err = db.Client.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, unique_name, req_user_id)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(errors.New("could not save new profile pic")))
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrCouldNotSaveProfilePic))
 		return
 	}
 
