@@ -14,18 +14,14 @@
 
 ### Code Quality
 
--Tests
-    -finish handlers
-    -handler utils
-        -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
-    -model utils
 -Remove repeat code wherever possible
-    -ScanLinks / RenderPaginatedLinks calls in GetLinks handler
-        -this is hard.. need a Go expert lol
+    -RenderPaginatedLinks possibly, but requires either runtime reflection
+     (icky, hard to read) or repeat code in the handler to handle a generic
 -Refactors for simplicity / accuracy
-    -RenderPaginatedLinks move slicing into separate PaginateLinks func that is more easily testable
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
+    -RenderPaginatedLinks move slicing into separate PaginateLinks func that can be tested
     -GetTmapCatCounts probably possible in all sql
+
 ## To-Maybe-Dos
 
 -Tmap period filter
@@ -51,11 +47,16 @@
     -{user}'s favorite tmaps page
 -Better logging?
     (Zap)
--Purge other repeat code that doesn't matter as much
+-Purge other repeat code
     -shared TestClient?
     -helpers for DB actions
         -(new link, new summary, update summary, etc.)
     -ScanTmapLinks tests
+-Other tests
+    -finish handlers
+    -handler utils
+        -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
+    -model utils
 -Look into broken auto og:image
     -e.g., coolers.co image should not have been added with invalid link
 -Improve profile pic upload?

@@ -16,7 +16,7 @@ func Pagination(next http.Handler) http.Handler {
 			page_int = 1
 		} else {
 			page_int, err = strconv.Atoi(page)
-			if err != nil {
+			if err != nil || page_int < 1 {
 				page_int = 1
 			}
 		}

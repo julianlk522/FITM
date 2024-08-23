@@ -16,8 +16,12 @@ func TestScanLinks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(*links_signed_out) == 0 {
-		t.Fatal("no links")
+	if l, ok := links_signed_out.(*[]model.Link); ok {
+		if len(*l) == 0 {
+			t.Fatal("no links")
+		}
+	} else {
+		t.Fatal("expected *[]model.Link")
 	}
 
 	// signed in
@@ -25,10 +29,12 @@ func TestScanLinks(t *testing.T) {
 	links_signed_in, err := ScanLinks[model.LinkSignedIn](links_sql, test_req_user_id)
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	if len(*links_signed_in) == 0 {
-		t.Fatal("no links")
+	} else if l, ok := links_signed_in.(*[]model.LinkSignedIn); ok {
+		if len(*l) == 0 {
+			t.Fatal("no links")
+		}
+	} else {
+		t.Fatal("expected *[]model.LinkSignedIn")
 	}
 }
 

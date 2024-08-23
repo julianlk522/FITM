@@ -48,24 +48,21 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: if possible, refactor to remove repeat
-	// tricky to dynamically build tmap while using interface{} for links...
+	// scan
+	var links interface{}
+	var err error
 	if req_user_id != "" {
-		links, err := util.ScanLinks[model.LinkSignedIn](links_sql, req_user_id)
-		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
-			return
-		}
-		util.RenderPaginatedLinks(links, page, w, r)
+		links, err = util.ScanLinks[model.LinkSignedIn](links_sql, req_user_id)
 	} else {
-		links, err := util.ScanLinks[model.Link](links_sql, req_user_id)
-		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
-			return
-		}
-		util.RenderPaginatedLinks(links, page, w, r)
+		links, err = util.ScanLinks[model.Link](links_sql, req_user_id)
 	}
 
+	if err != nil {
+		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
+	}
+
+	util.RenderPaginatedLinks(links, page, w, r)
 }
 
 func AddLink(w http.ResponseWriter, r *http.Request) {
