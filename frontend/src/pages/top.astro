@@ -2,7 +2,7 @@
 import Link from '../components/Link/Link'
 import Pagination from '../components/Pagination.astro'
 import ScrollUp from '../components/ScrollUp.astro'
-import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT, SUBCATS_ENDPOINT } from '../constants'
+import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
 import Layout from '../layouts/Layout.astro'
 import {
 Periods,
@@ -77,7 +77,7 @@ if (links && links.length) {
 
 	// Get subcategory counts and category contributors
 	if (cats) {
-		let subcats_url = SUBCATS_ENDPOINT + `/${cats}`
+		let subcats_url = CATS_ENDPOINT + `?cats=${cats}`
 		let contributors_url = CONTRIBUTORS_ENDPOINT + `/${cats}`
 
 		if (period !== 'all') {

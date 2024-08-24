@@ -41,9 +41,10 @@
     -'Add to Favorites' button on other user's tmap
     -'Favorites' link on tmap
     -{user}'s favorite tmaps page
+-SQL prepared statements
 -Better logging?
     (Zap)
--Purge other repeat code
+-Other lesser refactors and removal of duplicate code
     -shared TestClient?
     -helpers for DB actions
         -(new link, new summary, update summary, etc.)
@@ -58,6 +59,7 @@
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
     -Edit about causes large layout shift / squishing
+-Redis caching
 
 ## Why?
 
