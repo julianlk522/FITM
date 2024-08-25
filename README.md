@@ -15,10 +15,6 @@
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
--Show contributors even when no cats?
-    -add requests in frontend:
-        -index.astro
-            -also needs UI
 
 ### Code Quality
 

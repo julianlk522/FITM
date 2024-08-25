@@ -37,11 +37,7 @@ let user = Astro.cookies.get('user')?.value
 		:root {
 			--text: hsl(0, 0%, 92%);
 			--text-treasurey: hsl(44, 55%, 80%);
-			--text-treasurey-mild: hsl(44, 15%, 80%);
 			--text-treasurey-dark: hsl(44, 25%, 60%);
-			
-			--treasurey: hsl(44, 95%, 71%);
-			--treasurey-mild: hsl(54, 77%, 75%);
 
 			--sky: hsl(180, 33%, 82%);
 			--sky-mild: hsla(180, 33%, 82%, 0.05);
@@ -156,7 +152,8 @@ let user = Astro.cookies.get('user')?.value
 			cursor: pointer;
 		}
 
-		#top-cats {
+		#top-cats,
+		#top-contributors {
 			display: flex;
 			flex-direction: column;
 			list-style-position: inside;

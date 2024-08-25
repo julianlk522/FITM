@@ -5,18 +5,18 @@ import ScrollUp from '../components/ScrollUp.astro'
 import Layout from '../layouts/Layout.astro'
 ---
 
-<Layout Title='FITM Frequently Asked Questions'>
+<Layout Title='About FITM'>
 	<main>
 		<h1>About</h1>
 		<Image src={cornucopia} alt='a cornucopia of links' />
 		<section>
 			<p>
 				The <strong>Flexible Internet Treasure Map (FITM)</strong>
-				is a tool for sharing valuable Internet content. Its aim is to defeat
-				the challenges of high obscurity and resultingly low discoverability
-				of key online resources; to announce and celebrate greatness
-				hidden in the web's sprawling contents.
+				is a tool for sharing valuable Internet content. You can use it to map the locations of key resources hidden throughout the sprawling web.
 			</p>
+			<p>It is an attempted solution to
+				the challenges of high obscurity and resultingly low discoverability
+				of Internet greatness, both new and old. </p>
 			<p>
 				<em>Treasure</em> is intentionally vague. This site is about sharing or
 				discovering anything on the Internet that's worth sharing or
@@ -61,10 +61,10 @@ import Layout from '../layouts/Layout.astro'
 			<p>
 				Reddit is an invaluable resource
 				and a blessing to the internet. It is an inspiration to FITM. But they are
-				different in that FITM is primarily a <em>data</em> hub while Reddit is
-				primarily a <em>communication</em> hub. FITM is not meant for topical
+				different in that Reddit is
+				primarily a <em>communication</em> hub while FITM is primarily a <em>data</em> hub. FITM is not meant for topical
 				discussion, only web resource sharing and
-				discovery (with a few options for user text submission in support of that goal: see <a href="#core-actions">Core Actions</a> below).
+				discovery (with a few text submission actions in support of that goal: see <a href="#core-actions">Core Actions</a> below).
 			</p>
 			<p>
 				FITM also aims to use cat-stacking to serve users
@@ -84,7 +84,8 @@ import Layout from '../layouts/Layout.astro'
 
 			<h3 id="cats" class="subsection">Cats?</h3>
 			<p>The term <em>"cats"</em> is used often here. It&apos;s a shorthand for <em><a href="#tags">tag categories</a></em>. Cats are also a <a href="https://en.wikipedia.org/wiki/I_Can_Has_Cheezburger%3F">historically prominent Internet symbol</a>, so it seems fitting that they'd help run FITM.</p>
-			<p>Please don't be alarmed by mention of "stacking cats" or things of that nature. No animals were harmed in the making of this site, and further <em>"cat"</em>s are written with the above intended meaning.</p>
+
+			<p>Please don't be alarmed by mention of "stacking cats" or things of that nature. No animals were harmed in making this site.</p>
 
 			<p>In FITM searches, the top (most frequent) cats will be listed along with returned links matching your desired parameters. Searches with cat filters return top <em>overlapping</em> cats. In other words, the most frequent cats found across the subsection of links returned in your search, not including your given cat filter(s). Tentatively these are called subcats.</p>
 
@@ -145,8 +146,10 @@ import Layout from '../layouts/Layout.astro'
 				Any <em>user-submitted tag</em>, i.e., a user's categorization(s) of some link,
 				dictates how that link will be indexed on <em>their</em> Treasure Map. By contrast, links are indexed using <em>global tags</em> in Global Treasure Map searches.
 			</p>
+		</section>
+		<section>
 
-			<h3 class='subsection'>The Global Treasure Map and Global Tags</h3>
+			<h3> The Global Treasure Map and Global Tags</h3>
 			<p>
 				Each link is also associated with a <em>global tag</em>,
 				which filters the results of searches made outside of any single
@@ -157,14 +160,17 @@ import Layout from '../layouts/Layout.astro'
 			<p>
 				<em>Global tags</em> are calculated automatically by the age of every
 				<em>user-submitted tag</em> and the frequency of each cat across
-				them.
+				them. They are shown with each link. (Unless the link is viewed from a user's Treasure Map in which case it will show that user's tag.) You can also view any link's top user-submitted tags on demand.
 			</p>
-			<p>
-				The assumption is that repeated categorizations are more likely to be
-				universally pleasing, and so are ones that have remained unedited
-				for a long time.
-			</p>
-			<p>A long-unedited tag may be bad, but if another user sees it and disagrees then they can submit their own tag. If more users agree with the 2nd interpretation and tag similarly, the 1st tag's cats will soon lose relevance and be stripped from the link's global tag.</p>
+
+			<p>Each user-submitted tag shows its <em>lifespan overlap</em> percentage, author, date of submission, and cats, of course. (Tags that have remained in their current configuration for the greatest portion of the link's lifespan are ranked highest.)</p>
+
+			<p>Not only the cats contained in the top tag rankings may be assigned globally. If a large number of more recent tags contain different cats, it's likely that those too will be assigned and may even replace ones from longstanding tags.</p>
+
+			<p> The assumption is that cat interpretations that remain unedited
+				for a long time are likely to be good, along with cats that reappear across tags.</p>
+
+			<p>A long-unchanged tag could be bad, but if enough users disagree and submit alternative tags, their collective input will rule it out; the old tag's cats will be stripped from the link's global tag.</p>
 		</section>
 
 		<section>
@@ -177,9 +183,9 @@ import Layout from '../layouts/Layout.astro'
 				Aspect ratio: 0.5:1 &dash; 2:1
 			</p>
 
-			<h3>Global Tag Calculation</h3>
-			<p>Note: probably will rethink this soon, so dont write too much...</p>
-			<p>To be added to a link&apos;s global tags, a cat that it has been tagged with must hold a score greater than or equal to 50% of the highest cat score for that link.</p>
+			<h3 class="subsection">Global Tag Calculation</h3>
+			<p>Note: proposed alternatives for this system are allowed and encouraged. Please see the <a href="/feedback">feedback page</a> for FITM contact info.</p>
+			<p>To be added to a link&apos;s global tags, a cat that it has been tagged with must hold a score greater than or equal to 25% of the highest cat score for that link.</p>
 			<p>Scores for each cat are calculated by combining the weights of all occurences. Weights are calculated as lifespan overlap percentage divided by number of cats for that tag. lifespan overlap percentage is the portion of the link&apos;s lifepan during which that tag has remained in its current state with no further edits.</p>
 		</section>
 
@@ -200,9 +206,6 @@ import Layout from '../layouts/Layout.astro'
 	@media (min-width: 680px) {
 		img {
 			max-height: 200px;
-		}
-		.subsection {
-			margin-top: 2rem;
 		}
 	}
 </style>

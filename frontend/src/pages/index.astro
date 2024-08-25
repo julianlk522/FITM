@@ -1,9 +1,9 @@
 ---
 import Link from '../components/Link/Link'
 import ScrollUp from '../components/ScrollUp.astro'
-import { CATS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
+import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
 import Layout from '../layouts/Layout.astro'
-import { Periods, type CategoryCount, type PaginatedLinks } from '../types'
+import { Periods, type CatCount, type Contributor, type PaginatedLinks } from '../types'
 
 // Auth
 const token = Astro.cookies.get('token')?.value
@@ -15,17 +15,23 @@ const top_cats_resp = await (token
 			headers: { Authorization: `Bearer ${token}` },
 		})
 	: fetch(CATS_ENDPOINT))
-const top_cats: CategoryCount[] = await top_cats_resp.json()
+const top_cats: CatCount[] = await top_cats_resp.json()
+
+// Get top contributors
+const top_contributors_resp = await fetch(CONTRIBUTORS_ENDPOINT)
+const top_contributors: Contributor[] = await top_contributors_resp.json()
 
 // Get top links
-const links_endpoint = LINKS_ENDPOINT + '?period=month'
+const DEFAULT_PERIOD = Periods[2] // month
+const links_url = LINKS_ENDPOINT + `?period=${DEFAULT_PERIOD}`
 const get_links_resp = await (token
-	? fetch(links_endpoint, {
+	? fetch(links_url, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
-	: fetch(links_endpoint))
+	: fetch(links_url))
 const data: PaginatedLinks = await get_links_resp.json()
 const links = data.Links
+
 const other_periods = Periods.filter((other) => other !== 'month')
 ---
 
@@ -54,6 +60,29 @@ const other_periods = Periods.filter((other) => other !== 'month')
 				}
 			</ol>
 		</section>
+
+		<section>
+			<h2>Top Contributors</h2>
+			<ol id="top-contributors">
+				{top_contributors.map(
+					(contributor: Contributor) => (
+						<li>
+							<strong>
+								<a
+									href={`/map/${contributor.LoginName}`}
+								>
+									{contributor.LoginName}
+								</a>
+							</strong>
+							<span>
+								({contributor.LinksSubmitted})
+							</span>
+						</li>
+					)
+				)}
+			</ol>
+		</section>
+
 		<section>
 			<h2>Top Links This Month</h2>
 			<ol id='change-period'>
@@ -70,10 +99,15 @@ const other_periods = Periods.filter((other) => other !== 'month')
 					links.map((link) => (
 						<Link
 							client:load
-							CatsFromUser={link.TagCount === 1 && link.SubmittedBy === user ? user : undefined}
+							CatsFromUser={
+								link.TagCount === 1 && link.SubmittedBy === user 
+									? user 
+									: undefined
+							}
 							Link={link}
 							IsSummaryPage={false}
 							IsTagPage={false}
+							IsTmapPage={false}
 							Token={token}
 							User={user}
 						/>
