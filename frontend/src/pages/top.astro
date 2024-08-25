@@ -6,8 +6,8 @@ import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constan
 import Layout from '../layouts/Layout.astro'
 import {
 Periods,
-type CategoryContributor,
-type CategoryCount,
+type CatCount,
+type Contributor,
 type PaginatedLinks,
 type Period,
 } from '../types'
@@ -69,39 +69,42 @@ const get_links_resp = await (token
 const data: PaginatedLinks = await get_links_resp.json()
 const links = data.Links
 
-let top_cats: CategoryCount[] = []
-let top_subcats: CategoryCount[] = []
-let top_contributors: CategoryContributor[] = []
+let top_cats: CatCount[] = []
+let top_subcats: CatCount[] = []
+let top_contributors: Contributor[] = []
 
 if (links && links.length) {
 
-	// Get subcategory counts and category contributors
+	// Get cat(s) contributors and subcat counts
+	let contributors_url = CONTRIBUTORS_ENDPOINT
+
 	if (cats) {
+		contributors_url += `?cats=${cats}`
 		let subcats_url = CATS_ENDPOINT + `?cats=${cats}`
-		let contributors_url = CONTRIBUTORS_ENDPOINT + `/${cats}`
 
 		if (period !== 'all') {
-			subcats_url += `?period=${period}`
-			contributors_url += `?period=${period}`
+			contributors_url += `&period=${period}`
+			subcats_url += `&period=${period}`
 		}
 
 		const subcats_resp = await fetch(subcats_url)
 		top_subcats = await subcats_resp.json()
-
-		const contributors_resp = await fetch(contributors_url)
-		top_contributors = await contributors_resp.json()
 	
-	// Get category counts
+	// Get cat counts
 	} else {
 		let cats_url = CATS_ENDPOINT
 		if (period !== 'all') {
+			contributors_url += `?period=${period}`
 			cats_url += `?period=${period}`
 		}
 
 		const top_cats_resp = await fetch(cats_url)
 		top_cats = await top_cats_resp.json()
-		// [{Category: 'umvc3', Count: 1}, ...]
+		// [{Cat: 'umvc3', Count: 1}, ...]
 	}
+
+	const contributors_resp = await fetch(contributors_url)
+	top_contributors = await contributors_resp.json()
 }
 
 const page_title =
@@ -165,49 +168,48 @@ const page_title =
 							</ol>
 						</section>
 					) : (
-						<>
-							<section>
-								<h2>Top Subcats</h2>
-								{top_subcats?.length ? (
-									<ol id='top-cats'>
-										{top_subcats.map((subcat) => (
-											<li>
-												<a
-													href={`/top?cats=${cats + ',' + subcat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
-												>
-													{subcat.Category}
-												</a>
-												<span> ({subcat.Count})</span>
-											</li>
-										))}
-									</ol>
-								) : (
-									<p>No further subcats</p>
-								)}
-							</section>
-							<section>
-								<h2>Top Contributors</h2>
-								<ol id="top-contributors">
-									{top_contributors.map(
-										(contributor: CategoryContributor) => (
-											<li>
-												<strong>
-													<a
-														href={`/map/${contributor.LoginName}`}
-													>
-														{contributor.LoginName}
-													</a>
-												</strong>
-												<span>
-													({contributor.LinksSubmitted})
-												</span>
-											</li>
-										)
-									)}
+						<section>
+							<h2>Top Subcats</h2>
+							{top_subcats?.length ? (
+								<ol id='top-cats'>
+									{top_subcats.map((subcat) => (
+										<li>
+											<a
+												href={`/top?cats=${cats + ',' + subcat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
+											>
+												{subcat.Category}
+											</a>
+											<span> ({subcat.Count})</span>
+										</li>
+									))}
 								</ol>
-							</section>
-						</>
+							) : (
+								<p>No further subcats</p>
+							)}
+						</section>
 					)}
+
+					<section>
+						<h2>Top Contributors</h2>
+						<ol id="top-contributors">
+							{top_contributors.map(
+								(contributor: Contributor) => (
+									<li>
+										<strong>
+											<a
+												href={`/map/${contributor.LoginName}`}
+											>
+												{contributor.LoginName}
+											</a>
+										</strong>
+										<span>
+											({contributor.LinksSubmitted})
+										</span>
+									</li>
+								)
+							)}
+						</ol>
+					</section>
 
 					<section>
 						<h2>Top Links</h2>
@@ -273,12 +275,6 @@ const page_title =
 		a {
 			margin-left: 5px;
 		}
-	}
-
-	#top-contributors {
-		margin: 0;
-		padding: 0;
-		list-style-position: inside;
 	}
 
 	:is(li a, li strong:has(a)):has(+ span) {

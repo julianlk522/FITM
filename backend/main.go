@@ -76,7 +76,7 @@ func main() {
 	r.Get("/pic/{file_name}", h.GetProfilePic)
 
 	r.Get("/cats", h.GetTopGlobalCats) // includes subcats
-	r.Get("/contributors/{cats}", h.GetCatsContributors)
+	r.Get("/contributors", h.GetTopContributors)
 
 	// OPTIONAL AUTHENTICATION
 	// (bearer token used optionally to get IsLiked / IsCopied / IsTagged for links)

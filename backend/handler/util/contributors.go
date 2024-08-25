@@ -11,17 +11,17 @@ import (
 	"github.com/go-chi/render"
 )
 
-// Cats Contributors
-func ScanCatsContributors(contributors_sql *query.CatsContributors, cats_str string) *[]model.CatsContributor {
+// Contributors
+func ScanContributors(contributors_sql *query.Contributors) *[]model.Contributor {
 	rows, err := db.Client.Query(contributors_sql.Text)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 
-	contributors := []model.CatsContributor{}
+	contributors := []model.Contributor{}
 	for rows.Next() {
-		contributor := model.CatsContributor{Cats: cats_str}
+		contributor := model.Contributor{}
 		err := rows.Scan(
 			&contributor.LinksSubmitted,
 			&contributor.LoginName,
@@ -35,7 +35,7 @@ func ScanCatsContributors(contributors_sql *query.CatsContributors, cats_str str
 	return &contributors
 }
 
-func RenderCatsContributors(contributors *[]model.CatsContributor, w http.ResponseWriter, r *http.Request) {
+func RenderContributors(contributors *[]model.Contributor, w http.ResponseWriter, r *http.Request) {
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, contributors)
 }

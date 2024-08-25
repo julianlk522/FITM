@@ -15,6 +15,10 @@
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
+-Show contributors even when no cats?
+    -add requests in frontend:
+        -index.astro
+            -also needs UI
 
 ### Code Quality
 
@@ -22,6 +26,7 @@
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
     -GetTmapCatCounts probably possible in all sql
     -remove superfluous is_tagged
+    -Make Top Cats / Top Links / etc. into components
 -Purge code duplication
     -Layout.astro, Feedback.astro styles
         -NoFooter.astro for Feedback, BaseLayout extends NoFooter and is used elsewhere
@@ -31,7 +36,6 @@
 -Tmap period filter
 -Better way to visualize how Global Cats are determined
 -Show number of copies along with number of likes in frontend
--Show contributors even when no cats?
 -Edit category filters directly on top links by period/category(ies) page
     -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads
 -Search for existing tag cats while adding/editing

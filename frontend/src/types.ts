@@ -58,13 +58,12 @@ type TagPage = {
 }
 
 // CATEGORY
-type CategoryCount = {
+type CatCount = {
 	Category: string
 	Count: number
 }
 
-type CategoryContributor = {
-	Category: string
+type Contributor = {
 	LoginName: string
 	LinksSubmitted: number
 }
@@ -91,7 +90,7 @@ type FilteredTreasureMap = {
 	Submitted: TmapLink[]
 	Copied: TmapLink[]
 	Tagged: TmapLink[]
-	Cats: CategoryCount[]
+	Cats: CatCount[]
 }
 
 type TreasureMap = FilteredTreasureMap & { Profile: Profile }
@@ -100,8 +99,8 @@ const tmap_sections = ['Submitted', 'Copied', 'Tagged'] as const
 
 export { Periods, is_error_response, tmap_sections }
 export type {
-	CategoryContributor,
-	CategoryCount,
+	CatCount,
+	Contributor,
 	ErrorResponse,
 	FilteredTreasureMap,
 	Link,

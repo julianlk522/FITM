@@ -44,8 +44,7 @@ type TmapLinkSignedIn struct {
 	CatsFromUser bool
 }
 
-type CatsContributor struct {
-	Cats           string
+type Contributor struct {
 	LoginName      string
 	LinksSubmitted int
 }

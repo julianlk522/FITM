@@ -203,32 +203,48 @@ func (l *TopLinks) _Where(clause string) *TopLinks {
 }
 
 // Cats contributors (single or multiple cats)
-type CatsContributors struct {
+type Contributors struct {
 	Query
 }
 
-const CATS_CONTRIBUTORS_BASE = `SELECT 
-	count(*), submitted_by 
+const CONTRIBUTORS_FIELDS = `SELECT count(*), submitted_by 
 FROM Links`
 
-func NewCatsContributors(cats []string) *CatsContributors {
-	return (&CatsContributors{Query: Query{Text: CATS_CONTRIBUTORS_BASE}})._FromCats(cats)
+var CONTRIBUTORS_GBOBL = fmt.Sprintf(
+	` 
+	GROUP BY submitted_by
+	ORDER BY count(*) DESC, submitted_by ASC
+	LIMIT %d;`, CATEGORY_CONTRIBUTORS_LIMIT,
+)
+
+func NewContributors() *Contributors {
+	return (&Contributors{
+		Query: Query{
+			Text: CONTRIBUTORS_FIELDS + CONTRIBUTORS_GBOBL,
+		},
+	})
 }
 
-func (c *CatsContributors) _FromCats(cats []string) *CatsContributors {
-	c.Text += fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", cats[0])
+func (c *Contributors) FromCats(cats []string) *Contributors {
+	clause := fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", cats[0])
 	for i := 1; i < len(cats); i++ {
-		c.Text += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", cats[i])
+		clause += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", cats[i])
 	}
 
-	c.Text += fmt.Sprintf(` 
-		GROUP BY submitted_by 
-		ORDER BY count(*) DESC, submitted_by ASC
-		LIMIT %d;`, CATEGORY_CONTRIBUTORS_LIMIT)
+	// Swap previous WHERE for AND, if any
+	c.Text = strings.Replace(c.Text, "WHERE", "AND", 1)
+
+	c.Text = strings.Replace(
+		c.Text, 
+		CONTRIBUTORS_FIELDS,
+		CONTRIBUTORS_FIELDS + clause, 
+		1,
+	)
+
 	return c
 }
 
-func (c *CatsContributors) DuringPeriod(period string) *CatsContributors {
+func (c *Contributors) DuringPeriod(period string) *Contributors {
 	clause, err := GetPeriodClause(period)
 	if err != nil {
 		c.Error = err
@@ -241,10 +257,10 @@ func (c *CatsContributors) DuringPeriod(period string) *CatsContributors {
 	// Prepend new clause
 	c.Text = strings.Replace(
 		c.Text,
-		CATS_CONTRIBUTORS_BASE,
+		CONTRIBUTORS_FIELDS,
 		fmt.Sprintf(
 			"%s WHERE %s",
-			CATS_CONTRIBUTORS_BASE,
+			CONTRIBUTORS_FIELDS,
 			clause),
 		1)
 

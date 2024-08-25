@@ -3,21 +3,30 @@ package handler
 import (
 	"fmt"
 	"oitm/query"
-	"strings"
 	"testing"
 )
 
-func TestScanCatsContributors(t *testing.T) {
+func TestScanContributors(t *testing.T) {
+
+	// no cats
+	contributors_sql := query.NewContributors()
+	if contributors_sql.Error != nil {
+		t.Fatal(contributors_sql.Error)
+	}
+
+	contributors := ScanContributors(contributors_sql)
+	if len(*contributors) == 0 {
+		t.Fatal("no contributors")
+	}
 
 	// single cat
-	contributors_sql := query.NewCatsContributors(test_single_cat)
+	contributors_sql = query.NewContributors().FromCats(test_single_cat)
 	if contributors_sql.Error != nil {
 		t.Fatal(contributors_sql.Error)
 	}
 
 	test_cats_str := test_single_cat[0]
-	contributors := ScanCatsContributors(contributors_sql, test_cats_str)
-
+	contributors = ScanContributors(contributors_sql)
 	if len(*contributors) == 0 {
 		t.Fatal("no contributors")
 	}
@@ -46,13 +55,12 @@ func TestScanCatsContributors(t *testing.T) {
 	}
 
 	// multiple cats
-	contributors_sql = query.NewCatsContributors(test_multiple_cats)
+	contributors_sql = query.NewContributors().FromCats(test_multiple_cats)
 	if contributors_sql.Error != nil {
 		t.Fatal(contributors_sql.Error)
 	}
 
-	test_cats_str = strings.Join(test_multiple_cats, ",")
-	contributors = ScanCatsContributors(contributors_sql, test_cats_str)
+	contributors = ScanContributors(contributors_sql)
 
 	if len(*contributors) == 0 {
 		t.Fatal("no contributors")

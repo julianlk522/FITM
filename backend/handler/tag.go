@@ -120,14 +120,15 @@ func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {
 	util.RenderCatCounts(counts, w, r)
 }
 
-func GetCatsContributors(w http.ResponseWriter, r *http.Request) {
-	cats_params := chi.URLParam(r, "cats")
-	if cats_params == "" {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoCats))
-		return
+func GetTopContributors(w http.ResponseWriter, r *http.Request) {
+	contributors_sql := query.NewContributors()
+
+	cats_params := r.URL.Query().Get("cats")
+	if cats_params != "" {
+		cats := strings.Split(cats_params, ",")
+		contributors_sql = contributors_sql.FromCats(cats)
 	}
-	cats := strings.Split(cats_params, ",")
-	contributors_sql := query.NewCatsContributors(cats)
+	
 
 	period_params := r.URL.Query().Get("period")
 	if period_params != "" {
@@ -139,8 +140,8 @@ func GetCatsContributors(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contributors := util.ScanCatsContributors(contributors_sql, cats_params)
-	util.RenderCatsContributors(contributors, w, r)
+	contributors := util.ScanContributors(contributors_sql)
+	util.RenderContributors(contributors, w, r)
 }
 
 func AddTag(w http.ResponseWriter, r *http.Request) {

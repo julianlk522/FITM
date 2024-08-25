@@ -174,9 +174,13 @@ func Test_LinksWhere(t *testing.T) {
 	defer rows2.Close()
 }
 
-// Cats contributors
-func TestNewCatsContributors(t *testing.T) {
-	contributors_sql := NewCatsContributors([]string{"umvc3"})
+// Contributors
+func TestNewContributors(t *testing.T) {
+	contributors_sql := NewContributors()
+	if contributors_sql.Error != nil {
+		t.Fatal(contributors_sql.Error)
+	}
+
 	if contributors_sql.Error != nil {
 		t.Fatal(contributors_sql.Error)
 	}
@@ -212,13 +216,13 @@ func TestNewCatsContributors(t *testing.T) {
 	}
 }
 
-func Test_ContributorsFromCats(t *testing.T) {
-	contributors_sql := NewCatsContributors([]string{"umvc3"})
+func TestContributorsFromCats(t *testing.T) {
+	contributors_sql := NewContributors().FromCats([]string{"umvc3"})
 	contributors_sql.Text = strings.Replace(
 		contributors_sql.Text,
 		"count(*), submitted_by",
 		"global_cats",
-		1)
+	1)
 
 	rows, err := TestClient.Query(contributors_sql.Text)
 	if err != nil && err != sql.ErrNoRows {
@@ -230,8 +234,7 @@ func Test_ContributorsFromCats(t *testing.T) {
 		var cat string
 		if err := rows.Scan(&cat); err != nil {
 			t.Fatal(err)
-		}
-		if !strings.Contains(cat, "umvc3") {
+		} else if !strings.Contains(strings.ToLower(cat), "umvc3") {
 			t.Fatalf("got %s, should contain %s", cat, "umvc3")
 		}
 	}
@@ -250,8 +253,9 @@ func TestContributorsDuringPeriod(t *testing.T) {
 		{"shouldfail", false},
 	}
 
+	// Period only
 	for _, period := range test_periods {
-		contributors_sql := NewCatsContributors([]string{"umvc3"}).DuringPeriod(period.Period)
+		contributors_sql := NewContributors().DuringPeriod(period.Period)
 		if period.Valid && contributors_sql.Error != nil {
 			t.Fatal(contributors_sql.Error)
 		} else if !period.Valid && contributors_sql.Error == nil {
@@ -265,4 +269,19 @@ func TestContributorsDuringPeriod(t *testing.T) {
 		defer rows.Close()
 	}
 
+	// Period and Cats
+	for _, period := range test_periods {
+		contributors_sql := NewContributors().DuringPeriod(period.Period).FromCats([]string{"umvc3"})
+		if period.Valid && contributors_sql.Error != nil {
+			t.Fatal(contributors_sql.Error)
+		} else if !period.Valid && contributors_sql.Error == nil {
+			t.Fatalf("expected error for period %s", period.Period)
+		}
+
+		rows, err := TestClient.Query(contributors_sql.Text)
+		if err != nil && err != sql.ErrNoRows {
+			t.Fatal(err)
+		}
+		defer rows.Close()
+	}
 }
