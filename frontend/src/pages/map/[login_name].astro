@@ -1,7 +1,7 @@
 ---
 import Link from '../../components/Link/Link'
 import ScrollUp from '../../components/ScrollUp.astro'
-import TagCategory from '../../components/Tag/TagCategory'
+import TagCat from "../../components/Tag/TagCat"
 import EditAbout from '../../components/Tmap/EditAbout'
 import ProfilePic from '../../components/Tmap/ProfilePic'
 import { GET_PFP_ENDPOINT, TMAP_ENDPOINT } from '../../constants'
@@ -148,16 +148,16 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 					cats_split.length > 1 ? (
 						cats_split.map((cat) => {
 							return (
-								<TagCategory
-									Category={cat}
+								<TagCat
+									Cat={cat}
 									EditActivated={false}
 									Deleted={undefined}
 								/>
 							)
 						})
 					) : (
-						<TagCategory
-							Category={cats_split[0]}
+						<TagCat
+							Cat={cats_split[0]}
 							EditActivated={false}
 							Deleted={undefined}
 						/>

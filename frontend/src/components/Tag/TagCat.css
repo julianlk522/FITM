@@ -1,4 +1,4 @@
-.category {
+.cat {
 	list-style: none;
 	display: flex;
 	padding: 0 5px;
@@ -6,7 +6,7 @@
 	background-color: var(--sky);
 }
 
-.category p {
+.cat p {
 	color: black;
 	font-weight: bold;
 	margin: 0;

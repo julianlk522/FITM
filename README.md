@@ -11,7 +11,6 @@
         -Subcats
     -Global Cats
     -Global Subcats
--Fix Tag page cat_list appearing even when no user tag
 -NSFW tags:
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
@@ -23,6 +22,9 @@
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
     -GetTmapCatCounts probably possible in all sql
     -remove superfluous is_tagged
+-Purge code duplication
+    -Layout.astro, Feedback.astro styles
+        -NoFooter.astro for Feedback, BaseLayout extends NoFooter and is used elsewhere
 
 ## To-Maybe-Dos
 

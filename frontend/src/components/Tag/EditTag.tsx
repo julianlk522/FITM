@@ -4,7 +4,7 @@ import type { Tag } from '../../types'
 import { is_error_response } from '../../types'
 import { format_long_date } from '../../util/format_date'
 import './EditTag.css'
-import TagCategory from './TagCategory'
+import TagCat from './TagCat'
 interface Props {
 	LinkID: string
 	Token: string | undefined
@@ -18,10 +18,10 @@ export default function EditTag(props: Props) {
 	const [cats, set_cats] = useState<string[]>(initial_cats)
 
 	// Pass deleted_cat signal to children TagCategory.tsx
-	// to allow removing their category in this EditTag.tsx parent
+	// to allow removing their cat in this EditTag.tsx parent
 	const deleted_cat = useSignal<string | undefined>(undefined)
 
-	// Check for deleted category and set cats accordingly
+	// Check for deleted cat and set cats accordingly
 	effect(() => {
 		if (deleted_cat.value) {
 			set_cats((c) => c.filter((cat) => cat !== deleted_cat.value))
@@ -32,29 +32,27 @@ export default function EditTag(props: Props) {
 	const [editing, set_editing] = useState(false)
 	const [error, set_error] = useState<string | undefined>(undefined)
 
-	function add_category(event: SubmitEvent) {
+	function add_cat(event: SubmitEvent) {
 		event.preventDefault()
-		2
+
 		const form = event.target as HTMLFormElement
 		const formData = new FormData(form)
-		const category = formData.get('category')?.toString()
+		const cat = formData.get('cat')?.toString()
 
-		if (!category) {
-			set_error('Missing category')
+		if (!cat) {
+			set_error('Missing cat')
 			return
 		}
 
-		if (cats.includes(category)) {
-			set_error('Category already added')
+		if (cats.includes(cat)) {
+			set_error('Cat already added')
 			return
 		}
 
-		set_cats([...cats, category])
+		set_cats([...cats, cat])
 		set_error(undefined)
 
-		const cat_field = document.getElementById(
-			'category'
-		) as HTMLInputElement
+		const cat_field = document.getElementById('cat') as HTMLInputElement
 		cat_field.value = ''
 		return
 	}
@@ -118,7 +116,6 @@ export default function EditTag(props: Props) {
 					onClick={() => {
 						set_cats(cats.sort())
 
-						// update if changes detected, else skip
 						if (
 							editing &&
 							(cats.length !== initial_cats.length ||
@@ -145,31 +142,30 @@ export default function EditTag(props: Props) {
 
 			{error ? <p class='error'>{`Error: ${error}`}</p> : null}
 
-			<ol id='cat_list'>
-				{cats.map((cat) => (
-					<TagCategory
-						Category={cat}
-						EditActivated={editing}
-						Deleted={deleted_cat}
-					/>
-				))}
-			</ol>
+			{tag || (editing && cats.length) ? (
+				<ol id='cat_list'>
+					{cats.map((cat) => (
+						<TagCat
+							Cat={cat}
+							EditActivated={editing}
+							Deleted={deleted_cat}
+						/>
+					))}
+				</ol>
+			) : null}
 
 			{editing ? (
-				<form
-					id='edit_tag_form'
-					onSubmit={(event) => add_category(event)}
-				>
-					<label for='category'>Category</label>
-					<input type='text' id='category' name='category' />
-					<input type='Submit' value='Add Category' />
+				<form id='edit_tag_form' onSubmit={(event) => add_cat(event)}>
+					<label for='cat'>Cat</label>
+					<input type='text' id='cat' name='cat' />
+					<input type='Submit' value='Add Cat' />
 				</form>
 			) : null}
 
 			{tag ? (
 				<p>(Last Updated: {format_long_date(tag.LastUpdated)})</p>
 			) : editing ? null : (
-				<p>(Not tagged.)</p>
+				<p>(not tagged)</p>
 			)}
 		</section>
 	)

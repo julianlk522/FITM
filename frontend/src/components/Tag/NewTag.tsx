@@ -1,7 +1,7 @@
 import { effect, useSignal } from '@preact/signals'
 import type { Dispatch, StateUpdater } from 'preact/hooks'
 import './NewTag.css'
-import TagCategory from './TagCategory'
+import TagCat from './TagCat'
 
 interface Props {
 	Cats: string[]
@@ -61,8 +61,8 @@ export default function NewTag(props: Props) {
 
 			<ol id='cat_list'>
 				{cats.map((cat) => (
-					<TagCategory
-						Category={cat}
+					<TagCat
+						Cat={cat}
 						EditActivated={true}
 						Deleted={deleted_cat}
 					/>

@@ -1,7 +1,7 @@
 ---
 import Link from '../../components/Link/Link'
 import EditTag from '../../components/Tag/EditTag'
-import TagCategory from '../../components/Tag/TagCategory'
+import TagCat from '../../components/Tag/TagCat'
 import { TAGS_ENDPOINT } from '../../constants'
 import Layout from '../../layouts/Layout.astro'
 import type { TagPage } from '../../types'
@@ -73,8 +73,8 @@ link.TagCount = top_tags.length
 								<ul id='cat_list'>
 									{tag.Cats.split(',').map((tag) => {
 										return (
-											<TagCategory
-												Category={tag}
+											<TagCat
+												Cat={tag}
 												EditActivated={false}
 												Deleted={undefined}
 											/>
