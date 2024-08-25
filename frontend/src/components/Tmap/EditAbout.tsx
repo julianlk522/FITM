@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks'
+import { TMAP_ABOUT_ENDPOINT } from '../../constants'
 import { is_error_response } from '../../types'
 import './EditAbout.css'
 
@@ -38,7 +39,7 @@ export default function EditAbout(props: Props) {
 			return (window.location.href = '/login')
 		}
 
-		const resp = await fetch('http://127.0.0.1:8000/about', {
+		const resp = await fetch(TMAP_ABOUT_ENDPOINT, {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',

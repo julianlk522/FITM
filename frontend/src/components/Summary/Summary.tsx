@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks'
+import { SUMMARIES_ENDPOINT } from '../../constants'
 import { format_long_date } from '../../util/format_date'
 import './Summary.css'
 
@@ -27,7 +28,7 @@ export default function Summary(props: Props) {
 	const [like_count, set_like_count] = useState(props.LikeCount)
 	const [error, set_error] = useState<string | undefined>(undefined)
 
-	const like_api_url = `http://127.0.0.1:8000/summaries/${ID}/like`
+	const like_api_url = SUMMARIES_ENDPOINT + `/${ID}/like`
 
 	async function handle_like() {
 		if (!token) {
@@ -79,7 +80,7 @@ export default function Summary(props: Props) {
 		if (!token) {
 			return (window.location.href = '/login')
 		}
-		const delete_resp = await fetch(`http://127.0.0.1:8000/summaries`, {
+		const delete_resp = await fetch(SUMMARIES_ENDPOINT, {
 			method: 'DELETE',
 			headers: {
 				'Content-Type': 'application/json',

@@ -2,6 +2,7 @@ import type { APIContext } from 'astro'
 import { sequence } from 'astro:middleware'
 import type { VerifyErrors } from 'jsonwebtoken'
 import jwt from 'jsonwebtoken'
+import { API_URL } from './constants'
 
 export const onRequest = sequence(handle_jwt_auth, handle_redirect_action)
 
@@ -99,9 +100,8 @@ async function handle_redirect_action(
 		api_section = 'summaries'
 	}
 
-	const api_url = 'http://127.0.0.1:8000'
 	const item_id = redirect_action.split(' ')[2]
-	const redirect_action_url = `${api_url}/${api_section}/${item_id}/${action}`
+	const redirect_action_url = `${API_URL}/${api_section}/${item_id}/${action}`
 
 	const resp = await fetch(redirect_action_url, {
 		method: 'POST',

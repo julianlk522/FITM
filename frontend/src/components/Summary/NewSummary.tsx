@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks'
+import { SUMMARIES_ENDPOINT } from '../../constants'
 import { is_error_response } from '../../types'
 import './NewSummary.css'
 
@@ -19,20 +20,17 @@ export default function NewSummary(props: Props) {
 		const formData = new FormData(form)
 		const summary = formData.get('summary')
 
-		const new_summary_resp = await fetch(
-			'http://127.0.0.1:8000/summaries',
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`,
-				},
-				body: JSON.stringify({
-					link_id: link_id,
-					text: summary,
-				}),
-			}
-		)
+		const new_summary_resp = await fetch(SUMMARIES_ENDPOINT, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify({
+				link_id: link_id,
+				text: summary,
+			}),
+		})
 		if (new_summary_resp.statusText === 'Unauthorized') {
 			document.cookie = `redirect_to=${window.location.pathname.replaceAll(
 				'/',

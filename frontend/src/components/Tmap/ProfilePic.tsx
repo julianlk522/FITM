@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
+import { TMAP_PFP_ENDPOINT } from '../../constants'
 import './ProfilePic.css'
 
 interface Props {
@@ -25,7 +26,7 @@ export default function ProfilePic(props: Props) {
 			if (!pfp) {
 				return
 			}
-			const pfp_resp = await fetch(`http://127.0.0.1:8000/pic/${pfp}`, {
+			const pfp_resp = await fetch(TMAP_PFP_ENDPOINT + `/${pfp}`, {
 				headers: { 'Content-Type': 'image/png' },
 			})
 			if (pfp_resp.status > 399) {
@@ -53,7 +54,7 @@ export default function ProfilePic(props: Props) {
 		let formData = new FormData()
 		formData.append('pic', new_pic)
 
-		const new_pic_resp = await fetch(`http://127.0.0.1:8000/pic`, {
+		const new_pic_resp = await fetch(TMAP_PFP_ENDPOINT, {
 			method: 'POST',
 			headers: { Authorization: `Bearer ${token}` },
 			body: formData,

@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks'
+import { LINKS_ENDPOINT } from '../../constants'
 import * as types from '../../types'
 import { format_long_date } from '../../util/format_date'
 import './Link.css'
@@ -93,16 +94,13 @@ export default function Link(props: Props) {
 
 		// like
 		if (!is_liked) {
-			const like_resp = await fetch(
-				`http://127.0.0.1:8000/links/${id}/like`,
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`,
-					},
-				}
-			)
+			const like_resp = await fetch(LINKS_ENDPOINT + `/${id}/like`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`,
+				},
+			})
 			const like_data = await like_resp.json()
 			if (like_data.ID) {
 				set_is_liked(true)
@@ -114,16 +112,13 @@ export default function Link(props: Props) {
 
 			// unlike
 		} else {
-			const unlike_resp = await fetch(
-				`http://127.0.0.1:8000/links/${id}/like`,
-				{
-					method: 'DELETE',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`,
-					},
-				}
-			)
+			const unlike_resp = await fetch(LINKS_ENDPOINT + `/${id}/like`, {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`,
+				},
+			})
 			const unlike_data = await unlike_resp.json()
 			if (unlike_data.message === 'deleted') {
 				set_is_liked(false)
@@ -146,16 +141,13 @@ export default function Link(props: Props) {
 		}
 
 		if (!is_copied) {
-			const copy_resp = await fetch(
-				`http://127.0.0.1:8000/links/${id}/copy`,
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`,
-					},
-				}
-			)
+			const copy_resp = await fetch(LINKS_ENDPOINT + `/${id}/copy`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`,
+				},
+			})
 			const copy_data = await copy_resp.json()
 			if (copy_data.ID) {
 				set_is_copied(true)
@@ -164,16 +156,13 @@ export default function Link(props: Props) {
 				console.error('WTF is this: ', copy_data)
 			}
 		} else {
-			const uncopy_resp = await fetch(
-				`http://127.0.0.1:8000/links/${id}/copy`,
-				{
-					method: 'DELETE',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`,
-					},
-				}
-			)
+			const uncopy_resp = await fetch(LINKS_ENDPOINT + `/${id}/copy`, {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`,
+				},
+			})
 			const uncopy_data = await uncopy_resp.json()
 			if (uncopy_data.message === 'deleted') {
 				set_is_copied(false)

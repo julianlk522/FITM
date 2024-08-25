@@ -4,7 +4,7 @@ import ScrollUp from '../../components/ScrollUp.astro'
 import TagCat from "../../components/Tag/TagCat"
 import EditAbout from '../../components/Tmap/EditAbout'
 import ProfilePic from '../../components/Tmap/ProfilePic'
-import { GET_PFP_ENDPOINT, TMAP_ENDPOINT } from '../../constants'
+import { TMAP_ENDPOINT, TMAP_PFP_ENDPOINT } from '../../constants'
 import Layout from '../../layouts/Layout.astro'
 import type { FilteredTreasureMap, Profile, TreasureMap } from '../../types'
 import { tmap_sections } from '../../types'
@@ -75,7 +75,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 
 	abbreviated_about = profile.About.length > 200 ? `${profile.About.slice(0, 200)}...` : undefined
 
-	const get_pfp_url = GET_PFP_ENDPOINT + `/${profile.PFP}`
+	const get_pfp_url = TMAP_PFP_ENDPOINT + `/${profile.PFP}`
 	const found_pfp_resp = await fetch(get_pfp_url, {
 		headers: { 'Content-Type': 'image/png' },
 	})

@@ -1,5 +1,6 @@
 import { effect, useSignal } from '@preact/signals'
 import { useState } from 'preact/hooks'
+import { TAGS_ENDPOINT } from '../../constants'
 import type { Tag } from '../../types'
 import { is_error_response } from '../../types'
 import { format_long_date } from '../../util/format_date'
@@ -66,7 +67,7 @@ export default function EditTag(props: Props) {
 
 		// new tag
 		if (!tag) {
-			resp = await fetch('http://127.0.0.1:8000/tags', {
+			resp = await fetch(TAGS_ENDPOINT, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -80,7 +81,7 @@ export default function EditTag(props: Props) {
 
 			// edit tag
 		} else {
-			resp = await fetch('http://127.0.0.1:8000/tags', {
+			resp = await fetch(TAGS_ENDPOINT, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
