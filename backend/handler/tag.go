@@ -31,19 +31,17 @@ func GetTagPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
 	// refresh global cats before querying
 	util.CalculateAndSetGlobalCats(link_id)
 
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
-	link_sql := query.NewTagPageLink(link_id, req_user_id)
+	link_sql := query.NewTagPageLink(link_id)
+	if req_user_id != "" {
+		link_sql = link_sql.AsSignedInUser(req_user_id)
+	}
 	if link_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(link_sql.Error))
-		return
-	}
-
-	link, err := util.ScanTagPageLink(link_sql)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
 
@@ -66,12 +64,33 @@ func GetTagPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tag_page := model.TagPage{
-		Link:        link,
-		UserTag:     user_tag,
-		TagRankings: tag_rankings,
+	if req_user_id != "" {
+		link, err := util.ScanTagPageLink[model.LinkSignedIn](link_sql)
+		if err != nil {
+			render.Render(w, r, e.ErrInvalidRequest(err))
+			return
+		}
+
+		render.JSON(w, r, model.TagPage[model.LinkSignedIn]{
+			Link:        link,
+			UserTag:     user_tag,
+			TagRankings: tag_rankings,
+		})
+
+	} else {
+		link, err := util.ScanTagPageLink[model.Link](link_sql)
+		if err != nil {
+			render.Render(w, r, e.ErrInvalidRequest(err))
+			return
+		}
+
+		render.JSON(w, r, model.TagPage[model.Link]{
+			Link:        link,
+			UserTag:     user_tag,
+			TagRankings: tag_rankings,
+		})
 	}
-	render.JSON(w, r, tag_page)
+	
 }
 
 func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {

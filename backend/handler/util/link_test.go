@@ -11,7 +11,7 @@ func TestScanLinks(t *testing.T) {
 	// NewTopLinks().Error tested in query/link_test.go
 
 	// signed out
-	links_signed_out, err := ScanLinks[model.Link](links_sql, "")
+	links_signed_out, err := ScanLinks[model.Link](links_sql)
 	if err != nil {
 		t.Fatal(err)
 	} else if len(*links_signed_out) == 0 {
@@ -20,7 +20,7 @@ func TestScanLinks(t *testing.T) {
 
 	// signed in
 	links_sql = links_sql.AsSignedInUser(test_req_user_id)
-	links_signed_in, err := ScanLinks[model.LinkSignedIn](links_sql, test_req_user_id)
+	links_signed_in, err := ScanLinks[model.LinkSignedIn](links_sql)
 	if err != nil {
 		t.Fatal(err)
 	} else if len(*links_signed_in) == 0 {
@@ -33,7 +33,7 @@ func TestPaginateLinks(t *testing.T) {
 	// no links
 	links_sql := query.NewTopLinks().FromCats([]string{"umvc3"}).DuringPeriod("day").Page(1)
 
-	links, err := ScanLinks[model.Link](links_sql, "")
+	links, err := ScanLinks[model.Link](links_sql)
 	if err != nil {
 		t.Fatal(err)
 	} else if len(*links) != 0 {
@@ -53,7 +53,7 @@ func TestPaginateLinks(t *testing.T) {
 	
 	// single page
 	links_sql = query.NewTopLinks().FromCats([]string{"umvc3","flowers"}).Page(1)
-	links, err = ScanLinks[model.Link](links_sql, "")
+	links, err = ScanLinks[model.Link](links_sql)
 	if err != nil {
 		t.Fatal(err)
 	} else if len(*links) == 0 {
@@ -74,7 +74,7 @@ func TestPaginateLinks(t *testing.T) {
 	// multiple pages
 	links_sql = query.NewTopLinks().Page(1)
 
-	links, err = ScanLinks[model.Link](links_sql, "")
+	links, err = ScanLinks[model.Link](links_sql)
 	if err != nil {
 		t.Fatal(err)
 	} else if len(*links) == 0 {

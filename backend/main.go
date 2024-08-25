@@ -33,13 +33,15 @@ func main() {
 	}()
 
 	// Router-wide middleware
+	// Logger
+	r.Use(middleware.Logger)
+
+	// Rate Limit
 	httprate_options := httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusTooManyRequests)
 		w.Write([]byte(`{"message": "too many requests"}`))
 	})
-
-	r.Use(middleware.Logger)
 	r.Use(httprate.Limit(
 		20,
 		1*time.Minute,
@@ -54,6 +56,8 @@ func main() {
 			}),
 			httprate_options,
 		))
+
+	// CORS
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{"https://*", "http://*"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -89,6 +93,7 @@ func main() {
 		})
 
 		r.Get("/summaries/{link_id}", h.GetSummaryPage)
+		r.Get("/tags/{link_id}", h.GetTagPage)
 	})
 
 	// PROTECTED
@@ -110,7 +115,6 @@ func main() {
 		r.Delete("/links/{link_id}/copy", h.UncopyLink)
 
 		// Tags
-		r.Get("/tags/{link_id}", h.GetTagPage)
 		r.Post("/tags", h.AddTag)
 		r.Put("/tags", h.EditTag)
 

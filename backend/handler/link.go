@@ -50,13 +50,13 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 
 	// scan
 	if req_user_id != "" {
-		links, err := util.ScanLinks[model.LinkSignedIn](links_sql, req_user_id)
+		links, err := util.ScanLinks[model.LinkSignedIn](links_sql)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 		}
 		render.JSON(w, r, util.PaginateLinks(links, page))
 	} else {
-		links, err := util.ScanLinks[model.Link](links_sql, req_user_id)
+		links, err := util.ScanLinks[model.Link](links_sql)
 		if err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 		}

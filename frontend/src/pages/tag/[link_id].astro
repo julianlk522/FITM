@@ -9,15 +9,6 @@ import { format_long_date } from '../../util/format_date'
 
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
-if (!user) {
-	Astro.cookies.set('redirect_to', Astro.url.pathname, {
-		path: '/login',
-		maxAge: 21600,
-		sameSite: 'strict',
-		secure: true,
-	})
-	return Astro.redirect('/login')
-}
 
 const { link_id } = Astro.params
 if (!link_id) {
@@ -25,11 +16,11 @@ if (!link_id) {
 }
 
 const tags_url = TAGS_ENDPOINT + `/${link_id}`
-const get_tags_resp = await fetch(tags_url, {
+const get_tags_resp = await (token ? fetch(tags_url, {
 	headers: {
 		Authorization: `Bearer ${token}`,
 	},
-})
+}) : fetch(tags_url))
 if (get_tags_resp.status > 399) {
 	return Astro.redirect('/404')
 }
@@ -39,6 +30,16 @@ link.TagCount = top_tags.length
 ---
 
 <Layout Title=`Tags for ${tag_Data.Link.Summary}`>
+	<script>
+		function handle_redirect() {
+			document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=21600; SameSite=strict; Secure`
+			return (window.location.href = '/login')
+		}
+
+		document
+			.getElementById('login-redirect-link')
+			?.addEventListener('click', handle_redirect)
+	</script>
 	<main>
 		<section>
 			<h2>Link:</h2>
@@ -52,12 +53,14 @@ link.TagCount = top_tags.length
 			/>
 		</section>
 
-		<EditTag
+		{user !== undefined ? <EditTag
 			client:load
 			LinkID={link_id}
 			Token={token}
 			UserTag={user_tag}
-		/>
+		/> : <section>
+			<p id="login-redirect-link"><a href="/login">Login</a> to start tagging links.</p>
+		</section>}
 
 		{
 			top_tags ? (
@@ -85,8 +88,8 @@ link.TagCount = top_tags.length
 								</p>
 								<p>{format_long_date(tag.LastUpdated)}</p>
 								<p>
-									Lifespan Overlap:{' '}
-									{tag.LifeSpanOverlap.toFixed(2)}%
+									
+									Lifespan: {tag.LifeSpanOverlap.toFixed(2)}%
 								</p>
 							</li>
 						))}
@@ -98,8 +101,11 @@ link.TagCount = top_tags.length
 </Layout>
 
 <style>
-	.tag {
-		margin-bottom: 50px;
+	#login-redirect-link {
+		margin-top: 0;
+	}
+	.tag:not(:last-child) {
+		margin-bottom: 2rem;
 	}
 	#cat_list {
 		display: flex;

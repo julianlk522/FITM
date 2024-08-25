@@ -17,29 +17,53 @@ import (
 )
 
 // Get tags for link
-func ScanTagPageLink(link_sql *query.TagPageLink) (*model.LinkSignedIn, error) {
-	var l = &model.LinkSignedIn{}
+func ScanTagPageLink[T model.Link | model.LinkSignedIn](link_sql *query.TagPageLink) (*T, error) {
+	var link interface{}
 
-	err := db.Client.
-		QueryRow(link_sql.Text).
-		Scan(
-			&l.ID,
-			&l.URL,
-			&l.SubmittedBy,
-			&l.SubmitDate,
-			&l.Cats,
-			&l.Summary,
-			&l.SummaryCount,
-			&l.LikeCount,
-			&l.ImgURL,
-			&l.IsLiked,
-			&l.IsCopied,
-		)
-	if err != nil {
-		return nil, err
+	switch any(new(T)).(type) {
+		case *model.Link:
+			var l = &model.Link{}
+			if err := db.Client.
+			QueryRow(link_sql.Text).
+			Scan(
+				&l.ID,
+				&l.URL,
+				&l.SubmittedBy,
+				&l.SubmitDate,
+				&l.Cats,
+				&l.Summary,
+				&l.SummaryCount,
+				&l.LikeCount,
+				&l.ImgURL,
+			); err != nil {
+				return nil, err
+			}
+
+			link = l
+		case *model.LinkSignedIn:
+			var l = &model.LinkSignedIn{}
+			if err := db.Client.
+			QueryRow(link_sql.Text).
+			Scan(
+				&l.ID,
+				&l.URL,
+				&l.SubmittedBy,
+				&l.SubmitDate,
+				&l.Cats,
+				&l.Summary,
+				&l.SummaryCount,
+				&l.LikeCount,
+				&l.ImgURL,
+				&l.IsLiked,
+				&l.IsCopied,
+				); err != nil {
+				return nil, err
+			}
+
+			link = l
 	}
 
-	return l, nil
+	return link.(*T), nil
 }
 
 func GetUserTagForLink(login_name string, link_id string) (*model.Tag, error) {

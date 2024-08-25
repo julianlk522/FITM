@@ -26,7 +26,7 @@ func RenderZeroLinks(w http.ResponseWriter, r *http.Request) {
 	render.Status(r, http.StatusOK)
 }
 
-func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks, req_user_id string) (*[]T, error) {
+func ScanLinks[T model.Link | model.LinkSignedIn](get_links_sql *query.TopLinks) (*[]T, error) {
 	rows, err := db.Client.Query(get_links_sql.Text)
 	if err != nil {
 		return nil, err
@@ -36,59 +36,60 @@ func ScanLinks[T model.LinkSignedIn | model.Link](get_links_sql *query.TopLinks,
 	var links interface{}
 
 	switch any(new(T)).(type) {
-	case *model.LinkSignedIn:
-		var signed_in_links = []model.LinkSignedIn{}
+		case *model.Link:
+			var signed_out_links = []model.Link{}
 
-		for rows.Next() {
-			i := model.LinkSignedIn{}
-			if err := rows.Scan(
-				&i.ID,
-				&i.URL,
-				&i.SubmittedBy,
-				&i.SubmitDate,
-				&i.Cats,
-				&i.Summary,
-				&i.SummaryCount,
-				&i.TagCount,
-				&i.LikeCount,
-				&i.ImgURL,
-				&i.IsLiked,
-				&i.IsCopied,
-				&i.IsTagged,
-			); err != nil {
-				return nil, err
+			for rows.Next() {
+				i := model.Link{}
+				err := rows.Scan(
+					&i.ID,
+					&i.URL,
+					&i.SubmittedBy,
+					&i.SubmitDate,
+					&i.Cats,
+					&i.Summary,
+					&i.SummaryCount,
+					&i.TagCount,
+					&i.LikeCount,
+					&i.ImgURL,
+				)
+				if err != nil {
+					return nil, err
+				}
+				signed_out_links = append(signed_out_links, i)
 			}
 
-			signed_in_links = append(signed_in_links, i)
-		}
+			links = &signed_out_links
 
-		links = &signed_in_links
+		case *model.LinkSignedIn:
+			var signed_in_links = []model.LinkSignedIn{}
 
-	case *model.Link:
-		var signed_out_links = []model.Link{}
+			for rows.Next() {
+				i := model.LinkSignedIn{}
+				if err := rows.Scan(
+					&i.ID,
+					&i.URL,
+					&i.SubmittedBy,
+					&i.SubmitDate,
+					&i.Cats,
+					&i.Summary,
+					&i.SummaryCount,
+					&i.TagCount,
+					&i.LikeCount,
+					&i.ImgURL,
+					&i.IsLiked,
+					&i.IsCopied,
+					&i.IsTagged,
+				); err != nil {
+					return nil, err
+				}
 
-		for rows.Next() {
-			i := model.Link{}
-			err := rows.Scan(
-				&i.ID,
-				&i.URL,
-				&i.SubmittedBy,
-				&i.SubmitDate,
-				&i.Cats,
-				&i.Summary,
-				&i.SummaryCount,
-				&i.TagCount,
-				&i.LikeCount,
-				&i.ImgURL,
-			)
-			if err != nil {
-				return nil, err
+				signed_in_links = append(signed_in_links, i)
 			}
-			signed_out_links = append(signed_out_links, i)
-		}
 
-		links = &signed_out_links
+			links = &signed_in_links
 	}
+	
 
 	return links.(*[]T), nil
 }

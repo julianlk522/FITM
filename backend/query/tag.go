@@ -16,7 +16,7 @@ type TagPageLink struct {
 	Query
 }
 
-const TAG_PAGE_LINK_BASE = `SELECT 
+const TAG_PAGE_LINK_BASE_FIELDS = `SELECT 
 	links_id as link_id, 
 	url, 
 	sb, 
@@ -25,9 +25,13 @@ const TAG_PAGE_LINK_BASE = `SELECT
 	summary,
 	summary_count, 
 	COUNT('Link Likes'.id) as like_count, 
-	img_url, 
+	img_url`
+
+const TAG_PAGE_LINK_AUTH_FIELDS = `,
 	COALESCE(is_liked,0) as is_liked, 
-	COALESCE(is_copied,0) as is_copied
+	COALESCE(is_copied,0) as is_copied`
+
+const TAG_PAGE_LINK_BASE_FROM = `
 FROM 
 	(
 	SELECT 
@@ -39,6 +43,8 @@ FROM
 		global_summary as summary, 
 		COALESCE(img_url,"") as img_url 
 	FROM Links
+LEFT JOIN 'Link Likes'
+	ON 'Link Likes'.link_id = links_id
 LEFT JOIN
 	(
 	SELECT count(*) as summary_count, link_id as slink_id
@@ -47,8 +53,8 @@ LEFT JOIN
 	)
 ON slink_id = links_id`
 
-func NewTagPageLink(link_id string, user_id string) *TagPageLink {
-	return (&TagPageLink{Query: Query{Text: TAG_PAGE_LINK_BASE}})._FromID(link_id)._AsSignedInUser(user_id)
+func NewTagPageLink(link_id string) *TagPageLink {
+	return (&TagPageLink{Query: Query{Text: TAG_PAGE_LINK_BASE_FIELDS + TAG_PAGE_LINK_BASE_FROM}})._FromID(link_id)
 }
 
 func (l *TagPageLink) _FromID(link_id string) *TagPageLink {
@@ -66,10 +72,15 @@ func (l *TagPageLink) _FromID(link_id string) *TagPageLink {
 	return l
 }
 
-func (l *TagPageLink) _AsSignedInUser(user_id string) *TagPageLink {
+func (l *TagPageLink) AsSignedInUser(user_id string) *TagPageLink {
+	l.Text = strings.Replace(
+		l.Text,
+		TAG_PAGE_LINK_BASE_FIELDS,
+		TAG_PAGE_LINK_BASE_FIELDS+TAG_PAGE_LINK_AUTH_FIELDS,
+		1,
+	)
+
 	l.Text += fmt.Sprintf(` 
-	LEFT JOIN 'Link Likes'
-	ON 'Link Likes'.link_id = links_id
 	LEFT JOIN
 		(
 		SELECT id as like_id, count(*) as is_liked, user_id as luser_id, link_id as like_link_id2
@@ -96,7 +107,7 @@ type TagRankings struct {
 }
 
 const TOP_OVERLAP_SCORES_BASE_FIELDS = `SELECT
-(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) AS lifespan_overlap, 
+(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) * 100 AS lifespan_overlap, 
 cats`
 
 const TOP_OVERLAP_SCORES_PUBLIC_FIELDS = `, 

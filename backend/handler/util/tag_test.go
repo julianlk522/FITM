@@ -3,40 +3,53 @@ package handler
 import (
 	"database/sql"
 	"fmt"
+	"oitm/model"
 	"oitm/query"
 	"testing"
 )
 
 func TestScanTagPageLink(t *testing.T) {
-	tag_page_link_sql := query.NewTagPageLink(test_link_id, test_req_user_id)
+	link_sql := query.NewTagPageLink(test_link_id)
 	// NewTagPageLink().Error already tested in query/tag_test.go
 
-	link, err := ScanTagPageLink(tag_page_link_sql)
+	// signed out
+	link, err := ScanTagPageLink[model.Link](link_sql)
 	if err != nil {
 		t.Fatal(err)
+	} else if link == nil {
+		t.Fatal("no link (signed out)")
+	}
+
+	// signed in
+	link_sql = link_sql.AsSignedInUser(test_req_user_id)
+	link2, err := ScanTagPageLink[model.LinkSignedIn](link_sql)
+	if err != nil {
+		t.Fatal(err)
+	} else if link2 == nil {
+		t.Fatal("no link (signed in)")
 	}
 
 	// Verify link ID
-	if link.ID != test_link_id {
+	if link2.ID != test_link_id {
 		t.Fatalf(
 			"got link ID %s, want %s",
-			link.ID,
+			link2.ID,
 			test_link_id,
 		)
 	}
 
 	// Verify isLiked / isCopied
 	liked := UserHasLikedLink(test_req_user_id, test_link_id)
-	if liked && !link.IsLiked {
+	if liked && !link2.IsLiked {
 		t.Fatalf("expected link with ID %s to be liked by user", test_link_id)
-	} else if !liked && link.IsLiked {
+	} else if !liked && link2.IsLiked {
 		t.Fatalf("link with ID %s NOT liked by user, expected error", test_link_id)
 	}
 
 	copied := UserHasCopiedLink(test_req_user_id, test_link_id)
-	if copied && !link.IsCopied {
+	if copied && !link2.IsCopied {
 		t.Fatalf("expected link with ID %s to be copied by user", test_link_id)
-	} else if !copied && link.IsCopied {
+	} else if !copied && link2.IsCopied {
 		t.Fatalf("link with ID %s NOT copied by user, expected error", test_link_id)
 	}
 }

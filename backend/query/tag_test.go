@@ -10,14 +10,15 @@ import (
 
 // Tags Page Link
 func TestNewTagPageLink(t *testing.T) {
-	test_link_id, test_user_id := "1", "1"
+	test_link_id := "1"
 
-	tag_sql := NewTagPageLink(test_link_id, test_user_id)
+	// signed out
+	tag_sql := NewTagPageLink(test_link_id)
 	if tag_sql.Error != nil {
 		t.Fatal(tag_sql.Error)
 	}
 
-	var l model.LinkSignedIn
+	var l model.Link
 	if err := TestClient.QueryRow(tag_sql.Text).Scan(
 		&l.ID,
 		&l.URL,
@@ -28,14 +29,35 @@ func TestNewTagPageLink(t *testing.T) {
 		&l.SummaryCount,
 		&l.LikeCount,
 		&l.ImgURL,
-		&l.IsLiked,
-		&l.IsCopied,
 	); err != nil {
 		t.Fatal(err)
 	}
 
 	if l.ID != test_link_id {
 		t.Fatalf("got %s, want %s", l.ID, test_link_id)
+	}
+
+	// signed in
+	tag_sql = tag_sql.AsSignedInUser(test_req_user_id)
+	if tag_sql.Error != nil {
+		t.Fatal(tag_sql.Error)
+	}
+
+	var lsi model.LinkSignedIn
+	if err := TestClient.QueryRow(tag_sql.Text).Scan(
+		&lsi.ID,
+		&lsi.URL,
+		&lsi.SubmittedBy,
+		&lsi.SubmitDate,
+		&lsi.Cats,
+		&lsi.Summary,
+		&lsi.TagCount,
+		&lsi.LikeCount,
+		&lsi.ImgURL,
+		&lsi.IsLiked,
+		&lsi.IsCopied,
+	); err != nil {
+		t.Fatal(err)
 	}
 }
 

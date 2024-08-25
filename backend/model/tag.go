@@ -44,8 +44,8 @@ type TagRankingPublic struct {
 	LastUpdated string
 }
 
-type TagPage struct {
-	Link        *LinkSignedIn
+type TagPage[T Link | LinkSignedIn] struct {
+	Link        *T
 	UserTag     *Tag
 	TagRankings *[]TagRankingPublic
 }

@@ -11,6 +11,7 @@
         -Subcats
     -Global Cats
     -Global Subcats
+-Fix Tag page cat_list appearing even when no user tag
 
 ### Code Quality
 
@@ -49,6 +50,8 @@
     -helpers for DB actions
         -(new link, new summary, update summary, etc.)
     -ScanTmapLinks tests
+    -BuildTagPage helper to declutter GetTagPage handler
+    -duplicate handle_redirect() helpers on tag page / summary page
 -Other tests
     -finish handlers
     -handler utils
