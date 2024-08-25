@@ -20,6 +20,7 @@ let user = Astro.cookies.get('user')?.value
 	<nav>
 		<a href='/'>Home</a>
 		<a href='/about'>About</a>
+		<a href='/top'>Top</a>
 		{
 			user ? (
 			<a href=`/map/${user}` id="user-tmap-link">{user}</a>) : (<a href='/login' id="login-link">Login</a>)
@@ -107,7 +108,7 @@ let user = Astro.cookies.get('user')?.value
 			margin-bottom: 0;
 		}
 		section {
-			padding: 0.5rem 0;
+			padding: 1rem 0;
 			border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 		}
 		a:not(:visited) {
@@ -170,6 +171,7 @@ let user = Astro.cookies.get('user')?.value
 		#top-links {
 			max-width: calc(100% - 1rem);
 			margin: 0;
+			margin-top: 0.5rem;
 			margin-left: auto;
 			padding: 0;
 		}
@@ -186,10 +188,6 @@ let user = Astro.cookies.get('user')?.value
 				padding: 2rem;
 				padding-bottom: 1rem;
 				max-width: calc(100% - 4rem);
-			}
-
-			section:has(>h2) {
-				padding-top: 1.5rem;
 			}
 
 			#top-cats {
