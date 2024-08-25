@@ -8,6 +8,7 @@ interface Props {
 	CatsFromUser?: string
 	IsSummaryPage: boolean
 	IsTagPage: boolean
+	IsTmapPage: boolean
 	Token: string | undefined
 	User: string | undefined
 }
@@ -17,6 +18,7 @@ export default function Link(props: Props) {
 		CatsFromUser: cats_from_user,
 		IsSummaryPage: is_summary_page,
 		IsTagPage: is_tag_page,
+		IsTmapPage: is_tmap_page,
 		Token: token,
 		User: user,
 	} = props
@@ -48,11 +50,8 @@ export default function Link(props: Props) {
 			: 'Global Tag'
 	tag_attribution += ` (${tag_count})`
 	const cats_html =
-		// depending on if tmap page, link to tmap subcats page or global cats page
-		cats_from_user
-			? // tag1 ==> <a href='/map/user/cat/tag1'>tag1</a>
-			  // tag1,tag2 ==> <a href='/map/user/tag1'>tag1</a>, <a href='/map/user/tag2'>tag2</a>
-			  split_cats?.map((cat, i) => {
+		is_tmap_page && cats_from_user
+			? split_cats?.map((cat, i) => {
 					if (i === split_cats.length - 1) {
 						return (
 							<a href={`/map/${cats_from_user}?cats=${cat}`}>
@@ -70,9 +69,7 @@ export default function Link(props: Props) {
 						)
 					}
 			  })
-			: // tag1 ==> <a href='/cat/tag1'>tag1</a>
-			  // tag1,tag2 ==> <a href='/cat/tag1'>tag1</a>, <a href='/cat/tag2'>tag2</a>
-			  split_cats?.map((cat, i) => {
+			: split_cats?.map((cat, i) => {
 					if (i === split_cats.length - 1) {
 						return <a href={`/top?cats=${cat}`}>{cat}</a>
 					} else {

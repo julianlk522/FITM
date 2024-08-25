@@ -219,6 +219,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 												CatsFromUser={login_name}
 												IsSummaryPage={false}
 												IsTagPage={false}
+												IsTmapPage={true}
 												Token={token}
 												User={user}
 											/>
@@ -235,6 +236,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 												}
 												IsSummaryPage={false}
 												IsTagPage={false}
+												IsTmapPage={true}
 												Token={token}
 												User={user}
 											/>
@@ -317,7 +319,8 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 
 		ol {
 			max-width: calc(100% - 1rem);
-			margin: 0;
+			margin-top: 0;
+			margin-bottom: 0.5rem;
 			margin-left: auto;
 			padding: 0;
 		}

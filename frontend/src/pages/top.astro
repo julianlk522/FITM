@@ -168,7 +168,7 @@ const page_title =
 						<>
 							<section>
 								<h2>Top Subcats</h2>
-								{top_subcats.length ? (
+								{top_subcats?.length ? (
 									<ol id='top-cats'>
 										{top_subcats.map((subcat) => (
 											<li>
@@ -226,6 +226,7 @@ const page_title =
 									CatsFromUser={link.TagCount === 1 && link.SubmittedBy === user ? user : undefined}
 									IsSummaryPage={false}
 									IsTagPage={false}
+									IsTmapPage={false}
 									Link={link}
 									Token={token}
 									User={user}
