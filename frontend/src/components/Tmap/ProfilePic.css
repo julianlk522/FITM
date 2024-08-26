@@ -3,21 +3,17 @@ div#profile-pic {
 		color: red;
 	}
 
-	img {
-		display: block;
-	}
-
 	img#pfp {
+		display: block;
 		max-height: 150px;
 		width: auto;
 	}
 
-	#new-pic-upload-label {
-		margin-top: 0.5rem;
-		width: fit-content;
-	}
-
-	#upload-btn {
-		padding: 0;
+	form {
+		#new-pic-upload-label {
+			margin-top: 0.5rem;
+			width: fit-content;
+			cursor: pointer;
+		}
 	}
 }

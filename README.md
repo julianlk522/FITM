@@ -29,6 +29,7 @@
 
 ## To-Maybe-Dos
 
+-robots.txt
 -Tmap period filter
 -Better way to visualize how Global Cats are determined
 -Show number of copies along with number of likes in frontend

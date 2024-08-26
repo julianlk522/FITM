@@ -46,7 +46,7 @@ export default function ProfilePic(props: Props) {
 			return (window.location.href = '/login')
 		}
 		const target = e.target as HTMLInputElement
-		if (!target.files) {
+		if (!target.files || target.files.length === 0) {
 			return
 		}
 
@@ -83,20 +83,13 @@ export default function ProfilePic(props: Props) {
 			{is_signed_in_user ? (
 				<form>
 					<label id='new-pic-upload-label' for='new-pic-upload'>
-						<button
-							id='upload-btn'
+						<img
 							title='Upload new profile picture'
-							class='img-btn'
-							type='submit'
-							value='Submit'
-						>
-							<img
-								src='../../../upload-pfp.svg'
-								height={24}
-								width={24}
-								alt='Upload New Profile Picture'
-							/>
-						</button>
+							src='../../../upload-pfp.svg'
+							height={24}
+							width={24}
+							alt='Upload New Profile Picture'
+						/>
 					</label>
 					<input
 						id='new-pic-upload'
