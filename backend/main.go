@@ -27,8 +27,10 @@ func init() {
 func main() {
 	r := chi.NewRouter()
 	defer func() {
-		if err := http.ListenAndServe("localhost:8000", r); err != nil {
+		if err := http.ListenAndServe("localhost:1999", r); err != nil {
 			log.Fatal(err)
+		} else {
+			log.Println("server running on http://localhost:1999")
 		}
 	}()
 

@@ -121,7 +121,11 @@ Users can like listed links to boost them, so in theory the most univerally appr
 ## Challenges
 
 - Learning Go
+    - interfaces
+    - pointers
 - Debugging Docker install
     - edit etc/apt/sources.list.d/docker.list to add specific Ubuntu codename to retrieve correct release package
     - repeated "dial unix /var/run/docker.sock: connect: connection refused" cryptic errors, tried editing group permissions, starting/stopping docker daemon etc. but nothing working
     - finally got it by authenticating DockerHub acct. via CLI (docker login)
+- Linode
+    - Getting connections other than SSH (http/https) to open despite firewall config explicitly allowing them

@@ -1,4 +1,4 @@
-const API_URL = 'http://45.79.207.223:8000'
+const API_URL = 'http://45.79.207.223:1999'
 
 const SIGNUP_ENDPOINT = API_URL + '/signup'
 const LOGIN_ENDPOINT = API_URL + '/login'
