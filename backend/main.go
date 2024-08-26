@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -18,7 +19,10 @@ import (
 	m "oitm/middleware"
 )
 
-var token_auth *jwtauth.JWTAuth
+var (
+	token_auth *jwtauth.JWTAuth
+	api_url = os.Getenv("FITM_VPS_IP") + ":1999"
+)
 
 func init() {
 	token_auth = jwtauth.New("HS256", []byte(os.Getenv("FITM_JWT_SECRET")), nil, jwt.WithAcceptableSkew(6*time.Hour))
@@ -27,10 +31,15 @@ func init() {
 func main() {
 	r := chi.NewRouter()
 	defer func() {
-		if err := http.ListenAndServe("localhost:1999", r); err != nil {
+		if err := http.ListenAndServeTLS(
+			api_url, 
+			"/etc/letsencrypt/live/fitm.online/fullchain.pem", 
+			"/etc/letsencrypt/live/fitm.online/privkey.pem", 
+			r,
+		); err != nil {
 			log.Fatal(err)
 		} else {
-			log.Println("server running on http://localhost:1999")
+			fmt.Println("server running on port 1999")
 		}
 	}()
 

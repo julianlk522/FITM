@@ -129,3 +129,4 @@ Users can like listed links to boost them, so in theory the most univerally appr
     - finally got it by authenticating DockerHub acct. via CLI (docker login)
 - Linode
     - Getting connections other than SSH (http/https) to open despite firewall config explicitly allowing them
+- LetsEncrypt SSL
