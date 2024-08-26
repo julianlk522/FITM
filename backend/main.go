@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -21,7 +20,7 @@ import (
 
 var (
 	token_auth *jwtauth.JWTAuth
-	api_url = os.Getenv("FITM_VPS_IP") + ":1999"
+	api_url = "api.fitm.online:1999"
 )
 
 func init() {
@@ -33,13 +32,11 @@ func main() {
 	defer func() {
 		if err := http.ListenAndServeTLS(
 			api_url, 
-			"/etc/letsencrypt/live/fitm.online/fullchain.pem", 
-			"/etc/letsencrypt/live/fitm.online/privkey.pem", 
+			"/etc/letsencrypt/live/api.fitm.online/fullchain.pem", 
+			"/etc/letsencrypt/live/api.fitm.online/privkey.pem", 
 			r,
 		); err != nil {
 			log.Fatal(err)
-		} else {
-			fmt.Println("server running on port 1999")
 		}
 	}()
 
