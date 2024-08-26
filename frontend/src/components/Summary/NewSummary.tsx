@@ -1,7 +1,6 @@
 import { useState } from 'preact/hooks'
 import { SUMMARIES_ENDPOINT } from '../../constants'
 import { is_error_response } from '../../types'
-import './NewSummary.css'
 
 interface Props {
 	Token: string

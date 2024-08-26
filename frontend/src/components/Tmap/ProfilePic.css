@@ -1,8 +1,4 @@
 div#profile-pic {
-	.error {
-		color: red;
-	}
-
 	img#pfp {
 		display: block;
 		max-height: 150px;

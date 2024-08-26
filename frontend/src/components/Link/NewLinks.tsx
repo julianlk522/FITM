@@ -22,6 +22,14 @@ export default function NewLinks(props: Props) {
 		const form = event.target as HTMLFormElement
 		const formData = new FormData(form)
 		const url = formData.get('url')
+		if (!url) {
+			set_error('missing URL')
+			return
+		} else if (!cats.length) {
+			set_error('missing tag')
+			return
+		}
+
 		const summary = formData.get('summary')
 
 		let resp_body: string
