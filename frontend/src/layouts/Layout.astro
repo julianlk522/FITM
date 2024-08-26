@@ -132,15 +132,15 @@ let user = Astro.cookies.get('user')?.value
 		}
 		details {
 			max-width: 100%;
-
-			p {
-				word-wrap: break-word;
-			}
 		}
 		details[open] {
-			summary p { 
+			summary pre { 
 				display: none;
 			}
+		}
+		pre {
+			white-space: pre-wrap;
+			margin: 0;
 		}
 
 		button.img-btn {
@@ -175,6 +175,10 @@ let user = Astro.cookies.get('user')?.value
 			margin-top: 0.5rem;
 			margin-left: auto;
 			padding: 0;
+		}
+
+		.error {
+			color: red;
 		}
 
 		@media (min-width: 480px) {

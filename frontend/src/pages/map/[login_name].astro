@@ -105,12 +105,18 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 						: abbreviated_about 
 							?  <details>
 								<summary>
-									<p>about: {abbreviated_about}</p>
+									<pre>
+										<span>about:</span> {abbreviated_about}
+									</pre>
 								</summary>
-								<p>about: {profile.About}</p>
+								<pre>
+									<span>about:</span> {profile.About}
+								</pre>
 							</details> 
 							: profile.About.length > 0 ?
-							<p>about: {profile.About}</p>
+							<pre>
+								<span>about:</span> {profile.About}
+							</pre>
 							: null
 					: null
 				}

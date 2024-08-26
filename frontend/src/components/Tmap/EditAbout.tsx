@@ -62,7 +62,7 @@ export default function EditAbout(props: Props) {
 			{editing ? (
 				<form onSubmit={(event) => handle_finished_editing(event)}>
 					<label for='about'>About</label>
-					<textarea name='about' cols={100} rows={4}>
+					<textarea name='about' cols={100} rows={8}>
 						{initial}
 					</textarea>
 					<button
@@ -85,12 +85,18 @@ export default function EditAbout(props: Props) {
 					{abbreviated ? (
 						<details>
 							<summary>
-								<p>about: {abbreviated}</p>
+								<pre>
+									<span>about:</span> {abbreviated}
+								</pre>
 							</summary>
-							<p>about: {initial}</p>
+							<pre>
+								<span>about:</span> {initial}
+							</pre>
 						</details>
 					) : initial ? (
-						<p>about: {initial}</p>
+						<pre>
+							<span>about:</span> {initial}
+						</pre>
 					) : null}
 					<button
 						id='edit-about-btn'
