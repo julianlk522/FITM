@@ -75,7 +75,10 @@ async function handle_redirect_action(
 	// or if user aborted redirect process from login page
 	if (
 		!redirect_action ||
-		context.request.url === 'https://fitm.online/login'
+		context.request.url === 'https://fitm.online/login' ||
+		'https://www.fitm.online/login'
+		// context.request.url === 'http://localhost:4321/login' ||
+		// 'http://127.0.0.1:4321/login'
 	) {
 		return next()
 	}

@@ -83,9 +83,9 @@ export default function ProfilePic(props: Props) {
 			{is_signed_in_user ? (
 				<form>
 					<label id='new-pic-upload-label' for='new-pic-upload'>
-						Upload New
 						<button
 							id='upload-btn'
+							title='Upload new profile picture'
 							class='img-btn'
 							type='submit'
 							value='Submit'

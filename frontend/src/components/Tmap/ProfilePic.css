@@ -1,32 +1,23 @@
-div#profile-pic.hidden {
-	display: none;
-}
+div#profile-pic {
+	.error {
+		color: red;
+	}
 
-.error {
-	color: red;
-}
+	img {
+		display: block;
+	}
 
-img {
-	display: block;
-}
+	img#pfp {
+		max-height: 150px;
+		width: auto;
+	}
 
-img#pfp {
-	max-height: 150px;
-	width: auto;
-}
+	#new-pic-upload-label {
+		margin-top: 0.5rem;
+		width: fit-content;
+	}
 
-#new-pic-upload-label {
-	font-size: 0.9rem;
-	background-color: transparent;
-	padding: 1px 8px;
-	border: 1px solid var(--sky);
-	border-radius: 2px;
-	cursor: pointer;
-	display: flex;
-	gap: 5px;
-	width: fit-content;
-}
-
-#upload-btn {
-	padding: 0;
+	#upload-btn {
+		padding: 0;
+	}
 }

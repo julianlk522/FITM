@@ -58,7 +58,7 @@ export default function EditAbout(props: Props) {
 	}
 
 	return (
-		<div id='edit-about'>
+		<div id='profile-about'>
 			{editing ? (
 				<form onSubmit={(event) => handle_finished_editing(event)}>
 					<label for='about'>About</label>
@@ -67,6 +67,7 @@ export default function EditAbout(props: Props) {
 					</textarea>
 					<button
 						id='confirm-changes'
+						title='Save changes to your Treasure Map About section'
 						class='img-btn'
 						type='submit'
 						value='Submit'
@@ -93,6 +94,8 @@ export default function EditAbout(props: Props) {
 					) : null}
 					<button
 						id='edit-about-btn'
+						title='Edit About section'
+						alt='Edit About'
 						class='img-btn'
 						onClick={() => {
 							set_editing(true)
@@ -100,9 +103,9 @@ export default function EditAbout(props: Props) {
 					>
 						<img
 							src='../../../edit_about.svg'
-							height={24}
-							width={24}
-							alt='Toggle About Section edit mode'
+							height={20}
+							width={20}
+							alt='Toggle About section edit mode'
 						/>
 					</button>
 				</>

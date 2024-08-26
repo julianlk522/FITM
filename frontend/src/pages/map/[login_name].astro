@@ -4,7 +4,7 @@ import ScrollUp from '../../components/ScrollUp.astro'
 import TagCat from "../../components/Tag/TagCat"
 import EditAbout from '../../components/Tmap/EditAbout'
 import ProfilePic from '../../components/Tmap/ProfilePic'
-import { TMAP_ENDPOINT, TMAP_PFP_ENDPOINT } from '../../constants'
+import { TMAP_ENDPOINT } from '../../constants'
 import Layout from '../../layouts/Layout.astro'
 import type { FilteredTreasureMap, Profile, TreasureMap } from '../../types'
 import { tmap_sections } from '../../types'
@@ -57,12 +57,10 @@ if (tmap_resp.status > 399) {
 tmap = await tmap_resp.json()
 const used_sections = tmap_sections.filter((s) => tmap[s].length)
 
-// Attempt PFP fetch, display about/pfp if they are used
-// (unfiltered only)
+// Display about if used (unfiltered only)
 let profile: Profile | undefined
 let display_about = false
 let abbreviated_about: string | undefined
-let display_pfp = false
 
 if (!cats && tmap.hasOwnProperty('Profile')) {
 	profile = (tmap as TreasureMap).Profile
@@ -74,13 +72,6 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 	}
 
 	abbreviated_about = profile.About.length > 200 ? `${profile.About.slice(0, 200)}...` : undefined
-
-	const get_pfp_url = TMAP_PFP_ENDPOINT + `/${profile.PFP}`
-	const found_pfp_resp = await fetch(get_pfp_url, {
-		headers: { 'Content-Type': 'image/png' },
-	})
-	const found_pfp = found_pfp_resp.status < 400
-	display_pfp = profile !== undefined && found_pfp
 }
 
 ---
@@ -95,16 +86,12 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 		<!-- Profile  -->
 		 {profile ? (
 			<section id="profile">
-				{
-					display_pfp ? (
-						<ProfilePic 
-							client:load
-							LoginName={login_name} 
-							PFP={profile.PFP} SignedInUser={user} 
-							Token={token} 
-						/>
-					) : null
-				}
+				<ProfilePic 
+					client:load
+					LoginName={login_name} 
+					PFP={profile.PFP} SignedInUser={user} 
+					Token={token} 
+				/>
 
 				{
 					display_about ? 
@@ -257,7 +244,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 
 <style>	
 	h1,
-	h2 {
+	h2.subtitle {
 		text-align: left;
 	}
 
@@ -289,10 +276,6 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 		
 		div:has(#skip-to-link-section) {
 			margin: 0 auto;
-		}
-
-		#top-cats li a {
-			display: inline-block;
 		}
 
 		#skip-to-link-section {
