@@ -7,12 +7,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 
-	"oitm/db"
-	e "oitm/error"
-	util "oitm/handler/util"
-	m "oitm/middleware"
-	"oitm/model"
-	"oitm/query"
+	"github.com/julianlk522/fitm/db"
+	e "github.com/julianlk522/fitm/error"
+	util "github.com/julianlk522/fitm/handler/util"
+	m "github.com/julianlk522/fitm/middleware"
+	"github.com/julianlk522/fitm/model"
+	"github.com/julianlk522/fitm/query"
 )
 
 func GetTagPage(w http.ResponseWriter, r *http.Request) {

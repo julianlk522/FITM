@@ -11,7 +11,7 @@ import (
 
 func TestMain(m *testing.M) {
 	var err error
-	Client, err = sql.Open("sqlite3", "./oitm.db")
+	Client, err = sql.Open("sqlite3", "./fitm.db")
 	if err != nil {
 		log.Fatalf("Could not open database: %s", err)
 	}

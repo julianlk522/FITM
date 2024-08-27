@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"oitm/model"
-	"oitm/query"
+	"github.com/julianlk522/fitm/model"
+	"github.com/julianlk522/fitm/query"
 	"testing"
 )
 

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	m "oitm/middleware"
+	m "github.com/julianlk522/fitm/middleware"
 	"testing"
 )
 

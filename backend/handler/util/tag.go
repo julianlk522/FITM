@@ -7,9 +7,9 @@ import (
 	"slices"
 	"strings"
 
-	"oitm/db"
-	"oitm/model"
-	"oitm/query"
+	"github.com/julianlk522/fitm/db"
+	"github.com/julianlk522/fitm/model"
+	"github.com/julianlk522/fitm/query"
 
 	"net/http"
 

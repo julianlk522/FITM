@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"oitm/db"
-	e "oitm/error"
-	"oitm/model"
-	"oitm/query"
+	"github.com/julianlk522/fitm/db"
+	e "github.com/julianlk522/fitm/error"
+	"github.com/julianlk522/fitm/model"
+	"github.com/julianlk522/fitm/query"
 	"slices"
 	"strings"
 

@@ -2,9 +2,9 @@ package model
 
 import (
 	"net/http"
-	e "oitm/error"
+	e "github.com/julianlk522/fitm/error"
 
-	util "oitm/model/util"
+	util "github.com/julianlk522/fitm/model/util"
 
 	"github.com/google/uuid"
 )

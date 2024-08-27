@@ -3,8 +3,8 @@ package handler
 import (
 	"database/sql"
 	"net/http"
-	"oitm/db"
-	e "oitm/error"
+	"github.com/julianlk522/fitm/db"
+	e "github.com/julianlk522/fitm/error"
 	"os"
 
 	"image"

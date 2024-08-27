@@ -3,8 +3,8 @@ package handler
 import (
 	"context"
 	"net/http"
-	m "oitm/middleware"
-	"oitm/model"
+	m "github.com/julianlk522/fitm/middleware"
+	"github.com/julianlk522/fitm/model"
 	"testing"
 )
 

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	m "oitm/middleware"
+	m "github.com/julianlk522/fitm/middleware"
 
 	"io"
 	"net/http"

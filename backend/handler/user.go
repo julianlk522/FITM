@@ -5,7 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
-	util "oitm/handler/util"
+	util "github.com/julianlk522/fitm/handler/util"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,10 +18,10 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	"oitm/db"
-	e "oitm/error"
-	m "oitm/middleware"
-	"oitm/model"
+	"github.com/julianlk522/fitm/db"
+	e "github.com/julianlk522/fitm/error"
+	m "github.com/julianlk522/fitm/middleware"
+	"github.com/julianlk522/fitm/model"
 )
 
 var pic_dir string

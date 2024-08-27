@@ -2,7 +2,7 @@ package query
 
 import (
 	"database/sql"
-	"oitm/db"
+	"github.com/julianlk522/fitm/db"
 )
 
 // shared across Query tests

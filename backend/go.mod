@@ -1,4 +1,4 @@
-module oitm
+module github.com/julianlk522/fitm
 
 go 1.22.2
 

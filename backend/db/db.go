@@ -27,7 +27,7 @@ func Connect() error {
 	_, db_file, _, _ := runtime.Caller(0)
 	db_dir := filepath.Dir(db_file)
 
-	Client, err = sql.Open("sqlite3", db_dir+"/oitm.db")
+	Client, err = sql.Open("sqlite3", db_dir+"/fitm.db")
 	if err != nil {
 		return err
 	}

@@ -15,6 +15,13 @@
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
+-Move "login to add summaries" up above summaries
+-Remove crappy test data
+-Change JLK user / password
+-Make mobile buttons more visible
+-Add "Add Link" button on home page but redirect if no auth
+-Cat search on index/top.astro
+-Bump num top cats to 20
 
 ### Code Quality
 
@@ -38,10 +45,6 @@
 -Search for existing tag cats while adding/editing
     -Fuzzysort?
 -Properly backup DB
-    -sqlite3 backend/db/oitm.db ".backup '_oitm_backup.bak'"
-    -sqlite3 backend/db/oitm.db < _oitm_backup.bak
-    -sqlite3 my_database .dump | gzip -c > my_database.dump.gz
-    zcat my_database.dump.gz | sqlite3 my_database
 -Rethink CalculateGlobalCategories algo
     -currently makes it difficult, unless submitting first tag or soon after first, to affect global cats
     -might allow many user-submitted tags to flood global tag ... but probably not since would require different cats from many users
@@ -130,4 +133,4 @@ Users can like listed links to boost them, so in theory the most univerally appr
     - finally got it by authenticating DockerHub acct. via CLI (docker login)
 - Linode
     - Getting connections other than SSH (http/https) to open despite firewall config explicitly allowing them
-- LetsEncrypt SSL
+- LetsEncrypt / Certbot / NameCheap SSL

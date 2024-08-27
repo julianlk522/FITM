@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 	"net/url"
-	m "oitm/middleware"
-	"oitm/model"
-	"oitm/query"
+	m "github.com/julianlk522/fitm/middleware"
+	"github.com/julianlk522/fitm/model"
+	"github.com/julianlk522/fitm/query"
 	"slices"
 	"testing"
 )

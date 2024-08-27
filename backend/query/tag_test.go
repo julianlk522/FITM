@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"oitm/model"
+	"github.com/julianlk522/fitm/model"
 )
 
 // Tags Page Link

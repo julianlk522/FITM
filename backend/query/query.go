@@ -2,7 +2,7 @@ package query
 
 import (
 	"fmt"
-	e "oitm/error"
+	e "github.com/julianlk522/fitm/error"
 )
 
 type Query struct {

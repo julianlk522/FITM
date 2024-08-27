@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"regexp"
 
-	e "oitm/error"
-	util "oitm/model/util"
+	e "github.com/julianlk522/fitm/error"
+	util "github.com/julianlk522/fitm/model/util"
 
 	"github.com/google/uuid"
 )

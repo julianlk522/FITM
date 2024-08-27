@@ -1,14 +1,14 @@
 package handler
 
 import (
-	"oitm/db"
+	"github.com/julianlk522/fitm/db"
 
 	"database/sql"
 	"net/http"
-	e "oitm/error"
-	m "oitm/middleware"
-	"oitm/model"
-	"oitm/query"
+	e "github.com/julianlk522/fitm/error"
+	m "github.com/julianlk522/fitm/middleware"
+	"github.com/julianlk522/fitm/model"
+	"github.com/julianlk522/fitm/query"
 	"slices"
 	"strings"
 )

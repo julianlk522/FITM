@@ -14,12 +14,13 @@ import (
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 
-	h "oitm/handler"
-	m "oitm/middleware"
+	h "github.com/julianlk522/fitm/handler"
+	m "github.com/julianlk522/fitm/middleware"
 )
 
 var (
 	token_auth *jwtauth.JWTAuth
+	// test_api_url = "localhost:1999"
 	api_url = "api.fitm.online:1999"
 )
 
@@ -31,13 +32,16 @@ func main() {
 	r := chi.NewRouter()
 	defer func() {
 		if err := http.ListenAndServeTLS(
-			api_url, 
+		api_url, 
 			"/etc/letsencrypt/live/api.fitm.online/fullchain.pem", 
 			"/etc/letsencrypt/live/api.fitm.online/privkey.pem", 
 			r,
 		); err != nil {
 			log.Fatal(err)
 		}
+		// if err := http.ListenAndServe(test_api_url, r); err != nil {
+		// 	log.Fatal(err)
+		// }
 	}()
 
 	// Router-wide middleware

@@ -2,7 +2,7 @@ package handler
 
 import (
 	"fmt"
-	"oitm/query"
+	"github.com/julianlk522/fitm/query"
 	"testing"
 )
 
