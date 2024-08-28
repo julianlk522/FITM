@@ -7,7 +7,7 @@ import (
 
 const (
 	LINKS_PAGE_LIMIT                = 20
-	CATEGORY_CONTRIBUTORS_LIMIT int = 5
+	CONTRIBUTORS_PAGE_LIMIT         = 10
 )
 
 // Links
@@ -214,7 +214,7 @@ var CONTRIBUTORS_GBOBL = fmt.Sprintf(
 	` 
 	GROUP BY submitted_by
 	ORDER BY count(*) DESC, submitted_by ASC
-	LIMIT %d;`, CATEGORY_CONTRIBUTORS_LIMIT,
+	LIMIT %d;`, CONTRIBUTORS_PAGE_LIMIT,
 )
 
 func NewContributors() *Contributors {

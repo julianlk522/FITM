@@ -1,12 +1,13 @@
 package handler
 
 import (
+	"slices"
+	"strings"
+
 	"github.com/julianlk522/fitm/db"
 	e "github.com/julianlk522/fitm/error"
 	"github.com/julianlk522/fitm/model"
 	"github.com/julianlk522/fitm/query"
-	"slices"
-	"strings"
 
 	"database/sql"
 	"fmt"
@@ -14,11 +15,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-)
-
-const (
-	LINKS_PAGE_LIMIT    int = 20
-	CATEGORY_PAGE_LIMIT int = 15
 )
 
 func RenderZeroLinks(w http.ResponseWriter, r *http.Request) {
@@ -99,8 +95,8 @@ func PaginateLinks[T model.LinkSignedIn | model.Link](links *[]T, page int) (int
 		return &model.PaginatedLinks[model.Link]{NextPage: -1}
 	}
 
-	if len(*links) == LINKS_PAGE_LIMIT+1 {
-		sliced := (*links)[0:LINKS_PAGE_LIMIT]
+	if len(*links) == query.LINKS_PAGE_LIMIT+1 {
+		sliced := (*links)[0:query.LINKS_PAGE_LIMIT]
 		return &model.PaginatedLinks[T]{
 			NextPage: page + 1,
 			Links:    &sliced,

@@ -20,7 +20,6 @@
 -Make mobile buttons more visible
 -Add "Add Link" button on home page but redirect if no auth
 -Cat search on index/top.astro
--Bump num top cats to 20
 
 ### Code Quality
 

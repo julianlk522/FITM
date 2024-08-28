@@ -3,9 +3,10 @@ package handler
 import (
 	"database/sql"
 	"fmt"
+	"testing"
+
 	"github.com/julianlk522/fitm/model"
 	"github.com/julianlk522/fitm/query"
-	"testing"
 )
 
 func TestScanTagPageLink(t *testing.T) {
@@ -191,10 +192,10 @@ func TestScanGlobalCatCounts(t *testing.T) {
 
 	if len(*counts) == 0 {
 		t.Fatal("no counts returned for top global cats")
-	} else if len(*counts) > query.TOP_GLOBAL_CATS_LIMIT {
+	} else if len(*counts) > query.GLOBAL_CATS_PAGE_LIMIT {
 		t.Fatalf(
 			"too many counts returned for top global cats (limit %d)",
-			query.TOP_GLOBAL_CATS_LIMIT,
+			query.GLOBAL_CATS_PAGE_LIMIT,
 		)
 	}
 
@@ -266,10 +267,10 @@ func TestScanGlobalCatCounts(t *testing.T) {
 			continue
 		}
 
-		if len(*counts) > query.TOP_GLOBAL_CATS_LIMIT {
+		if len(*counts) > query.GLOBAL_CATS_PAGE_LIMIT {
 			t.Fatalf(
 				"too many counts returned for top global cats (limit %d)",
-				query.TOP_GLOBAL_CATS_LIMIT,
+				query.GLOBAL_CATS_PAGE_LIMIT,
 			)
 
 			// Only top few cats

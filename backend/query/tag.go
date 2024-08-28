@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	TAGS_PAGE_LIMIT          = 20
-	TOP_OVERLAP_SCORES_LIMIT = 20
-	TOP_GLOBAL_CATS_LIMIT    = 15
+	TAGS_PAGE_LIMIT           = 20
+	TAG_RANKINGS_PAGE_LIMIT   = 20
+	GLOBAL_CATS_PAGE_LIMIT    = 20
 )
 
 // Tags Page link
@@ -120,7 +120,7 @@ INNER JOIN Links
 ON Links.id = Tags.link_id
 WHERE link_id = 'LINK_ID'
 ORDER BY lifespan_overlap DESC` + fmt.Sprintf(`
-LIMIT %d`, TOP_OVERLAP_SCORES_LIMIT)
+LIMIT %d`, TAG_RANKINGS_PAGE_LIMIT)
 
 func NewTagRankings(link_id string) *TagRankings {
 	return (&TagRankings{Query: Query{Text: TOP_OVERLAP_SCORES_BASE}})._ForLink(link_id)
@@ -170,7 +170,7 @@ GROUP BY global_cats
 ORDER BY count DESC, LOWER(global_cats) ASC;`
 
 func NewTopGlobalCatCounts() *GlobalCatCounts {
-	return (&GlobalCatCounts{Query: Query{Text: GLOBAL_CAT_COUNTS_BASE}})._Limit(TOP_GLOBAL_CATS_LIMIT)
+	return (&GlobalCatCounts{Query: Query{Text: GLOBAL_CAT_COUNTS_BASE}})._Limit(GLOBAL_CATS_PAGE_LIMIT)
 }
 
 func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
