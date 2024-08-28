@@ -7,7 +7,7 @@ let user = Astro.cookies.get('user')?.value
 
 if (!token || !user) {
 	Astro.cookies.set('redirect_to', Astro.url.pathname, {
-		maxAge: 21600,
+		maxAge: 300,
 		path: '/login',
 		sameSite: 'strict',
 		secure: true,
@@ -16,9 +16,9 @@ if (!token || !user) {
 }
 ---
 
-<Layout Title='Submit New Link'>
+<Layout Title='Submit New Link(s)'>
 	<main>
-		<h1>Submit New Links</h1>
+		<h1>Submit New Links(s)</h1>
 		<section>
 			<h2>Rules</h2>
 			<p>

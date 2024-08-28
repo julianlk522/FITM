@@ -18,7 +18,6 @@
 -Remove crappy test data
 -Change JLK user / password
 -Make mobile buttons more visible
--Add "Add Link" button on home page but redirect if no auth
 -Cat search on index/top.astro
 
 ### Code Quality

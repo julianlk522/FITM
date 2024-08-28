@@ -40,13 +40,9 @@ const other_periods = Periods.filter((other) => other !== 'month')
 		<img class='chest-backdrop' src='../../chest.svg' alt="treasure chest full of Internet links" />
 			<h1>Welcome to FITM</h1>
 			<h2 class='subtitle bg'>a map of the web's treasures</h2>
-			{
-				user ? (
-					<h3 id="new-link">
-						<a href={`/new`}>Add link</a>
-					</h3>
-				) : null
-			}
+			<h3 id="new-link">
+				<a href={`/new`}>Add link</a>
+			</h3>
 		<section>
 			<h2>Top Cats</h2>
 			<ol id="top-cats">
