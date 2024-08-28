@@ -15,10 +15,9 @@
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
--Remove crappy test data
--Change JLK user / password
 -Make mobile buttons more visible
 -Cat search on index/top.astro
+-Strip spaces from tag start/end
 
 ### Code Quality
 
