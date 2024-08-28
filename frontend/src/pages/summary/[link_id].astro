@@ -34,7 +34,6 @@ const { Link: link, Summaries: summaries } = summary_data
 // put summary with highest like count first,
 // unless it is a tie between "Auto Summary" and 1+ others
 // (in that case, the next highest first)
-
 summaries.sort((a, b) => a.SubmittedBy == 'Auto Summary' ? 1 : b.LikeCount - a.LikeCount || a.Text.localeCompare(b.Text))
 ---
 
@@ -64,11 +63,17 @@ summaries.sort((a, b) => a.SubmittedBy == 'Auto Summary' ? 1 : b.LikeCount - a.L
 			/>
 		</section>
 
-		{is_signed_in ? 
-			<section>
-				<NewSummary client:load Token={token} LinkID={link_id} />
-			</section>
-		 : null}
+		<section>
+			{is_signed_in ? 
+				<NewSummary client:load Token={token} LinkID={link_id} /> 
+			: <p>
+				<a id='login-redirect-link' href='#'>
+					Login
+				</a>
+				<span> to like summaries or add your own.</span>
+			</p>
+			}
+		</section>
 
 		<section>
 			<h2>Top Summaries</h2>
@@ -94,18 +99,6 @@ summaries.sort((a, b) => a.SubmittedBy == 'Auto Summary' ? 1 : b.LikeCount - a.L
 				}
 			</ol>
 		</section>
-
-		{is_signed_in 
-			? null 
-			: <section>
-				<p>
-					<a id='login-redirect-link' href='#'>
-						Login
-					</a>
-					<span> to like summaries or add your own.</span>
-				</p>
-			</section>
-		}
 	</main>
 </Layout>
 

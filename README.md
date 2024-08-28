@@ -15,7 +15,6 @@
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
--Move "login to add summaries" up above summaries
 -Remove crappy test data
 -Change JLK user / password
 -Make mobile buttons more visible
@@ -134,3 +133,4 @@ Users can like listed links to boost them, so in theory the most univerally appr
 - Linode
     - Getting connections other than SSH (http/https) to open despite firewall config explicitly allowing them
 - LetsEncrypt / Certbot / NameCheap SSL
+- tmux
