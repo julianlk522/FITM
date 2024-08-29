@@ -33,7 +33,7 @@ sd,
 cats, 
 summary, 
 COALESCE(summary_count,0) as summary_count,
-tag_count,
+COALESCE(tag_count,0) as tag_count,
 like_count, 
 img_url`
 

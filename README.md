@@ -15,13 +15,27 @@
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
+-Fix "Error: invalid link ID provided" when rewriting summary
+-Fix Auto Summary not being used if only summary
+-Fix broken summary likes
+-Fix time frontend display
+    -Tag Page
+-Make sure backend timestamp is working
+-Fix tag page title
+-Fix Link.tsx tag cat sort order
+-Fix SQL identifiers to use double quotes (?)
+    -verify first
+-Change "Error: Missing Cat" to something like "Error: input is empty"
+-Add some space before "Add Cat" button
 -Make mobile buttons more visible
 -Cat search on index/top.astro
 -Strip spaces from tag start/end
+-Verify that tag last updated is working
 -Fix links endpoints in frontend
 -Quick link to existing link if attempting to submit duplicate
--Adjust new link handler to request from YT Data API if user submits a YT video link
-    -e.g., https://www.googleapis.com/youtube/v3/videos?id=MH03ZJaNe8A&key={key}&part=snippet
+-Space between new links
+-Guidelines / heuristics for avoiding "marooned" tags
+    -only proper nouns / abbreviations should be capitalized?
 
 ### Code Quality
 
@@ -37,6 +51,7 @@
 ## To-Maybe-Dos
 
 -robots.txt
+-Make long URL link scrollbar less ugly
 -Tmap period filter
 -Better way to visualize how Global Cats are determined
 -Show number of copies along with number of likes in frontend
@@ -44,6 +59,7 @@
     -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads
 -Search for existing tag cats while adding/editing
     -Fuzzysort?
+    -For nearly identical cats with slight differences, maybe have a prompt on load that says like "would you like to reload and include these results too?"
 -Properly backup DB
 -Rethink CalculateGlobalCategories algo
 -Favorite tmaps
