@@ -104,6 +104,8 @@ func TestIsYouTubeVideoLink(t *testing.T) {
 		{"https://www.youtube.com/watch?v=9bZkp7q19f0&feature=player_embedded", true},
 		{"fred.com", false},
 		{"https://www.youtube.com/watch?v=MH03ZJaNe8A", true},
+		{"https://youtu.be/uW5GjbidEHU?si=d2wJ7ADMCMMyJfQ-", true},
+		{"https://youtu.be/uW5GjbidEHU", true},
 	}
 
 	for _, u := range test_urls {
@@ -124,6 +126,8 @@ func TestExtractYouTubeVideoID(t *testing.T) {
 		{"https://www.youtube.com/watch?v=9bZkp7q19f0", "9bZkp7q19f0"},
 		{"https://www.youtube.com/watch?v=9bZkp7q19f0&feature=player_embedded", "9bZkp7q19f0"},
 		{"https://www.youtube.com/watch?v=MH03ZJaNe8A", "MH03ZJaNe8A"},
+		{"https://youtu.be/uW5GjbidEHU?si=d2wJ7ADMCMMyJfQ-", "uW5GjbidEHU"},
+		{"https://youtu.be/uW5GjbidEHU", "uW5GjbidEHU"},
 	}
 
 	for _, u := range test_urls {

@@ -3,8 +3,8 @@ package handler
 import (
 	"log"
 	"net/http"
-
 	"os"
+
 	"strings"
 
 	"github.com/go-chi/chi/v5"

@@ -113,11 +113,19 @@ func PaginateLinks[T model.LinkSignedIn | model.Link](links *[]T, page int) (int
 
 // Add link
 func IsYouTubeVideoLink(url string) bool {
-	return strings.Contains(url, "youtube.com/watch?v=")
+
+	// TODO: consider making this more strict
+	return strings.Contains(url, "youtube.com/watch?v=") || strings.Contains(url, "youtu.be/")
 }
 
 func ExtractYouTubeVideoID(url string) string {
-	return strings.Split(strings.Split(url, "&")[0], "?v=")[1]
+	if strings.Contains(url, "youtube.com/watch?v=") {
+		return strings.Split(strings.Split(url, "&")[0], "?v=")[1]
+	} else if strings.Contains(url, "youtu.be/") {
+		return strings.Split(strings.Split(url, "youtu.be/")[1], "?")[0]
+	}
+
+	return ""
 }
 
 func ExtractMetaDataFromGoogleAPIsResponse(body io.Reader) (model.YTVideoMetaData, error) {
