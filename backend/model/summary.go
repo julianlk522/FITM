@@ -50,7 +50,7 @@ func (s *NewSummaryRequest) Bind(r *http.Request) error {
 	}
 
 	s.ID = uuid.New().String()
-	s.LastUpdated = util.NEW_LONG_TIMESTAMP
+	s.LastUpdated = util.NEW_LONG_TIMESTAMP()
 
 	return nil
 

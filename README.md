@@ -20,7 +20,6 @@
 -Fix broken summary likes
 -Fix time frontend display
     -Tag Page
--Make sure backend timestamp is working
 -Fix tag page title
 -Fix Link.tsx tag cat sort order
 -Fix SQL identifiers to use double quotes (?)

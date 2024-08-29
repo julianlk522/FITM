@@ -39,7 +39,7 @@ func (s *SignUpRequest) Bind(r *http.Request) error {
 	}
 
 	s.ID = uuid.New().String()
-	s.CreatedAt = util.NEW_SHORT_TIMESTAMP
+	s.CreatedAt = util.NEW_SHORT_TIMESTAMP()
 	return nil
 }
 

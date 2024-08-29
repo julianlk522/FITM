@@ -80,7 +80,7 @@ func (t *NewTagRequest) Bind(r *http.Request) error {
 	}
 
 	t.ID = uuid.New().String()
-	t.LastUpdated = util.NEW_LONG_TIMESTAMP
+	t.LastUpdated = util.NEW_LONG_TIMESTAMP()
 
 	return nil
 }
@@ -107,7 +107,7 @@ func (et *EditTagRequest) Bind(r *http.Request) error {
 		return e.ErrDuplicateCats
 	}
 
-	et.LastUpdated = util.NEW_LONG_TIMESTAMP
+	et.LastUpdated = util.NEW_LONG_TIMESTAMP()
 
 	return nil
 }
