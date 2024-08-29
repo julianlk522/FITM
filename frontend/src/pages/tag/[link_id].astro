@@ -58,7 +58,7 @@ link.TagCount = top_tags.length
 			client:load
 			LinkID={link_id}
 			Token={token}
-			UserTag={user_tag}
+			UserTag={user_tag ? user_tag : undefined}
 		/> : <section>
 			<p id="login-redirect-link"><a href="/login">Login</a> to start tagging links.</p>
 		</section>}
