@@ -2,7 +2,6 @@ package model
 
 import (
 	"net/http"
-	"strconv"
 
 	e "github.com/julianlk522/fitm/error"
 	util "github.com/julianlk522/fitm/model/util"
@@ -39,8 +38,6 @@ type NewSummaryRequest struct {
 func (s *NewSummaryRequest) Bind(r *http.Request) error {
 	if s.LinkID == "" {
 		return e.ErrNoLinkID
-	} else if i, err := strconv.Atoi(s.LinkID); err != nil || i < 1 {
-		return e.ErrInvalidLinkID
 	}
 
 	if s.Text == "" {

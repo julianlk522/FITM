@@ -15,7 +15,6 @@
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
--Fix "Error: invalid link ID provided" when rewriting summary
 -Fix Auto Summary not being used if only summary
 -Fix broken summary likes
 -Fix time frontend display

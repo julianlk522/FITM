@@ -2,7 +2,6 @@ package model
 
 import (
 	"net/http"
-	"strconv"
 	"strings"
 
 	e "github.com/julianlk522/fitm/error"
@@ -64,8 +63,6 @@ type NewTagRequest struct {
 func (t *NewTagRequest) Bind(r *http.Request) error {
 	if t.NewTag.LinkID == "" {
 		return e.ErrNoLinkID
-	} else if i, err := strconv.Atoi(t.NewTag.LinkID); err != nil || i < 1 {
-		return e.ErrInvalidLinkID
 	}
 
 	switch {
