@@ -5,10 +5,11 @@ import (
 	"io"
 	"log"
 	"net/http"
-	util "github.com/julianlk522/fitm/handler/util"
 	"os"
 	"path/filepath"
 	"strings"
+
+	util "github.com/julianlk522/fitm/handler/util"
 
 	_ "golang.org/x/image/webp"
 

@@ -1,4 +1,5 @@
 backend/db/profile-pics
+backend/db/fitm.db
 _*
 .vscode/
 .prettierignore

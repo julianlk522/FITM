@@ -18,6 +18,7 @@
 -Make mobile buttons more visible
 -Cat search on index/top.astro
 -Strip spaces from tag start/end
+-Fix links endpoints in frontend
 
 ### Code Quality
 

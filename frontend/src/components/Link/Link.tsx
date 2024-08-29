@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks'
-import { LINKS_ENDPOINT } from '../../constants'
+import { NEW_LINK_ENDPOINT } from '../../constants'
 import * as types from '../../types'
 import { format_long_date } from '../../util/format_date'
 import './Link.css'
@@ -94,7 +94,7 @@ export default function Link(props: Props) {
 
 		// like
 		if (!is_liked) {
-			const like_resp = await fetch(LINKS_ENDPOINT + `/${id}/like`, {
+			const like_resp = await fetch(NEW_LINK_ENDPOINT + `/${id}/like`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ export default function Link(props: Props) {
 
 			// unlike
 		} else {
-			const unlike_resp = await fetch(LINKS_ENDPOINT + `/${id}/like`, {
+			const unlike_resp = await fetch(NEW_LINK_ENDPOINT + `/${id}/like`, {
 				method: 'DELETE',
 				headers: {
 					'Content-Type': 'application/json',
@@ -141,7 +141,7 @@ export default function Link(props: Props) {
 		}
 
 		if (!is_copied) {
-			const copy_resp = await fetch(LINKS_ENDPOINT + `/${id}/copy`, {
+			const copy_resp = await fetch(NEW_LINK_ENDPOINT + `/${id}/copy`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -156,7 +156,7 @@ export default function Link(props: Props) {
 				console.error('WTF is this: ', copy_data)
 			}
 		} else {
-			const uncopy_resp = await fetch(LINKS_ENDPOINT + `/${id}/copy`, {
+			const uncopy_resp = await fetch(NEW_LINK_ENDPOINT + `/${id}/copy`, {
 				method: 'DELETE',
 				headers: {
 					'Content-Type': 'application/json',
