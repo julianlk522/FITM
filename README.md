@@ -131,3 +131,4 @@ Users can like listed links to boost them, so in theory the most univerally appr
     - Getting connections other than SSH (http/https) to open despite firewall config explicitly allowing them
 - LetsEncrypt / Certbot / NameCheap SSL
 - tmux
+    - detach from / reattach to SSH session to safely exit terminal and leave running

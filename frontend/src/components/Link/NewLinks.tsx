@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks'
-import { LINKS_ENDPOINT } from '../../constants'
+import { NEW_LINK_ENDPOINT } from '../../constants'
 import * as types from '../../types'
 import { is_error_response } from '../../types'
 import NewTag from '../Tag/NewTag'
@@ -47,7 +47,7 @@ export default function NewLinks(props: Props) {
 			})
 		}
 
-		const new_link_resp = await fetch(LINKS_ENDPOINT, {
+		const new_link_resp = await fetch(NEW_LINK_ENDPOINT, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

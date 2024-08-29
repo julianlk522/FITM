@@ -4,7 +4,8 @@ const API_URL = 'https://api.fitm.online:1999'
 const SIGNUP_ENDPOINT = API_URL + '/signup'
 const LOGIN_ENDPOINT = API_URL + '/login'
 
-const LINKS_ENDPOINT = API_URL + '/links/top'
+const NEW_LINK_ENDPOINT = API_URL + '/links'
+const TOP_LINKS_ENDPOINT = API_URL + '/links/top'
 
 const SUMMARIES_ENDPOINT = API_URL + '/summaries'
 const TAGS_ENDPOINT = API_URL + '/tags'
@@ -20,8 +21,9 @@ export {
 	API_URL,
 	CATS_ENDPOINT,
 	CONTRIBUTORS_ENDPOINT,
-	LINKS_ENDPOINT,
+	TOP_LINKS_ENDPOINT as LINKS_ENDPOINT,
 	LOGIN_ENDPOINT,
+	NEW_LINK_ENDPOINT,
 	SIGNUP_ENDPOINT,
 	SUMMARIES_ENDPOINT,
 	TAGS_ENDPOINT,
