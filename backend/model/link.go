@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/http"
+
 	e "github.com/julianlk522/fitm/error"
 
 	util "github.com/julianlk522/fitm/model/util"
@@ -20,6 +21,24 @@ type Link struct {
 	TagCount     int
 	LikeCount    int64
 	ImgURL       string
+}
+
+// YouTube links
+type YTVideoMetaData struct {
+	Items []VYTVideoItems `json:"items"`
+}
+
+type VYTVideoItems struct {
+	Snippet YTVideoSnippet `json:"snippet"`
+}
+
+type YTVideoSnippet struct {
+	Title  string `json:"title"`
+	Thumbnails struct {
+		Default struct {
+			URL string `json:"url"`
+		} `json:"default"`
+	}
 }
 
 type LinkSignedIn struct {

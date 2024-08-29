@@ -3,6 +3,8 @@ package handler
 import (
 	"log"
 	"net/http"
+
+	"os"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -71,17 +73,66 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check URL is valid and update
-	resp, err := util.ResolveURL(request.NewLink.URL)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-	defer resp.Body.Close()
+	// Check if URL is YT video
+	// if so, extract ID and send request to GoogleAPIs using API key
+	if util.IsYouTubeVideoLink(request.NewLink.URL) {
 
-	// save updated URL (after any redirects e.g., to wwww.)
-	// remove trailing slash
-	request.URL = strings.TrimSuffix(resp.Request.URL.String(), "/")
+		// Get ID from URL
+		id := util.ExtractYouTubeVideoID(request.NewLink.URL)
+		if id == "" {
+			render.Render(w, r, e.ErrInvalidRequest(e.ErrInvalidURL))
+			return
+		}
+
+		// Build new GoogleAPIs URL
+		API_KEY := os.Getenv("FITM_GOOGLE_API_KEY")
+		if API_KEY == "" {
+			log.Printf("Could not find API_KEY")
+			render.Status(r, http.StatusInternalServerError)
+			return
+		}
+		gAPIs_url := "https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + API_KEY + "&part=snippet"
+
+		// Request from GoogleAPIs
+		resp, err := http.Get(gAPIs_url)
+		if err != nil {
+			log.Printf("Error requesting from GoogleAPIs: %s", err)
+			render.Render(w, r, e.ErrInvalidRequest(err))
+			return
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != 200 {
+			log.Printf("Error response from GoogleAPIs: %s", err)
+			render.Render(w, r, e.ErrInvalidRequest(e.ErrInvalidURL))
+			return
+		}
+
+		// Extract URL metadata from response
+		video_data, err := util.ExtractMetaDataFromGoogleAPIsResponse(resp.Body)
+		if err != nil {
+			log.Printf("Error: %s", err)
+			render.Status(r, http.StatusInternalServerError)
+			return
+		}
+		request.AutoSummary = video_data.Items[0].Snippet.Title
+		request.ImgURL = video_data.Items[0].Snippet.Thumbnails.Default.URL
+		request.URL = "https://www.youtube.com/watch?v=" + id
+
+	} else {
+		resp, err := util.ResolveURL(request.NewLink.URL)
+		if err != nil {
+			render.Render(w, r, e.ErrInvalidRequest(err))
+			return
+		}
+		defer resp.Body.Close()
+
+		// save updated URL (after any redirects e.g., to wwww.)
+		// remove trailing slash
+		request.URL = strings.TrimSuffix(resp.Request.URL.String(), "/")
+
+		meta := util.GetMetaFromHTMLTokens(resp.Body)
+		util.AssignMetadata(meta, request)
+	}
 
 	// Check URL is unique
 	// Note: this comes after ResolveURL() because
@@ -94,14 +145,11 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	request.SubmittedBy = req_login_name
 
-	meta := util.GetMetaFromHTMLTokens(resp.Body)
-	util.AssignMetadata(meta, request)
-
 	unsorted_cats := request.NewLink.Cats
 	util.AssignSortedCats(unsorted_cats, request)
 
 	// Insert link
-	_, err = db.Client.Exec(
+	_, err := db.Client.Exec(
 		"INSERT INTO Links VALUES(?,?,?,?,?,?,?);",
 		request.ID,
 		request.URL,

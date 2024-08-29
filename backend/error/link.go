@@ -16,6 +16,7 @@ var (
 	ErrNoPeriod      error = errors.New("no period provided")
 	// Add link
 	ErrNoURL             error = errors.New("no URL provided")
+	ErrInvalidURL        error = errors.New("invalid URL provided")
 	ErrRedirect          error = errors.New("invalid link destination: redirect detected")
 	ErrCannotLikeOwnLink error = errors.New("cannot like your own link")
 	ErrLinkAlreadyLiked  error = errors.New("link already liked")

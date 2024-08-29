@@ -19,6 +19,9 @@
 -Cat search on index/top.astro
 -Strip spaces from tag start/end
 -Fix links endpoints in frontend
+-Quick link to existing link if attempting to submit duplicate
+-Adjust new link handler to request from YT Data API if user submits a YT video link
+    -e.g., https://www.googleapis.com/youtube/v3/videos?id=MH03ZJaNe8A&key={key}&part=snippet
 
 ### Code Quality
 
@@ -43,9 +46,6 @@
     -Fuzzysort?
 -Properly backup DB
 -Rethink CalculateGlobalCategories algo
-    -currently makes it difficult, unless submitting first tag or soon after first, to affect global cats
-    -might allow many user-submitted tags to flood global tag ... but probably not since would require different cats from many users
-        -(could also always just limit to top, idk, 10 cats)
 -Favorite tmaps
     -add favorites col to users table
     -'Add to Favorites' button on other user's tmap
@@ -64,13 +64,13 @@
 -Other tests
     -finish handlers
     -handler utils
+        -TestExtractMetaDataFromGoogleAPIsResponse()
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
     -model utils
 -Look into broken auto og:image
     -e.g., coolers.co image should not have been added with invalid link
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
-    -Edit about causes large layout shift / squishing
 -Redis caching
 
 ## Why?
@@ -133,3 +133,5 @@ Users can like listed links to boost them, so in theory the most univerally appr
 - LetsEncrypt / Certbot / NameCheap SSL
 - tmux
     - detach from / reattach to SSH session to safely exit terminal and leave running
+- YouTube Data API
+    - Register Google API key

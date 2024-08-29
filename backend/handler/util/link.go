@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"encoding/json"
+	"io"
 	"slices"
 	"strings"
 
@@ -110,6 +112,21 @@ func PaginateLinks[T model.LinkSignedIn | model.Link](links *[]T, page int) (int
 }
 
 // Add link
+func IsYouTubeVideoLink(url string) bool {
+	return strings.Contains(url, "youtube.com/watch?v=")
+}
+
+func ExtractYouTubeVideoID(url string) string {
+	return strings.Split(strings.Split(url, "&")[0], "?v=")[1]
+}
+
+func ExtractMetaDataFromGoogleAPIsResponse(body io.Reader) (model.YTVideoMetaData, error) {
+	var meta model.YTVideoMetaData
+
+	err := json.NewDecoder(body).Decode(&meta)
+	return meta, err
+}
+
 func ResolveURL(url string) (*http.Response, error) {
 	protocols := []string{"", "https://", "http://"}
 
