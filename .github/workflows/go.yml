@@ -9,12 +9,15 @@ on:
   pull_request:
     branches: [ "main" ]
 
+defaults:
+ run:
+  working-directory: ./backend
+
 jobs:
 
   build:
     runs-on: ubuntu-latest
     steps:
-    - working-directory: /backend
     - uses: actions/checkout@v4
 
     - name: Set up Go
