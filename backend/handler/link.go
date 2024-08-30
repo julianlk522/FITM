@@ -202,6 +202,14 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if request.NewLink.Summary != "" {
+		request.Summary  = request.NewLink.Summary
+	} else if request.AutoSummary != "" {
+		request.Summary  = request.AutoSummary
+	} else {
+		request.Summary  = ""
+	}
+
 	// Insert tag
 	_, err = db.Client.Exec(
 		"INSERT INTO Tags VALUES(?,?,?,?,?);",
@@ -223,7 +231,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		SubmittedBy:  request.SubmittedBy,
 		SubmitDate:   request.SubmitDate,
 		Cats:         request.Cats,
-		Summary:      request.NewLink.Summary,
+		Summary:      request.Summary,
 		SummaryCount: request.SummaryCount,
 		ImgURL:       request.ImgURL,
 	}

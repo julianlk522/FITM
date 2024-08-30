@@ -15,8 +15,6 @@
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
--Verify that tag last updated is working
--Fix Auto Summary not being used if only summary
 -Fix time frontend display
     -Tag Page
 -Fix Link.tsx tag cat sort order
