@@ -1,6 +1,12 @@
 .summary {
-	margin: 2rem 0 0;
+	margin: 1rem 0 0;
 }
 astro-island:first-of-type li.summary {
 	margin-top: 0;
+}
+
+@media (min-width: 768px) {
+	.summary {
+		margin-top: 2rem;
+	}
 }

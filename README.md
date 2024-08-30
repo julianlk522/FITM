@@ -23,8 +23,6 @@
 -Strip spaces from tag start/end
 -Fix links endpoints in frontend
 -Quick link to existing link if attempting to submit duplicate
--Space between new links
-    -2rem (same as summaries)
 -Guidelines / heuristics for avoiding "marooned" tags
     -only proper nouns / abbreviations should be capitalized?
 -Remove link to Auto Summary map on summaries page
@@ -81,6 +79,7 @@
     -e.g., coolers.co image should not have been added with invalid link
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
+    -Link preview img srcset
 -Redis caching
 
 ## Why?
