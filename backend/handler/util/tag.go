@@ -160,6 +160,18 @@ func UserHasTaggedLink(login_name string, link_id string) (bool, error) {
 
 }
 
+func AlphabetizeCats(cats string) string {
+	split_cats := strings.Split(cats, ",")
+	slices.SortFunc(split_cats, func(i, j string) int {
+		if strings.ToLower(i) < strings.ToLower(j) {
+			return -1
+		}
+		return 1
+	})
+
+	return strings.Join(split_cats, ",")
+}
+
 // Edit tag
 func UserSubmittedTagWithID(login_name string, tag_id string) (bool, error) {
 	var t sql.NullString
@@ -173,13 +185,6 @@ func UserSubmittedTagWithID(login_name string, tag_id string) (bool, error) {
 
 	return true, nil
 
-}
-
-func AlphabetizeCats(cats string) string {
-	split_cats := strings.Split(cats, ",")
-	slices.Sort(split_cats)
-
-	return strings.Join(split_cats, ",")
 }
 
 func GetLinkIDFromTagID(tag_id string) (string, error) {
@@ -276,8 +281,16 @@ func AlphabetizeOverlapScoreCats(scores map[string]float32) []string {
 	for cat := range scores {
 		cats = append(cats, cat)
 	}
-	slices.Sort(cats)
 
+	slices.SortFunc(cats, func(i, j string) int {
+		if scores[i] > scores[j] {
+			return -1
+		} else if scores[i] == scores[j] && strings.ToLower(i) < strings.ToLower(j) {
+			return -1
+		}
+		return 1
+	})
+	
 	return cats
 }
 

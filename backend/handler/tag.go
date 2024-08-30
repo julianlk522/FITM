@@ -170,6 +170,8 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tag_data.Cats = util.AlphabetizeCats(tag_data.Cats)
+
 	_, err = db.Client.Exec(
 		"INSERT INTO Tags VALUES(?,?,?,?,?);",
 		tag_data.ID,

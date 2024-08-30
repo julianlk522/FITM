@@ -9,7 +9,7 @@ export function format_long_date(date: string): string {
 		hour: 'numeric',
 		minute: 'numeric',
 		hour12: true,
-		timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+		timeZone: 'UTC',
 	}).format(date_obj)
 }
 
@@ -22,6 +22,6 @@ export function format_short_date(date: string): string {
 		day: 'numeric',
 		year: 'numeric',
 		hour12: true,
-		timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+		timeZone: 'UTC',
 	}).format(date_obj)
 }

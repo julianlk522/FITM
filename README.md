@@ -15,9 +15,6 @@
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
--Fix time frontend display
-    -Tag Page
--Fix Link.tsx tag cat sort order
 -Change "Error: Missing Cat" to something like "Error: input is empty"
 -Add some space before "Add Cat" / "Add Summary" button
     -Also edit "Submit" to "Add Summary" for consistency
@@ -30,6 +27,7 @@
     -2rem (same as summaries)
 -Guidelines / heuristics for avoiding "marooned" tags
     -only proper nouns / abbreviations should be capitalized?
+-Remove link to Auto Summary map on summaries page
 
 ### Code Quality
 
