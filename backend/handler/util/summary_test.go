@@ -3,9 +3,10 @@ package handler
 import (
 	"context"
 	"net/http"
+	"testing"
+
 	m "github.com/julianlk522/fitm/middleware"
 	"github.com/julianlk522/fitm/model"
-	"testing"
 )
 
 // Get summaries
@@ -154,7 +155,7 @@ func TestLinkHasOneSummaryLeft(t *testing.T) {
 }
 
 // Like / unlike summary
-func TestSummarySubmittedByuser(t *testing.T) {
+func TestSummarySubmittedByUser(t *testing.T) {
 	var test_summary_ids = []struct {
 		ID                  string
 		SubmittedByTestUser bool

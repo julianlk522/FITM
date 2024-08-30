@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strconv"
 
 	"net/http"
 
@@ -185,14 +184,14 @@ func LinkHasOneSummaryLeft(link_id string) (bool, error) {
 
 // Like / unlike summary
 func SummarySubmittedByUser(summary_id string, user_id string) (bool, error) {
-	var submitted_by sql.NullInt64
+	var submitted_by sql.NullString
 	err := db.Client.QueryRow("SELECT submitted_by FROM Summaries WHERE id = ?", summary_id).Scan(&submitted_by)
 
 	if err != nil && err != sql.ErrNoRows {
 		return false, err
 	}
 
-	return strconv.FormatInt(submitted_by.Int64, 10) == user_id, nil
+	return submitted_by.String == user_id, nil
 }
 
 func UserHasLikedSummary(user_id string, summary_id string) (bool, error) {
