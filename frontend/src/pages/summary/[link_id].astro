@@ -35,9 +35,11 @@ const { Link: link, Summaries: summaries } = summary_data
 // unless it is a tie between "Auto Summary" and 1+ others
 // (in that case, the next highest first)
 summaries.sort((a, b) => a.SubmittedBy == 'Auto Summary' ? 1 : b.LikeCount - a.LikeCount || a.Text.localeCompare(b.Text))
+
+const page_title = link.Summary ? `Summaries for "${link.Summary}"` : 'Link Summaries'
 ---
 
-<Layout Title=`Summaries for ${link.Summary}`>
+<Layout Title={page_title}>
 	<script>
 		function handle_redirect() {
 			document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=21600; SameSite=strict; Secure`

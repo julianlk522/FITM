@@ -18,12 +18,10 @@
 -Fix Auto Summary not being used if only summary
 -Fix time frontend display
     -Tag Page
--Fix tag page title
 -Fix Link.tsx tag cat sort order
--Fix SQL identifiers to use double quotes (?)
-    -verify first
 -Change "Error: Missing Cat" to something like "Error: input is empty"
--Add some space before "Add Cat" button
+-Add some space before "Add Cat" / "Add Summary" button
+    -Also edit "Submit" to "Add Summary" for consistency
 -Make mobile buttons more visible
 -Cat search on index/top.astro
 -Strip spaces from tag start/end
@@ -75,6 +73,8 @@
     -ScanTmapLinks tests
     -BuildTagPage helper to declutter GetTagPage handler
     -duplicate handle_redirect() helpers on tag page / summary page
+    -Fix SQL identifiers to use double quotes (?)
+        -verify first
 -Other tests
     -finish handlers
     -handler utils

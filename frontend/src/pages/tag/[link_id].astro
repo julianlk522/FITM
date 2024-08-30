@@ -27,9 +27,11 @@ if (get_tags_resp.status > 399) {
 const tag_Data: TagPage = await get_tags_resp.json()
 const { Link: link, UserTag: user_tag, TagRankings: top_tags } = tag_Data
 link.TagCount = top_tags.length
+
+const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 ---
 
-<Layout Title=`Tags for ${tag_Data.Link.Summary}`>
+<Layout Title={page_title}>
 	<script>
 		function handle_redirect() {
 			document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=21600; SameSite=strict; Secure`
