@@ -72,7 +72,7 @@ const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 					<ol>
 						{top_tags.map((tag) => (
 							<li class='tag'>
-								<ul id='cat_list'>
+								<ul id='cat-list'>
 									{tag.Cats.split(',').map((tag) => {
 										return (
 											<TagCat
@@ -109,11 +109,5 @@ const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 	}
 	.tag:not(:last-child) {
 		margin-bottom: 2rem;
-	}
-	#cat_list {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 10px;
-		padding-inline-start: 0px;
 	}
 </style>

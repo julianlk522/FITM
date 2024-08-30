@@ -59,7 +59,7 @@ export default function NewTag(props: Props) {
 				Add Cat
 			</button>
 
-			<ol id='cat_list'>
+			<ol id='cat-list'>
 				{cats.map((cat) => (
 					<TagCat
 						Cat={cat}

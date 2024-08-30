@@ -144,7 +144,7 @@ export default function EditTag(props: Props) {
 			{error ? <p class='error'>{`Error: ${error}`}</p> : null}
 
 			{tag || (editing && cats.length) ? (
-				<ol id='cat_list'>
+				<ol id='cat-list'>
 					{cats.map((cat) => (
 						<TagCat
 							Cat={cat}

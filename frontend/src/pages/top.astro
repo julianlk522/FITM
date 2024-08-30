@@ -107,6 +107,10 @@ if (links && links.length) {
 	top_contributors = await contributors_resp.json()
 }
 
+const is_only_page = 
+	page === 1
+	&& data.NextPage === -1
+
 const page_title =
 	cats
 		? cats
@@ -214,11 +218,11 @@ const page_title =
 					<section>
 						<h2>Top Links</h2>
 
-						<Pagination
+						{is_only_page ? null : <Pagination 
 							Period={period}
 							Page={page}
 							NextPage={data.NextPage}
-						/>
+						/>}
 
 						{/* TODO: replace magic page limit number */}
 						<ol id='top-links' start={(page - 1) * 20 + 1}>
@@ -280,4 +284,6 @@ const page_title =
 	:is(li a, li strong:has(a)):has(+ span) {
 		display: inline-block;
 	}
+
+	
 </style>

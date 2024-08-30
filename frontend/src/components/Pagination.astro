@@ -17,6 +17,8 @@ const is_only_page =
 	Page:
 	{page > 1 ? <a href={`/top?period=${period}`}>1</a> : null}
 
+	{ page > 3 ? <span>...</span> : null}
+
 	{
 		page > 2 ? (
 			<span>
@@ -35,31 +37,3 @@ const is_only_page =
 		) : null
 	}
 </nav>
-
-<style>
-	#scroll-to-top {
-		display: none;
-		background-color: transparent;
-		border: none;
-		color: white;
-		flex-direction: column;
-		align-items: center;
-		position: fixed;
-		bottom: 10px;
-		right: max(24px, calc((100% - min(100%, 1080px)) / 2));
-	}
-	#scroll-to-top svg {
-		width: 24px;
-		height: 24px;
-	}
-	#scroll-to-top p {
-		font-size: 0.9rem;
-		margin: 0;
-	}
-	#scroll-to-top:hover {
-		cursor: pointer;
-	}
-	#scroll-to-top.visible {
-		display: flex;
-	}
-</style>

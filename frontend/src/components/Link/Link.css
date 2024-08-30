@@ -9,7 +9,7 @@ astro-island:first-of-type li.link {
 }
 .preview {
 	display: inline-flex;
-	gap: 20px;
+	gap: 1rem;
 	vertical-align: top;
 	overflow: scroll;
 }
@@ -34,7 +34,7 @@ a.url-anchor {
 	max-width: calc(100% - 32px);
 
 	span:first-of-type {
-		margin-left: 5px;
+		margin-left: 3px;
 	}
 
 	a:visited {
@@ -44,7 +44,6 @@ a.url-anchor {
 .like-btn,
 .copy-btn {
 	border-radius: 2px;
-	margin-right: 5px;
 }
 .like-btn.liked,
 .copy-btn.copied {
@@ -56,7 +55,8 @@ a.url-anchor {
 .same-user-like-count {
 	display: inline-flex;
 	align-items: center;
-	gap: 5px;
+	gap: 3px;
+	margin-top: 1rem;
 }
 p,
 button,

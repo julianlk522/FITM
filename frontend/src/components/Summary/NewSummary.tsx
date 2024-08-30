@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import { SUMMARIES_ENDPOINT } from '../../constants'
 import { is_error_response } from '../../types'
+import './NewSummary.css'
 
 interface Props {
 	Token: string
@@ -56,7 +57,9 @@ export default function NewSummary(props: Props) {
 
 			<label for='summary'>Add New Summary</label>
 			<input type='text' id='summary' name='summary' />
-			<button type='submit'>Submit</button>
+			<button id='submit-new-summary' type='submit'>
+				Submit
+			</button>
 		</form>
 	)
 }

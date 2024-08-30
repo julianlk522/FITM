@@ -16,15 +16,11 @@
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
 -Change "Error: Missing Cat" to something like "Error: input is empty"
--Add some space before "Add Cat" / "Add Summary" button
-    -Also edit "Submit" to "Add Summary" for consistency
 -Make mobile buttons more visible
 -Cat search on index/top.astro
 -Strip spaces from tag start/end
 -Fix links endpoints in frontend
 -Quick link to existing link if attempting to submit duplicate
--Guidelines / heuristics for avoiding "marooned" tags
-    -only proper nouns / abbreviations should be capitalized?
 -Remove link to Auto Summary map on summaries page
 
 ### Code Quality
@@ -41,7 +37,8 @@
 ## To-Maybe-Dos
 
 -robots.txt
--Make long URL link scrollbar less ugly
+-Guidelines / heuristics for avoiding "marooned" tags
+    -only proper nouns / abbreviations should be capitalized?
 -Tmap period filter
 -Better way to visualize how Global Cats are determined
 -Show number of copies along with number of likes in frontend
@@ -80,6 +77,7 @@
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
     -Link preview img srcset
+    -Make long URL link scrollbar less ugly
 -Redis caching
 
 ## Why?

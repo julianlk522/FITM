@@ -118,7 +118,7 @@ let user = Astro.cookies.get('user')?.value
 
 			label {
 				display: block;
-				margin-top: 5px;
+				margin-top: 3px;
 			}
 
 			textarea {
@@ -144,7 +144,7 @@ let user = Astro.cookies.get('user')?.value
 		}
 
 		button.img-btn {
-			padding: 3px 5px 0px;
+			padding: 3px 3px 0px;
 			margin-top: 0;
 			min-width: fit-content;
 			background-color: transparent;
@@ -175,6 +175,17 @@ let user = Astro.cookies.get('user')?.value
 			margin-top: 0.5rem;
 			margin-left: auto;
 			padding: 0;
+		}
+
+		nav.pagination + ol#top-links {
+			margin-top: 0;
+		}
+
+		#cat-list {
+			display: flex;
+			flex-wrap: wrap;
+			padding-inline-start: 0;
+			gap: 5px;
 		}
 
 		.error {

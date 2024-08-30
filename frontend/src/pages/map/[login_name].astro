@@ -137,7 +137,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 					<a href={`/map/${login_name}`}>Reset</a>
 				</p>
 			</div>
-			<ul id='cats-grid'>
+			<ul id='cat-list'>
 				{
 					cats_split.length > 1 ? (
 						cats_split.map((cat) => {
@@ -264,12 +264,8 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 			margin: 0;
 		}
 
-		#cats-grid {
-			display: flex;
-			flex-wrap: wrap;
-			align-content: flex-start;
-			padding-inline-start: 0;
-			gap: 10px;
+		#cat-list {
+			margin-bottom: 0;
 		}
 	}
 
@@ -325,7 +321,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 				margin: 0;
 			}
 			
-			#cats-grid {
+			#cat-list {
 				margin: 0 auto;
 				align-content: center;
 			}
