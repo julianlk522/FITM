@@ -22,6 +22,7 @@
 -Fix links endpoints in frontend
 -Quick link to existing link if attempting to submit duplicate
 -Remove link to Auto Summary map on summaries page
+-Home page pagination
 
 ### Code Quality
 
@@ -33,6 +34,7 @@
 -Purge code duplication
     -Layout.astro, Feedback.astro styles
         -NoFooter.astro for Feedback, BaseLayout extends NoFooter and is used elsewhere
+    -handler_test / util_test TestMain()s
 
 ## To-Maybe-Dos
 

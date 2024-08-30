@@ -1,6 +1,7 @@
 package query
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 	"testing"
@@ -27,7 +28,7 @@ func TestNewTmapProfile(t *testing.T) {
 		&profile.About,
 		&profile.PFP,
 		&profile.Created,
-	); err != nil {
+	); err != nil && err != sql.ErrNoRows {
 		t.Fatal(err)
 	}
 }

@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 	defer TestClient.Close()
 
 	db.Client = TestClient
-	log.Printf("switched connection to in-memory test DB")
+	log.Printf("switched connection to in-memory test DB (util_test.go)")
 
 	_, util_file, _, _ := runtime.Caller(0)
 	util_dir := filepath.Dir(util_file)
