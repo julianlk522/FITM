@@ -43,7 +43,7 @@ func TestMain(m *testing.M) {
 	_, util_file, _, _ := runtime.Caller(0)
 	util_dir := filepath.Dir(util_file)
 	db_dir := filepath.Join(util_dir, "../../db")
-	sql_dump_path := filepath.Join(db_dir, "_fitm.db.sql")
+	sql_dump_path := filepath.Join(db_dir, "test_db.sql")
 	sql_dump, err := os.ReadFile(sql_dump_path)
 	if err != nil {
 		log.Fatal(err)
