@@ -23,7 +23,7 @@ const TAG_PAGE_LINK_BASE_FIELDS = `SELECT
 	sd, 
 	cats, 
 	summary,
-	summary_count, 
+	COALESCE(summary_count,0) as summary_count, 
 	COUNT('Link Likes'.id) as like_count, 
 	img_url`
 
