@@ -6,7 +6,6 @@ astro-island:first-of-type li.link {
 }
 .link.single {
 	list-style: none;
-	margin-bottom: 0.5rem;
 }
 .preview {
 	display: inline-flex;
