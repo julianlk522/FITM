@@ -197,7 +197,11 @@ func SummarySubmittedByUser(summary_id string, user_id string) (bool, error) {
 
 func UserHasLikedSummary(user_id string, summary_id string) (bool, error) {
 	var summary_like_id sql.NullString
-	err := db.Client.QueryRow("SELECT id FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?", user_id, summary_id).Scan(&summary_like_id)
+
+	err := db.Client.QueryRow(
+		"SELECT id FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?", user_id, 
+		summary_id,
+	).Scan(&summary_like_id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil

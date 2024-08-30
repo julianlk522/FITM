@@ -16,7 +16,6 @@
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
 -Fix Auto Summary not being used if only summary
--Fix broken summary likes
 -Fix time frontend display
     -Tag Page
 -Fix tag page title
@@ -32,6 +31,7 @@
 -Fix links endpoints in frontend
 -Quick link to existing link if attempting to submit duplicate
 -Space between new links
+    -2rem (same as summaries)
 -Guidelines / heuristics for avoiding "marooned" tags
     -only proper nouns / abbreviations should be capitalized?
 

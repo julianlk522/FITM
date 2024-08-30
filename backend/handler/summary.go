@@ -183,6 +183,15 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	req_login_name := r.Context().Value(m.LoginNameKey).(string)
+	user_exists, err := util.UserExists(req_login_name)
+	if err != nil {
+		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
+		} else if !user_exists {
+			render.Render(w, r, e.ErrInvalidRequest(e.ErrNoUserWithLoginName))
+		}
+		
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	owns_summary, err := util.SummarySubmittedByUser(summary_id, req_user_id)
 	if err != nil {
@@ -205,8 +214,8 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 	_, err = db.Client.Exec(
 		`INSERT INTO 'Summary Likes' VALUES (?,?,?)`,
 		uuid.New().String(),
-		req_user_id,
 		summary_id,
+		req_user_id,
 	)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
