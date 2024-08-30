@@ -79,7 +79,6 @@
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
     -Link preview img srcset
-    -Make long URL link scrollbar less ugly
 -Redis caching
 
 ## Why?
@@ -144,3 +143,6 @@ Users can like listed links to boost them, so in theory the most univerally appr
     - detach from / reattach to SSH session to safely exit terminal and leave running
 - YouTube Data API
     - Register Google API key
+- Bash scripting
+    - modified https://stackoverflow.com/a/76544267 for FITM
+    - sourcing .bashrc from /etc/profile on if exists and readable

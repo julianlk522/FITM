@@ -12,18 +12,26 @@ astro-island:first-of-type li.link {
 	gap: 1rem;
 	vertical-align: top;
 	overflow: scroll;
+
+	img {
+		object-fit: cover;
+	}
 }
-.preview img {
-	object-fit: cover;
-}
-.url {
-	font-size: 0.9rem;
-	word-wrap: break-word;
-}
+
 a.url-anchor {
 	display: block;
 	width: fit-content;
 }
+
+p.url {
+	font-size: 0.9rem;
+}
+
+a.url-anchor h3,
+p.url {
+	overflow-wrap: anywhere;
+}
+
 .summaries a:not(:visited),
 .summaries a:visited,
 .tags .tags-page-link:not(:visited),
