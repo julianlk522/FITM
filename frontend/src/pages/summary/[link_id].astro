@@ -34,7 +34,19 @@ const { Link: link, Summaries: summaries } = summary_data
 // put summary with highest like count first,
 // unless it is a tie between "Auto Summary" and 1+ others
 // (in that case, the next highest first)
-summaries.sort((a, b) => a.SubmittedBy == 'Auto Summary' ? 1 : b.LikeCount - a.LikeCount || a.Text.localeCompare(b.Text))
+summaries.sort((a, b) => {
+	if (a.LikeCount !== b.LikeCount) {
+		return b.LikeCount - a.LikeCount;
+	}
+	
+	if (a.SubmittedBy === 'Auto Summary') {
+		return 1;
+	} else if (b.SubmittedBy === 'Auto Summary') {
+		return -1;
+	}
+	
+	return a.Text.localeCompare(b.Text);
+})
 
 const page_title = link.Summary ? `Summaries for "${link.Summary}"` : 'Link Summaries'
 ---
