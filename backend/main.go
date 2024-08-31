@@ -99,10 +99,9 @@ func main() {
 
 		r.Get("/map/{login_name}", h.GetTreasureMap)
 
-		r.Route("/links", func(r chi.Router) {
-			r.Use(m.Pagination)
-			r.Get("/top", h.GetLinks)
-		})
+		r.
+			With(m.Pagination).
+			Get("/links", h.GetLinks)
 
 		r.Get("/summaries/{link_id}", h.GetSummaryPage)
 		r.Get("/tags/{link_id}", h.GetTagPage)

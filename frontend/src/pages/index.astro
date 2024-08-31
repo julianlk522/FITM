@@ -1,7 +1,7 @@
 ---
 import Link from '../components/Link/Link'
 import ScrollUp from '../components/ScrollUp.astro'
-import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, TOP_LINKS_ENDPOINT } from '../constants'
+import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
 import Layout from '../layouts/Layout.astro'
 import { Periods, type CatCount, type Contributor, type PaginatedLinks } from '../types'
 
@@ -23,7 +23,7 @@ const top_contributors: Contributor[] = await top_contributors_resp.json()
 
 // Get top links
 const DEFAULT_PERIOD = Periods[2] // month
-const links_url = TOP_LINKS_ENDPOINT + `?period=${DEFAULT_PERIOD}`
+const links_url = LINKS_ENDPOINT + `?period=${DEFAULT_PERIOD}`
 const get_links_resp = await (token
 	? fetch(links_url, {
 			headers: { Authorization: `Bearer ${token}` },

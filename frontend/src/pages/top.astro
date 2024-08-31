@@ -2,7 +2,7 @@
 import Link from '../components/Link/Link'
 import Pagination from '../components/Pagination.astro'
 import ScrollUp from '../components/ScrollUp.astro'
-import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, TOP_LINKS_ENDPOINT } from '../constants'
+import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
 import Layout from '../layouts/Layout.astro'
 import {
 Periods,
@@ -38,7 +38,7 @@ if (
 }
 
 // Get links
-let links_url = TOP_LINKS_ENDPOINT
+let links_url = LINKS_ENDPOINT
 
 let has_period = false
 if (period !== 'all') {
