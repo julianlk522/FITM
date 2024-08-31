@@ -44,6 +44,7 @@
 -robots.txt
 -Guidelines / heuristics for avoiding "marooned" tags
     -only proper nouns / abbreviations should be capitalized?
+-Optional topical summaries that can be provided if you submit / like enough links with a certain cat?
 -Tmap period filter
 -Better way to visualize how Global Cats are determined
 -Show number of copies along with number of likes in frontend

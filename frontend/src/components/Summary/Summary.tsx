@@ -99,16 +99,14 @@ export default function Summary(props: Props) {
 		<li class='summary'>
 			"{text}"
 			<p>
-				<strong>Submitted by</strong>{' '}
+				submitted by{' '}
 				{submitted_by === 'Auto Summary' ? (
-					'Auto Summary'
+					<span class='auto-summary'>Auto Summary</span>
 				) : (
 					<a href={`/map/${submitted_by}`}>{submitted_by}</a>
 				)}
 			</p>
-			<p>
-				<strong>Last Updated</strong>: {format_long_date(last_updated)}
-			</p>
+			<p>last updated: {format_long_date(last_updated)}</p>
 			{user !== submitted_by ? (
 				<button
 					onClick={handle_like}

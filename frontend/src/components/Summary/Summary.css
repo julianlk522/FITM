@@ -5,6 +5,10 @@ astro-island:first-of-type li.summary {
 	margin-top: 0;
 }
 
+.auto-summary {
+	color: var(--text-treasurey-dark);
+}
+
 @media (min-width: 768px) {
 	.summary {
 		margin-top: 2rem;
