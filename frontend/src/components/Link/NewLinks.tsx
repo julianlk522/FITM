@@ -23,10 +23,10 @@ export default function NewLinks(props: Props) {
 		const formData = new FormData(form)
 		const url = formData.get('url')
 		if (!url) {
-			set_error('missing URL')
+			set_error('Missing URL')
 			return
 		} else if (!cats.length) {
-			set_error('missing tag')
+			set_error('Missing tag')
 			return
 		}
 

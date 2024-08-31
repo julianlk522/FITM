@@ -41,7 +41,7 @@ export default function EditTag(props: Props) {
 		const cat = formData.get('cat')?.toString()
 
 		if (!cat) {
-			set_error('Missing cat')
+			set_error('Input is empty')
 			return
 		}
 

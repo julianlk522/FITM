@@ -15,12 +15,18 @@
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
--Change "Error: Missing Cat" to something like "Error: input is empty"
+-Look into input sequences that might produce problematic results
+    -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
+-Change about "optional"
 -Cat search on index/top.astro
 -Strip spaces from tag start/end
 -Fix links endpoints in frontend
+-Fix times off by 4 hrs... again
+    -12h time might be screwing it up (just got 1:28pm for 5:28am)
+        -btw lol
 -Quick link to existing link if attempting to submit duplicate
 -Home page pagination
+-Lowercase link.tsx "Submitted by", "Tag", "Summaries"
 
 ### Code Quality
 
@@ -33,6 +39,8 @@
     -Layout.astro, Feedback.astro styles
         -NoFooter.astro for Feedback, BaseLayout extends NoFooter and is used elsewhere
     -handler_test / util_test TestMain()s
+-CI/CD
+    -cronjob to backup db every day or so
 
 ## To-Maybe-Dos
 
@@ -78,6 +86,8 @@
 -Improve frontend A11y/semantic markup/looks
     -Link preview img srcset
     -Tiny bit more space between like/copy buttons on mobile
+    -maybe go through BrowserStack and see if anything is horrendous
+    -add proper favicon.ico
 -Redis caching
 
 ## Why?

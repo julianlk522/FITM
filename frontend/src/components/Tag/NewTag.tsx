@@ -34,12 +34,12 @@ export default function NewTag(props: Props) {
 		const cat = formData.get('cat')?.toString()
 
 		if (!cat) {
-			set_error('Missing cat')
+			set_error('Input is empty')
 			return
 		}
 
 		if (cats.includes(cat)) {
-			set_error('Category already added')
+			set_error('Cat already added')
 			return
 		}
 
