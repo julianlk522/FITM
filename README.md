@@ -18,9 +18,6 @@
 -Look into input sequences that might produce problematic results
     -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
 -Cat search on index/top.astro
--Fix times off by 4 hrs... again
-    -12h time might be screwing it up (just got 1:28pm for 5:28am)
-        -btw lol
 -Quick link to existing link if attempting to submit duplicate
 -Home page pagination
 
