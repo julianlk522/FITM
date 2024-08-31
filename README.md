@@ -4,9 +4,10 @@
 
 ### Features
 
--Look into input sequences that might produce problematic results
-    -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
+-frontend display for when you get rate limited
 -Cat search on index/top.astro
+    -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads
+    -For nearly identical cats with slight differences, maybe have a prompt on load that says like "would you like to reload and include these results too?"
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
@@ -29,38 +30,43 @@
     -handler_test / util_test TestMain()s
 -CI/CD
     -cronjob to backup db every day or so
+-Security
+    -Look into input sequences that might produce problematic results
+        -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
 
 ## To-Maybe-Dos
 
--robots.txt
+### Features
+
+-SQL prepared statements
+    -more important if truly does help prevent injection... verify
+-Redis caching
+-Favorite tmaps?
+-Show number of copies along with number of likes in frontend
+-Better way to visualize how Global Cats are determined?
+-Optional summaries that can be edited if you submit / like enough links with a certain cat?
+    -i.e., if you submit enough links with cat "FOSS" you get to add a wiki-like summary of "FOSS" that appears on the top page when it is applied alone
 -Guidelines / heuristics for avoiding "marooned" tags
     -only proper nouns / abbreviations should be capitalized?
--Optional topical summaries that can be provided if you submit / like enough links with a certain cat?
--Tmap period filter
--Better way to visualize how Global Cats are determined
--Show number of copies along with number of likes in frontend
--Edit category filters directly on top links by period/category(ies) page
-    -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads
--Search for existing tag cats while adding/editing
-    -Fuzzysort?
-    -For nearly identical cats with slight differences, maybe have a prompt on load that says like "would you like to reload and include these results too?"
--Properly backup DB
+-Tmap period filter?
+-Improve profile pic upload?
+-Improve frontend A11y/semantic markup/looks
+    -proper favicon.ico
+    -Link preview img srcset
+    -Tiny bit more space between like/copy buttons on mobile
+    -maybe go through BrowserStack and see if anything is horrendous
 -Rethink CalculateGlobalCategories algo
--Favorite tmaps
-    -add favorites col to users table
-    -'Add to Favorites' button on other user's tmap
-    -'Favorites' link on tmap
-    -{user}'s favorite tmaps page
--SQL prepared statements
+
+### Code Quality
+
 -Better logging?
     (Zap)
 -Other lesser refactors and removal of duplicate code
-    -shared TestClient?
+    -duplicate handle_redirect() helpers on tag page / summary page
+    -BuildTagPage helper to declutter GetTagPage handler
+    -ScanTmapLinks tests
     -helpers for DB actions
         -(new link, new summary, update summary, etc.)
-    -ScanTmapLinks tests
-    -BuildTagPage helper to declutter GetTagPage handler
-    -duplicate handle_redirect() helpers on tag page / summary page
     -Fix SQL identifiers to use double quotes (?)
         -verify first
 -Other tests
@@ -72,13 +78,7 @@
 -Look into broken auto og:image
     -e.g., coolers.co image should not have been added with invalid link
     -https://rss.com/blog/how-do-rss-feeds-work/
--Improve profile pic upload?
--Improve frontend A11y/semantic markup/looks
-    -add proper favicon.ico
-    -Link preview img srcset
-    -Tiny bit more space between like/copy buttons on mobile
-    -maybe go through BrowserStack and see if anything is horrendous
--Redis caching
+-robots.txt
 
 ## Why?
 

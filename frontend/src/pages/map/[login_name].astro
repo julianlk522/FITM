@@ -59,14 +59,17 @@ const used_sections = tmap_sections.filter((s) => tmap[s].length)
 
 // Display about if used (unfiltered only)
 let profile: Profile | undefined
+let display_pfp = false
 let display_about = false
 let abbreviated_about: string | undefined
 
 if (!cats && tmap.hasOwnProperty('Profile')) {
 	profile = (tmap as TreasureMap).Profile
+	const has_pfp = profile.PFP !== undefined && profile.PFP.length > 0
+	display_pfp = has_pfp || is_signed_in_user
 
 	const has_about = profile.About !== undefined && profile.About.length > 0
-	display_about = (profile !== undefined && has_about) || is_signed_in_user
+	display_about = has_about || is_signed_in_user
 
 	abbreviated_about = profile.About.length > 200 ? `${profile.About.slice(0, 200)}...` : undefined
 }
@@ -81,7 +84,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 		</h2>
 
 		<!-- Profile  -->
-		 {profile ? (
+		 {profile !== undefined && (display_about || display_pfp) ? (
 			<section id="profile">
 				<ProfilePic 
 					client:load
