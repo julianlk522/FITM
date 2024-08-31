@@ -4,6 +4,10 @@
 
 ### Features
 
+-Look into input sequences that might produce problematic results
+    -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
+-Cat search on index/top.astro
+-Home page pagination
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
@@ -15,11 +19,6 @@
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
--Look into input sequences that might produce problematic results
-    -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
--Cat search on index/top.astro
--Quick link to existing link if attempting to submit duplicate
--Home page pagination
 
 ### Code Quality
 

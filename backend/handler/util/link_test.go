@@ -165,7 +165,7 @@ func TestResolveURL(t *testing.T) {
 	}
 }
 
-func TestURLAlreadyAdded(t *testing.T) {
+func TestLinkAlreadyAdded(t *testing.T) {
 	var test_urls = []struct {
 		URL   string
 		Added bool
@@ -177,7 +177,7 @@ func TestURLAlreadyAdded(t *testing.T) {
 	}
 
 	for _, u := range test_urls {
-		added := URLAlreadyAdded(u.URL)
+		added, _ := LinkAlreadyAdded(u.URL)
 		if u.Added && !added {
 			t.Fatalf("expected url %s to be added", u.URL)
 		} else if !u.Added && added {

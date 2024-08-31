@@ -135,10 +135,10 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check URL is unique
-	// Note: this comes after ResolveURL() because
-	// the URL may be mutated slightly
-	if util.URLAlreadyAdded(request.URL) {
-		render.Render(w, r, e.ErrInvalidRequest(e.DuplicateURL(request.URL)))
+	// this comes after ResolveURL() because may mutate slightly
+	if is_duplicate, dupe_link_id := util.LinkAlreadyAdded(request.URL); is_duplicate {
+		render.Status(r, http.StatusConflict)
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrDuplicateLink(request.URL, dupe_link_id)))
 		return
 	}
 

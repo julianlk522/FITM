@@ -159,11 +159,16 @@ func InvalidURLError(url string) error {
 	return fmt.Errorf("invalid URL: %s", url)
 }
 
-func URLAlreadyAdded(url string) bool {
-	var u sql.NullString
+func LinkAlreadyAdded(url string) (bool, string) {
+	var id sql.NullString
 
-	err := db.Client.QueryRow("SELECT url FROM Links WHERE url = ?", url).Scan(&u)
-	return err == nil && u.Valid
+	err := db.Client.QueryRow("SELECT id FROM Links WHERE url = ?", url).Scan(&id)
+
+	if err == nil && id.Valid {
+		return true, id.String
+	} else {
+		return false, ""
+	}
 }
 
 func AssignMetadata(meta HTMLMeta, link_data *model.NewLinkRequest) {

@@ -93,7 +93,7 @@ func (l *NewLinkRequest) Bind(r *http.Request) error {
 	if l.NewLink.URL == "" {
 		return e.ErrNoURL
 	} else if len(l.NewLink.URL) > util.URL_CHAR_LIMIT {
-		return e.LinkURLCharsExceedLimit(util.URL_CHAR_LIMIT)
+		return e.ErrLinkURLCharsExceedLimit(util.URL_CHAR_LIMIT)
 	}
 
 	switch {

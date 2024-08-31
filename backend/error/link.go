@@ -26,10 +26,14 @@ var (
 	ErrLinkNotCopied     error = errors.New("link not already copied")
 )
 
-func LinkURLCharsExceedLimit(limit int) error {
+func ErrLinkURLCharsExceedLimit(limit int) error {
 	return fmt.Errorf("url too long (max %d chars)", limit)
 }
 
-func DuplicateURL(url string) error {
-	return fmt.Errorf("duplicate URL: %s", url)
+func ErrDuplicateLink(url string, duplicate_link_id string) error {
+	return fmt.Errorf(
+		"duplicate URL: %s\nsee /tag/%s", 
+		url,
+		duplicate_link_id,
+	)
 }

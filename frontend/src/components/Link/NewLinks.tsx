@@ -14,6 +14,7 @@ export default function NewLinks(props: Props) {
 	const { Token: token } = props
 
 	const [error, set_error] = useState<string | undefined>(undefined)
+	const [dupe_url, set_dupe_url] = useState<string | undefined>(undefined)
 	const [cats, set_cats] = useState<string[]>([])
 	const [submitted_links, set_submitted_links] = useState<types.Link[]>([])
 
@@ -62,7 +63,15 @@ export default function NewLinks(props: Props) {
 			await new_link_resp.json()
 
 		if (is_error_response(new_link_data)) {
-			set_error(new_link_data.error)
+			if (new_link_data.error.startsWith('duplicate URL')) {
+				const dupe_URL = new_link_data.error.split('\nsee ')[1]
+				set_error('Duplicate submission')
+				set_dupe_url(dupe_URL)
+			} else {
+				set_error(new_link_data.error)
+				set_dupe_url(undefined)
+			}
+
 			return
 		} else {
 			new_link_data.IsTagged = true
@@ -71,6 +80,7 @@ export default function NewLinks(props: Props) {
 			set_submitted_links([...submitted_links, new_link_data])
 			set_cats([])
 			set_error(undefined)
+			set_dupe_url(undefined)
 			form.reset()
 		}
 
@@ -81,7 +91,17 @@ export default function NewLinks(props: Props) {
 		<>
 			<section id='new-link'>
 				<h2>New Link</h2>
-				{error ? <p class='error'>{`Error: ${error}`}</p> : null}
+				{error ? (
+					<p class='error'>
+						{`Error: ${error}`}
+						{dupe_url ? (
+							<>
+								{' '}
+								<a href={dupe_url}>View existing</a>
+							</>
+						) : null}
+					</p>
+				) : null}
 				<form onSubmit={async (e) => await handle_submit(e)}>
 					<label for='url'>URL</label>
 					<input type='text' id='url' name='url' />
