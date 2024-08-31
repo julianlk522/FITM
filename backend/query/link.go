@@ -39,8 +39,7 @@ img_url`
 
 const LINKS_AUTH_FIELDS = `,
 COALESCE(is_liked,0) as is_liked,
-COALESCE(is_copied,0) as is_copied,
-COALESCE(is_tagged,0) as is_tagged`
+COALESCE(is_copied,0) as is_copied`
 
 const LINKS_BASE_FROM = `
 FROM 
@@ -98,16 +97,6 @@ LEFT JOIN
 	GROUP BY copy_link_id
 	)
 ON copy_link_id = link_id
-LEFT JOIN
-	(
-	SELECT link_id as tlink_id2, count(*) as is_tagged
-	FROM Tags
-	JOIN Users
-	ON Tags.submitted_by = Users.login_name
-	WHERE Users.id = 'REQ_USER_ID'
-	GROUP BY tlink_id2
-	)
-ON tlink_id2 = link_id
 `
 
 const LINKS_BASE_GROUP_BY_ORDER_BY = `

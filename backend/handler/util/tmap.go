@@ -5,12 +5,13 @@ import (
 
 	"database/sql"
 	"net/http"
+	"slices"
+	"strings"
+
 	e "github.com/julianlk522/fitm/error"
 	m "github.com/julianlk522/fitm/middleware"
 	"github.com/julianlk522/fitm/model"
 	"github.com/julianlk522/fitm/query"
-	"slices"
-	"strings"
 )
 
 const TMAP_CATS_PAGE_LIMIT int = 12
@@ -58,7 +59,7 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 
-	// Requesting user signed in: get IsLiked / IsCopied / IsTagged for each link
+	// Requesting user signed in: get IsLiked / IsCopied for each link
 	if req_user_id != "" {
 		submitted_sql = submitted_sql.AsSignedInUser(req_user_id, req_login_name)
 		copied_sql = copied_sql.AsSignedInUser(req_user_id, req_login_name)
@@ -151,10 +152,9 @@ func ScanTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](sql query.Query) (
 				&l.TagCount,
 				&l.ImgURL,
 
-				// Add IsLiked / IsCopied / IsTagged
+				// Add IsLiked / IsCopied
 				&l.IsLiked,
-				&l.IsCopied,
-				&l.IsTagged)
+				&l.IsCopied)
 			if err != nil {
 				return nil, err
 			}

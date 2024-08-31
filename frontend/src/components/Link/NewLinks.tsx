@@ -74,7 +74,6 @@ export default function NewLinks(props: Props) {
 
 			return
 		} else {
-			new_link_data.IsTagged = true
 			new_link_data.TagCount = 1
 
 			set_submitted_links([...submitted_links, new_link_data])

@@ -173,7 +173,6 @@ func TestNewTmapSubmittedAsSignedInUser(t *testing.T) {
 			&l.ImgURL,
 			&l.IsLiked,
 			&l.IsCopied,
-			&l.IsTagged,
 		); err != nil {
 			t.Fatal(err)
 		}
@@ -310,7 +309,6 @@ func TestNewTmapCopiedAsSignedInUser(t *testing.T) {
 			&l.ImgURL,
 			&l.IsLiked,
 			&l.IsCopied,
-			&l.IsTagged,
 		); err != nil {
 			t.Fatal(err)
 		}
@@ -447,7 +445,6 @@ func TestNewTmapTaggedAsSignedInUser(t *testing.T) {
 			&l.ImgURL,
 			&l.IsLiked,
 			&l.IsCopied,
-			&l.IsTagged,
 		); err != nil {
 			t.Fatal(err)
 		}

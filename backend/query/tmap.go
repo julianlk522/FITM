@@ -33,11 +33,10 @@ const BASE_FIELDS = `SELECT
 const BASE_ORDER = ` 
 ORDER BY like_count DESC, summary_count DESC, link_id DESC;`
 
-// Authenticated: add IsLiked, IsCopied, IsTagged
+// Authenticated: add IsLiked, IsCopied
 const AUTH_FIELDS = `, 
 	COALESCE(is_liked,0) as is_liked, 
-	COALESCE(is_copied,0) as is_copied,
-	COALESCE(is_tagged,0) as is_tagged`
+	COALESCE(is_copied,0) as is_copied`
 
 const AUTH_FROM = ` 
 LEFT JOIN
@@ -48,14 +47,6 @@ LEFT JOIN
 	GROUP BY id
 	)
 ON like_link_id2 = link_id 
-LEFT JOIN 
-(
-	SELECT id as tag_id, link_id as tlink_id, count(*) as is_tagged 
-	FROM Tags
-	WHERE Tags.submitted_by = 'REQ_LOGIN_NAME'
-	GROUP BY tag_id
-)
-ON tlink_id = link_id
 LEFT JOIN
 	(
 	SELECT id as copy_id, count(*) as is_copied, user_id as cuser_id, link_id as clink_id

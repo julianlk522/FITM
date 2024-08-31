@@ -44,7 +44,6 @@ type YTVideoSnippet struct {
 type LinkSignedIn struct {
 	Link
 	IsLiked  bool
-	IsTagged bool
 	IsCopied bool
 }
 

@@ -29,7 +29,6 @@ type Link = {
 	TagCount: number
 	LikeCount: number
 	IsLiked: boolean | undefined
-	IsTagged: boolean | undefined
 	IsCopied: boolean | undefined
 }
 

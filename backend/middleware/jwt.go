@@ -10,7 +10,7 @@ import (
 
 // MODIFIED JWT VERIFIER / AUTHENTICATOR
 // (requests with no token are allowed,
-// but getting link isLiked / isCopied / isTagged requires a token)
+// but getting link isLiked / isCopied requires a token)
 func VerifierOptional(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler {
 	return VerifyOptional(ja, jwtauth.TokenFromHeader, jwtauth.TokenFromCookie)
 }

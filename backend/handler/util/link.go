@@ -77,7 +77,6 @@ func ScanLinks[T model.Link | model.LinkSignedIn](get_links_sql *query.TopLinks)
 					&i.ImgURL,
 					&i.IsLiked,
 					&i.IsCopied,
-					&i.IsTagged,
 				); err != nil {
 					return nil, err
 				}

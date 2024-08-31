@@ -33,7 +33,6 @@ export default function Link(props: Props) {
 		SummaryCount: summary_count,
 		TagCount: tag_count,
 		ImgURL: img_url,
-		// IsTagged: is_tagged,
 	} = props.Link
 
 	const [is_copied, set_is_copied] = useState(props.Link.IsCopied)

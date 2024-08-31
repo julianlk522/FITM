@@ -91,7 +91,7 @@ func main() {
 	r.Get("/contributors", h.GetTopContributors)
 
 	// OPTIONAL AUTHENTICATION
-	// (bearer token used optionally to get IsLiked / IsCopied / IsTagged for links)
+	// (bearer token used optionally to get IsLiked / IsCopied for links)
 	r.Group(func(r chi.Router) {
 		r.Use(m.VerifierOptional(token_auth))
 		r.Use(m.AuthenticatorOptional(token_auth))

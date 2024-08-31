@@ -25,7 +25,6 @@
 -Refactors for simplicity / accuracy
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
     -GetTmapCatCounts probably possible in all sql
-    -remove superfluous is_tagged
     -Make Top Cats / Top Links / etc. into components
 -Purge code duplication
     -Layout.astro, Feedback.astro styles
@@ -77,10 +76,10 @@
     -e.g., coolers.co image should not have been added with invalid link
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
+    -add proper favicon.ico
     -Link preview img srcset
     -Tiny bit more space between like/copy buttons on mobile
     -maybe go through BrowserStack and see if anything is horrendous
-    -add proper favicon.ico
 -Redis caching
 
 ## Why?
