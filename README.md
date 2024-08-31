@@ -7,7 +7,6 @@
 -Look into input sequences that might produce problematic results
     -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
 -Cat search on index/top.astro
--Home page pagination
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links

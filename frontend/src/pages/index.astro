@@ -1,5 +1,6 @@
 ---
 import Link from '../components/Link/Link'
+import Pagination from '../components/Pagination.astro'
 import ScrollUp from '../components/ScrollUp.astro'
 import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
 import BaseLayout from '../layouts/BaseLayout.astro'
@@ -33,6 +34,9 @@ const data: PaginatedLinks = await get_links_resp.json()
 const links = data.Links
 
 const other_periods = Periods.filter((other) => other !== 'month')
+
+// Pagination
+const is_only_page = data.NextPage === -1
 ---
 
 <BaseLayout Title='Welcome to the Flexible Internet Treasure Map (FITM)'>
@@ -90,6 +94,13 @@ const other_periods = Periods.filter((other) => other !== 'month')
 					))
 				}
 			</ol>
+
+			{is_only_page ? null : <Pagination 
+				Period="month"
+				Page={1}
+				NextPage={data.NextPage}
+			/>}
+
 			<ol id='top-links'>
 				{
 					links.map((link) => (
@@ -110,6 +121,12 @@ const other_periods = Periods.filter((other) => other !== 'month')
 					))
 				}
 			</ol>
+
+			{is_only_page ? null : <Pagination 
+				Period="month"
+				Page={1}
+				NextPage={data.NextPage}
+			/>}
 		</section>
 		<ScrollUp />
 	</main>
