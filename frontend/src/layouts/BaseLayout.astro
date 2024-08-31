@@ -1,0 +1,16 @@
+---
+import NoFooter from "./NoFooter.astro";
+
+interface Props {
+	Title: string
+}
+
+const { Title: title } = Astro.props
+---
+
+<NoFooter Title={title}>
+	<slot />
+	<footer>
+		<a href='/feedback'>Feedback</a>
+	</footer>
+</NoFooter>

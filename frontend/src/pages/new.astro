@@ -1,6 +1,6 @@
 ---
 import NewLinks from '../components/Link/NewLinks.tsx'
-import Layout from '../layouts/Layout.astro'
+import BaseLayout from '../layouts/BaseLayout.astro'
 
 let token = Astro.cookies.get('token')?.value
 let user = Astro.cookies.get('user')?.value
@@ -16,7 +16,7 @@ if (!token || !user) {
 }
 ---
 
-<Layout Title='Submit New Link(s)'>
+<BaseLayout Title='Submit New Link(s)'>
 	<main>
 		<h1>Submit New Links(s)</h1>
 		<section>
@@ -28,7 +28,7 @@ if (!token || !user) {
 
 		<NewLinks client:load Token={token} User={user} />
 	</main>
-</Layout>
+</BaseLayout>
 
 <style>
 	#example-cat {

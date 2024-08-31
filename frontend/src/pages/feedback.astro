@@ -1,113 +1,14 @@
 ---
-let user = Astro.cookies.get('user')?.value
+import NoFooter from "../layouts/NoFooter.astro"
 ---
 
-<!doctype html>
-<html lang='en'>
-	<head>
-		<meta charset='UTF-8' />
-		<meta name='description' content='Open Internet Treasure Map' />
-		<meta name='viewport' content='width=device-width' />
-		<link rel='icon' type='image/svg+xml' href='/favicon.svg' />
-		<meta name='generator' content={Astro.generator} />
-		<title>Leave Feedback for FITM</title>
-	</head>
-	<nav>
-		<a href='/'>Home</a>
-		<a href='/about'>About</a>
-		{
-			user ? (
-			<a href=`/map/${user}` id="user-tmap-link">{user}</a>) : (<a href='/login' id="login-link">Login</a>)
-		}
-	</nav>
-	<body>
-		<main>
-			<section>
-				<h1>Feedback</h1>
-				<p>If you have an opinion about how FITM could be better, please email <a href='mailto:fitm-contact@proton.me'>contact-fitm@proton.me</a> to share it. </p>
-				<p>Your comments are appreciated and any suggestions will be considered in the next round of updates.</p>
-				<p>Thanks for visiting!</p>
-			</section>
-		</main>
-	</body>
-</html>
-
-<style>
-		:root {
-			--text: hsl(0, 0%, 92%);
-			--text-treasurey: hsl(44, 55%, 80%);
-			--text-treasurey-dark: hsl(44, 25%, 60%);
-		}
-		html {
-			font-family: system-ui, sans-serif;
-			background: #13151a;
-			background-size: 224px;
-		}
-		nav {
-			max-width: 1080px;
-			margin: 0 auto;
-			padding: 1rem;
-
-			a,
-			a:visited {
-				color: var(--text);
-			}
-		}
-		nav :is(#user-tmap-link, #login-link) {
-			float: right;
-		}
-		main {
-			margin: auto;
-			padding: 1rem;
-			width: 800px;
-			max-width: calc(100% - 2rem);
-			color: var(--text);
-			font-size: 18px;
-			line-height: 1.4;
-		}
-		h1 {
-			font-size: 2rem;
-			line-height: 1;
-			text-align: center;
-		}
-		h2 {
-			font-size: 1.5rem;
-		}
-		h3 {
-			font-size: 1.25rem;
-		}
-		h2, h3, h4, h5, h6 {
-			margin: 0;
-		}
-		section {
-			padding: 1rem 0;
-			border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-		}
-		a:not(:visited) {
-			color: var(--text-treasurey);
-		}
-		a:visited {
-			color: var(--text-treasurey-dark);
-		}
-
-		@media (min-width: 480px) {
-			h2 {
-				font-size: 1.25rem;
-			}
-
-			h3 {
-				font-size: 1.15rem;
-			}
-		}
-
-		@media (min-width: 680px) {
-			main {
-				padding: 2rem;
-				max-width: calc(100% - 4rem);
-			}
-
-			section {
-				padding: 2rem 0;
-			}
-		}
-</style>
+<NoFooter Title="Leave Feedback for FITM">
+	<main>	
+		<section>
+			<h1>Feedback</h1>
+			<p>If you have an opinion about how FITM could be better, please email <a href='mailto:fitm-contact@proton.me'>fitm-contact@proton.me</a> to share it. </p>
+			<p>Your comments are appreciated and any suggestions will be considered in the next round of updates.</p>
+			<p>Thanks for visiting!</p>
+		</section>
+	</main>
+</NoFooter>

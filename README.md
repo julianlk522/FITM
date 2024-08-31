@@ -25,10 +25,8 @@
 -Refactors for simplicity / accuracy
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
     -GetTmapCatCounts probably possible in all sql
-    -Make Top Cats / Top Links / etc. into components
+    -Top Cats / Top Links / etc. components
 -Purge code duplication
-    -Layout.astro, Feedback.astro styles
-        -NoFooter.astro for Feedback, BaseLayout extends NoFooter and is used elsewhere
     -handler_test / util_test TestMain()s
 -CI/CD
     -cronjob to backup db every day or so

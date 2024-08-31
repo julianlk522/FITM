@@ -5,7 +5,7 @@ import TagCat from "../../components/Tag/TagCat"
 import EditAbout from '../../components/Tmap/EditAbout'
 import ProfilePic from '../../components/Tmap/ProfilePic'
 import { TMAP_ENDPOINT } from '../../constants'
-import Layout from '../../layouts/Layout.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
 import type { FilteredTreasureMap, Profile, TreasureMap } from '../../types'
 import { tmap_sections } from '../../types'
 import { format_short_date } from '../../util/format_date'
@@ -73,7 +73,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 
 ---
 
-<Layout Title={page_title}>
+<BaseLayout Title={page_title}>
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
 		<h2 class="subtitle">
@@ -244,7 +244,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 
 		<ScrollUp />
 	</main>
-</Layout>
+</BaseLayout>
 
 <style>	
 	h1,

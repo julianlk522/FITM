@@ -3,7 +3,7 @@ import Link from '../../components/Link/Link'
 import EditTag from '../../components/Tag/EditTag'
 import TagCat from '../../components/Tag/TagCat'
 import { TAGS_ENDPOINT } from '../../constants'
-import Layout from '../../layouts/Layout.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
 import type { TagPage } from '../../types'
 import { format_long_date } from '../../util/format_date'
 
@@ -31,7 +31,7 @@ link.TagCount = top_tags.length
 const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 ---
 
-<Layout Title={page_title}>
+<BaseLayout Title={page_title}>
 	<script>
 		function handle_redirect() {
 			document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=21600; SameSite=strict; Secure`
@@ -101,7 +101,7 @@ const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 			) : null
 		}
 	</main>
-</Layout>
+</BaseLayout>
 
 <style>
 	#login-redirect-link {

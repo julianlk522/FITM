@@ -2,10 +2,10 @@
 import { Image } from 'astro:assets'
 import cornucopia from '../../public/cornucopia.png'
 import ScrollUp from '../components/ScrollUp.astro'
-import Layout from '../layouts/Layout.astro'
+import BaseLayout from '../layouts/BaseLayout.astro'
 ---
 
-<Layout Title='About FITM'>
+<BaseLayout Title='About FITM'>
 	<main>
 		<h1>About</h1>
 		<Image src={cornucopia} alt='a cornucopia of links' />
@@ -191,7 +191,7 @@ import Layout from '../layouts/Layout.astro'
 
 		<ScrollUp />
 	</main>
-</Layout>
+</BaseLayout>
 
 <style>
 	img {

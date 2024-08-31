@@ -2,7 +2,7 @@
 import Link from '../../components/Link/Link'
 import Summary from '../../components/Summary/Summary'
 import NewSummary from '../../components/Summary/NewSummary'
-import Layout from '../../layouts/Layout.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
 import type { SummaryPage } from '../../types'
 import {SUMMARIES_ENDPOINT} from '../../constants'
 
@@ -51,7 +51,7 @@ summaries.sort((a, b) => {
 const page_title = link.Summary ? `Summaries for "${link.Summary}"` : 'Link Summaries'
 ---
 
-<Layout Title={page_title}>
+<BaseLayout Title={page_title}>
 	<script>
 		function handle_redirect() {
 			document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=21600; SameSite=strict; Secure`
@@ -114,7 +114,7 @@ const page_title = link.Summary ? `Summaries for "${link.Summary}"` : 'Link Summ
 			</ol>
 		</section>
 	</main>
-</Layout>
+</BaseLayout>
 
 <style>
 	#login-redirect-link {

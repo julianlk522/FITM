@@ -3,7 +3,7 @@ import Link from '../components/Link/Link'
 import Pagination from '../components/Pagination.astro'
 import ScrollUp from '../components/ScrollUp.astro'
 import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
-import Layout from '../layouts/Layout.astro'
+import BaseLayout from '../layouts/BaseLayout.astro'
 import {
 Periods,
 type CatCount,
@@ -117,7 +117,7 @@ const page_title =
 		: 'Top Rated'
 ---
 
-<Layout Title='Top Links / Cats / Contributors'>
+<BaseLayout Title='Top Links / Cats / Contributors'>
 	<main>
 		<h1>
 			{page_title}
@@ -263,7 +263,7 @@ const page_title =
 			)
 		}
 	</main>
-</Layout>
+</BaseLayout>
 
 <style>
 	#search-filters {
