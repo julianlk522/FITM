@@ -99,10 +99,12 @@ export default function Summary(props: Props) {
 		<li class='summary'>
 			"{text}"
 			<p>
-				<strong>
-					Submitted by{' '}
+				<strong>Submitted by</strong>{' '}
+				{submitted_by === 'Auto Summary' ? (
+					'Auto Summary'
+				) : (
 					<a href={`/map/${submitted_by}`}>{submitted_by}</a>
-				</strong>
+				)}
 			</p>
 			<p>
 				<strong>Last Updated</strong>: {format_long_date(last_updated)}

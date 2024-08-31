@@ -20,7 +20,6 @@
 -Strip spaces from tag start/end
 -Fix links endpoints in frontend
 -Quick link to existing link if attempting to submit duplicate
--Remove link to Auto Summary map on summaries page
 -Home page pagination
 
 ### Code Quality
@@ -78,6 +77,7 @@
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
     -Link preview img srcset
+    -Tiny bit more space between like/copy buttons on mobile
 -Redis caching
 
 ## Why?
