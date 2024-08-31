@@ -61,7 +61,7 @@ export default function EditAbout(props: Props) {
 		<div id='profile-about'>
 			{editing ? (
 				<form onSubmit={(event) => handle_finished_editing(event)}>
-					<label for='about'>About</label>
+					<label for='about'>about: </label>
 					<textarea name='about' cols={100} rows={8}>
 						{initial}
 					</textarea>
@@ -93,11 +93,11 @@ export default function EditAbout(props: Props) {
 								<span>about:</span> {initial}
 							</pre>
 						</details>
-					) : initial ? (
+					) : (
 						<pre>
 							<span>about:</span> {initial}
 						</pre>
-					) : null}
+					)}
 					<button
 						id='edit-about-btn'
 						title='Edit About section'

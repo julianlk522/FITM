@@ -17,7 +17,6 @@
     -Restrict from tmap/top unless specifically chosen in filter
 -Look into input sequences that might produce problematic results
     -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
--Change about "optional"
 -Cat search on index/top.astro
 -Strip spaces from tag start/end
 -Fix links endpoints in frontend
@@ -26,7 +25,6 @@
         -btw lol
 -Quick link to existing link if attempting to submit duplicate
 -Home page pagination
--Lowercase link.tsx "Submitted by", "Tag", "Summaries"
 
 ### Code Quality
 

@@ -43,12 +43,12 @@ export default function Link(props: Props) {
 	const split_cats = cats?.split(',')
 	let tag_attribution =
 		cats && user && cats_from_user === user
-			? 'Your Tag'
+			? 'your tag'
 			: cats_from_user
-			? `${cats_from_user}'s Tag`
+			? `${cats_from_user}'s tag`
 			: tag_count === 1
-			? `${submitted_by}'s Tag`
-			: 'Global Tag'
+			? `${submitted_by}'s tag`
+			: 'global tag'
 	tag_attribution += ` (${tag_count})`
 	const cats_html =
 		is_tmap_page && cats_from_user
@@ -200,7 +200,7 @@ export default function Link(props: Props) {
 			)}
 
 			<p>
-				Submitted by{' '}
+				submitted by{' '}
 				<a href={`/map/${submitted_by}`} class='submitted-by'>
 					{submitted_by}
 				</a>{' '}
@@ -219,7 +219,7 @@ export default function Link(props: Props) {
 
 			{is_summary_page ? null : (
 				<p class='summaries'>
-					<a href={`/summary/${id}`}>Summaries ({summary_count})</a>
+					<a href={`/summary/${id}`}>summaries ({summary_count})</a>
 				</p>
 			)}
 

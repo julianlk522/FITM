@@ -67,9 +67,6 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 
 	const has_about = profile.About !== undefined && profile.About.length > 0
 	display_about = (profile !== undefined && has_about) || is_signed_in_user
-	if (!has_about && is_signed_in_user) {
-		profile.About = `(optional)`
-	}
 
 	abbreviated_about = profile.About.length > 200 ? `${profile.About.slice(0, 200)}...` : undefined
 }
