@@ -72,6 +72,7 @@
     -model utils
 -Look into broken auto og:image
     -e.g., coolers.co image should not have been added with invalid link
+    -https://rss.com/blog/how-do-rss-feeds-work/
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
     -add proper favicon.ico

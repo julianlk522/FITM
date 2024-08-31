@@ -148,26 +148,10 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	unsorted_cats := request.NewLink.Cats
 	util.AssignSortedCats(unsorted_cats, request)
 
-	// Insert link
-	_, err := db.Client.Exec(
-		"INSERT INTO Links VALUES(?,?,?,?,?,?,?);",
-		request.ID,
-		request.URL,
-		request.SubmittedBy,
-		request.SubmitDate,
-		request.Cats,
-		request.NewLink.Summary,
-		request.ImgURL,
-	)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	}
-
 	// Insert Summary(ies)
 	// (might have user-submitted, Auto Summary, or both)
 	if request.AutoSummary != "" {
-		_, err = db.Client.Exec(
+		_, err := db.Client.Exec(
 			"INSERT INTO Summaries VALUES(?,?,?,?,?);",
 			uuid.New().String(),
 			request.AutoSummary,
@@ -186,7 +170,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if request.NewLink.Summary != "" {
-		_, err = db.Client.Exec(
+		_, err := db.Client.Exec(
 			"INSERT INTO Summaries VALUES(?,?,?,?,?);",
 			uuid.New().String(),
 			request.NewLink.Summary,
@@ -202,6 +186,20 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Insert tag
+	_, err := db.Client.Exec(
+		"INSERT INTO Tags VALUES(?,?,?,?,?);",
+		uuid.New().String(),
+		request.ID,
+		request.Cats,
+		request.SubmittedBy,
+		request.SubmitDate,
+	)
+	if err != nil {
+		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
+	}
+
 	if request.NewLink.Summary != "" {
 		request.Summary  = request.NewLink.Summary
 	} else if request.AutoSummary != "" {
@@ -210,14 +208,16 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		request.Summary  = ""
 	}
 
-	// Insert tag
+	// Insert link
 	_, err = db.Client.Exec(
-		"INSERT INTO Tags VALUES(?,?,?,?,?);",
-		uuid.New().String(),
+		"INSERT INTO Links VALUES(?,?,?,?,?,?,?);",
 		request.ID,
-		request.Cats,
+		request.URL,
 		request.SubmittedBy,
 		request.SubmitDate,
+		request.Cats,
+		request.Summary,
+		request.ImgURL,
 	)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
