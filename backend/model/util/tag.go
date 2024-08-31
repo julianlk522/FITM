@@ -39,3 +39,14 @@ func HasDuplicateCats(cats string) bool {
 
 	return false
 }
+
+func TrimExcessAndTrailingSpaces(cats string) string {
+
+	// remove leading / trailing spaces
+	cats = strings.TrimSpace(cats)
+
+	// replace multiple spaces with single
+	cats = strings.Join(strings.Fields(cats), " ")
+
+	return cats
+}

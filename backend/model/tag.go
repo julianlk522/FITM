@@ -94,15 +94,17 @@ func (et *EditTagRequest) Bind(r *http.Request) error {
 	}
 
 	switch {
-	case et.Cats == "":
-		return e.ErrNoCats
-	case util.HasTooLongCats(et.Cats):
-		return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
-	case util.HasTooManyCats(et.Cats):
-		return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
-	case util.HasDuplicateCats(et.Cats):
-		return e.ErrDuplicateCats
+		case et.Cats == "":
+			return e.ErrNoCats
+		case util.HasTooLongCats(et.Cats):
+			return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
+		case util.HasTooManyCats(et.Cats):
+			return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
+		case util.HasDuplicateCats(et.Cats):
+			return e.ErrDuplicateCats
 	}
+
+	et.Cats = util.TrimExcessAndTrailingSpaces(et.Cats)
 
 	et.LastUpdated = util.NEW_LONG_TIMESTAMP()
 

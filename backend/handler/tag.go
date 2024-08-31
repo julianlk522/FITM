@@ -12,6 +12,7 @@ import (
 	util "github.com/julianlk522/fitm/handler/util"
 	m "github.com/julianlk522/fitm/middleware"
 	"github.com/julianlk522/fitm/model"
+	modelutil "github.com/julianlk522/fitm/model/util"
 	"github.com/julianlk522/fitm/query"
 )
 
@@ -212,6 +213,10 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// trim spaces
+	edit_tag_data.Cats = modelutil.TrimExcessAndTrailingSpaces(edit_tag_data.Cats)
+
+	// alphabetize
 	edit_tag_data.Cats = util.AlphabetizeCats(edit_tag_data.Cats)
 
 	_, err = db.Client.Exec(
