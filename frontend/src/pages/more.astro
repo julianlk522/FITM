@@ -37,9 +37,6 @@ if (top_cats_resp === undefined) {
 	return Astro.redirect("/rate-limit")
 }
 const top_cats: CatCount[] = await top_cats_resp.json()
-if (!top_cats?.length) {
-    return Astro.redirect("/404")
-}
 
 const page_title =
 	cats
@@ -86,7 +83,7 @@ const page_title =
                 {top_cats.map((cat) => (
                     <li>
                         <a
-                            href={`/more?cats=${cat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
+                            href={`/top?cats=${cat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
                         >
                             {cat.Category}
                         </a>
@@ -94,7 +91,7 @@ const page_title =
                     </li>
                 ))}
             </ol>
-        </section> : <p>No further subcats</p>}
+        </section> : cats ? <p>No further subcats.</p> : <p>No cats.</p>}
         <ScrollUp />
     </main>
 </BaseLayout>

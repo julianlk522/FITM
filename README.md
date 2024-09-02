@@ -19,6 +19,7 @@
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
 -look into not rendering images that dont successfully load
+-be sure to fix custom fetch directing to /rate-limit when it shouldnt
 
 ### Code Quality
 
