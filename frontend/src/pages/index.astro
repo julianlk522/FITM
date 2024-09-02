@@ -12,11 +12,7 @@ const token = Astro.cookies.get('token')?.value
 const user: string | undefined = Astro.cookies.get('user')?.value
 
 // Get top cats
-const top_cats_resp = await (token
-	? fetch_with_handle_rate_limit(CATS_ENDPOINT, {
-			headers: { Authorization: `Bearer ${token}` },
-		})
-	: fetch_with_handle_rate_limit(CATS_ENDPOINT))
+const top_cats_resp = await fetch_with_handle_rate_limit(CATS_ENDPOINT)
 if (top_cats_resp === undefined) {
 	return Astro.redirect("/rate-limit")
 }
