@@ -25,7 +25,7 @@ import fetch_with_handle_rate_limit from '../util/rate_limit'
 					password,
 				}),
 			})
-			if (signup_resp === undefined) {
+			if (!signup_resp) {
 				return window.location.href = '/rate-limit'
 			}
 			const signup_data = await signup_resp.json()
@@ -77,7 +77,7 @@ import fetch_with_handle_rate_limit from '../util/rate_limit'
 					password,
 				}),
 			})
-			if (login_resp === undefined) {
+			if (!login_resp) {
 				return window.location.href = '/rate-limit'
 			}
 			const login_data = await login_resp.json()

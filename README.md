@@ -4,7 +4,6 @@
 
 ### Features
 
--frontend display for when you get rate limited
 -Cat search on index/top.astro
     -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads
     -For nearly identical cats with slight differences, maybe have a prompt on load that says like "would you like to reload and include these results too?"
@@ -19,6 +18,7 @@
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
+-look into not rendering images that dont successfully load
 
 ### Code Quality
 

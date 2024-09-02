@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks'
 import { LINKS_ENDPOINT } from '../../constants'
 import * as types from '../../types'
 import { is_error_response } from '../../types'
+import fetch_with_handle_rate_limit from '../../util/rate_limit'
 import NewTag from '../Tag/NewTag'
 import Link from './Link'
 import './NewLinks.css'
@@ -48,14 +49,20 @@ export default function NewLinks(props: Props) {
 			})
 		}
 
-		const new_link_resp = await fetch(LINKS_ENDPOINT, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`,
-			},
-			body: resp_body,
-		})
+		const new_link_resp = await fetch_with_handle_rate_limit(
+			LINKS_ENDPOINT,
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`,
+				},
+				body: resp_body,
+			}
+		)
+		if (!new_link_resp) {
+			return (window.location.href = '/rate-limit')
+		}
 		if (new_link_resp.statusText === 'Unauthorized') {
 			window.location.href = '/login'
 		}

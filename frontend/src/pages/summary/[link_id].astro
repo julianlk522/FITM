@@ -5,6 +5,7 @@ import NewSummary from '../../components/Summary/NewSummary'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import type { SummaryPage } from '../../types'
 import {SUMMARIES_ENDPOINT} from '../../constants'
+import fetch_with_handle_rate_limit from '../../util/rate_limit'
 
 // Auth
 const token = Astro.cookies.get('token')?.value
@@ -19,12 +20,15 @@ if (!link_id) {
 // Get summaries + link
 const summaries_url = SUMMARIES_ENDPOINT + `/${link_id}`
 const get_summaries_resp = await (token
-	? fetch(summaries_url, {
+	? fetch_with_handle_rate_limit(summaries_url, {
 			headers: {
 				Authorization: `Bearer ${token}`,
 			},
 		})
-	: fetch(summaries_url))
+	: fetch_with_handle_rate_limit(summaries_url))
+if (!get_summaries_resp) {
+	return Astro.redirect('/rate-limit')
+}
 if (get_summaries_resp.status > 399) {
 	return Astro.redirect('/404')
 }

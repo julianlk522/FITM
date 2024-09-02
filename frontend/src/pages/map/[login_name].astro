@@ -9,6 +9,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import type { FilteredTreasureMap, Profile, TreasureMap } from '../../types'
 import { tmap_sections } from '../../types'
 import { format_short_date } from '../../util/format_date'
+import fetch_with_handle_rate_limit from '../../util/rate_limit'
 
 // Auth
 const token = Astro.cookies.get('token')?.value
@@ -45,12 +46,15 @@ if (cats_split.length) {
 }
 
 const tmap_resp = token
-	? await fetch(tmap_url, {
+	? await fetch_with_handle_rate_limit(tmap_url, {
 			headers: {
 				Authorization: `Bearer ${token}`,
 			},
 		})
-	: await fetch(tmap_url)
+	: await fetch_with_handle_rate_limit(tmap_url)
+if (!tmap_resp) {
+	return Astro.redirect('/rate-limit')
+}
 if (tmap_resp.status > 399) {
 	return Astro.redirect('/404')
 }
