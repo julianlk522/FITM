@@ -20,6 +20,10 @@
     -Restrict from tmap/top unless specifically chosen in filter
 -look into not rendering images that dont successfully load
 -be sure to fix custom fetch directing to /rate-limit when it shouldnt
+-add about scrollup
+-make sure new link submissions show correct time
+    (they dont now.. but then it's correct elsewhere? weird)
+-YT channel links
 
 ### Code Quality
 
