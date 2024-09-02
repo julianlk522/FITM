@@ -22,6 +22,7 @@
 
 ### Code Quality
 
+-VPS SSH key
 -Refactors for simplicity / accuracy
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
     -GetTmapCatCounts probably possible in all sql
@@ -33,6 +34,8 @@
 -Security
     -Look into input sequences that might produce problematic results
         -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
+    -refactor fetch_with_handle_rate_limit() to redirect to /404 in the catch block
+        -maybe have it return an object with props Response (Response or undefined) and RedirectTo ("/404". "/rate-limit", or "")
 
 ## To-Maybe-Dos
 

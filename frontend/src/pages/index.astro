@@ -5,6 +5,7 @@ import ScrollUp from '../components/ScrollUp.astro'
 import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { Periods, type CatCount, type Contributor, type PaginatedLinks } from '../types'
+import fetch_with_handle_rate_limit from '../util/rate_limit'
 
 // Auth
 const token = Astro.cookies.get('token')?.value
@@ -12,24 +13,33 @@ const user: string | undefined = Astro.cookies.get('user')?.value
 
 // Get top cats
 const top_cats_resp = await (token
-	? fetch(CATS_ENDPOINT, {
+	? fetch_with_handle_rate_limit(CATS_ENDPOINT, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
-	: fetch(CATS_ENDPOINT))
+	: fetch_with_handle_rate_limit(CATS_ENDPOINT))
+if (top_cats_resp === undefined) {
+	return Astro.redirect("/rate-limit")
+}
 const top_cats: CatCount[] = await top_cats_resp.json()
 
 // Get top contributors
-const top_contributors_resp = await fetch(CONTRIBUTORS_ENDPOINT)
+const top_contributors_resp = await fetch_with_handle_rate_limit(CONTRIBUTORS_ENDPOINT)
+if (top_contributors_resp === undefined) {
+	return Astro.redirect("/rate-limit")
+}
 const top_contributors: Contributor[] = await top_contributors_resp.json()
 
 // Get top links
 const DEFAULT_PERIOD = Periods[2] // month
 const links_url = LINKS_ENDPOINT + `?period=${DEFAULT_PERIOD}`
 const get_links_resp = await (token
-	? fetch(links_url, {
+	? fetch_with_handle_rate_limit(links_url, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
-	: fetch(links_url))
+	: fetch_with_handle_rate_limit(links_url))
+if (get_links_resp === undefined) {
+	return Astro.redirect("/rate-limit")
+}
 const data: PaginatedLinks = await get_links_resp.json()
 const links = data.Links
 

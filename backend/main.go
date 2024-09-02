@@ -55,13 +55,13 @@ func main() {
 		w.Write([]byte(`{"message": "too many requests"}`))
 	})
 	r.Use(httprate.Limit(
-		20,
+		60,
 		1*time.Minute,
 		httprate.WithKeyFuncs(httprate.KeyByIP),
 	))
 	r.Use(
 		httprate.Limit(
-			20,
+			60,
 			time.Minute,
 			httprate.WithKeyFuncs(func(r *http.Request) (string, error) {
 				return r.Header.Get("Authorization"), nil

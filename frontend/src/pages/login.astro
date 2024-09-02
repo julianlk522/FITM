@@ -6,24 +6,28 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 	<script>
 		import { LOGIN_ENDPOINT, SIGNUP_ENDPOINT } from '../constants'
 import get_cookie from '../util/get_cookie'
+import fetch_with_handle_rate_limit from '../util/rate_limit'
 
 		async function handle_signup(event: SubmitEvent) {
 			event.preventDefault()
 			const form = event.target as HTMLFormElement
 			const formData = new FormData(form)
-			const login_name = formData.get('login_name')
+			const signup_name = formData.get('signup_name')
 			const password = formData.get('password')
 
-			const signup_resp = await fetch(SIGNUP_ENDPOINT, {
+			const signup_resp = await fetch_with_handle_rate_limit(SIGNUP_ENDPOINT, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
-					login_name,
+					signup_name,
 					password,
 				}),
 			})
+			if (signup_resp === undefined) {
+				return window.location.href = '/rate-limit'
+			}
 			const signup_data = await signup_resp.json()
 
 			if (signup_data.token) {
@@ -63,7 +67,7 @@ import get_cookie from '../util/get_cookie'
 			const login_name = formData.get('login_name')
 			const password = formData.get('password')
 
-			const login_resp = await fetch(LOGIN_ENDPOINT, {
+			const login_resp = await fetch_with_handle_rate_limit(LOGIN_ENDPOINT, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -73,6 +77,9 @@ import get_cookie from '../util/get_cookie'
 					password,
 				}),
 			})
+			if (login_resp === undefined) {
+				return window.location.href = '/rate-limit'
+			}
 			const login_data = await login_resp.json()
 
 			if (login_data.token) {
@@ -128,8 +135,8 @@ import get_cookie from '../util/get_cookie'
 		<section>
 			<h2>Sign Up</h2>
 			<form id='signup'>
-				<label for='login_name'>Name</label>
-				<input type='text' name='login_name' />
+				<label for='signup_name'>Name</label>
+				<input type='text' name='signup_name' />
 				<br />
 				<label for='password'>Password</label>
 				<input type='password' name='password' />
