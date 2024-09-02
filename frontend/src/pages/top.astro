@@ -185,6 +185,7 @@ const page_title =
 										<span>({cat.Count})</span>
 									</li>
 								))}
+									<li class="more"><a href="/more">more</a></li>
 							</ol>
 						</section>
 					) : (
@@ -202,6 +203,7 @@ const page_title =
 											<span> ({subcat.Count})</span>
 										</li>
 									))}
+										<li class="more"><a href={`/more?cats=${cats}`}>more</a></li>
 								</ol>
 							) : (
 								<p>No further subcats</p>
