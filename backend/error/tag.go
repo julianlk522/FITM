@@ -10,6 +10,7 @@ var (
 	ErrNoTagCats           error = errors.New("no tag cat(s) provided")
 	ErrNoTagWithID         error = errors.New("no tag found with given ID")
 	ErrNoUserWithLoginName error = errors.New("no user found with given login name")
+	ErrInvalidMoreFlag error = errors.New("invalid value passed as \"more\" params. should be unset or \"true\"")
 	ErrDuplicateTag        error = errors.New("duplicate tag")
 	ErrDuplicateCats       error = errors.New("tag contains duplicate cat(s)")
 	ErrDoesntOwnTag        error = errors.New("not your tag")

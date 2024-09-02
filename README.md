@@ -26,8 +26,10 @@
 -Refactors for simplicity / accuracy
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
     -GetTmapCatCounts probably possible in all sql
-    -Top Cats / Top Links / etc. components
 -Purge code duplication
+    -Astro / Preact components:
+        -Top Cats / Top Links / etc. lists
+        -search filters (top, more)
     -handler_test / util_test TestMain()s
 -CI/CD
     -cronjob to backup db every day or so

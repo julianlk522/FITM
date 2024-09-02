@@ -1,0 +1,127 @@
+---
+import ScrollUp from "../components/ScrollUp.astro";
+import { CATS_ENDPOINT } from "../constants";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { Periods, type CatCount, type Period } from "../types";
+import fetch_with_handle_rate_limit from "../util/rate_limit";
+
+let more_cats_url = CATS_ENDPOINT + "?more=true"
+
+// Params
+// TODO: page and <Pagination />
+
+// Period
+let period: Period = 'all'
+let other_periods: Period[] = Periods.filter((other) => other !== 'all')
+if (
+	Astro.url.searchParams.get('period') &&
+	(Periods as readonly string[]).includes(
+		Astro.url.searchParams.get('period') as Period
+	)
+) {
+	period = Astro.url.searchParams.get('period') as Period
+    more_cats_url += `&period=${period}`
+	other_periods = Periods.filter((other) => other !== period)
+}
+
+// Cats params (i.e., for subcats)
+let cats: string | undefined
+if (Astro.url.searchParams.get('cats')) {
+	cats = Astro.url.searchParams.get('cats') as string
+    more_cats_url += `&cats=${cats}`
+}
+
+// Get (more) top cats
+const top_cats_resp = await fetch_with_handle_rate_limit(more_cats_url)
+if (top_cats_resp === undefined) {
+	return Astro.redirect("/rate-limit")
+}
+const top_cats: CatCount[] = await top_cats_resp.json()
+if (!top_cats?.length) {
+    return Astro.redirect("/404")
+}
+
+const page_title =
+	cats
+		? `${cats} (more)`
+		: 'More Top Global Cats'
+
+---
+
+<BaseLayout Title="More">
+    <main>
+        <h1>{page_title}</h1>
+        {period !== 'all' ? <h2 class="subtitle">({period.charAt(0).toUpperCase() + period.slice(1)})</h2> : null}
+        <section id='search-filters'>
+			<h2>Filters</h2>
+			<div>
+				<p>Period:</p>
+				{
+					other_periods.map((other) => (
+						<a
+							class='period'
+							href={`/more?period=${other}${cats ? `&cats=${cats}` : ''}`}
+						>
+							{other}
+						</a>
+					))
+				}
+			</div>
+			{
+				cats ? (
+					<div>
+						<p>
+							{cats.includes(',')
+								? 'Cats: '
+								: 'Cat: '}
+						</p>
+						<a href={`/more${period !== 'all' ? `?period=${period}` : ''}`}>Reset</a>
+					</div>
+				) : null
+			}
+		</section>
+        {top_cats?.length ? <section>
+            <h2>Top {cats ? "Subcats" : "Cats"}</h2>
+            <ol id='top-cats'>
+                {top_cats.map((cat) => (
+                    <li>
+                        <a
+                            href={`/more?cats=${cat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
+                        >
+                            {cat.Category}
+                        </a>
+                        <span>({cat.Count})</span>
+                    </li>
+                ))}
+            </ol>
+        </section> : <p>No further subcats</p>}
+        <ScrollUp />
+    </main>
+</BaseLayout>
+
+<style>
+    #search-filters {
+		div {
+			display: flex;
+			align-items: center;
+		}
+
+		p {
+			margin-top: 0;
+		}
+
+		a {
+			margin-left: 5px;
+		}
+	}
+
+	:is(li a, li strong:has(a)):has(+ span) {
+		display: inline-block;
+	}
+
+    @media (min-width: 680px) {
+        ol#top-cats {
+            max-height: 1280px;
+        }
+    }
+</style>

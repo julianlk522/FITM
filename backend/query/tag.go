@@ -9,6 +9,7 @@ const (
 	TAGS_PAGE_LIMIT           = 20
 	TAG_RANKINGS_PAGE_LIMIT   = 20
 	GLOBAL_CATS_PAGE_LIMIT    = 20
+	MORE_CATS_PAGE_LIMIT = 100
 )
 
 // Tags Page link
@@ -167,10 +168,25 @@ SELECT global_cats, count(global_cats) as count
 FROM split
 WHERE global_cats != ''
 GROUP BY global_cats
-ORDER BY count DESC, LOWER(global_cats) ASC;`
+ORDER BY count DESC, LOWER(global_cats) ASC 
+`
+
+var CATS_BASE_LIMIT = fmt.Sprintf(
+	"LIMIT %d;",
+	GLOBAL_CATS_PAGE_LIMIT,
+)
+
+var CATS_MORE_LIMIT = fmt.Sprintf(
+	"LIMIT %d;",
+	MORE_CATS_PAGE_LIMIT,
+)
 
 func NewTopGlobalCatCounts() *GlobalCatCounts {
-	return (&GlobalCatCounts{Query: Query{Text: GLOBAL_CAT_COUNTS_BASE}})._Limit(GLOBAL_CATS_PAGE_LIMIT)
+	return (&GlobalCatCounts{
+		Query: Query{
+			Text: GLOBAL_CAT_COUNTS_BASE,
+		},
+	})._Limit()
 }
 
 func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
@@ -231,17 +247,24 @@ func (t *GlobalCatCounts) DuringPeriod(period string) *GlobalCatCounts {
 	return t
 }
 
-func (t *GlobalCatCounts) _Limit(limit int) *GlobalCatCounts {
+func (t *GlobalCatCounts) More() *GlobalCatCounts {
 
+	// TODO: error if more than 1 instance of CATS_BASE_LIMIT exists
+	// since that would break the replace
+
+	// OR better idea, just trim the last line and then add CATS_MORE_LIMIT
 	t.Text = strings.Replace(
 		t.Text,
-		";",
-		fmt.Sprintf(
-			`
-LIMIT %d;`,
-			limit,
-		),
-		1)
+		CATS_BASE_LIMIT,
+		CATS_MORE_LIMIT,
+		1,
+	)
+
+	return t
+}
+
+func (t *GlobalCatCounts) _Limit() *GlobalCatCounts {
+	t.Text += CATS_BASE_LIMIT
 
 	return t
 }

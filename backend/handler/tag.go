@@ -108,6 +108,13 @@ func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {
 		global_cats_sql = global_cats_sql.DuringPeriod(period_params)
 	}
 
+	more_params := r.URL.Query().Get("more")
+	if more_params == "true" {
+		global_cats_sql = global_cats_sql.More()
+	} else if more_params != "" {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrInvalidMoreFlag))
+	}
+
 	if global_cats_sql.Error != nil {
 		render.Render(w, r, e.ErrInvalidRequest(global_cats_sql.Error))
 		return

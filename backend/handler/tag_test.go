@@ -7,9 +7,15 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	m "github.com/julianlk522/fitm/middleware"
 	"testing"
+
+	m "github.com/julianlk522/fitm/middleware"
 )
+
+// TODO: finish dat
+// func TestGetTopGlobalCats(t *testing.T) {
+// 	test_requests := []struct
+// }
 
 func TestAddTag(t *testing.T) {
 	test_tag_requests := []struct {
