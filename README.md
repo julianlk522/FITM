@@ -3,15 +3,14 @@
 ## Todos
 
 In order of importance:
-    1. allow uploading YT channels and playlists
-    2. WAL
-    3. refactor fetch_with_handle_rate_limit() to redirect to /404 in the catch block
-    4. backup cron job
+    1. refactor fetch_with_handle_rate_limit() to redirect to /404 in the catch block
+    2. backup cron job
+    3. refactor "like" queries to use virtual table
+        5a. triggers for SQL actions
 
 ### Features
 
 -SQLite optimizations
-    -WAL mode journaling
     -Replace "LIKE" queries with FTS / virtual table lookups
         -would be cool to benchmark this...
 -Cat search on index/top.astro
@@ -28,8 +27,19 @@ In order of importance:
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
+-Frontend shortcuts for tagging the same types of links
+    -e.g., YouTube videos, YouTube channels
 -look into not rendering images that dont successfully load
--Verify YT channels/playlists also work
+-Fix new links still being 4 hours off
+    -and top tags
+-Fix tag cat sort order on new links page
+-Add new link page to top nav
+-surround related statements in transactions (?)
+-ability to remove stuff
+    -link
+    -tag
+    -summary
+    -profile pic
 
 ### Code Quality
 
@@ -70,6 +80,9 @@ In order of importance:
     -i.e., if you submit enough links with cat "FOSS" you get to add a wiki-like summary of "FOSS" that appears on the top page when it is applied alone
 -Guidelines / heuristics for avoiding "marooned" tags
     -only proper nouns / abbreviations should be capitalized?
+    -always use "and" instead of "&" unless part of proper noun
+    -describe the containing group, not the object if one of many
+        -e.g., channels not channel
 -Tmap period filter?
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks

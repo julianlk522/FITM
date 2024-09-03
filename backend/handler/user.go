@@ -175,7 +175,7 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 		// Note: if, for some reason, the directory at pic_dir's path
 		// doesn't exist, this will fail
 		// shouldn't matter but just for posterity
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrCouldNotCreateProfilePic))
+		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotCreateProfilePic))
 		return
 	}
 	defer dst.Close()
@@ -185,18 +185,32 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 
 	// Save to new file
 	if _, err := io.Copy(dst, file); err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrCouldNotCopyProfilePic))
+		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotCopyProfilePic))
 		return
 	}
 
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	_, err = db.Client.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, unique_name, req_user_id)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrCouldNotSaveProfilePic))
+		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotSaveProfilePic))
 		return
 	}
 
 	http.ServeFile(w, r, full_path)
+}
+
+func RemoveProfilePic(w http.ResponseWriter, r *http.Request) {
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	// protected route: JWT middleware verifies bearer token to set req_user_id
+	// (no need to check here if empty)
+	_, err := db.Client.Exec(
+		`UPDATE Users SET pfp = NULL WHERE id = ?`, 
+		req_user_id,
+	)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotRemoveProfilePic))
+		return
+	}
 }
 
 func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
