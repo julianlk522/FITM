@@ -12,7 +12,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 		<section>
 			<p>
 				The <strong>Flexible Internet Treasure Map (FITM)</strong>
-				is a tool for sharing valuable Internet content. You can use it to map the locations of key resources hidden throughout the sprawling web.
+				is a tool for sharing valuable Internet content. You can use it to efficiently find key resources hidden throughout the sprawling web, or share ones you think other people should know about.
 			</p>
 			<p>It is an attempted solution to
 				the challenges of high obscurity and resultingly low discoverability
@@ -39,7 +39,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 			<p>
 				Search engines also are incentivized to promote results from
 				high-paying bidders. Maybe this is a
-				feature, not a bug, depending on who you ask. Do big budgets and marketing passion reliably produce high quality web content? If you're not sure about that, you may be in the right place. (You will <em>never</em> see ads on FITM).
+				feature, not a bug, depending on who you ask. Do big budgets and marketing passion reliably produce high quality web content? If you're not sure about that, you may be in the right place. (You will never see ads on FITM).
 			</p>
 			<p>
 				Arguably, a simple enough proxy for a link's quality is the number of
@@ -72,10 +72,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 				to communities defined by a <em>single</em> theme. Traditional WWW
 				searches make it hard to find sites that appeal to multiple
 				interests at once, especially if they aren't common or obviously
-				related. For example, if you like coding and heavy metal T_T.
-				However, if such a site exists and has been catalogued on FITM,
-				you can find it very easily by adding "coding" and "heavy metal"
-				as category filters to your search.
+				related.
 			</p>
 		</section>
 
@@ -160,15 +157,15 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 			<p>
 				<em>Global tags</em> are calculated automatically by the age of every
 				<em>user-submitted tag</em> and the frequency of each cat across
-				them. They are shown with each link. (Unless the link is viewed from a user's Treasure Map in which case it will show that user's tag.) You can also view any link's top user-submitted tags on demand.
+				them. They are shown with each link. (Unless the link is viewed from a user's Treasure Map. Then it will show <em>that</em> user's tag.) You can also view any link's top user-submitted tags on demand.
 			</p>
 
-			<p>Each user-submitted tag shows its <em>lifespan overlap</em> percentage, author, date of submission, and cats, of course. (Tags that have remained in their current configuration for the greatest portion of the link's lifespan are ranked highest.)</p>
+			<p>Each user-submitted tag shows its lifespan overlap percentage (see <a href="#global-tag-calculation">Global Tag Calculation</a> below), author, date of submission, and cats, of course. Tags that have remained in their current configuration for the greatest portion of the link's lifespan are ranked highest.</p>
 
 			<p>Not only the cats contained in the top tag rankings may be assigned globally. If a large number of more recent tags contain different cats, it's likely that those too will be assigned and may even replace ones from longstanding tags.</p>
 
-			<p> The assumption is that cat interpretations that remain unedited
-				for a long time are likely to be good, along with cats that reappear across tags.</p>
+			<p>The assumption is that cat interpretations that remain unedited
+				for a long time or that reappear across tags are most likely to be good fits.</p>
 
 			<p>A long-unchanged tag could be bad, but if enough users disagree and submit alternative tags, their collective input will rule it out; the old tag's cats will be stripped from the link's global tag.</p>
 		</section>
@@ -176,17 +173,19 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 		<section>
 			<h2>Additional Notes</h2>
 
-			<h3>Profile Pic Upload</h3>
+			<h3 id="global-tag-calculation" class="subsection">Global Tag Calculation</h3>
+			<p>Note: constructive criticism welcomed for this system. Please see the <a href="/feedback">feedback page</a> for FITM contact info.</p>
+			<p>For a cat to be added to link <code>L</code>'s' global tags, it must have a score &ge;25% of <code>L</code>'s' highest <em>cat score</em>.</p>
+			<p>Scores for cat <code>C</code> of link <code>L</code> are calculated as sum of scores from each occurence of <code>C</code> in one of <code>L</code>'s' tags, weighted by the number of cats in the tag containing the occurence.</p>
+			<p>Weights for tag <code>T</code> are calculated as <em>lifespan overlap percentage</em> of <code>T</code>, divided by <code>T</code>'s number of cats'. </p>
+			<p>Lifespan overlap percentage for tag <code>T</code> of link <code>L</code> the percentage of <code>L</code>'s time on FITM that  <code>T</code> has remained in its current state since edits.</p>
+
+			<h3 class="subsection">Profile Pic Upload</h3>
 			<p>File format: .JPG, .JPEG, .PNG, .WEBP</p>
 			<p>File size: &le;10MB</p>
 			<p>
 				Aspect ratio: 0.5:1 &dash; 2:1
 			</p>
-
-			<h3 class="subsection">Global Tag Calculation</h3>
-			<p>Note: proposed alternatives for this system are allowed and encouraged. Please see the <a href="/feedback">feedback page</a> for FITM contact info.</p>
-			<p>To be added to a link&apos;s global tags, a cat that it has been tagged with must hold a score greater than or equal to 25% of the highest cat score for that link.</p>
-			<p>Scores for each cat are calculated by combining the weights of all occurences. Weights are calculated as lifespan overlap percentage divided by number of cats for that tag. lifespan overlap percentage is the portion of the link&apos;s lifepan during which that tag has remained in its current state with no further edits.</p>
 		</section>
 
 		<ScrollUp />
@@ -194,13 +193,20 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 </BaseLayout>
 
 <style>
+	section {
+		padding: 2rem 0;
+	}
 	img {
 		display: flex;
 		margin: 0 auto;
 		max-height: 150px;
 	}
 	.subsection {
-		margin-top: 1rem;
+		margin-top: 2rem;
+	}
+
+	section h2 + h3.subsection {
+		margin-top: 0;
 	}
 
 	@media (min-width: 680px) {
