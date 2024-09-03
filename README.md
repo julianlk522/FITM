@@ -5,7 +5,10 @@
 In order of importance:
     1. backup cron job
     2. refactor "like" queries to use virtual table
-        5a. triggers for SQL actions
+        2a. triggers for SQL actions
+    3. 3 frontend tag shortcuts
+    4. fix new links tag cat sort order
+    5. try to fix times
 
 ### Features
 
@@ -32,7 +35,6 @@ In order of importance:
 -Fix new links still being 4 hours off
     -and top tags
 -Fix tag cat sort order on new links page
--Add new link page to top nav
 -surround related statements in transactions (?)
 -ability to remove stuff
     -link
