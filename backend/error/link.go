@@ -17,6 +17,7 @@ var (
 	// Add link
 	ErrNoURL             error = errors.New("no URL provided")
 	ErrInvalidURL        error = errors.New("invalid URL provided")
+	ErrGoogleAPIsKeyNotFound error = errors.New("gAPIs key not found")
 	ErrRedirect          error = errors.New("invalid link destination: redirect detected")
 	ErrCannotLikeOwnLink error = errors.New("cannot like your own link")
 	ErrLinkAlreadyLiked  error = errors.New("link already liked")
@@ -28,6 +29,18 @@ var (
 
 func ErrLinkURLCharsExceedLimit(limit int) error {
 	return fmt.Errorf("url too long (max %d chars)", limit)
+}
+
+func ErrGoogleAPIsRequestFail(err error) error {
+	return fmt.Errorf("error requesting from GoogleAPIs: %s", err)
+}
+
+func ErrInvalidGoogleAPIsResponse(status_text string) error {
+	return fmt.Errorf("invalid response from GoogleAPIs: %s", status_text)
+}
+
+func ErrGoogleAPIsResponseExtractionFail(err error) error {
+	return fmt.Errorf("error extracting response from GoogleAPIs: %s", err)
 }
 
 func ErrDuplicateLink(url string, duplicate_link_id string) error {

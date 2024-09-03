@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
-	"io"
 	"slices"
 	"strings"
 
@@ -110,31 +108,26 @@ func PaginateLinks[T model.LinkSignedIn | model.Link](links *[]T, page int) (int
 	}
 }
 
-// Add link
-func IsYouTubeVideoLink(url string) bool {
-
-	// TODO: consider making this more strict
-	return strings.Contains(url, "youtube.com/watch?v=") || strings.Contains(url, "youtu.be/")
-}
-
-func ExtractYouTubeVideoID(url string) string {
-	if strings.Contains(url, "youtube.com/watch?v=") {
-		return strings.Split(strings.Split(url, "&")[0], "?v=")[1]
-	} else if strings.Contains(url, "youtu.be/") {
-		return strings.Split(strings.Split(url, "youtu.be/")[1], "?")[0]
+// Add link (non-YT) 
+func ObtainURLMetaData(request *model.NewLinkRequest) error {
+	resp, err := GetResolvedURLResponse(request.NewLink.URL)
+	if err != nil {
+		return err
 	}
+	defer resp.Body.Close()
 
-	return ""
+	// save updated URL (after any redirects e.g., to wwww.)
+	request.URL = resp.Request.URL.String()
+
+	// remove trailing slash
+	request.URL = strings.TrimSuffix(request.URL, "/")
+
+	meta := ExtractMetaFromHTMLTokens(resp.Body)
+	AssignMetadata(meta, request)
+
+	return nil
 }
-
-func ExtractMetaDataFromGoogleAPIsResponse(body io.Reader) (model.YTVideoMetaData, error) {
-	var meta model.YTVideoMetaData
-
-	err := json.NewDecoder(body).Decode(&meta)
-	return meta, err
-}
-
-func ResolveURL(url string) (*http.Response, error) {
+func GetResolvedURLResponse(url string) (*http.Response, error) {
 	protocols := []string{"", "https://", "http://"}
 
 	for _, prefix := range protocols {
@@ -147,7 +140,7 @@ func ResolveURL(url string) (*http.Response, error) {
 			return nil, e.ErrRedirect
 		}
 
-		// URL is valid:  and return
+		// URL is valid: return
 		return resp, nil
 	}
 
@@ -202,8 +195,6 @@ func AssignSortedCats(unsorted_cats string, link *model.NewLinkRequest) {
 
 	link.Cats = strings.Join(split_cats, ",")
 }
-
-// Add link
 
 // Like / unlike link
 func UserSubmittedLink(login_name string, link_id string) bool {

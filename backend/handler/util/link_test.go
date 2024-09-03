@@ -95,54 +95,30 @@ func TestPaginateLinks(t *testing.T) {
 }
 
 // Add link
-func TestIsYouTubeVideoLink(t *testing.T) {
-	var test_urls = []struct {
-		URL   string
+func TestObtainURLMetaData(t *testing.T) {
+	var test_requests = []struct {
+		request *model.NewLinkRequest
 		Valid bool
 	}{
-		{"https://www.youtube.com/watch?v=9bZkp7q19f0", true},
-		{"https://www.youtube.com/watch?v=9bZkp7q19f0&feature=player_embedded", true},
-		{"fred.com", false},
-		{"https://www.youtube.com/watch?v=MH03ZJaNe8A", true},
-		{"https://youtu.be/uW5GjbidEHU?si=d2wJ7ADMCMMyJfQ-", true},
-		{"https://youtu.be/uW5GjbidEHU", true},
+		{&model.NewLinkRequest{NewLink: &model.NewLink{URL: "abc.com"}}, true},
+		{&model.NewLinkRequest{NewLink: &model.NewLink{URL: "www.abc.com"}}, true},
+		{&model.NewLinkRequest{NewLink: &model.NewLink{URL: "https://www.abc.com"}}, true},
+		{&model.NewLinkRequest{NewLink: &model.NewLink{URL: "about.google.com"}}, true},
+		{&model.NewLinkRequest{NewLink: &model.NewLink{URL: "julianlk.com/notreal"}}, false},
+		{&model.NewLinkRequest{NewLink: &model.NewLink{URL: "gobblety gook"}}, false},
 	}
 
-	for _, u := range test_urls {
-		return_true := IsYouTubeVideoLink(u.URL)
-		if u.Valid && !return_true {
-			t.Fatalf("expected url %s to be valid", u.URL)
-		} else if !u.Valid && return_true {
-			t.Fatalf("url %s NOT valid, expected error", u.URL)
+	for _, tr := range test_requests {
+		err := ObtainURLMetaData(tr.request)
+		if tr.Valid && err != nil {
+			t.Fatal(err)
+		} else if !tr.Valid && err == nil {
+			t.Fatalf("expected error for url %s", tr.request.NewLink.URL)
 		}
 	}
 }
 
-func TestExtractYouTubeVideoID(t *testing.T) {
-	var test_urls = []struct {
-		URL   string
-		ID    string
-	}{
-		{"https://www.youtube.com/watch?v=9bZkp7q19f0", "9bZkp7q19f0"},
-		{"https://www.youtube.com/watch?v=9bZkp7q19f0&feature=player_embedded", "9bZkp7q19f0"},
-		{"https://www.youtube.com/watch?v=MH03ZJaNe8A", "MH03ZJaNe8A"},
-		{"https://youtu.be/uW5GjbidEHU?si=d2wJ7ADMCMMyJfQ-", "uW5GjbidEHU"},
-		{"https://youtu.be/uW5GjbidEHU", "uW5GjbidEHU"},
-	}
-
-	for _, u := range test_urls {
-		id := ExtractYouTubeVideoID(u.URL)
-		if id != u.ID {
-			t.Fatalf("expected %s, got %s", u.ID, id)
-		}
-	}
-}
-
-func TestExtractMetaDataFromGoogleAPIsResponse(t *testing.T) {
-	// TODO
-}
-
-func TestResolveURL(t *testing.T) {
+func TestGetResolvedURLResponse(t *testing.T) {
 	var test_urls = []struct {
 		URL   string
 		Valid bool
@@ -156,7 +132,7 @@ func TestResolveURL(t *testing.T) {
 	}
 
 	for _, u := range test_urls {
-		_, err := ResolveURL(u.URL)
+		_, err := GetResolvedURLResponse(u.URL)
 		if u.Valid && err != nil {
 			t.Fatal(err)
 		} else if !u.Valid && err == nil {

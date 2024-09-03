@@ -39,3 +39,12 @@ func ErrRender(err error) render.Renderer {
 		ErrorText:      err.Error(),
 	}
 }
+
+func ErrServerFail(err error) render.Renderer {
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: 500,
+		StatusText:     "Server failed to process request.",
+		ErrorText:      err.Error(),
+	}
+}

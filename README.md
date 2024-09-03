@@ -4,6 +4,10 @@
 
 ### Features
 
+-SQLite optimizations
+    -WAL mode journaling
+    -Replace "LIKE" queries with FTS / virtual table lookups
+        -would be cool to benchmark this...
 -Cat search on index/top.astro
     -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads
     -For nearly identical cats with slight differences, maybe have a prompt on load that says like "would you like to reload and include these results too?"
@@ -19,6 +23,7 @@
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
 -look into not rendering images that dont successfully load
+-Verify YT channels/playlists also work
 
 ### Code Quality
 
@@ -31,11 +36,19 @@
     -handler_test / util_test TestMain()s
 -CI/CD
     -cronjob to backup db every day or so
+    -some way to auto deploy backend updates on the VPS but control over CLI?
 -Security
     -Look into input sequences that might produce problematic results
         -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
     -refactor fetch_with_handle_rate_limit() to redirect to /404 in the catch block
         -maybe have it return an object with props Response (Response or undefined) and RedirectTo ("/404". "/rate-limit", or "")
+-Ensure consistent language:
+    -get (request and retrieve things from an external source)
+    -scan (copy rows from sql to structs)
+    -extract (some data and carve out a different data type from it)
+    -assign (take some data and a pointer and copy the data to the referenced var)
+    -obtain (get, extract, assign)
+    -resolve (take in a possibly incomplete form and translate to a correct form)
 
 ## To-Maybe-Dos
 

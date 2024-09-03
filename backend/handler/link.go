@@ -3,7 +3,6 @@ package handler
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"strings"
 
@@ -73,65 +72,23 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if URL is YT video
-	// if so, extract ID and send request to GoogleAPIs using API key
 	if util.IsYouTubeVideoLink(request.NewLink.URL) {
+		if err := util.ObtainYouTubeMetaData(request); err != nil {
 
-		// Get ID from URL
-		id := util.ExtractYouTubeVideoID(request.NewLink.URL)
-		if id == "" {
-			render.Render(w, r, e.ErrInvalidRequest(e.ErrInvalidURL))
-			return
+			// if unable to get YT metadata, try treating as normal URL
+			// (in case of, e.g., example.com/youtube.com/watch?v=1234)
+			// though this should not happen per util.TestIsYouTubeVideoLink cases
+			if err = util.ObtainURLMetaData(request); err != nil {
+				render.Render(w, r, e.ErrServerFail(err))
+				return
+			}
 		}
-
-		// Build new GoogleAPIs URL
-		API_KEY := os.Getenv("FITM_GOOGLE_API_KEY")
-		if API_KEY == "" {
-			log.Printf("Could not find API_KEY")
-			render.Status(r, http.StatusInternalServerError)
-			return
-		}
-		gAPIs_url := "https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + API_KEY + "&part=snippet"
-
-		// Request from GoogleAPIs
-		resp, err := http.Get(gAPIs_url)
-		if err != nil {
-			log.Printf("Error requesting from GoogleAPIs: %s", err)
-			render.Render(w, r, e.ErrInvalidRequest(err))
-			return
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != 200 {
-			log.Printf("Error response from GoogleAPIs: %s", err)
-			render.Render(w, r, e.ErrInvalidRequest(e.ErrInvalidURL))
-			return
-		}
-
-		// Extract URL metadata from response
-		video_data, err := util.ExtractMetaDataFromGoogleAPIsResponse(resp.Body)
-		if err != nil {
-			log.Printf("Error: %s", err)
-			render.Status(r, http.StatusInternalServerError)
-			return
-		}
-		request.AutoSummary = video_data.Items[0].Snippet.Title
-		request.ImgURL = video_data.Items[0].Snippet.Thumbnails.Default.URL
-		request.URL = "https://www.youtube.com/watch?v=" + id
 
 	} else {
-		resp, err := util.ResolveURL(request.NewLink.URL)
-		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
+		if err := util.ObtainURLMetaData(request); err != nil {
+			render.Render(w, r, e.ErrServerFail(err))
 			return
 		}
-		defer resp.Body.Close()
-
-		// save updated URL (after any redirects e.g., to wwww.)
-		// remove trailing slash
-		request.URL = strings.TrimSuffix(resp.Request.URL.String(), "/")
-
-		meta := util.GetMetaFromHTMLTokens(resp.Body)
-		util.AssignMetadata(meta, request)
 	}
 
 	// Check URL is unique
@@ -148,6 +105,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	unsorted_cats := request.NewLink.Cats
 	util.AssignSortedCats(unsorted_cats, request)
 
+	// TODO: combine into single transaction
 	// Insert Summary(ies)
 	// (might have user-submitted, Auto Summary, or both)
 	if request.AutoSummary != "" {
