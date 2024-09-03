@@ -5,7 +5,7 @@ import NewSummary from '../../components/Summary/NewSummary'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import type { SummaryPage } from '../../types'
 import {SUMMARIES_ENDPOINT} from '../../constants'
-import fetch_with_handle_rate_limit from '../../util/rate_limit'
+import fetch_with_handle_redirect from '../../util/rate_limit'
 
 // Auth
 const token = Astro.cookies.get('token')?.value
@@ -20,19 +20,16 @@ if (!link_id) {
 // Get summaries + link
 const summaries_url = SUMMARIES_ENDPOINT + `/${link_id}`
 const get_summaries_resp = await (token
-	? fetch_with_handle_rate_limit(summaries_url, {
+	? fetch_with_handle_redirect(summaries_url, {
 			headers: {
 				Authorization: `Bearer ${token}`,
 			},
 		})
-	: fetch_with_handle_rate_limit(summaries_url))
-if (!get_summaries_resp) {
-	return Astro.redirect('/rate-limit')
+	: fetch_with_handle_redirect(summaries_url))
+if (!get_summaries_resp.Response || get_summaries_resp.RedirectTo) {
+	return Astro.redirect(get_summaries_resp.RedirectTo)
 }
-if (get_summaries_resp.status > 399) {
-	return Astro.redirect('/404')
-}
-let summary_data: SummaryPage = await get_summaries_resp.json()
+let summary_data: SummaryPage = await get_summaries_resp.Response.json()
 const { Link: link, Summaries: summaries } = summary_data
 
 // put summary with highest like count first,

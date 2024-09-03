@@ -3,9 +3,8 @@
 ## Todos
 
 In order of importance:
-    1. refactor fetch_with_handle_rate_limit() to redirect to /404 in the catch block
-    2. backup cron job
-    3. refactor "like" queries to use virtual table
+    1. backup cron job
+    2. refactor "like" queries to use virtual table
         5a. triggers for SQL actions
 
 ### Features
@@ -56,8 +55,6 @@ In order of importance:
 -Security
     -Look into input sequences that might produce problematic results
         -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
-    -refactor fetch_with_handle_rate_limit() to redirect to /404 in the catch block
-        -maybe have it return an object with props Response (Response or undefined) and RedirectTo ("/404". "/rate-limit", or "")
 -Ensure consistent language:
     -get (request and retrieve things from an external source)
     -scan (copy rows from sql to structs)
@@ -91,6 +88,8 @@ In order of importance:
     -Tiny bit more space between like/copy buttons on mobile
     -maybe go through BrowserStack and see if anything is horrendous
 -Rethink CalculateGlobalCategories algo
+-Implement RemoveProfilePic handler (securely) for when a user somehow ends up with a PFP that isn't found in the DB
+    -should be basically impossible so not high priority
 
 ### Code Quality
 

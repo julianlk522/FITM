@@ -8,6 +8,15 @@ function is_error_response(obj: any): obj is ErrorResponse {
 	return obj.error !== undefined
 }
 
+// FETCH
+const Redirects = ['/404', '/500', '/login', '/rate-limit'] as const
+type RedirectTo = (typeof Redirects)[number]
+
+type ResponseAndRedirect = {
+	Response: Response | undefined
+	RedirectTo: RedirectTo | undefined
+}
+
 // USER
 type Profile = {
 	LoginName: string
@@ -106,6 +115,7 @@ export type {
 	PaginatedLinks,
 	Period,
 	Profile,
+	ResponseAndRedirect,
 	Summary,
 	SummaryPage,
 	Tag,

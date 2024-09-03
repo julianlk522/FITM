@@ -6,7 +6,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 	<script>
 		import { LOGIN_ENDPOINT, SIGNUP_ENDPOINT } from '../constants'
 import get_cookie from '../util/get_cookie'
-import fetch_with_handle_rate_limit from '../util/rate_limit'
+import fetch_with_handle_redirect from '../util/rate_limit'
 
 		async function handle_signup(event: SubmitEvent) {
 			event.preventDefault()
@@ -15,7 +15,7 @@ import fetch_with_handle_rate_limit from '../util/rate_limit'
 			const signup_name = formData.get('signup_name')
 			const password = formData.get('password')
 
-			const signup_resp = await fetch_with_handle_rate_limit(SIGNUP_ENDPOINT, {
+			const signup_resp = await fetch_with_handle_redirect(SIGNUP_ENDPOINT, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -25,10 +25,10 @@ import fetch_with_handle_rate_limit from '../util/rate_limit'
 					password,
 				}),
 			})
-			if (!signup_resp) {
-				return window.location.href = '/rate-limit'
+			if (!signup_resp.Response || signup_resp.RedirectTo) {
+				return window.location.href = signup_resp.RedirectTo ?? '/500'
 			}
-			const signup_data = await signup_resp.json()
+			const signup_data = await signup_resp.Response.json()
 
 			if (signup_data.token) {
 				// set cookie
@@ -67,7 +67,7 @@ import fetch_with_handle_rate_limit from '../util/rate_limit'
 			const login_name = formData.get('login_name')
 			const password = formData.get('password')
 
-			const login_resp = await fetch_with_handle_rate_limit(LOGIN_ENDPOINT, {
+			const login_resp = await fetch_with_handle_redirect(LOGIN_ENDPOINT, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -77,10 +77,10 @@ import fetch_with_handle_rate_limit from '../util/rate_limit'
 					password,
 				}),
 			})
-			if (!login_resp) {
-				return window.location.href = '/rate-limit'
+			if (!login_resp.Response || login_resp.RedirectTo) {
+				return window.location.href = login_resp.RedirectTo ?? '/500'
 			}
-			const login_data = await login_resp.json()
+			const login_data = await login_resp.Response.json()
 
 			if (login_data.token) {
 				// set cookie

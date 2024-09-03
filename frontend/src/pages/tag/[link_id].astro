@@ -6,7 +6,7 @@ import { TAGS_ENDPOINT } from '../../constants'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import type { TagPage } from '../../types'
 import { format_long_date } from '../../util/format_date'
-import fetch_with_handle_rate_limit from '../../util/rate_limit'
+import fetch_with_handle_redirect from '../../util/rate_limit'
 
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
@@ -17,18 +17,15 @@ if (!link_id) {
 }
 
 const tags_url = TAGS_ENDPOINT + `/${link_id}`
-const get_tags_resp = await (token ? fetch_with_handle_rate_limit(tags_url, {
+const get_tags_resp = await (token ? fetch_with_handle_redirect(tags_url, {
 	headers: {
 		Authorization: `Bearer ${token}`,
 	},
-}) : fetch_with_handle_rate_limit(tags_url))
-if (!get_tags_resp) {
-	return Astro.redirect("/rate-limit")
+}) : fetch_with_handle_redirect(tags_url))
+if (!get_tags_resp.Response || get_tags_resp.RedirectTo) {
+	return Astro.redirect(get_tags_resp.RedirectTo)
 }
-if (get_tags_resp.status > 399) {
-	return Astro.redirect('/404')
-}
-const tag_Data: TagPage = await get_tags_resp.json()
+const tag_Data: TagPage = await get_tags_resp.Response.json()
 const { Link: link, UserTag: user_tag, TagRankings: top_tags } = tag_Data
 link.TagCount = top_tags.length
 
