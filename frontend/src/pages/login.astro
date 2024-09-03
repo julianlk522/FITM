@@ -21,7 +21,7 @@ import fetch_with_handle_rate_limit from '../util/rate_limit'
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
-					signup_name,
+					"login_name": signup_name,
 					password,
 				}),
 			})

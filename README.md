@@ -2,6 +2,12 @@
 
 ## Todos
 
+In order of importance:
+    1. allow uploading YT channels and playlists
+    2. WAL
+    3. refactor fetch_with_handle_rate_limit() to redirect to /404 in the catch block
+    4. backup cron job
+
 ### Features
 
 -SQLite optimizations
