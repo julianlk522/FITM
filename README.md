@@ -75,13 +75,13 @@ In order of importance:
 -Favorite tmaps?
 -Show number of copies along with number of likes in frontend
 -Better way to visualize how Global Cats are determined?
--Optional summaries that can be edited if you submit / like enough links with a certain cat?
-    -i.e., if you submit enough links with cat "FOSS" you get to add a wiki-like summary of "FOSS" that appears on the top page when it is applied alone
 -Guidelines / heuristics for avoiding "marooned" tags
     -only proper nouns / abbreviations should be capitalized?
     -always use "and" instead of "&" unless part of proper noun
     -describe the containing group, not the object if one of many
         -e.g., channels not channel
+-Optional summaries that can be edited if you submit / like enough links with a certain cat?
+    -i.e., if you submit enough links with cat "FOSS" you get to add a wiki-like summary of "FOSS" that appears on the top page when it is applied alone
 -Tmap period filter?
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks

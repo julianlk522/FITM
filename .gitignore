@@ -1,4 +1,6 @@
 backend/db/profile-pics
+backend/db/backup
+!backend/db/backup/backup_now.sh
 backend/db/fitm.db
 _*
 .vscode/
