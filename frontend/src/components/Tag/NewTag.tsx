@@ -43,7 +43,11 @@ export default function NewTag(props: Props) {
 			return
 		}
 
-		set_cats([...cats, cat].sort())
+		set_cats(
+			[...cats, cat].sort((a, b) => {
+				return a.localeCompare(b)
+			})
+		)
 		set_error(undefined)
 
 		const cat_field = document.getElementById('cat') as HTMLInputElement

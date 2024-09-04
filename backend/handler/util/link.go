@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"slices"
 	"strings"
 
 	"github.com/julianlk522/fitm/db"
@@ -187,13 +186,6 @@ func AssignMetadata(meta HTMLMeta, link_data *model.NewLinkRequest) {
 
 func IsRedirect(status_code int) bool {
 	return status_code > 299 && status_code < 400
-}
-
-func AssignSortedCats(unsorted_cats string, link *model.NewLinkRequest) {
-	split_cats := strings.Split(unsorted_cats, ",")
-	slices.Sort(split_cats)
-
-	link.Cats = strings.Join(split_cats, ",")
 }
 
 // Like / unlike link

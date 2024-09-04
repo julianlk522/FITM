@@ -3,9 +3,8 @@
 ## Todos
 
 In order of importance:
-    1. fix new links tag cat sort order
-    2. frontend tag shortcuts
-    3. refactor "like" queries to use virtual table
+    1. frontend tag shortcuts
+    2. refactor "like" queries to use virtual table
         a. triggers for SQL actions
         b. run some benchmarks before/after changes
 

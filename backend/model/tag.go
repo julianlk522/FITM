@@ -77,6 +77,7 @@ func (t *NewTagRequest) Bind(r *http.Request) error {
 	}
 
 	t.ID = uuid.New().String()
+	t.Cats = util.TrimExcessAndTrailingSpaces(t.NewTag.Cats)
 	t.LastUpdated = util.NEW_LONG_TIMESTAMP()
 
 	return nil
@@ -105,7 +106,6 @@ func (et *EditTagRequest) Bind(r *http.Request) error {
 	}
 
 	et.Cats = util.TrimExcessAndTrailingSpaces(et.Cats)
-
 	et.LastUpdated = util.NEW_LONG_TIMESTAMP()
 
 	return nil

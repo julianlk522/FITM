@@ -102,8 +102,8 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	request.SubmittedBy = req_login_name
 
-	unsorted_cats := request.NewLink.Cats
-	util.AssignSortedCats(unsorted_cats, request)
+	// sort cats
+	request.Cats = util.AlphabetizeCats(request.NewLink.Cats)
 
 	// TODO: combine into single transaction
 	// Insert Summary(ies)
