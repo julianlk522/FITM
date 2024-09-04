@@ -90,7 +90,7 @@ const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 										{tag.SubmittedBy}
 									</a>
 								</p>
-								<CSRLastUpdated LastUpdated={tag.LastUpdated} />
+								<CSRLastUpdated client:load LastUpdated={tag.LastUpdated} />
 								<p>
 									
 									lifespan: {tag.LifeSpanOverlap.toFixed(2)}%

@@ -32,9 +32,11 @@ export default function NewLink(props: Props) {
 	})
 
 	// correct submit_date timezone
-	const x = new Date(submit_date) // UTC
-	const tz_offset_millis = x.getTimezoneOffset() * 60000
-	const local_time = new Date(x.getTime() - tz_offset_millis).toISOString()
+	const sd_utc = new Date(submit_date)
+	const tz_offset_millis = sd_utc.getTimezoneOffset() * 60000
+	const local_time = new Date(
+		sd_utc.getTime() - tz_offset_millis
+	).toISOString()
 
 	return (
 		<li class='link'>
