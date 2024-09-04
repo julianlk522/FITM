@@ -63,15 +63,17 @@ export default function NewTag(props: Props) {
 				Add Cat
 			</button>
 
-			<ol id='cat-list'>
-				{cats.map((cat) => (
-					<TagCat
-						Cat={cat}
-						EditActivated={true}
-						Deleted={deleted_cat}
-					/>
-				))}
-			</ol>
+			{cats.length ? (
+				<ol id='cat-list'>
+					{cats.map((cat) => (
+						<TagCat
+							Cat={cat}
+							EditActivated={true}
+							Deleted={deleted_cat}
+						/>
+					))}
+				</ol>
+			) : null}
 		</>
 	)
 }

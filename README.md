@@ -3,15 +3,17 @@
 ## Todos
 
 In order of importance:
-    1. frontend tag shortcuts
-    2. refactor "like" queries to use virtual table
+    1. refactor "like" queries to use virtual table
         a. triggers for SQL actions
         b. run some benchmarks before/after changes
+    2. ability to remove stuff
+    3. top.astro cat search
+    4. look into CI/CD options, running tests on rpi
 
 
 ### Features
 
--Cat search on index/top.astro
+-Cat search on top.astro
     -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads
     -For nearly identical cats with slight differences, maybe have a prompt on load that says like "would you like to reload and include these results too?"
 -Pagination
@@ -69,7 +71,8 @@ In order of importance:
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
     -proper favicon.ico
-    -Link preview img srcset
+    -Link preview img srcset?
+        probably not realistic
     -Tiny bit more space between like/copy buttons on mobile
     -maybe go through BrowserStack and see if anything is horrendous
 -Rethink CalculateGlobalCategories algo

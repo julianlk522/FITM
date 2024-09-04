@@ -19,6 +19,43 @@ export default function NewLinks(props: Props) {
 	const [cats, set_cats] = useState<string[]>([])
 	const [submitted_links, set_submitted_links] = useState<types.Link[]>([])
 
+	function handle_url_change(e: InputEvent) {
+		const val = (e.currentTarget as HTMLInputElement).value
+		if (!val) {
+			return
+		}
+
+		// auto-populate YT cats if URL is YT link
+		if (
+			(val.includes('youtu.be') || val.includes('youtube.com')) &&
+			!cats.includes('YouTube')
+		) {
+			const cats_to_be_added = ['YouTube']
+
+			// channel
+			if (
+				val.includes('youtube.com/@') &&
+				!cats.includes('YouTube channels')
+			) {
+				cats_to_be_added.push('YouTube channels')
+			}
+
+			// playlist
+			if (
+				val.includes('youtube.com/playlist?') &&
+				!cats.includes('YouTube playlists')
+			) {
+				cats_to_be_added.push('YouTube playlists')
+			}
+
+			set_cats(
+				[...cats, ...cats_to_be_added].sort((a, b) =>
+					a.localeCompare(b)
+				)
+			)
+		}
+	}
+
 	async function handle_submit(event: SubmitEvent) {
 		event.preventDefault()
 		const form = event.target as HTMLFormElement
@@ -104,7 +141,12 @@ export default function NewLinks(props: Props) {
 				) : null}
 				<form onSubmit={async (e) => await handle_submit(e)}>
 					<label for='url'>URL</label>
-					<input type='text' id='url' name='url' />
+					<input
+						type='text'
+						id='url'
+						name='url'
+						onInput={(e) => handle_url_change(e)}
+					/>
 					<label for='summary'>Summary (optional)</label>
 					<textarea id='summary' name='summary' rows={3} cols={50} />
 					<NewTag
@@ -112,7 +154,7 @@ export default function NewLinks(props: Props) {
 						SetCats={set_cats}
 						SetError={set_error}
 					/>
-					<input type='submit' value='Submit' />
+					<input id='submit-new-link' type='submit' value='Submit' />
 				</form>
 			</section>
 			{submitted_links.length ? (
