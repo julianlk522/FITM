@@ -111,7 +111,7 @@ export default function EditTag(props: Props) {
 	return (
 		<section id='edit-tag'>
 			<div id='user_tags_title_bar'>
-				<h2>Your Tag For This Link</h2>
+				<h2>Your Tag</h2>
 
 				<button
 					onClick={() => {
@@ -164,7 +164,7 @@ export default function EditTag(props: Props) {
 			) : null}
 
 			{tag ? (
-				<p>(Last Updated: {format_long_date(tag.LastUpdated)})</p>
+				<p>(last updated: {format_long_date(tag.LastUpdated)})</p>
 			) : editing ? null : (
 				<p>(not tagged)</p>
 			)}

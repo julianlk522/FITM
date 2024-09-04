@@ -3,18 +3,15 @@
 ## Todos
 
 In order of importance:
-    1. backup cron job
-    2. refactor "like" queries to use virtual table
-        2a. triggers for SQL actions
-    3. 3 frontend tag shortcuts
-    4. fix new links tag cat sort order
-    5. try to fix times
+    1. fix new links tag cat sort order
+    2. frontend tag shortcuts
+    3. refactor "like" queries to use virtual table
+        a. triggers for SQL actions
+        b. run some benchmarks before/after changes
+
 
 ### Features
 
--SQLite optimizations
-    -Replace "LIKE" queries with FTS / virtual table lookups
-        -would be cool to benchmark this...
 -Cat search on index/top.astro
     -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads
     -For nearly identical cats with slight differences, maybe have a prompt on load that says like "would you like to reload and include these results too?"
@@ -29,12 +26,7 @@ In order of importance:
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
--Frontend shortcuts for tagging the same types of links
-    -e.g., YouTube videos, YouTube channels
 -look into not rendering images that dont successfully load
--Fix new links still being 4 hours off
-    -and top tags
--Fix tag cat sort order on new links page
 -surround related statements in transactions (?)
 -ability to remove stuff
     -link
@@ -44,31 +36,23 @@ In order of importance:
 
 ### Code Quality
 
--VPS SSH key
 -Refactors for simplicity / accuracy
-    -Move backend validation to /model unless using additional controller logic, e.g., JWT
     -GetTmapCatCounts probably possible in all sql
     -Top Cats / Top Links / etc. components
 -Purge code duplication
     -handler_test / util_test TestMain()s
 -CI/CD
-    -cronjob to backup db every day or so
-    -some way to auto deploy backend updates on the VPS but control over CLI?
+    -auto deploy backend updates but control with CLI on VPS?
+    -run tests on RPi!
 -Security
     -Look into input sequences that might produce problematic results
         -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
--Ensure consistent language:
-    -get (request and retrieve things from an external source)
-    -scan (copy rows from sql to structs)
-    -extract (some data and carve out a different data type from it)
-    -assign (take some data and a pointer and copy the data to the referenced var)
-    -obtain (get, extract, assign)
-    -resolve (take in a possibly incomplete form and translate to a correct form)
 
 ## To-Maybe-Dos
 
 ### Features
 
+-client:visible for tmap
 -SQL prepared statements
     -more important if truly does help prevent injection... verify
 -Redis caching
@@ -95,6 +79,14 @@ In order of importance:
 
 ### Code Quality
 
+-VPS SSH key
+-Ensure consistent language:
+    -get (request and retrieve things from an external source)
+    -scan (copy rows from sql to structs)
+    -extract (some data and carve out a different data type from it)
+    -assign (take some data and a pointer and copy the data to the referenced var)
+    -obtain (get, extract, assign)
+    -resolve (take in a possibly incomplete form and translate to a correct form)
 -Better logging?
     (Zap)
 -Other lesser refactors and removal of duplicate code
@@ -105,6 +97,7 @@ In order of importance:
         -(new link, new summary, update summary, etc.)
     -Fix SQL identifiers to use double quotes (?)
         -verify first
+    -Move backend validation to /model unless using additional controller logic, e.g., JWT
 -Other tests
     -finish handlers
     -handler utils

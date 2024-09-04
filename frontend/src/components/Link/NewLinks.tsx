@@ -4,7 +4,7 @@ import * as types from '../../types'
 import { is_error_response } from '../../types'
 import fetch_with_handle_redirect from '../../util/rate_limit'
 import NewTag from '../Tag/NewTag'
-import Link from './Link'
+import NewLink from './NewLink'
 import './NewLinks.css'
 interface Props {
 	Token: string
@@ -120,15 +120,7 @@ export default function NewLinks(props: Props) {
 					<h2>Submitted Links</h2>
 					<ol>
 						{submitted_links.map((link) => (
-							<Link
-								key={link.ID}
-								Link={link}
-								Token={props.Token}
-								User={props.User}
-								IsSummaryPage={false}
-								IsTagPage={false}
-								IsTmapPage={false}
-							/>
+							<NewLink key={link.ID} Link={link} />
 						))}
 					</ol>
 				</section>

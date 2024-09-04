@@ -5,8 +5,8 @@ import TagCat from '../../components/Tag/TagCat'
 import { TAGS_ENDPOINT } from '../../constants'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import type { TagPage } from '../../types'
-import { format_long_date } from '../../util/format_date'
 import fetch_with_handle_redirect from '../../util/rate_limit'
+import CSRLastUpdated from '../../components/Tag/CSRLastUpdated'
 
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
@@ -90,7 +90,7 @@ const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 										{tag.SubmittedBy}
 									</a>
 								</p>
-								<p>last updated: {format_long_date(tag.LastUpdated)}</p>
+								<CSRLastUpdated LastUpdated={tag.LastUpdated} />
 								<p>
 									
 									lifespan: {tag.LifeSpanOverlap.toFixed(2)}%
