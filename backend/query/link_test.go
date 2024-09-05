@@ -205,10 +205,6 @@ func TestNewContributors(t *testing.T) {
 		t.Fatal(contributors_sql.Error)
 	}
 
-	if contributors_sql.Error != nil {
-		t.Fatal(contributors_sql.Error)
-	}
-
 	rows, err := TestClient.Query(contributors_sql.Text)
 	if err != nil {
 		t.Fatal(err)
@@ -229,7 +225,7 @@ func TestNewContributors(t *testing.T) {
 	var test_cols = []struct {
 		Want string
 	}{
-		{"count(*)"},
+		{"count"},
 		{"submitted_by"},
 	}
 
@@ -240,12 +236,18 @@ func TestNewContributors(t *testing.T) {
 	}
 }
 
+// $fitm/backend/query: go test -run TestContributorsFromCats -tags 'fts5'
+// or just set VS Code "Go: Build Tags" to "fts5" (current)
 func TestContributorsFromCats(t *testing.T) {
 	contributors_sql := NewContributors().FromCats([]string{"umvc3"})
 	contributors_sql.Text = strings.Replace(
 		contributors_sql.Text,
-		"count(*), submitted_by",
-		"global_cats",
+		`SELECT
+count(l.id) as count, l.submitted_by
+FROM Links l`,
+		`SELECT
+count(l.id) as count, l.global_cats
+FROM Links l`,
 	1)
 
 	rows, err := TestClient.Query(contributors_sql.Text)
@@ -255,8 +257,8 @@ func TestContributorsFromCats(t *testing.T) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var cat string
-		if err := rows.Scan(&cat); err != nil {
+		var cat, count string
+		if err := rows.Scan(&count, &cat); err != nil {
 			t.Fatal(err)
 		} else if !strings.Contains(strings.ToLower(cat), "umvc3") {
 			t.Fatalf("got %s, should contain %s", cat, "umvc3")

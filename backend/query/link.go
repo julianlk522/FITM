@@ -87,8 +87,6 @@ const LINKS_AUTH_FROM = `
 LEFT JOIN IsLiked il ON l.id = il.link_id
 LEFT JOIN IsCopied ic ON l.id = ic.link_id`
 
-const LINKS_CATS_FROM = `INNER JOIN CatsFilter f ON l.id = f.link_id`
-
 const LINKS_ORDER_BY = ` 
 ORDER BY 
     like_count DESC, 
@@ -107,6 +105,8 @@ func NewTopLinks() *TopLinks {
 		},
 	})
 }
+
+const LINKS_CATS_FROM = `INNER JOIN CatsFilter f ON l.id = f.link_id`
 
 func (l *TopLinks) FromCats(cats []string) *TopLinks {
 	if len(cats) == 0 || cats[0] == "" {
@@ -221,13 +221,14 @@ type Contributors struct {
 	Query
 }
 
-const CONTRIBUTORS_FIELDS = `SELECT count(*), submitted_by 
-FROM Links`
+const CONTRIBUTORS_FIELDS = `SELECT
+count(l.id) as count, l.submitted_by
+FROM Links l`
 
 var CONTRIBUTORS_GBOBL = fmt.Sprintf(
 	` 
-	GROUP BY submitted_by
-	ORDER BY count(*) DESC, submitted_by ASC
+	GROUP BY l.submitted_by
+	ORDER BY count DESC, l.submitted_by ASC
 	LIMIT %d;`, CONTRIBUTORS_PAGE_LIMIT,
 )
 
@@ -239,19 +240,36 @@ func NewContributors() *Contributors {
 	})
 }
 
+const CONTRIBUTORS_CATS_FROM = `INNER JOIN CatsFilter f ON l.id = f.link_id`
+
 func (c *Contributors) FromCats(cats []string) *Contributors {
-	clause := fmt.Sprintf(" WHERE ',' || global_cats || ',' LIKE '%%,%s,%%'", cats[0])
+	clause := fmt.Sprintf("WHERE global_cats MATCH '%s'", cats[0])
 	for i := 1; i < len(cats); i++ {
-		clause += fmt.Sprintf(" AND ',' || global_cats || ',' LIKE '%%,%s,%%'", cats[i])
+		clause += fmt.Sprintf("\nAND global_cats MATCH '%s'", cats[i])
 	}
 
-	// Swap previous WHERE for AND, if any
-	c.Text = strings.Replace(c.Text, "WHERE", "AND", 1)
+	// build CTE
+	cats_cte := fmt.Sprintf(
+	`WITH CatsFilter AS (
+	SELECT link_id
+	FROM global_cats_fts
+	%s
+		)`, clause,
+	)
 
+	// prepend CTE
 	c.Text = strings.Replace(
-		c.Text, 
+		c.Text,
 		CONTRIBUTORS_FIELDS,
-		CONTRIBUTORS_FIELDS + clause, 
+		cats_cte + "\n" + CONTRIBUTORS_FIELDS,
+		1)
+
+
+	// append join
+	c.Text = strings.Replace(
+		c.Text,
+		CONTRIBUTORS_FIELDS,
+		CONTRIBUTORS_FIELDS + "\n" + CONTRIBUTORS_CATS_FROM,
 		1,
 	)
 
@@ -265,17 +283,18 @@ func (c *Contributors) DuringPeriod(period string) *Contributors {
 		return c
 	}
 
-	// Swap previous WHERE for AND, if any
-	c.Text = strings.Replace(c.Text, "WHERE", "AND", 1)
+	clause = strings.Replace(
+		clause,
+		"submit_date",
+		"l.submit_date",
+		1,
+	)
 
 	// Prepend new clause
 	c.Text = strings.Replace(
 		c.Text,
-		CONTRIBUTORS_FIELDS,
-		fmt.Sprintf(
-			"%s WHERE %s",
-			CONTRIBUTORS_FIELDS,
-			clause),
+		CONTRIBUTORS_GBOBL,
+		"\n" + "WHERE " + clause + CONTRIBUTORS_GBOBL,
 		1)
 
 	return c
