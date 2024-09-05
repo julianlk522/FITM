@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+
 	e "github.com/julianlk522/fitm/error"
 )
 
@@ -10,8 +11,6 @@ type Query struct {
 	Error error
 }
 
-// TODO: potentially switch to this more readable syntax:
-// WHERE last_updated >= date('now', '-30 days')
 func GetPeriodClause(period string) (clause string, err error) {
 	var days int
 	switch period {
@@ -27,5 +26,5 @@ func GetPeriodClause(period string) (clause string, err error) {
 		return "", e.ErrInvalidPeriod
 	}
 
-	return fmt.Sprintf("julianday('now') - julianday(submit_date) < %d", days), nil
+	return fmt.Sprintf("submit_date >= date('now', '-%d days')", days), nil
 }

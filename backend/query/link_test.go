@@ -55,7 +55,7 @@ func TestNewTopLinks(t *testing.T) {
 	var test_cols = []struct {
 		Want string
 	}{
-		{"link_id"},
+		{"id"},
 		{"url"},
 		{"sb"},
 		{"sd"},
@@ -124,6 +124,53 @@ func TestLinksDuringPeriod(t *testing.T) {
 	}
 }
 
+func TestAsSignedInUser(t *testing.T) {
+	links_sql := NewTopLinks().AsSignedInUser(test_user_id)
+	if links_sql.Error != nil {
+		t.Fatal(links_sql.Error)
+	}
+
+	rows, err := TestClient.Query(links_sql.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+
+	cols, err := rows.ColumnTypes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(cols) == 0 {
+		t.Fatal("no columns")
+	} else if len(cols) != 12 {
+		t.Fatal("incorrect col count")
+	}
+
+	var test_cols = []struct {
+		Want string
+	}{
+		{"id"},
+		{"url"},
+		{"sb"},
+		{"sd"},
+		{"cats"},
+		{"summary"},
+		{"summary_count"},
+		{"tag_count"},
+		{"like_count"},
+		{"img_url"},
+		{"is_liked"},
+		{"is_copied"},
+	}
+
+	for i, col := range cols {
+		if col.Name() != test_cols[i].Want {
+			t.Fatalf("column %d: got %s, want %s", i, col.Name(), test_cols[i].Want)
+		}
+	}
+}
+
 func TestPage(t *testing.T) {
 	var links_sql = NewTopLinks()
 
@@ -149,29 +196,6 @@ func TestPage(t *testing.T) {
 
 		links_sql = NewTopLinks()
 	}
-}
-
-func Test_LinksWhere(t *testing.T) {
-	l1 := NewTopLinks()
-	l2 := NewTopLinks()
-
-	clause1 := "links_id IN ('1', '2', '3')"
-	clause2 := "julianday('now') - julianday(submit_date) < 31"
-
-	l1._Where(clause1)
-	l2._Where(clause2)
-
-	rows1, err := TestClient.Query(l1.Text)
-	if err != nil && err != sql.ErrNoRows {
-		t.Fatal(err)
-	}
-	defer rows1.Close()
-
-	rows2, err := TestClient.Query(l2.Text)
-	if err != nil && err != sql.ErrNoRows {
-		t.Fatal(err)
-	}
-	defer rows2.Close()
 }
 
 // Contributors

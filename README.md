@@ -1,11 +1,10 @@
-# open-internet-treasure-map
+# flexible-internet-treasure-map
 
 ## Todos
 
 In order of importance:
     1. refactor "like" queries to use virtual table
         a. triggers for SQL actions
-        b. run some benchmarks before/after changes
     2. ability to remove stuff
     3. top.astro cat search
     4. look into CI/CD options, running tests on rpi
@@ -162,6 +161,7 @@ Users can like listed links to boost them, so in theory the most univerally appr
 - Learning Go
     - interfaces
     - pointers
+    - testing features
 - Debugging Docker install
     - edit etc/apt/sources.list.d/docker.list to add specific Ubuntu codename to retrieve correct release package
     - repeated "dial unix /var/run/docker.sock: connect: connection refused" cryptic errors, tried editing group permissions, starting/stopping docker daemon etc. but nothing working
@@ -174,5 +174,9 @@ Users can like listed links to boost them, so in theory the most univerally appr
 - YouTube Data API
     - Register Google API key
 - Bash scripting
-    - modified https://stackoverflow.com/a/76544267 for FITM
+    - modified https://stackoverflow.com/a/76544267 for FITM package rename
     - sourcing .bashrc from /etc/profile on if exists and readable
+    - backup_now.sh on cronjob
+- SQLite optimization
+    - FTS5 virtual table
+    - WAL mode

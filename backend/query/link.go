@@ -11,8 +11,11 @@ const (
 )
 
 // Links
-var UNPAGINATED_LIMIT_CLAUSE = fmt.Sprintf(` 
-LIMIT %d;`, LINKS_PAGE_LIMIT)
+var UNPAGINATED_LIMIT_CLAUSE = fmt.Sprintf(
+	` 
+	LIMIT %d;`, 
+	LINKS_PAGE_LIMIT,
+)
 
 func _PaginateLimitClause(page int) string {
 	if page == 1 {
@@ -25,89 +28,84 @@ type TopLinks struct {
 	Query
 }
 
-const LINKS_BASE_FIELDS = `SELECT 
-links_id as link_id, 
-url, 
-sb, 
-sd, 
-cats, 
-summary, 
-COALESCE(summary_count,0) as summary_count,
-COALESCE(tag_count,0) as tag_count,
-like_count, 
-img_url`
+const LINKS_BASE_CTES = 
+`WITH LikeCount AS (
+    SELECT link_id, COUNT(*) AS like_count 
+    FROM 'Link Likes'
+    GROUP BY link_id
+),
+SummaryCount AS (
+    SELECT link_id, COUNT(*) AS summary_count
+    FROM Summaries
+    GROUP BY link_id
+),
+TagCount AS (
+    SELECT link_id, COUNT(*) AS tag_count
+    FROM Tags
+    GROUP BY link_id
+)`
 
-const LINKS_AUTH_FIELDS = `,
-COALESCE(is_liked,0) as is_liked,
-COALESCE(is_copied,0) as is_copied`
-
-const LINKS_BASE_FROM = `
-FROM 
-	(
-	SELECT 
-		Links.id as links_id, 
-		url, 
-		submitted_by as sb, 
-		Links.submit_date as sd, 
-		COALESCE(global_cats,"") as cats, 
-		COALESCE(global_summary,"") as summary, 
-		COALESCE(like_count,0) as like_count, 
-		COALESCE(img_url,"") as img_url 
-	FROM LINKS 
-	LEFT JOIN 
-		(
-		SELECT link_id as likes_link_id, count(*) as like_count 
-		FROM 'Link Likes'
-		GROUP BY likes_link_id
-		) 
-	ON Links.id = likes_link_id
-	)
-LEFT JOIN
-	(
-	SELECT count(*) as summary_count, link_id as slink_id
-	FROM Summaries
-	GROUP BY slink_id
-	)
-ON slink_id = link_id
-LEFT JOIN 
-	(
-	SELECT count(*) as tag_count, link_id as tlink_id
-	FROM Tags
-	GROUP BY tlink_id
-	)
-ON tlink_id = link_id`
-
-var LINKS_BASE_FROM_LINES = strings.Split(LINKS_BASE_FROM, "\n")
-var LINKS_BASE_FROM_LAST_LINE = LINKS_BASE_FROM_LINES[len(LINKS_BASE_FROM_LINES)-1]
-
-const LINKS_AUTH_FROM = `
-LEFT JOIN 
-	(
-	SELECT link_id as likes_link_id2, count(*) as is_liked, user_id
+const LINKS_AUTH_CTES = `,
+IsLiked AS (
+	SELECT link_id, COUNT(*) AS is_liked
 	FROM 'Link Likes'
 	WHERE user_id = 'REQ_USER_ID'
-	GROUP BY likes_link_id2
-	)
-ON likes_link_id2 = link_id
-LEFT JOIN
-	(
-	SELECT link_id as copy_link_id, count(*) as is_copied, user_id
+	GROUP BY link_id
+),
+IsCopied AS (
+	SELECT link_id, COUNT(*) AS is_copied
 	FROM 'Link Copies'
 	WHERE user_id = 'REQ_USER_ID'
-	GROUP BY copy_link_id
-	)
-ON copy_link_id = link_id
-`
+	GROUP BY link_id
+)`
 
-const LINKS_BASE_GROUP_BY_ORDER_BY = `
-GROUP BY link_id 
-ORDER BY like_count DESC, summary_count DESC, link_id DESC`
+const LINKS_BASE_FIELDS = ` 
+SELECT 
+	l.id, 
+    l.url, 
+    l.submitted_by AS sb, 
+    l.submit_date AS sd, 
+    COALESCE(l.global_cats, '') AS cats, 
+    COALESCE(l.global_summary, '') AS summary, 
+    COALESCE(s.summary_count, 0) AS summary_count,
+    COALESCE(t.tag_count, 0) AS tag_count,
+    COALESCE(ll.like_count, 0) AS like_count, 
+    COALESCE(l.img_url, '') AS img_url`
+
+const LINKS_AUTH_FIELDS = `,
+	COALESCE(il.is_liked,0) AS is_liked,
+	COALESCE(ic.is_copied,0) AS is_copied`
+
+const LINKS_BASE_FROM = ` 
+FROM 
+    LINKS l
+LEFT JOIN LikeCount ll ON l.id = ll.link_id
+LEFT JOIN SummaryCount s ON l.id = s.link_id
+LEFT JOIN TagCount t ON l.id = t.link_id`
+
+const LINKS_AUTH_FROM = `
+LEFT JOIN IsLiked il ON l.id = il.link_id
+LEFT JOIN IsCopied ic ON l.id = ic.link_id`
+
+const LINKS_CATS_FROM = `INNER JOIN CatsFilter f ON l.id = f.link_id`
+
+const LINKS_ORDER_BY = ` 
+ORDER BY 
+    like_count DESC, 
+    summary_count DESC, 
+    l.id DESC`
 
 func NewTopLinks() *TopLinks {
-	return (&TopLinks{Query: Query{Text: LINKS_BASE_FIELDS +
-		LINKS_BASE_FROM +
-		LINKS_BASE_GROUP_BY_ORDER_BY +
-		UNPAGINATED_LIMIT_CLAUSE}})
+	return (&TopLinks{
+		Query: Query{
+			Text: 
+				LINKS_BASE_CTES +
+				LINKS_BASE_FIELDS +
+				LINKS_BASE_FROM +
+				LINKS_ORDER_BY +
+				UNPAGINATED_LIMIT_CLAUSE,
+		},
+	})
 }
 
 func (l *TopLinks) FromCats(cats []string) *TopLinks {
@@ -116,13 +114,38 @@ func (l *TopLinks) FromCats(cats []string) *TopLinks {
 		return l
 	}
 
-	clause := fmt.Sprintf(`',' || cats || ',' LIKE '%%,%s,%%'`, cats[0])
+	// build clause from cats
+	clause := fmt.Sprintf(`WHERE global_cats MATCH '%s'`, cats[0])
 	for i := 1; i < len(cats); i++ {
 		clause += fmt.Sprintf(` 
-		AND ',' || cats || ',' LIKE '%%,%s,%%'`, cats[i])
+		AND global_cats MATCH '%s'`, cats[i])
 	}
 
-	l._Where(clause)
+	// build CTE from clause
+	cats_cte := fmt.Sprintf(
+			`,
+		CatsFilter AS (
+			SELECT link_id
+			FROM global_cats_fts
+			%s
+		)`, clause,
+	)
+
+	// prepend CTE
+	l.Text = strings.Replace(
+		l.Text,
+		LINKS_BASE_FIELDS,
+		cats_cte + "\n" + LINKS_BASE_FIELDS,
+	1)
+
+	// append join
+	l.Text = strings.Replace(
+		l.Text,
+		LINKS_ORDER_BY,
+		"\n" + LINKS_CATS_FROM + LINKS_ORDER_BY,
+		1,
+	)
+	
 	return l
 }
 
@@ -132,26 +155,42 @@ func (l *TopLinks) DuringPeriod(period string) *TopLinks {
 		l.Error = err
 		return l
 	}
-	l._Where(clause)
+	
+	l.Text = strings.Replace(
+		l.Text,
+		LINKS_ORDER_BY,
+		"\n" + "WHERE " + clause + LINKS_ORDER_BY,
+		1,
+	)
 
 	return l
 }
 
 func (l *TopLinks) AsSignedInUser(req_user_id string) *TopLinks {
 
+	// append auth CTEs
+	l.Text = strings.Replace(
+		l.Text,
+		LINKS_BASE_CTES,
+		LINKS_BASE_CTES + LINKS_AUTH_CTES,
+		1,
+	)
+
 	// append auth fields
 	l.Text = strings.Replace(
 		l.Text,
 		LINKS_BASE_FIELDS,
-		LINKS_BASE_FIELDS+LINKS_AUTH_FIELDS,
-		1)
+		LINKS_BASE_FIELDS + LINKS_AUTH_FIELDS,
+		1,
+	)
 
-	// append auth from
+	// apend auth FROM
 	l.Text = strings.Replace(
 		l.Text,
-		LINKS_BASE_FROM_LAST_LINE,
-		LINKS_BASE_FROM_LAST_LINE+LINKS_AUTH_FROM,
-		1)
+		LINKS_BASE_FROM,
+		LINKS_BASE_FROM + LINKS_AUTH_FROM,
+		1,
+	)
 
 	// swap all "REQ_USER_ID" with req_user_id
 	l.Text = strings.ReplaceAll(
@@ -168,25 +207,11 @@ func (l *TopLinks) Page(page int) *TopLinks {
 		return l
 	}
 
-	l.Text = strings.Replace(l.Text, UNPAGINATED_LIMIT_CLAUSE, _PaginateLimitClause(page), 1)
-
-	return l
-}
-
-func (l *TopLinks) _Where(clause string) *TopLinks {
-
-	// Swap previous WHERE for AND, if any
-	l.Text = strings.Replace(l.Text, "WHERE", "AND", 1)
-
 	l.Text = strings.Replace(
-		l.Text,
-		"ON Links.id = likes_link_id",
-		fmt.Sprintf(
-			`ON Links.id = likes_link_id 
-			WHERE %s`,
-			clause,
-		),
-		1)
+		l.Text, 
+		UNPAGINATED_LIMIT_CLAUSE, 
+		_PaginateLimitClause(page), 
+	1)
 
 	return l
 }
