@@ -3,9 +3,14 @@
 ## Todos
 
 In order of importance:
-    1. ability to remove stuff
-    2. top.astro cat search
-    3. look into CI/CD options, running tests on rpi
+    1. look into CI/CD options, running tests on rpi
+        -(desired flow:)
+            1. I push a change to GH
+            2. tests automatically run (on rpi?) in Docker
+            3. if tests pass, Linode server automatically pulls changes
+            4. Linode server kills current process, rebuilds, restarts process (in tmux)
+    2. ability to remove stuff
+    3. top.astro cat search
 
 
 ### Features
