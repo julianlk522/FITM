@@ -7,8 +7,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	m "github.com/julianlk522/fitm/middleware"
 	"testing"
+
+	m "github.com/julianlk522/fitm/middleware"
 )
 
 func TestAddTag(t *testing.T) {
@@ -74,7 +75,7 @@ func TestAddTag(t *testing.T) {
 			},
 			Valid: false,
 		},
-		// should fail because user goolian has already tagged link with ID 1
+		// should fail because user jlk has already tagged link with ID 1
 		{
 			Payload: map[string]string{
 				"link_id": "1",
@@ -82,7 +83,7 @@ func TestAddTag(t *testing.T) {
 			},
 			Valid: false,
 		},
-		// should pass because goolian has _not_ tagged link with ID 10
+		// should pass because jlk has _not_ tagged link with ID 10
 		{
 			Payload: map[string]string{
 				"link_id": "10",
@@ -94,7 +95,7 @@ func TestAddTag(t *testing.T) {
 
 	const (
 		test_user_id    = "3"
-		test_login_name = "goolian"
+		test_login_name = "jlk"
 	)
 
 	for _, tr := range test_tag_requests {
@@ -128,7 +129,11 @@ func TestAddTag(t *testing.T) {
 				)
 			}
 		} else if !tr.Valid && res.StatusCode != 400 {
-			t.Fatalf("expected status code 400, got %d", res.StatusCode)
+			t.Fatalf(
+				"expected status code 400, got %d (test request %+v)", 
+				res.StatusCode,
+				tr.Payload,
+			)
 		}
 	}
 }
@@ -168,7 +173,7 @@ func TestEditTag(t *testing.T) {
 			},
 			Valid: false,
 		},
-		// should fail because user goolian _did not_ submit tag with ID 10
+		// should fail because user jlk _did not_ submit tag with ID 10
 		{
 			Payload: map[string]string{
 				"tag_id": "10",
@@ -176,7 +181,7 @@ func TestEditTag(t *testing.T) {
 			},
 			Valid: false,
 		},
-		// should pass because user goolian _has_ submitted tag with ID 32
+		// should pass because user jlk _has_ submitted tag with ID 32
 		{
 			Payload: map[string]string{
 				"tag_id": "32",
@@ -188,7 +193,7 @@ func TestEditTag(t *testing.T) {
 
 	const (
 		test_user_id    = "3"
-		test_login_name = "goolian"
+		test_login_name = "jlk"
 	)
 
 	for _, tr := range test_tag_requests {

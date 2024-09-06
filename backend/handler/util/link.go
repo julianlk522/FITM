@@ -24,6 +24,9 @@ func RenderZeroLinks(w http.ResponseWriter, r *http.Request) {
 func ScanLinks[T model.Link | model.LinkSignedIn](get_links_sql *query.TopLinks) (*[]T, error) {
 	rows, err := db.Client.Query(get_links_sql.Text)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 	defer rows.Close()
@@ -89,7 +92,7 @@ func ScanLinks[T model.Link | model.LinkSignedIn](get_links_sql *query.TopLinks)
 }
 
 func PaginateLinks[T model.LinkSignedIn | model.Link](links *[]T, page int) (interface{}) {
-	if len(*links) == 0 {
+	if links == nil || len(*links) == 0 {
 		return &model.PaginatedLinks[model.Link]{NextPage: -1}
 	}
 

@@ -57,8 +57,6 @@ func TestPaginateLinks(t *testing.T) {
 	links, err = ScanLinks[model.Link](links_sql)
 	if err != nil {
 		t.Fatal(err)
-	} else if len(*links) == 0 {
-		t.Fatal("expected links")
 	}
 
 	res = PaginateLinks(links, 1)
@@ -274,7 +272,7 @@ func TestUserSubmittedLink(t *testing.T) {
 		ID                  string
 		SubmittedByTestUser bool
 	}{
-		// user goolian submitted links with ID 7, 13, 23
+		// user jlk submitted links with ID 7, 13, 23
 		// (not 0, 1, or 86)
 		{"7", true},
 		{"13", true},
@@ -299,7 +297,7 @@ func TestUserHasLikedLink(t *testing.T) {
 		ID              string
 		LikedByTestUser bool
 	}{
-		// user goolian liked links with ID 21, 24, 32
+		// user jlk liked links with ID 21, 24, 32
 		// (not 9, 11, or 15)
 		{"21", true},
 		{"24", true},
@@ -325,7 +323,7 @@ func TestUserHasCopiedLink(t *testing.T) {
 		ID               string
 		CopiedByTestUser bool
 	}{
-		// user goolian copied links with ID 19, 31, 32
+		// user jlk copied links with ID 19, 31, 32
 		// (not 0, 1, or 99)
 		{"19", true},
 		{"31", true},

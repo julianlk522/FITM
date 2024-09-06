@@ -86,12 +86,34 @@ func TestFromCats(t *testing.T) {
 	}
 
 	for _, tc := range test_cats {
+
+		// cats only
 		links_sql := NewTopLinks().FromCats(tc.Cats)
 		if tc.Valid && links_sql.Error != nil {
 			t.Fatal(links_sql.Error)
 		} else if !tc.Valid && links_sql.Error == nil {
 			t.Fatalf("expected error for cats %s", tc.Cats)
 		}
+
+		rows, err := TestClient.Query(links_sql.Text)
+		if err != nil && err != sql.ErrNoRows {
+			t.Fatal(err)
+		}
+		defer rows.Close()
+
+		// with period
+		links_sql = links_sql.DuringPeriod("month")
+		if tc.Valid && links_sql.Error != nil {
+			t.Fatal(links_sql.Error)
+		} else if !tc.Valid && links_sql.Error == nil {
+			t.Fatalf("expected error for cats %s", tc.Cats)
+		}
+
+		rows, err = TestClient.Query(links_sql.Text)
+		if err != nil && err != sql.ErrNoRows {
+			t.Fatal(err)
+		}
+		defer rows.Close()
 	}
 }
 
@@ -109,6 +131,8 @@ func TestLinksDuringPeriod(t *testing.T) {
 	}
 
 	for _, tp := range test_periods {
+
+		// period only
 		links_sql := NewTopLinks().DuringPeriod(tp.Period)
 		if tp.Valid && links_sql.Error != nil {
 			t.Fatal(links_sql.Error)
@@ -117,6 +141,21 @@ func TestLinksDuringPeriod(t *testing.T) {
 		}
 
 		rows, err := TestClient.Query(links_sql.Text)
+		if err != nil && err != sql.ErrNoRows {
+			t.Fatal(err)
+		}
+		defer rows.Close()
+
+		// with cats
+		// NOT a repeat of TestFromCats; testing order of method calls
+		links_sql = links_sql.FromCats([]string{"umvc3"})
+		if tp.Valid && links_sql.Error != nil {
+			t.Fatal(links_sql.Error)
+		} else if !tp.Valid && links_sql.Error == nil {
+			t.Fatalf("expected error for period %s", tp.Period)
+		}
+
+		rows, err = TestClient.Query(links_sql.Text)
 		if err != nil && err != sql.ErrNoRows {
 			t.Fatal(err)
 		}
@@ -236,8 +275,6 @@ func TestNewContributors(t *testing.T) {
 	}
 }
 
-// $fitm/backend/query: go test -run TestContributorsFromCats -tags 'fts5'
-// or just set VS Code "Go: Build Tags" to "fts5" (current)
 func TestContributorsFromCats(t *testing.T) {
 	contributors_sql := NewContributors().FromCats([]string{"umvc3"})
 	contributors_sql.Text = strings.Replace(

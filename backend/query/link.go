@@ -106,8 +106,6 @@ func NewTopLinks() *TopLinks {
 	})
 }
 
-const LINKS_CATS_FROM = `INNER JOIN CatsFilter f ON l.id = f.link_id`
-
 func (l *TopLinks) FromCats(cats []string) *TopLinks {
 	if len(cats) == 0 || cats[0] == "" {
 		l.Error = fmt.Errorf("no cats provided")
@@ -134,20 +132,22 @@ func (l *TopLinks) FromCats(cats []string) *TopLinks {
 	// prepend CTE
 	l.Text = strings.Replace(
 		l.Text,
-		LINKS_BASE_FIELDS,
-		cats_cte + "\n" + LINKS_BASE_FIELDS,
+		LINKS_BASE_CTES,
+		LINKS_BASE_CTES + cats_cte,
 	1)
 
 	// append join
 	l.Text = strings.Replace(
 		l.Text,
-		LINKS_ORDER_BY,
-		"\n" + LINKS_CATS_FROM + LINKS_ORDER_BY,
+		"LINKS l",
+		"LINKS l" + "\n" + LINKS_CATS_JOIN,
 		1,
 	)
 	
 	return l
 }
+
+const LINKS_CATS_JOIN = `INNER JOIN CatsFilter f ON l.id = f.link_id`
 
 func (l *TopLinks) DuringPeriod(period string) *TopLinks {
 	clause, err := GetPeriodClause(period)

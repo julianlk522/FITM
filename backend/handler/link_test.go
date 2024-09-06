@@ -8,8 +8,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	m "github.com/julianlk522/fitm/middleware"
 	"testing"
+
+	m "github.com/julianlk522/fitm/middleware"
 )
 
 func TestGetLinks(t *testing.T) {
@@ -74,7 +75,7 @@ func TestGetLinks(t *testing.T) {
 				"cats": "",
 				"period": "",
 				"req_user_id": "3",
-				"req_login_name": "goolian",
+				"req_login_name": "jlk",
 			},
 			Page: 1,
 			Valid: true,
@@ -92,11 +93,10 @@ func TestGetLinks(t *testing.T) {
 		},
 	}
 
-
 	for _, tglr := range test_get_links_requests {
 		r := httptest.NewRequest(
 			http.MethodGet,
-			"/links/top",
+			"/links",
 			nil,
 		)
 
@@ -113,6 +113,7 @@ func TestGetLinks(t *testing.T) {
 		r.URL.RawQuery = q.Encode()
 
 		w := httptest.NewRecorder()
+
 		GetLinks(w, r)
 		res := w.Result()
 		defer res.Body.Close()
@@ -274,7 +275,11 @@ func TestAddLink(t *testing.T) {
 				text,
 			)
 		} else if !tr.Valid && res.StatusCode != 400 {
-			t.Fatalf("expected status code 400, got %d", res.StatusCode)
+			t.Fatalf(
+				"expected status code 400, got %d (test request %+v)", 
+				res.StatusCode,
+				tr.Payload,
+			)
 		}
 	}
 }

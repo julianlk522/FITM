@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	test_login_name = "goolian"
+	test_login_name = "jlk"
 	test_user_id    = "3"
 	test_cats       = []string{"go", "coding"}
 

@@ -4,7 +4,6 @@
 
 In order of importance:
     1. refactor "like" queries to use virtual table
-        -tmap
         -global cat counts
             -subcats
         a. triggers for SQL actions
@@ -108,6 +107,7 @@ In order of importance:
         -TestExtractMetaDataFromGoogleAPIsResponse()
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
     -model utils
+    -look into situation where user submits a link, it gets some other tags, and they delete their original tag (breaks tmap submitted / tagged searches in current state I think?)
 -Look into broken auto og:image
     -e.g., coolers.co image should not have been added with invalid link
     -https://rss.com/blog/how-do-rss-feeds-work/

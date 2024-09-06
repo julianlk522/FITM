@@ -17,7 +17,7 @@ import (
 var (
 	TestClient *sql.DB
 
-	test_login_name = "goolian"
+	test_login_name = "jlk"
 	test_user_id    = "3"
 
 	test_req_login_name = "bradley"

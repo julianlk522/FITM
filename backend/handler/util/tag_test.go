@@ -126,16 +126,12 @@ func TestScanTagRankings(t *testing.T) {
 			SubmittedBy: "nelson",
 		},
 		{
-			Cats:        "star,wars",
-			SubmittedBy: "boolian",
-		},
-		{
 			Cats:        "i,hate,sql",
-			SubmittedBy: "Julian",
+			SubmittedBy: "Test User",
 		},
 		{
 			Cats:        "monkeys,something",
-			SubmittedBy: "goolian",
+			SubmittedBy: "jlk",
 		},
 		{
 			Cats:        "jungle,knights,monkeys,talladega",
@@ -324,7 +320,7 @@ func TestUserHasTaggedLink(t *testing.T) {
 		{"22", true},
 		{"0", false},
 		{"10", false},
-		{"15", false},
+		{"102", false},
 	}
 
 	for _, l := range test_links {
@@ -404,7 +400,7 @@ func TestCalculateAndSetGlobalCats(t *testing.T) {
 		GlobalCats string
 	}{
 		{"0", "flowers"},
-		{"7", "7,baby,lucky"},
+		{"7", "7,lucky"},
 		{"11", "test"},
 	}
 

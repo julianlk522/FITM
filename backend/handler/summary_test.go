@@ -7,8 +7,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	m "github.com/julianlk522/fitm/middleware"
 	"testing"
+
+	m "github.com/julianlk522/fitm/middleware"
 )
 
 func TestAddSummary(t *testing.T) {
@@ -69,7 +70,7 @@ func TestAddSummary(t *testing.T) {
 
 	const (
 		test_user_id    = "3"
-		test_login_name = "goolian"
+		test_login_name = "jlk"
 	)
 
 	for _, tr := range test_summary_requests {

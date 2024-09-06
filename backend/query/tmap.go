@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -17,44 +18,51 @@ WHERE login_name = '%s';`, login_name)
 }
 
 // LINKS
-const BASE_FIELDS = `SELECT 
-	Links.id as link_id, 
-	url, 
-	submitted_by as login_name, 
-	submit_date, 
-	cats, 
-	0 as cats_from_user,
-	COALESCE(global_summary,'') as summary, 
-	COALESCE(summary_count,0) as summary_count, 
-	COALESCE(like_count,0) as like_count, 
-	COALESCE(tag_count,0) as tag_count, 
-	COALESCE(img_url,'') as img_url`
+const BASE_CTES = `SummaryCount AS (
+    SELECT link_id, COUNT(*) AS summary_count
+    FROM Summaries
+    GROUP BY link_id
+),
+LikeCount AS (
+    SELECT link_id, COUNT(*) AS like_count
+    FROM 'Link Likes'
+    GROUP BY link_id
+),
+TagCount AS (
+    SELECT link_id, COUNT(*) AS tag_count
+    FROM Tags
+    GROUP BY link_id
+)`
 
-const BASE_ORDER = ` 
-ORDER BY like_count DESC, summary_count DESC, link_id DESC;`
+const USER_CATS_CTE = `UserCats AS (
+    SELECT link_id, cats as user_cats
+    FROM user_cats_fts
+    WHERE submitted_by = 'LOGIN_NAME'
+)`
 
-// Authenticated: add IsLiked, IsCopied
-const AUTH_FIELDS = `, 
-	COALESCE(is_liked,0) as is_liked, 
-	COALESCE(is_copied,0) as is_copied`
+const BASE_FIELDS = `
+SELECT 
+	l.id AS link_id,
+    l.url,
+    l.submitted_by AS login_name,
+    l.submit_date,
+    uc.user_cats,
+    0 AS cats_from_user,
+    COALESCE(l.global_summary, '') AS summary,
+    COALESCE(sc.summary_count, 0) AS summary_count,
+    COALESCE(lc.like_count, 0) AS like_count,
+    COALESCE(tc.tag_count, 0) AS tag_count,
+    COALESCE(l.img_url, '') AS img_url`
 
-const AUTH_FROM = ` 
-LEFT JOIN
-	(
-	SELECT id, count(*) as is_liked, user_id, link_id as like_link_id2
-	FROM 'Link Likes'
-	WHERE user_id = 'REQ_USER_ID'
-	GROUP BY id
-	)
-ON like_link_id2 = link_id 
-LEFT JOIN
-	(
-	SELECT id as copy_id, count(*) as is_copied, user_id as cuser_id, link_id as clink_id
-	FROM 'Link Copies'
-	WHERE cuser_id = 'REQ_USER_ID'
-	GROUP BY copy_id
-	)
-ON clink_id = link_id`
+const BASE_FROM = `
+FROM Links l
+INNER JOIN UserCats uc ON l.id = uc.link_id
+LEFT JOIN TagCount tc ON l.id = tc.link_id
+LEFT JOIN LikeCount lc ON l.id = lc.link_id
+LEFT JOIN SummaryCount sc ON l.id = sc.link_id`
+
+const ORDER = `
+ORDER BY lc.like_count DESC, sc.summary_count DESC, l.id DESC;`
 
 // Submitted links (global cats replaced with user-assigned)
 type TmapSubmitted struct {
@@ -62,65 +70,56 @@ type TmapSubmitted struct {
 }
 
 func NewTmapSubmitted(login_name string) *TmapSubmitted {
-	q := &TmapSubmitted{Query: Query{Text: BASE_FIELDS + SUBMITTED_FROM + SUBMITTED_WHERE + BASE_ORDER}}
+	q := &TmapSubmitted{
+		Query: Query{
+			Text: 
+			"WITH " + BASE_CTES + ",\n" +
+			USER_CATS_CTE +
+			BASE_FIELDS + 
+			BASE_FROM + "\n" +
+			SUBMITTED_WHERE + 
+			ORDER,
+		},
+	}
 	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
 
 	return q
 }
 
-const SUBMITTED_FROM = ` FROM Links
-JOIN
-	(
-	SELECT cats, link_id as tag_link_id
-	FROM Tags
-	WHERE submitted_by = 'LOGIN_NAME'
-	)
-ON tag_link_id = link_id
-LEFT JOIN
-	(
-	SELECT count(*) as tag_count, link_id as tag_link_id2
-	FROM Tags
-	GROUP BY tag_link_id2
-	)
-ON tag_link_id2 = link_id
-LEFT JOIN
-	(
-	SELECT count(*) as like_count, link_id as like_link_id
-	FROM 'Link Likes'
-	GROUP BY link_id
-	)
-ON like_link_id = link_id
-LEFT JOIN
-	(
-	SELECT count(*) as summary_count, link_id as summary_link_id
-	FROM Summaries
-	GROUP BY link_id
-	)
-ON summary_link_id = link_id`
-
-const SUBMITTED_WHERE = ` 
-WHERE submitted_by = 'LOGIN_NAME'`
+const SUBMITTED_WHERE = `WHERE l.submitted_by = 'LOGIN_NAME'`
 
 func (q *TmapSubmitted) FromCats(cats []string) *TmapSubmitted {
 	var cat_clause string
 	for _, cat := range cats {
-		cat_clause += fmt.Sprintf(` 
-		AND ',' || cats || ',' LIKE '%%,%s,%%'`, cat)
+		cat_clause += fmt.Sprintf("\nAND uc.user_cats MATCH '%s'", cat)
 	}
 
-	q.Text = strings.Replace(q.Text, BASE_ORDER, cat_clause+BASE_ORDER, 1)
+	// find line with "WHERE l.submitted_by = 'xxx'"
+	// append after
+	sw_line := regexp.MustCompile(`WHERE l.submitted_by = '.+'`).FindString(q.Text)
+
+	q.Text = strings.Replace(
+		q.Text,
+		sw_line,
+		sw_line + cat_clause,
+		1,
+	)
 
 	return q
 }
 
-var SUBMITTED_FROM_LINES = strings.Split(SUBMITTED_FROM, "\n")
-var SUBMITTED_FROM_LAST_LINE = SUBMITTED_FROM_LINES[len(SUBMITTED_FROM_LINES)-1]
-
 func (q *TmapSubmitted) AsSignedInUser(req_user_id string, req_login_name string) *TmapSubmitted {
 
 	// 2 replacers required: cannot be achieved with 1 since REQ_USER_ID/REQ_LOGIN_NAME replacements must be applied to auth fields/from _after_ they are inserted
-	fields_replacer := strings.NewReplacer(BASE_FIELDS, BASE_FIELDS+AUTH_FIELDS, SUBMITTED_FROM_LAST_LINE, SUBMITTED_FROM_LAST_LINE+AUTH_FROM)
-	auth_replacer := strings.NewReplacer("REQ_USER_ID", req_user_id, "REQ_LOGIN_NAME", req_login_name)
+	fields_replacer := strings.NewReplacer(
+		BASE_CTES, BASE_CTES + ",\n" + AUTH_CTES,
+		BASE_FIELDS, BASE_FIELDS + AUTH_FIELDS,
+		BASE_FROM, BASE_FROM + AUTH_JOIN,
+	)
+	auth_replacer := strings.NewReplacer(
+		"REQ_USER_ID", req_user_id, 
+		"REQ_LOGIN_NAME", req_login_name,
+	)
 
 	q.Text = fields_replacer.Replace(q.Text)
 	q.Text = auth_replacer.Replace(q.Text)
@@ -128,88 +127,117 @@ func (q *TmapSubmitted) AsSignedInUser(req_user_id string, req_login_name string
 	return q
 }
 
+const AUTH_CTES = `IsLiked AS (
+	SELECT link_id, COUNT(*) AS is_liked
+	FROM 'Link Likes'
+	WHERE user_id = 'REQ_USER_ID'
+	GROUP BY id
+),
+IsCopied AS (
+	SELECT link_id, COUNT(*) AS is_copied
+	FROM 'Link Copies'
+	WHERE user_id = 'REQ_USER_ID'
+	GROUP BY id
+)`
+
+const AUTH_FIELDS = `, 
+	COALESCE(is_liked,0) as is_liked, 
+	COALESCE(is_copied,0) as is_copied`
+
+const AUTH_JOIN = `
+LEFT JOIN IsLiked il ON l.id = il.link_id
+LEFT JOIN IsCopied ic ON l.id = ic.link_id`
+
 // Copied links submitted by other users (global cats replaced with user-assigned if user has tagged)
 type TmapCopied struct {
 	Query
 }
 
 func NewTmapCopied(login_name string) *TmapCopied {
-	q := &TmapCopied{Query: Query{Text: COPIED_FIELDS + COPIED_FROM + COPIED_WHERE + BASE_ORDER}}
+	q := &TmapCopied{
+		Query: Query{
+			Text: 
+				"WITH " + USER_COPIES_CTE + ",\n" +
+				POSSIBLE_USER_CATS_CTE + ",\n" +
+				BASE_CTES +
+				COPIED_FIELDS + 
+				COPIED_FROM +
+				COPIED_WHERE + 
+				ORDER,
+		},
+	}
 	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
 
 	return q
 }
 
+const USER_COPIES_CTE = `UserCopies AS (
+    SELECT lc.link_id
+    FROM 'Link Copies' lc
+    INNER JOIN Users u ON u.id = lc.user_id
+    WHERE u.login_name = 'LOGIN_NAME'
+)`
+
+const POSSIBLE_USER_CATS_CTE = `PossibleUserCats AS (
+    SELECT 
+		link_id, 
+		cats AS user_cats,
+		(cats IS NOT NULL) AS cats_from_user
+    FROM user_cats_fts
+    WHERE submitted_by = 'LOGIN_NAME'
+)`
+
 var COPIED_FIELDS = strings.Replace(
 	strings.Replace(
 		BASE_FIELDS,
-		"cats",
-		"COALESCE(user_cats,global_cats) as cats",
-		1),
-	"0 as cats_from_user",
-	`COALESCE(cats_from_user,0) as cats_from_user`,
-	1)
+		"uc.user_cats", "COALESCE(puc.user_cats, l.global_cats) AS cats",
+		1,
+	), 
+	"0 AS cats_from_user", `COALESCE(puc.cats_from_user,0) AS cats_from_user`,
+	1,
+)
 
-const COPIED_FROM = ` FROM Links
-JOIN
-	(
-	SELECT link_id as copy_link_id, user_id as copier_id
-	FROM 'Link Copies'
-	JOIN Users
-	ON Users.id = copier_id
-	WHERE Users.login_name = 'LOGIN_NAME'
-	)
-ON copy_link_id = link_id
-LEFT JOIN
-	(
-	SELECT cats as user_cats, cats IS NOT NULL as cats_from_user, link_id as tag_link_id
-	FROM Tags
-	WHERE submitted_by = 'LOGIN_NAME'
-	)
-ON tag_link_id = link_id
-LEFT JOIN
-	(
-	SELECT count(*) as tag_count, link_id as tag_link_id2
-	FROM Tags
-	GROUP BY tag_link_id2
-	)
-ON tag_link_id2 = link_id
-LEFT JOIN
-	(
-	SELECT count(*) as like_count, link_id as like_link_id
-	FROM 'Link Likes'
-	GROUP BY link_id
-	)
-ON like_link_id = link_id
-LEFT JOIN
-	(
-	SELECT count(*) as summary_count, link_id as summary_link_id
-	FROM Summaries
-	GROUP BY link_id
-	)
-ON summary_link_id = link_id`
+var COPIED_FROM = strings.Replace(
+	BASE_FROM,
+	"INNER JOIN UserCats uc ON l.id = uc.link_id",
+	COPIED_JOIN,
+	1,
+)
+
+const COPIED_JOIN = `INNER JOIN UserCopies uc ON l.id = uc.link_id
+LEFT JOIN PossibleUserCats puc ON l.id = puc.link_id`
 
 const COPIED_WHERE = ` 
 WHERE submitted_by != 'LOGIN_NAME'`
 
 func (q *TmapCopied) FromCats(cats []string) *TmapCopied {
-	var cat_clause string
-
-	for _, cat := range cats {
-		cat_clause += fmt.Sprintf(` 
-		AND ',' || cats || ',' LIKE '%%,%s,%%'`, cat)
+	var cats_clause string
+	for i := range cats {
+		cats_clause += fmt.Sprintf(
+			"\nAND cats MATCH '%s'", cats[i],
+		)
 	}
 
-	q.Text = strings.Replace(q.Text, BASE_ORDER, cat_clause+BASE_ORDER, 1)
+	q.Text = strings.Replace(
+		q.Text, 
+		ORDER, 
+		cats_clause + ORDER,  
+		1,
+	)
+
 	return q
 }
 
-var COPIED_FROM_LINES = strings.Split(COPIED_FROM, "\n")
-var COPIED_FROM_LAST_LINE = COPIED_FROM_LINES[len(COPIED_FROM_LINES)-1]
-
 func (q *TmapCopied) AsSignedInUser(req_user_id string, req_login_name string) *TmapCopied {
-	fields_replacer := strings.NewReplacer(COPIED_FIELDS, COPIED_FIELDS+AUTH_FIELDS, COPIED_FROM_LAST_LINE, COPIED_FROM_LAST_LINE+AUTH_FROM)
-	auth_replacer := strings.NewReplacer("REQ_USER_ID", req_user_id, "REQ_LOGIN_NAME", req_login_name)
+	fields_replacer := strings.NewReplacer(
+		BASE_CTES, BASE_CTES + ",\n" + AUTH_CTES,
+		COPIED_FIELDS, COPIED_FIELDS + AUTH_FIELDS, 
+		COPIED_FROM, COPIED_FROM + AUTH_JOIN,
+	)
+	auth_replacer := strings.NewReplacer(
+		"REQ_USER_ID", req_user_id, 
+		"REQ_LOGIN_NAME", req_login_name,
+	)
 
 	q.Text = fields_replacer.Replace(q.Text)
 	q.Text = auth_replacer.Replace(q.Text)
@@ -223,40 +251,54 @@ type TmapTagged struct {
 }
 
 func NewTmapTagged(login_name string) *TmapTagged {
-	q := &TmapTagged{Query: Query{Text: BASE_FIELDS + TAGGED_FROM + TAGGED_WHERE + BASE_ORDER}}
-	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
+	q := &TmapTagged{
+		Query: Query{
+			Text: 
+				"WITH " + USER_COPIES_CTE + ",\n" +
+				USER_CATS_CTE + ",\n" +
+				BASE_CTES +
+				BASE_FIELDS + 
+				BASE_FROM +
+				TAGGED_WHERE + 
+				ORDER,
+		},
+	}
 
+	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
 	return q
 }
 
-const TAGGED_FROM = SUBMITTED_FROM
 const TAGGED_WHERE = ` WHERE submitted_by != 'LOGIN_NAME'
-	AND link_id NOT IN
-		(
-		SELECT link_id
-		FROM 'Link Copies'
-		JOIN Users
-		ON Users.id = 'Link Copies'.user_id
-		WHERE Users.login_name = 'LOGIN_NAME'
-		)`
+	AND l.id NOT IN
+		(SELECT link_id FROM UserCopies)`
 
 func (q *TmapTagged) FromCats(cats []string) *TmapTagged {
 	var cat_clause string
 	for _, cat := range cats {
-		cat_clause += fmt.Sprintf(` 
-		AND ',' || cats || ',' LIKE '%%,%s,%%'`, cat)
+		cat_clause += fmt.Sprintf(
+			"\nAND uc.user_cats MATCH '%s'", cat)
 	}
 
-	q.Text = strings.Replace(q.Text, BASE_ORDER, cat_clause+BASE_ORDER, 1)
+	q.Text = strings.Replace(
+		q.Text, 
+		ORDER, 
+		cat_clause + ORDER, 
+		1,
+	)
 
 	return q
 }
 
-var TAGGED_FROM_LAST_LINE = SUBMITTED_FROM_LAST_LINE
-
 func (q *TmapTagged) AsSignedInUser(req_user_id string, req_login_name string) *TmapTagged {
-	fields_replacer := strings.NewReplacer(BASE_FIELDS, BASE_FIELDS+AUTH_FIELDS, TAGGED_FROM_LAST_LINE, TAGGED_FROM_LAST_LINE+AUTH_FROM)
-	auth_replacer := strings.NewReplacer("REQ_USER_ID", req_user_id, "REQ_LOGIN_NAME", req_login_name)
+	fields_replacer := strings.NewReplacer(
+		BASE_CTES, BASE_CTES + ",\n" + AUTH_CTES,
+		BASE_FIELDS, BASE_FIELDS + AUTH_FIELDS, 
+		BASE_FROM, BASE_FROM + AUTH_JOIN,
+	)
+	auth_replacer := strings.NewReplacer(
+		"REQ_USER_ID", req_user_id, 
+		"REQ_LOGIN_NAME", req_login_name,
+	)
 
 	q.Text = fields_replacer.Replace(q.Text)
 	q.Text = auth_replacer.Replace(q.Text)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+
 	m "github.com/julianlk522/fitm/middleware"
 
 	"io"
@@ -61,7 +62,7 @@ func TestSignUp(t *testing.T) {
 		},
 		{
 			Payload: map[string]string{
-				"login_name": "goolian",
+				"login_name": "jlk",
 				"password":   "testtest",
 			},
 			Valid: false,

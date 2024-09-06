@@ -18,7 +18,7 @@ func TestLoginNameTaken(t *testing.T) {
 	}{
 		{"akjlhsdflkjhhasdf", false},
 		{"janedoe", false},
-		{"goolian", true},
+		{"jlk", true},
 	}
 
 	for _, l := range test_login_names {
@@ -37,7 +37,7 @@ func TestAuthenticateUser(t *testing.T) {
 		Password           string
 		ShouldAuthenticate bool
 	}{
-		{"goolian", "password", false},
+		{"jlk", "password", false},
 		{"monkey", "monkey", true},
 		{"monkey", "bananas", false},
 	}

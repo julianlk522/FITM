@@ -53,13 +53,13 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 	if req_user_id != "" {
 		links, err := util.ScanLinks[model.LinkSignedIn](links_sql)
 		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrServerFail(err))
 		}
 		render.JSON(w, r, util.PaginateLinks(links, page))
 	} else {
 		links, err := util.ScanLinks[model.Link](links_sql)
 		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrServerFail(err))
 		}
 		render.JSON(w, r, util.PaginateLinks(links, page))
 	}
@@ -79,14 +79,14 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 			// (in case of, e.g., example.com/youtube.com/watch?v=1234)
 			// though this should not happen per util.TestIsYouTubeVideoLink cases
 			if err = util.ObtainURLMetaData(request); err != nil {
-				render.Render(w, r, e.ErrServerFail(err))
+				render.Render(w, r, e.ErrInvalidRequest(err))
 				return
 			}
 		}
 
 	} else {
 		if err := util.ObtainURLMetaData(request); err != nil {
-			render.Render(w, r, e.ErrServerFail(err))
+			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
 	}
