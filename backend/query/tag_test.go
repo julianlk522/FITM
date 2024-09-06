@@ -2,6 +2,7 @@ package query
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -167,9 +168,45 @@ func TestNewTopGlobalCatCountsSubcatsOfCats(t *testing.T) {
 		t.Fatal(counts_sql.Error)
 	}
 
-	_, err := TestClient.Query(counts_sql.Text)
+	rows, err := TestClient.Query(counts_sql.Text)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	// scan
+	var counts []model.CatCount
+	for rows.Next() {
+		var c model.CatCount
+		if err := rows.Scan(&c.Category, &c.Count); err != nil {
+			t.Fatal(err)
+		}
+		counts = append(counts, c)
+	}
+
+	// verify counts
+	for _, c := range counts {
+		var count int32
+		sql := fmt.Sprintf(
+			`SELECT count(id) as count 
+			FROM LINKS 
+			WHERE global_cats LIKE '%%%s%%'
+			AND global_cats LIKE '%%%s%%'
+			AND global_cats LIKE '%%%s%%'`,
+			test_cats[0],
+			test_cats[1],
+			c.Category,
+		)
+
+		if err := TestClient.QueryRow(sql).Scan(&count); err != nil {
+			t.Fatal(err)
+		} else if count != c.Count {
+			t.Fatalf(
+				"got %d, want %d for cat %s", 
+				count, 
+				c.Count,
+				c.Category,
+			)
+		}
 	}
 }
 

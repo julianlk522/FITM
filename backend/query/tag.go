@@ -6,7 +6,6 @@ import (
 )
 
 const (
-	TAGS_PAGE_LIMIT           = 20
 	TAG_RANKINGS_PAGE_LIMIT   = 20
 	GLOBAL_CATS_PAGE_LIMIT    = 20
 )
@@ -176,17 +175,11 @@ func NewTopGlobalCatCounts() *GlobalCatCounts {
 func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
 	cats := strings.Split(cats_params, ",")
 
-	filter_clause := fmt.Sprintf(
-		`WHERE global_cats LIKE '%%%s%%'`,
-		cats[0],
-	)
+	match_clause := fmt.Sprintf(`WHERE global_cats MATCH '%s`, cats[0])
 	for i := 1; i < len(cats); i++ {
-		filter_clause += fmt.Sprintf(
-			` 
-			OR global_cats LIKE '%%%s%%'`,
-			cats[i],
-		)
+		match_clause += fmt.Sprintf(" AND %s", cats[i])
 	}
+	match_clause += `'`
 
 	for i := range cats {
 		cats[i] = "'" + cats[i] + "'"
@@ -197,14 +190,14 @@ func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
 		"WHERE global_cats != ''",
 		fmt.Sprintf(
 			`WHERE global_cats != ''
-			AND global_cats NOT IN (%s)
-			AND id IN (
-				SELECT id 
-				FROM split 
-				%s
+	AND global_cats NOT IN (%s)
+	AND id IN (
+		SELECT link_id 
+		FROM global_cats_fts
+		%s
 			)`,
 			strings.Join(cats, ","),
-			filter_clause,
+			match_clause,
 		),
 		1)
 

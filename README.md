@@ -4,8 +4,6 @@
 
 In order of importance:
     1. refactor "like" queries to use virtual table
-        -global cat counts
-            -subcats
         a. triggers for SQL actions
     2. ability to remove stuff
     3. top.astro cat search
