@@ -3,11 +3,9 @@
 ## Todos
 
 In order of importance:
-    1. refactor "like" queries to use virtual table
-        a. triggers for SQL actions
-    2. ability to remove stuff
-    3. top.astro cat search
-    4. look into CI/CD options, running tests on rpi
+    1. ability to remove stuff
+    2. top.astro cat search
+    3. look into CI/CD options, running tests on rpi
 
 
 ### Features
@@ -81,6 +79,8 @@ In order of importance:
 ### Code Quality
 
 -VPS SSH key
+-Ensure http response codes are correct
+    -e.g., tag page for invalid link id returns 500 (should be 404)
 -Ensure consistent language:
     -get (request and retrieve things from an external source)
     -scan (copy rows from sql to structs)
