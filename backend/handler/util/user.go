@@ -3,9 +3,10 @@ package handler
 import (
 	"database/sql"
 	"net/http"
+	"os"
+
 	"github.com/julianlk522/fitm/db"
 	e "github.com/julianlk522/fitm/error"
-	"os"
 
 	"image"
 	_ "image/jpeg"
@@ -53,9 +54,21 @@ func GetJWTFromLoginName(login_name string) (string, error) {
 		return "", err
 	}
 
-	claims := map[string]interface{}{"user_id": id.String, "login_name": login_name}
+	claims := map[string]interface{}{
+		"user_id": id.String, 
+		"login_name": login_name,
+	}
 
-	auth := jwtauth.New("HS256", []byte(os.Getenv("FITM_JWT_SECRET")), nil, jwt.WithAcceptableSkew(6*time.Hour))
+	secret := os.Getenv("FITM_JWT_SECRET")
+	if secret == "" {
+		return "", e.ErrNoJWTSecretEnv
+	}
+	auth := jwtauth.New(
+		"HS256", 
+		[]byte(secret), 
+		nil, 
+		jwt.WithAcceptableSkew(6*time.Hour),
+	)
 	_, token, err := auth.Encode(claims)
 	if err != nil {
 		return "", err

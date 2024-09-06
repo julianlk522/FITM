@@ -6,11 +6,16 @@ In order of importance:
     1. look into CI/CD options, running tests on rpi
         -(desired flow:)
             1. I push a change to GH
-            2. tests automatically run (on rpi?) in Docker
-            3. if tests pass, Linode server automatically pulls changes
-            4. Linode server kills current process, rebuilds, restarts process (in tmux)
+            2. test runner preps
+                -install dependencies
+                -build
+                -run tests
+            3. tests automatically run
+            4. if tests pass, Linode server automatically pulls changes
+            5. Linode server kills current process, rebuilds, restarts process (in tmux)
     2. ability to remove stuff
     3. top.astro cat search
+    4. output non-2xx responses to log file
 
 
 ### Features
@@ -185,4 +190,6 @@ Users can like listed links to boost them, so in theory the most univerally appr
     - backup_now.sh on cronjob
 - SQLite optimization
     - FTS5 virtual table
-    - WAL mode
+- CI/CD
+    - GH actions
+    - scp into rpi

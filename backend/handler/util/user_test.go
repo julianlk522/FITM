@@ -2,8 +2,6 @@ package handler
 
 import (
 	"image"
-	"path/filepath"
-	"runtime"
 
 	_ "golang.org/x/image/webp"
 
@@ -69,9 +67,11 @@ func TestHasAcceptableAspectRatio(t *testing.T) {
 		{"test3.webp", true},
 	}
 
-	_, user_test_file, _, _ := runtime.Caller(0)
-	handler_util_dir := filepath.Dir(user_test_file)
-	pic_dir := filepath.Join(handler_util_dir, "../../db/profile-pics")
+	test_data_path := os.Getenv("FITM_TEST_DATA_PATH")
+	if test_data_path == "" {
+		t.Fatal("FITM_TEST_DATA_PATH not set")
+	}
+	pic_dir := test_data_path + "/profile-pics"
 
 	for _, l := range test_image_files {
 		f, err := os.Open(pic_dir + "/" + l.Name)

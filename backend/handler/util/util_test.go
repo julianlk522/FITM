@@ -40,10 +40,21 @@ func TestMain(m *testing.M) {
 	db.Client = TestClient
 	log.Printf("switched connection to in-memory test DB (util_test.go)")
 
-	_, util_file, _, _ := runtime.Caller(0)
-	util_dir := filepath.Dir(util_file)
-	db_dir := filepath.Join(util_dir, "../../db")
-	sql_dump_path := filepath.Join(db_dir, "_fitm.db.sql")
+	var sql_dump_path string
+	// check for FITM_TEST_DATA_PATH env var,
+	// if not set, use default path
+	test_data_path := os.Getenv("FITM_TEST_DATA_PATH")
+	if test_data_path == "" {
+		log.Printf("FITM_TEST_DATA_PATH not set, using default path")
+		_, util_file, _, _ := runtime.Caller(0)
+		util_dir := filepath.Dir(util_file)
+		db_dir := filepath.Join(util_dir, "../../db")
+		sql_dump_path = filepath.Join(db_dir, "fitm_test.db.sql")
+	} else {
+		log.Print("using FITM_TEST_DATA_PATH")
+		sql_dump_path = test_data_path + "/fitm_test.db.sql"
+	}
+
 	sql_dump, err := os.ReadFile(sql_dump_path)
 	if err != nil {
 		log.Fatal(err)

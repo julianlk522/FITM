@@ -20,8 +20,8 @@ import (
 
 var (
 	token_auth *jwtauth.JWTAuth
-	// test_api_url = "localhost:1999"
-	api_url = "api.fitm.online:1999"
+	test_api_url = "localhost:1999"
+	// api_url = "api.fitm.online:1999"
 )
 
 func init() {
@@ -31,17 +31,17 @@ func init() {
 func main() {
 	r := chi.NewRouter()
 	defer func() {
-		if err := http.ListenAndServeTLS(
-		api_url, 
-			"/etc/letsencrypt/live/api.fitm.online/fullchain.pem", 
-			"/etc/letsencrypt/live/api.fitm.online/privkey.pem", 
-			r,
-		); err != nil {
-			log.Fatal(err)
-		}
-		// if err := http.ListenAndServe(test_api_url, r); err != nil {
+		// if err := http.ListenAndServeTLS(
+		// api_url, 
+		// 	"/etc/letsencrypt/live/api.fitm.online/fullchain.pem", 
+		// 	"/etc/letsencrypt/live/api.fitm.online/privkey.pem", 
+		// 	r,
+		// ); err != nil {
 		// 	log.Fatal(err)
 		// }
+		if err := http.ListenAndServe(test_api_url, r); err != nil {
+			log.Fatal(err)
+		}
 	}()
 
 	// Router-wide middleware
@@ -117,7 +117,6 @@ func main() {
 		// Users
 		r.Put("/about", h.EditAbout)
 		r.Post("/pic", h.UploadProfilePic)
-		r.Delete("/pic", h.RemoveProfilePic)
 
 		// Links
 		r.Post("/links", h.AddLink)

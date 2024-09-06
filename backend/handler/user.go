@@ -46,7 +46,10 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pw_hash, err := bcrypt.GenerateFromPassword([]byte(signup_data.Auth.Password), bcrypt.DefaultCost)
+	pw_hash, err := bcrypt.GenerateFromPassword(
+		[]byte(signup_data.Auth.Password), 
+		bcrypt.DefaultCost,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,6 +69,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	token, err := util.GetJWTFromLoginName(signup_data.Auth.LoginName)
 	if err != nil {
+		log.Print("failed to GetJWTFromLoginName")
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
@@ -199,19 +203,19 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, full_path)
 }
 
-func RemoveProfilePic(w http.ResponseWriter, r *http.Request) {
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
-	// protected route: JWT middleware verifies bearer token to set req_user_id
-	// (no need to check here if empty)
-	_, err := db.Client.Exec(
-		`UPDATE Users SET pfp = NULL WHERE id = ?`, 
-		req_user_id,
-	)
-	if err != nil {
-		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotRemoveProfilePic))
-		return
-	}
-}
+// func RemoveProfilePic(w http.ResponseWriter, r *http.Request) {
+// 	req_user_id := r.Context().Value(m.UserIDKey).(string)
+// 	// protected route: JWT middleware verifies bearer token to set req_user_id
+// 	// (no need to check here if empty)
+// 	_, err := db.Client.Exec(
+// 		`UPDATE Users SET pfp = NULL WHERE id = ?`, 
+// 		req_user_id,
+// 	)
+// 	if err != nil {
+// 		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotRemoveProfilePic))
+// 		return
+// 	}
+// }
 
 func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	var login_name string = chi.URLParam(r, "login_name")
