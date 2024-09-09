@@ -142,6 +142,14 @@ func TestNewTmapSubmittedFromCats(t *testing.T) {
 			t.Fatal("TagCount == 0")
 		}
 	}
+
+	// test "." properly escaped
+	submitted_sql = NewTmapSubmitted(test_login_name).FromCats([]string{"YouTube", "c. viper"})
+	if submitted_sql.Error != nil {
+		t.Fatal(submitted_sql.Error)
+	} else if strings.Contains(submitted_sql.Text, ".") && !strings.Contains(submitted_sql.Text, `"."`) {
+		t.Fatal("failed to ecape period in cat 'c. viper'")
+	}
 }
 
 func TestNewTmapSubmittedAsSignedInUser(t *testing.T) {
@@ -278,6 +286,14 @@ func TestNewTmapCopiedFromCats(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+
+	// test "." properly escaped
+	copied_sql = NewTmapCopied(test_login_name).FromCats([]string{"YouTube", "c. viper"})
+	if copied_sql.Error != nil {
+		t.Fatal(copied_sql.Error)
+	} else if strings.Contains(copied_sql.Text, ".") && !strings.Contains(copied_sql.Text, `"."`) {
+		t.Fatal("failed to ecape period in cat 'c. viper'")
+	}
 }
 
 func TestNewTmapCopiedAsSignedInUser(t *testing.T) {
@@ -413,6 +429,14 @@ func TestNewTmapTaggedFromCats(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+	}
+
+	// test "." properly escaped
+	tagged_sql = NewTmapTagged(test_login_name).FromCats([]string{"YouTube", "c. viper"})
+	if tagged_sql.Error != nil {
+		t.Fatal(tagged_sql.Error)
+	} else if strings.Contains(tagged_sql.Text, ".") && !strings.Contains(tagged_sql.Text, `"."`) {
+		t.Fatal("failed to ecape period in cat 'c. viper'")
 	}
 }
 

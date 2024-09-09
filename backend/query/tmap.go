@@ -89,6 +89,14 @@ func NewTmapSubmitted(login_name string) *TmapSubmitted {
 const SUBMITTED_WHERE = `WHERE l.submitted_by = 'LOGIN_NAME'`
 
 func (q *TmapSubmitted) FromCats(cats []string) *TmapSubmitted {
+
+	// escape any "." in cats
+	for i := 0; i < len(cats); i++ {
+		if strings.Contains(cats[i], ".") {
+			cats[i] = strings.Replace(cats[i], `.`, `"."`, 1)
+		}
+	}
+
 	var cat_clause string
 	for _, cat := range cats {
 		cat_clause += fmt.Sprintf("\nAND uc.user_cats MATCH '%s'", cat)
@@ -211,6 +219,14 @@ const COPIED_WHERE = `
 WHERE submitted_by != 'LOGIN_NAME'`
 
 func (q *TmapCopied) FromCats(cats []string) *TmapCopied {
+
+	// escape any "." in cats
+	for i := 0; i < len(cats); i++ {
+		if strings.Contains(cats[i], ".") {
+			cats[i] = strings.Replace(cats[i], `.`, `"."`, 1)
+		}
+	}
+
 	var cats_clause string
 	for i := range cats {
 		cats_clause += fmt.Sprintf(
@@ -273,6 +289,14 @@ const TAGGED_WHERE = ` WHERE submitted_by != 'LOGIN_NAME'
 		(SELECT link_id FROM UserCopies)`
 
 func (q *TmapTagged) FromCats(cats []string) *TmapTagged {
+
+	// escape any "." in cats
+	for i := 0; i < len(cats); i++ {
+		if strings.Contains(cats[i], ".") {
+			cats[i] = strings.Replace(cats[i], `.`, `"."`, 1)
+		}
+	}
+
 	var cat_clause string
 	for _, cat := range cats {
 		cat_clause += fmt.Sprintf(

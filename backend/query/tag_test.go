@@ -208,6 +208,14 @@ func TestNewTopGlobalCatCountsSubcatsOfCats(t *testing.T) {
 			)
 		}
 	}
+
+	// test that "." properly escaped
+	counts_sql = NewTopGlobalCatCounts().SubcatsOfCats("YouTube,c.viper")
+	if counts_sql.Error != nil {
+		t.Fatal(counts_sql.Error)
+	} else if strings.Contains(counts_sql.Text, ".") && !strings.Contains(counts_sql.Text, `"."`) {
+		t.Fatal("failed to escape period in cat 'c. viper'")
+	}
 }
 
 func TestNewTopGlobalCatCountsDuringPeriod(t *testing.T) {

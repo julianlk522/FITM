@@ -83,6 +83,7 @@ func TestFromCats(t *testing.T) {
 		{[]string{""}, false},
 		{[]string{"umvc3"}, true},
 		{[]string{"umvc3", "flowers"}, true},
+		{[]string{"YouTube", "c. viper"}, true},
 	}
 
 	for _, tc := range test_cats {
@@ -95,6 +96,13 @@ func TestFromCats(t *testing.T) {
 			t.Fatalf("expected error for cats %s", tc.Cats)
 		}
 
+		// ensure that cats with "." have surrounded it in quotes
+		for _, cat := range tc.Cats {
+			if strings.Contains(cat, ".") && !strings.Contains(links_sql.Text, `"."`) {
+				t.Fatalf("failed to escape period in cat: %s", cat)
+			}
+		}
+		
 		rows, err := TestClient.Query(links_sql.Text)
 		if err != nil && err != sql.ErrNoRows {
 			t.Fatal(err)
@@ -276,7 +284,18 @@ func TestNewContributors(t *testing.T) {
 }
 
 func TestContributorsFromCats(t *testing.T) {
-	contributors_sql := NewContributors().FromCats([]string{"umvc3"})
+	contributors_sql := NewContributors().FromCats(
+		[]string{
+			"umvc3", 
+			"c. viper",
+		},
+	)
+
+	// ensure "." properly escaped
+	if strings.Contains(contributors_sql.Text, ".") && !strings.Contains(contributors_sql.Text, `"."`) {
+		t.Fatal("failed to escape period in cat 'c. viper'")
+	}
+
 	contributors_sql.Text = strings.Replace(
 		contributors_sql.Text,
 		`SELECT

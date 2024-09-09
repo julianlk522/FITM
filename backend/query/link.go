@@ -76,14 +76,16 @@ const LINKS_AUTH_FIELDS = `,
 	COALESCE(il.is_liked,0) AS is_liked,
 	COALESCE(ic.is_copied,0) AS is_copied`
 
-const LINKS_BASE_FROM = ` 
-FROM 
-    LINKS l
+const LINKS_FROM = `
+FROM
+	Links l`
+
+const LINKS_BASE_JOINS = `
 LEFT JOIN LikeCount ll ON l.id = ll.link_id
 LEFT JOIN SummaryCount s ON l.id = s.link_id
 LEFT JOIN TagCount t ON l.id = t.link_id`
 
-const LINKS_AUTH_FROM = `
+const LINKS_AUTH_JOINS = `
 LEFT JOIN IsLiked il ON l.id = il.link_id
 LEFT JOIN IsCopied ic ON l.id = ic.link_id`
 
@@ -99,7 +101,8 @@ func NewTopLinks() *TopLinks {
 			Text: 
 				LINKS_BASE_CTES +
 				LINKS_BASE_FIELDS +
-				LINKS_BASE_FROM +
+				LINKS_FROM + 
+				LINKS_BASE_JOINS +
 				LINKS_ORDER_BY +
 				UNPAGINATED_LIMIT_CLAUSE,
 		},
@@ -112,12 +115,20 @@ func (l *TopLinks) FromCats(cats []string) *TopLinks {
 		return l
 	}
 
+	// for any cats with "." surround them in double quotes
+	for i := 0; i < len(cats); i++ {
+		if strings.Contains(cats[i], ".") {
+			cats[i] = strings.Replace(cats[i], `.`, `"."`, 1)
+		}
+	}
+
 	// build clause from cats
-	clause := fmt.Sprintf(`WHERE global_cats MATCH '%s'`, cats[0])
+	clause := fmt.Sprintf(`WHERE global_cats MATCH '%s`, cats[0])
 	for i := 1; i < len(cats); i++ {
 		clause += fmt.Sprintf(` 
-		AND global_cats MATCH '%s'`, cats[i])
+		AND %s`, cats[i])
 	}
+	clause += `'`
 
 	// build CTE from clause
 	cats_cte := fmt.Sprintf(
@@ -139,8 +150,8 @@ func (l *TopLinks) FromCats(cats []string) *TopLinks {
 	// append join
 	l.Text = strings.Replace(
 		l.Text,
-		"LINKS l",
-		"LINKS l" + "\n" + LINKS_CATS_JOIN,
+		LINKS_FROM,
+		LINKS_FROM + "\n" + LINKS_CATS_JOIN,
 		1,
 	)
 	
@@ -187,8 +198,8 @@ func (l *TopLinks) AsSignedInUser(req_user_id string) *TopLinks {
 	// apend auth FROM
 	l.Text = strings.Replace(
 		l.Text,
-		LINKS_BASE_FROM,
-		LINKS_BASE_FROM + LINKS_AUTH_FROM,
+		LINKS_BASE_JOINS,
+		LINKS_BASE_JOINS + LINKS_AUTH_JOINS,
 		1,
 	)
 
@@ -243,10 +254,19 @@ func NewContributors() *Contributors {
 const CONTRIBUTORS_CATS_FROM = `INNER JOIN CatsFilter f ON l.id = f.link_id`
 
 func (c *Contributors) FromCats(cats []string) *Contributors {
-	clause := fmt.Sprintf("WHERE global_cats MATCH '%s'", cats[0])
-	for i := 1; i < len(cats); i++ {
-		clause += fmt.Sprintf("\nAND global_cats MATCH '%s'", cats[i])
+
+	// escape any "." in cats
+	for i := 0; i < len(cats); i++ {
+		if strings.Contains(cats[i], ".") {
+			cats[i] = strings.Replace(cats[i], `.`, `"."`, 1)
+		}
 	}
+
+	clause := fmt.Sprintf("WHERE global_cats MATCH '%s", cats[0])
+	for i := 1; i < len(cats); i++ {
+		clause += fmt.Sprintf(" AND %s", cats[i])
+	}
+	clause += `'`
 
 	// build CTE
 	cats_cte := fmt.Sprintf(

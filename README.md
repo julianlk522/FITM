@@ -99,6 +99,7 @@ In order of importance:
     -Fix SQL identifiers to use double quotes (?)
         -verify first
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
+    -repeat check for "." in cats
 -Other tests
     -finish handlers
     -handler utils
