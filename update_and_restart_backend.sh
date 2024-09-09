@@ -1,14 +1,26 @@
-#!/bin/sh
+#!/bin/bash
+
+if [ -z "$FITM_ROOT_PATH" ]; then
+    echo "Error: FITM_ROOT_PATH is not set"
+    exit 1
+fi
+
+# navigate to root
+cd "$FITM_ROOT_PATH" || { echo "Error: could not navigate to $FITM_ROOT_PATH"; exit 1; }
+echo "navigated to $FITM_ROOT_PATH"
 
 # pull changes
-cd $FITM_ROOT_PATH
 git pull
 
-# update dependencies
+# navigate to backend
+if [ ! -d "backend" ]; then
+    echo "Error: 'backend' directory not found"
+    exit 1
+fi
 cd backend
-go mod tidy
 
-# rebuild
+# update dependencies, rebuild
+go mod tidy
 go build --tags 'fts5' .
 
 # get running server process ID
@@ -37,10 +49,16 @@ if [ -n "$PID" ]; then
     done
 fi
 
-# start new binary in tmux session
-tmux send-keys -t FITM "./fitm" ENTER
+# start tmux session if not exists already
+if ! tmux has-session -t FITM 2>/dev/null; then
+    echo "Creating new FITM tmux session"
+    tmux new-session -d -s FITM
+fi
 
-# Detach from the tmux session
+# start new binary in tmux session
+tmux send-keys -t FITM "cd $FITM_ROOT_PATH/backend && ./fitm" ENTER
+
+# detach
 tmux detach -s FITM
 
 # timestamp
