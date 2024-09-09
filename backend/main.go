@@ -71,13 +71,15 @@ func main() {
 
 	// CORS
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"https://*", "http://*"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedOrigins: []string{
+			"https://fitm.online/*", 
+			"https://www.fitm.online/*",
+		},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{
 			"Authorization",
 			"Content-Type",
 		},
-		MaxAge: 300,
 		// Debug: true,
 	}))
 
