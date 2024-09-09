@@ -159,7 +159,7 @@ export default function NewLinks(props: Props) {
 			</section>
 			{submitted_links.length ? (
 				<section id='submitted-links'>
-					<h2>Submitted Links</h2>
+					<h2>Submitted</h2>
 					<ol>
 						{submitted_links.map((link) => (
 							<NewLink key={link.ID} Link={link} />
