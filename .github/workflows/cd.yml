@@ -2,7 +2,7 @@ name: FITM Backend
 run-name: FITM backend tests
 on:
     push:
-        branches: [cicd]
+        branches: [main]
 
     workflow_dispatch: # Run manually from Actions tab
 
