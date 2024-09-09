@@ -72,8 +72,12 @@ func main() {
 	// CORS
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{
-			"https://fitm.online/*", 
+			"https://fitm.online", 
+			"https://fitm.online/*",
+			"https://www.fitm.online",
 			"https://www.fitm.online/*",
+			// "http://localhost:4321",
+			// "http://localhost:4321/*",
 		},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{
