@@ -25,6 +25,8 @@ var (
 	ErrCannotCopyOwnLink error = errors.New("cannot copy your own link to your treasure map")
 	ErrLinkAlreadyCopied error = errors.New("link already copied to treasure map")
 	ErrLinkNotCopied     error = errors.New("link not already copied")
+	// Delete link
+	ErrDoesntOwnLink error = errors.New("not your link; cannot delete")
 )
 
 func ErrLinkURLCharsExceedLimit(limit int) error {

@@ -122,6 +122,7 @@ func main() {
 
 		// Links
 		r.Post("/links", h.AddLink)
+		r.Delete("/links", h.DeleteLink)
 		r.Post("/links/{link_id}/like", h.LikeLink)
 		r.Delete("/links/{link_id}/like", h.UnlikeLink)
 		r.Post("/links/{link_id}/copy", h.CopyLink)

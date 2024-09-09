@@ -3,9 +3,16 @@
 ## Todos
 
 In order of importance:
+    0. save logs from webhooks
     1. ability to remove stuff
     2. top.astro cat search
     3. output non-2xx responses to log file
+
+-ability to remove stuff
+    -link
+    -tag
+    -summary
+    -profile pic
 
 
 ### Features
@@ -26,11 +33,6 @@ In order of importance:
     -Restrict from tmap/top unless specifically chosen in filter
 -look into not rendering images that dont successfully load
 -surround related statements in transactions (?)
--ability to remove stuff
-    -link
-    -tag
-    -summary
-    -profile pic
 
 ### Code Quality
 
@@ -110,6 +112,10 @@ In order of importance:
     -e.g., coolers.co image should not have been added with invalid link
     -https://rss.com/blog/how-do-rss-feeds-work/
 -robots.txt
+-improve status codes
+    -replace "message":"deleted" with just 204
+    -205 for successful logins/forms that require reload
+    -500 for server fuckups
 
 ## Why?
 

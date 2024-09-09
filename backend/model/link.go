@@ -116,3 +116,15 @@ func (l *NewLinkRequest) Bind(r *http.Request) error {
 
 	return nil
 }
+
+type DeleteLinkRequest struct {
+	LinkID string `json:"link_id"`
+}
+
+func (dl *DeleteLinkRequest) Bind(r *http.Request) error {
+	if dl.LinkID == "" {
+		return e.ErrNoLinkID
+	}
+
+	return nil
+}

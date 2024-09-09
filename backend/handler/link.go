@@ -198,6 +198,39 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, new_link)
 }
 
+func DeleteLink(w http.ResponseWriter, r *http.Request) {
+	request := &model.DeleteLinkRequest{}
+	if err := render.Bind(r, request); err != nil {
+		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
+	}
+	
+	link_exists, err := util.LinkExists(request.LinkID)
+	if err != nil {
+		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
+	} else if !link_exists {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLinkWithID))
+		return
+	}
+
+	req_login_name := r.Context().Value(m.LoginNameKey).(string)
+	if !util.UserSubmittedLink(req_login_name, request.LinkID) {
+		render.Render(w, r, e.ErrUnauthorized(e.ErrDoesntOwnLink))
+		return
+	}
+
+	_, err = db.Client.Exec(
+		"DELETE FROM Links WHERE id = ?;",
+		request.LinkID,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func LikeLink(w http.ResponseWriter, r *http.Request) {
 	link_id := chi.URLParam(r, "link_id")
 	if link_id == "" {
