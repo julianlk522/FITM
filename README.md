@@ -3,19 +3,9 @@
 ## Todos
 
 In order of importance:
-    1. look into CI/CD options, running tests on rpi
-        -(desired flow:)
-            1. I push a change to GH
-            2. test runner preps
-                -install dependencies
-                -build
-                -run tests
-            3. tests automatically run
-            4. if tests pass, Linode server automatically pulls changes
-            5. Linode server kills current process, rebuilds, restarts process (in tmux)
-    2. ability to remove stuff
-    3. top.astro cat search
-    4. output non-2xx responses to log file
+    1. ability to remove stuff
+    2. top.astro cat search
+    3. output non-2xx responses to log file
 
 
 ### Features
@@ -191,5 +181,9 @@ Users can like listed links to boost them, so in theory the most univerally appr
 - SQLite optimization
     - FTS5 virtual table
 - CI/CD
-    - GH actions
-    - scp into rpi
+    - GH actions workflow
+        - Raspbian Buster firmware outdated (no Node.js 20 support needed for test runner)
+            - flash memory card to update to Raspbian Lite Bookworm
+            - no networking, configure manually with nmcli
+        - didn't want private test data stored on GH: store on test runner local filesystem and pass path as GH Actions secret through workflow .yml file to Docker container where test suite runs
+        - GH deploy key (SSH)
