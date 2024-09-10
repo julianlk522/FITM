@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"log"
 	"math"
 	"slices"
 	"strings"
@@ -283,8 +282,6 @@ func CalculateAndSetGlobalCats(link_id string) error {
 			}
 		}
 	}
-
-	log.Printf("overlap_scores: %v", overlap_scores)
 
 	// Alphabetize so global cats are assigned in order
 	alphabetized_cats := AlphabetizeOverlapScoreCats(overlap_scores)

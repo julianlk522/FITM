@@ -46,6 +46,8 @@ func main() {
 
 	// Router-wide middleware
 	// Logger
+	// https://github.com/go-chi/chi/blob/6fedde2a70dc2adce0a3dc41b8aebc0b2bec8185/middleware/logger.go#L32C20-L33C46: Logger should go before any other middleware that may change
+	// the response, such as middleware.Recoverer
 	r.Use(middleware.Logger)
 
 	// Rate Limit
@@ -89,14 +91,15 @@ func main() {
 
 	// ROUTES
 	// PUBLIC
-	r.Post("/ghwh", h.HandleGitHubWebhook)
-	
 	r.Post("/signup", h.SignUp)
 	r.Post("/login", h.LogIn)
 	r.Get("/pic/{file_name}", h.GetProfilePic)
-
+	
 	r.Get("/cats", h.GetTopGlobalCats) // includes subcats
 	r.Get("/contributors", h.GetTopContributors)
+
+	// CD webhook: application update and refresh
+	r.Post("/ghwh", h.HandleGitHubWebhook)
 
 	// OPTIONAL AUTHENTICATION
 	// (bearer token used optionally to get IsLiked / IsCopied for links)

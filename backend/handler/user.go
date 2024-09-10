@@ -232,11 +232,17 @@ func DeleteProfilePic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Delete file from disk
-	err = os.Remove(pfp_path)
-	if err != nil {
-		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotRemoveProfilePic))
-		return
+	// Confirm file at path exists
+	if _, err := os.Stat(pfp_path); err == nil {
+
+		// Delete from filesystem
+		err = os.Remove(pfp_path)
+		if err != nil {
+			render.Render(w, r, e.ErrServerFail(e.ErrCouldNotRemoveProfilePic))
+			return
+		}
+	} else {
+		log.Print("pfp was not present on filesystem at saved path")
 	}
 
 	w.WriteHeader(http.StatusNoContent)
