@@ -297,11 +297,11 @@ func TestUserHasLikedLink(t *testing.T) {
 		ID              string
 		LikedByTestUser bool
 	}{
-		// user jlk liked links with ID 21, 24, 32
+		// user jlk liked links with ID 24, 32, 103
 		// (not 9, 11, or 15)
-		{"21", true},
 		{"24", true},
 		{"32", true},
+		{"103", true},
 		{"9", false},
 		{"11", false},
 		{"15", false},

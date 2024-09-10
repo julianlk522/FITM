@@ -5,11 +5,11 @@
 In order of importance:
     0. save logs from webhooks
     1. ability to remove stuff
+        -add link delete recursive trigger
     2. top.astro cat search
     3. output non-2xx responses to log file
 
 -ability to remove stuff
-    -link
     -tag
     -summary
     -profile pic

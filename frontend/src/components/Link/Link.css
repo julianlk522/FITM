@@ -1,4 +1,5 @@
 .link {
+	position: relative;
 	margin: 1rem 0 0;
 }
 astro-island:first-of-type li.link {
@@ -75,11 +76,31 @@ p {
 	margin-bottom: 0;
 }
 
+button.delete-link-btn {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	filter: invert(1);
+}
+
+dialog.delete-link-modal {
+	z-index: 1;
+	background-color: var(--text-treasurey);
+
+	button:not(:first-of-type) {
+		margin-left: 5px;
+	}
+}
+
 @media (min-width: 768px) {
 	.link {
 		margin-top: 2rem;
 	}
 	.preview {
 		overflow: auto;
+	}
+
+	button.delete-link-btn {
+		bottom: calc(50% - 10px);
 	}
 }
