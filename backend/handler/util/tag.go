@@ -197,6 +197,20 @@ func GetLinkIDFromTagID(tag_id string) (string, error) {
 	return link_id.String, nil
 }
 
+// Delete tag
+func TagExists(tag_id string) (bool, error) {
+	var t sql.NullString
+	err := db.Client.QueryRow("SELECT id FROM Tags WHERE id = ?;", tag_id).Scan(&t)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+}
+
 // Calculate global cats
 func CalculateAndSetGlobalCats(link_id string) error {
 	overlap_scores_sql := query.NewTagRankings(link_id)

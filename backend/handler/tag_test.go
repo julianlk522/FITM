@@ -231,3 +231,70 @@ func TestEditTag(t *testing.T) {
 		}
 	}
 }
+
+func TestDeleteTag(t *testing.T) {
+	var test_requests = []struct {
+		TagID string
+		Valid  bool
+		ExpectedStatusCode int
+	}{
+		// jlk did not submit tag 11
+		{
+			TagID: "11",
+			Valid:  false,
+			ExpectedStatusCode: 403,
+		},
+		// not a real tag
+		{
+			TagID: "-1",
+			Valid:  false,
+			ExpectedStatusCode: 400,
+		},
+		// jlk _did_ submit tag 34
+		{
+			TagID: "34",
+			Valid:  true,
+			ExpectedStatusCode: 204,
+		},
+	}
+
+	for _, tr := range test_requests {
+		pl, b := map[string]string{
+			"tag_id": tr.TagID,
+		}, new(bytes.Buffer)
+		err := json.NewEncoder(b).Encode(pl)
+		if err != nil {
+			t.Fatal(err)
+		}
+		r := httptest.NewRequest(
+			http.MethodDelete,
+			"/tags",
+			b,
+		)
+		r.Header.Set("Content-Type", "application/json")
+
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, m.LoginNameKey, test_login_name)
+		r = r.WithContext(ctx)
+
+		w := httptest.NewRecorder()
+		DeleteTag(w, r)
+		res := w.Result()
+		defer res.Body.Close()
+
+		if tr.Valid && res.StatusCode != 204 {
+			t.Fatalf(
+				"expected status code 204, got %d (test request %+v)", 
+				res.StatusCode,
+				tr,
+			)
+		} else if !tr.Valid && res.StatusCode != tr.ExpectedStatusCode {
+			t.Fatalf(
+				"expected status code %d, got %d (test request %+v)", 
+				tr.ExpectedStatusCode,
+				res.StatusCode,
+				tr,
+			)
+		}
+	}
+}

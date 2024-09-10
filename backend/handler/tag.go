@@ -240,5 +240,43 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, edit_tag_data)
+}
 
+func DeleteTag(w http.ResponseWriter, r *http.Request) {
+	delete_tag_data := &model.DeleteTagRequest{}
+	if err := render.Bind(r, delete_tag_data); err != nil {
+		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
+	}
+
+	tag_exists, err := util.TagExists(delete_tag_data.ID)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	} else if !tag_exists {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoTagWithID))
+		return
+	}
+
+	req_login_name := r.Context().Value(m.LoginNameKey).(string)
+	owns_tag, err := util.UserSubmittedTagWithID(req_login_name, delete_tag_data.ID)
+	if err != nil {
+		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
+	} else if !owns_tag {
+		render.Render(w, r, e.ErrUnauthorized(e.ErrDoesntOwnTag))
+		return
+	}
+
+	// delete
+	_, err = db.Client.Exec(
+		"DELETE FROM Tags WHERE id = ?;",
+		delete_tag_data.ID,
+	)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

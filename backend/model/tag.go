@@ -110,3 +110,15 @@ func (et *EditTagRequest) Bind(r *http.Request) error {
 
 	return nil
 }
+
+type DeleteTagRequest struct {
+	ID string `json:"tag_id"`
+}
+
+func (dt *DeleteTagRequest) Bind(r *http.Request) error {
+	if dt.ID == "" {
+		return e.ErrNoTagID
+	}
+
+	return nil
+}

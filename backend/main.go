@@ -137,6 +137,7 @@ func main() {
 		// Tags
 		r.Post("/tags", h.AddTag)
 		r.Put("/tags", h.EditTag)
+		r.Delete("/tags", h.DeleteTag)
 
 		// Summaries
 		r.Post("/summaries", h.AddSummary)
