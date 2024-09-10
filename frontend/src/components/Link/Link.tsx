@@ -374,12 +374,12 @@ export default function Link(props: Props) {
 				</div>
 			)}
 
-			{is_your_link ? (
+			{is_tmap_page && is_your_link ? (
 				<>
 					{/* delete button */}
 					<button
 						class='delete-link-btn img-btn'
-						onClick={(e) => set_show_delete_modal(true)}
+						onClick={() => set_show_delete_modal(true)}
 					>
 						<img src='../../../x-lg.svg' height={20} width={20} />
 					</button>
