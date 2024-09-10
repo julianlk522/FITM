@@ -26,8 +26,8 @@ if (!get_tags_resp.Response || get_tags_resp.RedirectTo) {
 	return Astro.redirect(get_tags_resp.RedirectTo)
 }
 const tag_Data: TagPage = await get_tags_resp.Response.json()
-const { Link: link, UserTag: user_tag, TagRankings: top_tags } = tag_Data
-link.TagCount = top_tags.length
+const { Link: link, UserTag: user_tag, TagRankings: tags } = tag_Data
+link.TagCount = tags.length
 
 const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 ---
@@ -62,16 +62,17 @@ const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 			LinkID={link_id}
 			Token={token}
 			UserTag={user_tag ? user_tag : undefined}
+			OnlyTag={tags.length === 1}
 		/> : <section>
 			<p id="login-redirect-link"><a href="/login">Login</a> to start tagging links.</p>
 		</section>}
 
 		{
-			top_tags ? (
+			tags ? (
 				<section>
 					<h2>Top Tags</h2>
 					<ol>
-						{top_tags.map((tag) => (
+						{tags.map((tag) => (
 							<li class='tag'>
 								<ul id='cat-list'>
 									{tag.Cats.split(',').map((tag) => {

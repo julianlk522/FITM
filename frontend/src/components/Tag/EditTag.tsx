@@ -10,10 +10,16 @@ interface Props {
 	LinkID: string
 	Token: string | undefined
 	UserTag: Tag | undefined
+	OnlyTag: boolean
 }
 
 export default function EditTag(props: Props) {
-	const { LinkID: link_id, Token: token, UserTag: tag } = props
+	const {
+		LinkID: link_id,
+		Token: token,
+		UserTag: tag,
+		OnlyTag: only_tag,
+	} = props
 	const initial_cats = tag ? tag.Cats.split(',') : []
 
 	const [cats, set_cats] = useState<string[]>(initial_cats)
@@ -32,6 +38,9 @@ export default function EditTag(props: Props) {
 
 	const [editing, set_editing] = useState(false)
 	const [error, set_error] = useState<string | undefined>(undefined)
+
+	// confirm before deleting tag
+	const [show_delete_modal, set_show_delete_modal] = useState(false)
 
 	function add_cat(event: SubmitEvent) {
 		event.preventDefault()
@@ -64,6 +73,10 @@ export default function EditTag(props: Props) {
 
 	async function confirm_changes() {
 		if (!token) {
+			document.cookie = `redirect_to=${window.location.pathname.replaceAll(
+				'/',
+				'%2F'
+			)}; path=/login; max-age=21600; SameSite=strict; Secure`
 			return (window.location.href = '/login')
 		}
 
@@ -112,6 +125,38 @@ export default function EditTag(props: Props) {
 		}
 	}
 
+	async function handle_delete() {
+		if (!tag) {
+			return
+		}
+
+		if (!token) {
+			document.cookie = `redirect_to=${window.location.pathname.replaceAll(
+				'/',
+				'%2F'
+			)}; path=/login; max-age=21600; SameSite=strict; Secure`
+			return (window.location.href = '/login')
+		}
+
+		const delete_resp = await fetch(TAGS_ENDPOINT, {
+			method: 'DELETE',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify({ tag_id: tag.ID }),
+		})
+		if (delete_resp.status !== 204) {
+			console.error(delete_resp)
+			const err_msg = await delete_resp.json()
+			set_error(err_msg.error)
+			return
+		}
+
+		// reload if successful
+		window.location.reload()
+	}
+
 	return (
 		<section id='edit-tag'>
 			<div id='user_tags_title_bar'>
@@ -143,6 +188,15 @@ export default function EditTag(props: Props) {
 						alt={editing ? 'Confirm Edits' : 'Edit Tag'}
 					/>
 				</button>
+
+				{editing && !only_tag ? (
+					<button
+						class='delete-tag-btn img-btn'
+						onClick={() => set_show_delete_modal(true)}
+					>
+						<img src='../../../x-lg.svg' height={20} width={20} />
+					</button>
+				) : null}
 			</div>
 
 			{error ? <p class='error'>{`Error: ${error}`}</p> : null}
@@ -172,6 +226,22 @@ export default function EditTag(props: Props) {
 			) : editing ? null : (
 				<p>(not tagged)</p>
 			)}
+
+			{show_delete_modal ? (
+				<>
+					{/* delete modal */}
+					<dialog class='delete-tag-modal' open>
+						<p>Delete your tag?</p>
+						<button onClick={handle_delete}>Yes</button>
+						<button
+							autofocus
+							onClick={() => set_show_delete_modal(false)}
+						>
+							Cancel
+						</button>
+					</dialog>
+				</>
+			) : null}
 		</section>
 	)
 }

@@ -10,7 +10,6 @@ In order of importance:
     3. output non-2xx responses to log file
 
 -ability to remove stuff
-    -tag
     -summary
     -profile pic
 
@@ -40,7 +39,7 @@ In order of importance:
     -GetTmapCatCounts probably possible in all sql
     -Top Cats / Top Links / etc. components
 -Purge code duplication
-    -handler_test / util_test TestMain()s
+    -handler_test / util_test / query_test TestMain()s
 -CI/CD
     -auto deploy backend updates but control with CLI on VPS?
     -run tests on RPi!
@@ -102,6 +101,9 @@ In order of importance:
         -verify first
     -Move backend validation to /model unless using additional controller logic, e.g., JWT
     -repeat check for "." in cats
+    -repeat redirect_to cookie logic using window.location.pathname
+    -repeat delete modals
+        -link, tag
 -Other tests
     -finish handlers
     -handler utils
