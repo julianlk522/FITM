@@ -10,7 +10,6 @@ In order of importance:
     3. output non-2xx responses to log file
 
 -ability to remove stuff
-    -summary
     -profile pic
 
 
