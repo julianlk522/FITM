@@ -21,7 +21,8 @@ var (
 	ErrCouldNotCreateProfilePic     error = errors.New("could not create new profile pic file")
 	ErrCouldNotCopyProfilePic       error = errors.New("could not save profile pic to file")
 	ErrCouldNotSaveProfilePic       error = errors.New("could not assign profile pic to user")
-	// ErrCouldNotRemoveProfilePic     error = errors.New("could not remove profile pic for user")
+	ErrCouldNotRemoveProfilePic     error = errors.New("could not remove profile pic for user")
+	ErrNoProfilePic                 error = errors.New("no profile pic found for user")
 )
 
 func LoginNameExceedsLowerLimit(limit int) error {

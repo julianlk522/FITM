@@ -89,3 +89,25 @@ func TestHasAcceptableAspectRatio(t *testing.T) {
 		}
 	}
 }
+
+// Delete profile pic
+func TestUserWithIDHasProfilePic(t *testing.T) {
+	var test_users = []struct {
+		ID string
+		HasProfilePic bool
+	}{
+		// jlk has profile pic
+		{test_user_id, true},
+		// nelson does not have profile pic
+		{"nelson", false},
+	}
+
+	for _, u := range test_users {
+		return_true := UserWithIDHasProfilePic(u.ID)
+		if u.HasProfilePic && !return_true {
+			t.Fatalf("expected user %s to have profile pic", u.ID)
+		} else if !u.HasProfilePic && return_true {
+			t.Fatalf("user %s NOT have profile pic, expected error", u.ID)
+		}
+	}
+}

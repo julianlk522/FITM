@@ -93,3 +93,12 @@ func HasAcceptableAspectRatio(img image.Image) bool {
 
 	return true
 }
+
+// Delete profile pic
+func UserWithIDHasProfilePic(user_id string) bool {
+	var p sql.NullString
+	if err := db.Client.QueryRow("SELECT pfp FROM Users WHERE id = ?", user_id).Scan(&p); err != nil {
+		return false
+	}
+		return p.Valid
+}

@@ -203,19 +203,27 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, full_path)
 }
 
-// func RemoveProfilePic(w http.ResponseWriter, r *http.Request) {
-// 	req_user_id := r.Context().Value(m.UserIDKey).(string)
-// 	// protected route: JWT middleware verifies bearer token to set req_user_id
-// 	// (no need to check here if empty)
-// 	_, err := db.Client.Exec(
-// 		`UPDATE Users SET pfp = NULL WHERE id = ?`, 
-// 		req_user_id,
-// 	)
-// 	if err != nil {
-// 		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotRemoveProfilePic))
-// 		return
-// 	}
-// }
+func DeleteProfilePic(w http.ResponseWriter, r *http.Request) {
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	// protected route: JWT middleware verifies bearer token to set req_user_id
+	// (no need to check here if empty)
+
+	if has_pfp := util.UserWithIDHasProfilePic(req_user_id); !has_pfp {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoProfilePic))
+		return
+	}
+
+	_, err := db.Client.Exec(
+		`UPDATE Users SET pfp = NULL WHERE id = ?`, 
+		req_user_id,
+	)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotRemoveProfilePic))
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
 
 func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 	var login_name string = chi.URLParam(r, "login_name")
