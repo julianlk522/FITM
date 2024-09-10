@@ -174,16 +174,27 @@ func NewTopGlobalCatCounts() *GlobalCatCounts {
 
 func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
 	cats := strings.Split(cats_params, ",")
-
-	match_clause := fmt.Sprintf(`WHERE global_cats MATCH '%s`, cats[0])
-	for i := 1; i < len(cats); i++ {
-		match_clause += fmt.Sprintf(" AND %s", cats[i])
+	
+	// build match clause
+	match_cats := make([]string, len(cats))
+	copy(match_cats, cats)
+	// escape any "." in match_cats
+	for i := 0; i < len(match_cats); i++ {
+		if strings.Contains(match_cats[i], ".") {
+			match_cats[i] = strings.Replace(match_cats[i], `.`, `"."`, 1)
+		}
+	}
+	match_clause := fmt.Sprintf(`WHERE global_cats MATCH '%s`, match_cats[0])
+	for i := 1; i < len(match_cats); i++ {
+		match_clause += fmt.Sprintf(" AND %s", match_cats[i])
 	}
 	match_clause += `'`
 
+	// build NOT IN clause
 	for i := range cats {
 		cats[i] = "'" + cats[i] + "'"
 	}
+	not_in_clause := strings.Join(cats, ", ")
 
 	t.Text = strings.Replace(
 		t.Text,
@@ -196,7 +207,7 @@ func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
 		FROM global_cats_fts
 		%s
 			)`,
-			strings.Join(cats, ","),
+			not_in_clause,
 			match_clause,
 		),
 		1)

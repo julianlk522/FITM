@@ -392,15 +392,12 @@ func TestGetLinkIDFromTagID(t *testing.T) {
 }
 
 func TestCalculateAndSetGlobalCats(t *testing.T) {
-
-	// TODO: refactor test after refactoring CalculateGlobalCatsForLink()
-
 	var test_link_ids = []struct {
 		ID         string
 		GlobalCats string
 	}{
 		{"0", "flowers"},
-		{"7", "7,lucky"},
+		{"7", "7,lucky,arrest,Best,jest,Molest,winchest"},
 		{"11", "test"},
 	}
 
