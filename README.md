@@ -9,8 +9,6 @@ In order of importance:
     2. top.astro cat search
     3. output non-2xx responses to log file
 
-delete file from disk after profile pic delete
-
 ### Features
 
 -Cat search on top.astro

@@ -213,10 +213,27 @@ func DeleteProfilePic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := db.Client.Exec(
+	// Get file path before deleting
+	var pfp string
+	err := db.Client.QueryRow(`SELECT pfp FROM Users WHERE id = ?`, req_user_id).Scan(&pfp)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+	pfp_path := pic_dir + "/" + pfp
+
+	// Delete from DB
+	_, err = db.Client.Exec(
 		`UPDATE Users SET pfp = NULL WHERE id = ?`, 
 		req_user_id,
 	)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotRemoveProfilePic))
+		return
+	}
+
+	// Delete file from disk
+	err = os.Remove(pfp_path)
 	if err != nil {
 		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotRemoveProfilePic))
 		return
