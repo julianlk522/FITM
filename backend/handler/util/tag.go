@@ -211,6 +211,26 @@ func TagExists(tag_id string) (bool, error) {
 	return true, nil
 }
 
+func IsOnlyTag(tag_id string) (bool, error) {
+	link_id, err := GetLinkIDFromTagID(tag_id)
+	if err != nil {
+		return false, err
+	}
+
+	rows, err := db.Client.Query("SELECT id FROM Tags WHERE link_id = ?;", link_id)
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	rows.Next()
+	if rows.Next() {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 // Calculate global cats
 func CalculateAndSetGlobalCats(link_id string) error {
 	overlap_scores_sql := query.NewTagRankings(link_id)

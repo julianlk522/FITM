@@ -258,6 +258,15 @@ func DeleteTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	is_only_tag, err := util.IsOnlyTag(delete_tag_data.ID)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	} else if is_only_tag {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrCantDeleteOnlyTag))
+		return
+	}
+
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	owns_tag, err := util.UserSubmittedTagWithID(req_login_name, delete_tag_data.ID)
 	if err != nil {

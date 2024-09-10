@@ -361,6 +361,32 @@ func TestUserSubmittedTagWithID(t *testing.T) {
 	}
 }
 
+// Delete tag
+func TestTagExists(t *testing.T) {
+	// TODO
+}
+
+func TestIsOnlyTag(t *testing.T) {
+	var test_tags = []struct {
+		ID     string
+		IsOnly bool
+	}{
+		{"5", true},
+		{"4", false},
+		{"35", true},
+		{"34", false},
+	}
+
+	for _, tag := range test_tags {
+		return_true, err := IsOnlyTag(tag.ID)
+		if err != nil {
+			t.Fatalf("failed with error: %s", err)
+		} else if tag.IsOnly != return_true {
+			t.Fatalf("expected tag with ID %s to be only tag", tag.ID)
+		}
+	}
+}
+
 // AlphabetizeCats() is simple usage of strings.Split / string.Join / slices.Sort
 // no point in testing
 

@@ -256,6 +256,12 @@ func TestDeleteTag(t *testing.T) {
 			Valid:  true,
 			ExpectedStatusCode: 204,
 		},
+		// tag with ID 156 is only tag for link 108: should fail
+		{
+			TagID: "156",
+			Valid:  false,
+			ExpectedStatusCode: 400,
+		},
 	}
 
 	for _, tr := range test_requests {

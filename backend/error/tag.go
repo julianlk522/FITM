@@ -13,6 +13,7 @@ var (
 	ErrDuplicateTag        error = errors.New("duplicate tag")
 	ErrDuplicateCats       error = errors.New("tag contains duplicate cat(s)")
 	ErrDoesntOwnTag        error = errors.New("not your tag")
+	ErrCantDeleteOnlyTag   error = errors.New("last tag for this link; cannot be deleted")
 )
 
 func CatCharsExceedLimit(limit int) error {
