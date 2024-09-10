@@ -19,6 +19,8 @@ export default function ProfilePic(props: Props) {
 	const [url, set_url] = useState<string | undefined>(undefined)
 	const [error, set_error] = useState<string | undefined>(undefined)
 
+	const [show_delete_modal, set_show_delete_modal] = useState<boolean>(false)
+
 	const is_signed_in_user = login_name === signed_in_user
 
 	useEffect(() => {
@@ -69,6 +71,26 @@ export default function ProfilePic(props: Props) {
 		set_url(URL.createObjectURL(new_pic_data))
 	}
 
+	async function handle_delete(e: MouseEvent) {
+		e.preventDefault()
+		if (!token) {
+			return (window.location.href = '/login')
+		}
+
+		const delete_resp = await fetch(TMAP_PFP_ENDPOINT, {
+			method: 'DELETE',
+			headers: { Authorization: `Bearer ${token}` },
+		})
+		if (delete_resp.status > 399) {
+			const data = await delete_resp.json()
+			set_error(data.error)
+			return
+		}
+
+		set_url(undefined)
+		set_show_delete_modal(false)
+	}
+
 	return (
 		<div id='profile-pic'>
 			{error ? <p class='error'>{error}</p> : null}
@@ -98,6 +120,39 @@ export default function ProfilePic(props: Props) {
 						hidden
 						onChange={handle_pic_change}
 					/>
+					{url ? (
+						<button
+							title='Delete profile picture'
+							id='delete-pfp-btn'
+							class='img-btn'
+							onClick={(e) => {
+								e.preventDefault()
+								set_show_delete_modal(true)
+							}}
+						>
+							<img
+								src='../../../x-lg.svg'
+								height={22}
+								width={22}
+							/>
+						</button>
+					) : null}
+
+					{show_delete_modal ? (
+						<>
+							{/* delete modal */}
+							<dialog id='delete-profile-pic-modal' open>
+								<p>Delete profile pic?</p>
+								<button onClick={handle_delete}>Yes</button>
+								<button
+									autofocus
+									onClick={() => set_show_delete_modal(false)}
+								>
+									Cancel
+								</button>
+							</dialog>
+						</>
+					) : null}
 				</form>
 			) : null}
 		</div>

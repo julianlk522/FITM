@@ -9,9 +9,7 @@ In order of importance:
     2. top.astro cat search
     3. output non-2xx responses to log file
 
--ability to remove stuff
-    -profile pic
-
+delete file from disk after profile pic delete
 
 ### Features
 
@@ -67,7 +65,8 @@ In order of importance:
 -Tmap period filter?
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
-    -proper favicon.ico
+    -original favicon.ico
+    -button titles
     -Link preview img srcset?
         probably not realistic
     -Tiny bit more space between like/copy buttons on mobile
@@ -102,7 +101,7 @@ In order of importance:
     -repeat check for "." in cats
     -repeat redirect_to cookie logic using window.location.pathname
     -repeat delete modals
-        -link, tag
+        -link, tag, tmap pfp
 -Other tests
     -finish handlers
     -handler utils

@@ -1,14 +1,18 @@
-.cat {
+li.cat {
 	list-style: none;
 	display: flex;
 	padding: 0 5px;
 	border-radius: 2px;
 	background-color: var(--sky);
-}
 
-.cat p {
-	color: black;
-	font-weight: bold;
-	margin: 0;
-	white-space: nowrap;
+	p {
+		color: black;
+		font-weight: bold;
+		margin: 0;
+		white-space: nowrap;
+	}
+
+	button.img-btn {
+		filter: invert(1);
+	}
 }

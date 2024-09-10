@@ -14,7 +14,6 @@ button#delete-summary-btn {
 	position: absolute;
 	right: 0;
 	bottom: 0;
-	filter: invert(1);
 }
 
 @media (min-width: 768px) {

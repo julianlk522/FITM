@@ -80,7 +80,6 @@ button.delete-link-btn {
 	position: absolute;
 	right: 0;
 	bottom: 0;
-	filter: invert(1);
 }
 
 dialog.delete-link-modal {

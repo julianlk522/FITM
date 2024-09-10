@@ -363,6 +363,7 @@ export default function Link(props: Props) {
 				<>
 					{/* delete button */}
 					<button
+						title='Delete Link'
 						class='delete-link-btn img-btn'
 						onClick={() => set_show_delete_modal(true)}
 					>
