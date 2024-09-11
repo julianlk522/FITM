@@ -6,6 +6,7 @@ In order of importance:
     -1. confirm that front page top contributors counts are correct
         -bradley showing as 6 but has 5 submitted links
         -ACTUALLY this is fine, but fix tmap submitted links since now OG tag can be deleted so not all submitted are also tagged
+            -test against link 93, currently set to fail
     0. save logs from webhooks
     2. top.astro cat search
     3. output non-2xx responses to log file
@@ -44,6 +45,7 @@ In order of importance:
 
 ### Features
 
+-use user summaries in tmap if they exist
 -client:visible for tmap
 -SQL prepared statements
     -more important if truly does help prevent injection... verify

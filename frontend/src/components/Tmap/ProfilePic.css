@@ -1,4 +1,6 @@
 div#profile-pic {
+	margin-bottom: 0.5rem;
+
 	img#pfp {
 		display: block;
 		max-height: 150px;

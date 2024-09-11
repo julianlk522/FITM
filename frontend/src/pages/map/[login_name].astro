@@ -2,6 +2,7 @@
 import Link from '../../components/Link/Link'
 import ScrollUp from '../../components/ScrollUp.astro'
 import TagCat from "../../components/Tag/TagCat"
+import AboutText from '../../components/Tmap/AboutText'
 import EditAbout from '../../components/Tmap/EditAbout'
 import ProfilePic from '../../components/Tmap/ProfilePic'
 import { TMAP_ENDPOINT } from '../../constants'
@@ -106,18 +107,12 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 						: abbreviated_about 
 							?  <details>
 								<summary>
-									<pre>
-										<span>about:</span> {abbreviated_about}
-									</pre>
+									<AboutText About={abbreviated_about} />
 								</summary>
-								<pre>
-									<span>about:</span> {profile.About}
-								</pre>
+								<AboutText About={profile.About} />
 							</details> 
 							: profile.About.length > 0 ?
-							<pre>
-								<span>about:</span> {profile.About}
-							</pre>
+								<AboutText About={profile.About} />
 							: null
 					: null
 				}
@@ -270,7 +265,10 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 
 	#profile {
 		padding-top: 0;
-		padding-bottom: 1rem;
+
+		astro-island:has(div#profile-pic) + pre {
+			margin-top: 1rem;
+		}
 	}
 
 	#overview {

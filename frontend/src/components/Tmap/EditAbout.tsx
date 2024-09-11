@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import { TMAP_ABOUT_ENDPOINT } from '../../constants'
 import { is_error_response } from '../../types'
+import AboutText from './AboutText'
 import './EditAbout.css'
 
 interface Props {
@@ -85,24 +86,12 @@ export default function EditAbout(props: Props) {
 					{abbreviated ? (
 						<details>
 							<summary>
-								<pre>
-									about:{'\n'}
-									{'\n'}
-									{abbreviated}
-								</pre>
+								<AboutText About={abbreviated} />
 							</summary>
-							<pre>
-								about:{'\n'}
-								{'\n'}
-								{initial}
-							</pre>
+							<AboutText About={initial} />
 						</details>
 					) : (
-						<pre>
-							about:{'\n'}
-							{'\n'}
-							{initial}
-						</pre>
+						<AboutText About={initial} />
 					)}
 					<button
 						id='edit-about-btn'
