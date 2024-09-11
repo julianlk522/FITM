@@ -41,7 +41,7 @@ func TestNewTmapSubmitted(t *testing.T) {
 
 	submitted_ids_sql := fmt.Sprintf(
 		`SELECT id FROM Links WHERE submitted_by = '%s'`,
-		test_login_name,
+		test_req_login_name,
 	)
 
 	rows, err := TestClient.Query(submitted_ids_sql)
@@ -58,8 +58,8 @@ func TestNewTmapSubmitted(t *testing.T) {
 		submitted_ids = append(submitted_ids, id)
 	}
 
-	// then execute query and confirm all submitted links are present
-	submitted_sql := NewTmapSubmitted(test_login_name)
+	// execute query and confirm all submitted links are present
+	submitted_sql := NewTmapSubmitted(test_req_login_name)
 	if submitted_sql.Error != nil {
 		t.Fatal(submitted_sql.Error)
 	}
@@ -86,8 +86,8 @@ func TestNewTmapSubmitted(t *testing.T) {
 			&l.ImgURL,
 		); err != nil {
 			t.Fatal(err)
-		} else if l.SubmittedBy != test_login_name {
-			t.Fatalf("SubmittedBy != test login_name (%s)", test_login_name)
+		} else if l.SubmittedBy != test_req_login_name {
+			t.Fatalf("SubmittedBy != test login_name (%s)", test_req_login_name)
 		} else if l.TagCount == 0 {
 			t.Fatalf("TagCount == 0: %+v", l)
 		}
