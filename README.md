@@ -3,9 +3,8 @@
 ## Todos
 
 In order of importance:
-    0. save logs from webhooks
-    2. top.astro cat search
-    3. output non-2xx responses to log file
+    1. top.astro cat search
+    2. output non-2xx responses to log file
 
 ### Features
 
