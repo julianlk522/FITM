@@ -10,40 +10,30 @@ log() {
 # "2>&1" redirects stderr (file descriptor 2) to stdout (1)
 exec >> "$LOG_FILE" 2>&1
 
-log "UPDATE AND RESTART"
 echo
+log "UPDATE AND RESTART"
 
+# pull changes
 if [ -z "$FITM_ROOT_PATH" ]; then
     log "error: FITM_ROOT_PATH is not set"
     exit 1
 fi
-
-# navigate to root
 cd "$FITM_ROOT_PATH" || { log "error: could not navigate to $FITM_ROOT_PATH"; exit 1; }
-log "navigated to $FITM_ROOT_PATH"
-
-# pull changes
 git pull
 
-# navigate to backend
+# update dependencies, rebuild
 if [ ! -d "backend" ]; then
     log "error: 'backend' directory not found"
     exit 1
 fi
 cd backend
-log "navigated to /backend"
-
-
-# update dependencies, rebuild
 go mod tidy
 go build --tags 'fts5' .
 log "build complete"
 
-# get running server process ID(s)
+# interrupt running server process(es)
 PIDs=$(pgrep -f fitm)
 log "found PID(s): $PIDs"
-
-# interrupt if running
 if [ -n "$PIDs" ]; then
     for PID in $PIDs; do
         log "attempting to stop process $PID"
@@ -82,5 +72,4 @@ tmux send-keys -t FITM "cd $FITM_ROOT_PATH/backend && ./fitm" ENTER
 # detach
 tmux detach -s FITM
 
-# save timestamp
 log "update complete and server restarted"
