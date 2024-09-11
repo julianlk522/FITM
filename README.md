@@ -3,9 +3,10 @@
 ## Todos
 
 In order of importance:
+    -1. confirm that front page top contributors counts are correct
+        -bradley showing as 6 but has 5 submitted links
+        -ACTUALLY this is fine, but fix tmap submitted links since now OG tag can be deleted so not all submitted are also tagged
     0. save logs from webhooks
-    1. ability to remove stuff
-        -add link delete recursive trigger
     2. top.astro cat search
     3. output non-2xx responses to log file
 
@@ -35,9 +36,6 @@ In order of importance:
     -Top Cats / Top Links / etc. components
 -Purge code duplication
     -handler_test / util_test / query_test TestMain()s
--CI/CD
-    -auto deploy backend updates but control with CLI on VPS?
-    -run tests on RPi!
 -Security
     -Look into input sequences that might produce problematic results
         -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
@@ -63,6 +61,7 @@ In order of importance:
 -Tmap period filter?
 -Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
+    -subtitle probably should not be h2
     -original favicon.ico
     -button titles
     -Link preview img srcset?

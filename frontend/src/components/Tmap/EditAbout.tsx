@@ -86,16 +86,22 @@ export default function EditAbout(props: Props) {
 						<details>
 							<summary>
 								<pre>
-									<span>about:</span> {abbreviated}
+									about:{'\n'}
+									{'\n'}
+									{abbreviated}
 								</pre>
 							</summary>
 							<pre>
-								<span>about:</span> {initial}
+								about:{'\n'}
+								{'\n'}
+								{initial}
 							</pre>
 						</details>
 					) : (
 						<pre>
-							<span>about:</span> {initial}
+							about:{'\n'}
+							{'\n'}
+							{initial}
 						</pre>
 					)}
 					<button
