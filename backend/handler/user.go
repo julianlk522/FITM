@@ -260,7 +260,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if !user_exists {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoUserWithLoginName))
+		render.Render(w, r, e.Err404(e.ErrNoUserWithLoginName))
 		return
 	}
 

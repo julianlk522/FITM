@@ -4,6 +4,8 @@
 
 In order of importance:
     1. top.astro cat search
+        -spellfix1
+        -search UI
     2. output non-2xx responses to log file
 
 ### Features
