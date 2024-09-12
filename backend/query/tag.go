@@ -169,7 +169,11 @@ GROUP BY global_cats
 ORDER BY count DESC, LOWER(global_cats) ASC;`
 
 func NewTopGlobalCatCounts() *GlobalCatCounts {
-	return (&GlobalCatCounts{Query: Query{Text: GLOBAL_CAT_COUNTS_BASE}})._Limit(GLOBAL_CATS_PAGE_LIMIT)
+	return (&GlobalCatCounts{
+		Query: Query{
+			Text: GLOBAL_CAT_COUNTS_BASE,
+		},
+	})._Limit(GLOBAL_CATS_PAGE_LIMIT)
 }
 
 func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {

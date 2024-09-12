@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
 )
 
 var (
@@ -22,12 +22,13 @@ func init() {
 }
 
 func Connect() error {
-	var err error
-
+	LoadSpellfix()
+	
 	_, db_file, _, _ := runtime.Caller(0)
 	db_dir := filepath.Dir(db_file)
+	var err error
 
-	Client, err = sql.Open("sqlite3", db_dir+"/fitm.db")
+	Client, err = sql.Open("sqlite-spellfix1", db_dir+"/fitm.db")
 	if err != nil {
 		return err
 	}
@@ -37,7 +38,19 @@ func Connect() error {
 		return err
 	}
 
-	log.Print("Connected to DB")
+	log.Print("DB connection verified")
 
 	return nil
+}
+
+func LoadSpellfix() {
+	sql.Register(
+		"sqlite-spellfix1",
+		&sqlite3.SQLiteDriver{
+			ConnectHook: func(c *sqlite3.SQLiteConn) error {
+				return c.LoadExtension("./spellfix", "sqlite3_spellfix_init")
+			},
+		},
+	)
+	log.Print("Loaded spellfix")
 }

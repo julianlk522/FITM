@@ -5,6 +5,34 @@
 In order of importance:
     1. top.astro cat search
         -spellfix1
+            -CREATE VIRTUAL TABLE global_cats_spellfix USING spellfix1
+            
+            // set initial global_cats_spellfix counts
+            -WITH RECURSIVE split(id, global_cats, str) AS 
+                (
+                SELECT id, '', global_cats||',' 
+                FROM Links
+                UNION ALL SELECT
+                id,
+                substr(str, 0, instr(str, ',')),
+                substr(str, instr(str, ',') + 1)
+                FROM split
+                WHERE str != ''
+                )
+            INSERT INTO global_cats_spellfix(word,rank)
+                SELECT global_cats, count(global_cats) as count
+                FROM split
+                WHERE global_cats != ''
+                GROUP BY global_cats
+                ORDER BY count DESC, LOWER(global_cats) ASC;
+
+            // WHEN do global cats change?
+                -new link
+                    -add the user's cats one-by-one .. easy
+                -delete link
+                    -delete the link's cats one-by-one .. easy
+                -link has global cats updated
+                    -find removed cats and added cats, update each accordingly
         -search UI
     2. output non-2xx responses to log file
 
@@ -26,6 +54,8 @@ In order of importance:
     -Restrict from tmap/top unless specifically chosen in filter
 -look into not rendering images that dont successfully load
 -surround related statements in transactions (?)
+-improve cat count lookup speed with fts5vocab table
+    -(row type)
 
 ### Code Quality
 
