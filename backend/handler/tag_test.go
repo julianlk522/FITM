@@ -142,6 +142,7 @@ func TestEditTag(t *testing.T) {
 	test_tag_requests := []struct {
 		Payload map[string]string
 		Valid   bool
+		ExpectedStatusCode int
 	}{
 		{
 			Payload: map[string]string{
@@ -149,6 +150,7 @@ func TestEditTag(t *testing.T) {
 				"cats":   "",
 			},
 			Valid: false,
+			ExpectedStatusCode: 400,
 		},
 		{
 			Payload: map[string]string{
@@ -156,6 +158,7 @@ func TestEditTag(t *testing.T) {
 				"cats":   "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123",
 			},
 			Valid: false,
+			ExpectedStatusCode: 400,
 		},
 		// too many cats
 		{
@@ -164,6 +167,7 @@ func TestEditTag(t *testing.T) {
 				"cats":   "0,1,2,3,4,5,6,7,8,9,0,1,2",
 			},
 			Valid: false,
+			ExpectedStatusCode: 400,
 		},
 		// duplicate cats
 		{
@@ -172,6 +176,7 @@ func TestEditTag(t *testing.T) {
 				"cats":   "0,1,2,3,3",
 			},
 			Valid: false,
+			ExpectedStatusCode: 400,
 		},
 		// should fail because user jlk _did not_ submit tag with ID 10
 		{
@@ -180,6 +185,7 @@ func TestEditTag(t *testing.T) {
 				"cats":   "testtest",
 			},
 			Valid: false,
+			ExpectedStatusCode: 403,
 		},
 		// should pass because user jlk _has_ submitted tag with ID 32
 		{
@@ -188,6 +194,7 @@ func TestEditTag(t *testing.T) {
 				"cats":   "hello,kitty",
 			},
 			Valid: true,
+			ExpectedStatusCode: 200,
 		},
 	}
 
@@ -215,19 +222,25 @@ func TestEditTag(t *testing.T) {
 		res := w.Result()
 		defer res.Body.Close()
 
-		if tr.Valid && res.StatusCode != 200 {
+		if tr.Valid && res.StatusCode != tr.ExpectedStatusCode {
 			text, err := io.ReadAll(res.Body)
 			if err != nil {
 				t.Fatal("failed but unable to read request body bytes")
 			} else {
 				t.Fatalf(
-					"expected status code 200, got %d (test request %+v)\n%s", res.StatusCode,
+					"expected status code %d, got %d (test request %+v)\n%s", 
+					tr.ExpectedStatusCode,
+					res.StatusCode,
 					tr.Payload,
 					text,
 				)
 			}
-		} else if !tr.Valid && res.StatusCode != 400 {
-			t.Fatalf("expected status code 400, got %d", res.StatusCode)
+		} else if !tr.Valid && res.StatusCode != tr.ExpectedStatusCode {
+			t.Fatalf(
+				"expected status code %d, got %d", 
+				tr.ExpectedStatusCode,
+				res.StatusCode,
+			)
 		}
 	}
 }
@@ -289,10 +302,15 @@ func TestDeleteTag(t *testing.T) {
 		defer res.Body.Close()
 
 		if tr.Valid && res.StatusCode != 204 {
+			text, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Fatal("failed but unable to read request body bytes")
+			}
 			t.Fatalf(
-				"expected status code 204, got %d (test request %+v)", 
+				"expected status code 204, got %d (test request %+v) \n%s", 
 				res.StatusCode,
 				tr,
+				text,
 			)
 		} else if !tr.Valid && res.StatusCode != tr.ExpectedStatusCode {
 			t.Fatalf(

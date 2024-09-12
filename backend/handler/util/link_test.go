@@ -268,17 +268,14 @@ func TestIncrementSpellfixRanksForCats(t *testing.T) {
 	var test_cats = []struct {
 		Cats  []string
 		CurrentRanks []int
-		ExpectedResultRanks []int
 	}{
 		{
 			[]string{"umvc3"},
 			[]int{4}, 
-			[]int{5},
 		},
 		{
-			[]string{"coding","hacking"}, 
-			[]int{6, 2}, 
-			[]int{7, 3},
+			[]string{"flowers","nerd"}, 
+			[]int{6, 1}, 
 		},
 	}
 
@@ -296,9 +293,9 @@ func TestIncrementSpellfixRanksForCats(t *testing.T) {
 
 			if err != nil {
 				t.Fatal(err)
-			} else if rank != tc.ExpectedResultRanks[i] {
+			} else if rank != tc.CurrentRanks[i] + 1 {
 				t.Fatal(
-					"expected rank for", cat, "to be", tc.ExpectedResultRanks[i], "got", rank,
+					"expected rank for", cat, "to be", tc.CurrentRanks[i] + 1, "got", rank,
 				)
 			}
 		}
@@ -313,17 +310,14 @@ func TestDecrementSpellfixRanksForCats(t *testing.T) {
 	var test_cats = []struct {
 		Cats  []string
 		CurrentRanks []int
-		ExpectedResultRanks []int
 	}{
 		{
-			[]string{"umvc3"},
-			[]int{4}, 
-			[]int{3},
+			[]string{"test"},
+			[]int{11}, 
 		},
 		{
 			[]string{"coding","hacking"}, 
 			[]int{6, 2}, 
-			[]int{5, 1},
 		},
 	}
 
@@ -341,9 +335,9 @@ func TestDecrementSpellfixRanksForCats(t *testing.T) {
 			
 			if err != nil {
 				t.Fatal(err)
-			} else if rank != tc.ExpectedResultRanks[i] {
+			} else if rank != tc.CurrentRanks[i] - 1 {
 				t.Fatal(
-					"expected rank for", cat, "to be", tc.ExpectedResultRanks[i], "got", rank,
+					"expected rank for", cat, "to be", tc.CurrentRanks[i] - 1, "got", rank,
 				)
 			}
 		}

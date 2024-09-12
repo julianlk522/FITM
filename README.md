@@ -26,9 +26,6 @@ In order of importance:
                 GROUP BY global_cats
                 ORDER BY count DESC, LOWER(global_cats) ASC;
 
-            // WHEN do global cats change?
-                -link has global cats updated
-                    -find removed cats and added cats, update each accordingly
         -search UI
     2. output non-2xx responses to log file
 

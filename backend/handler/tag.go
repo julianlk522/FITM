@@ -209,7 +209,7 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoTagWithID))
 		return
 	} else if !owns_tag {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrDoesntOwnTag))
+		render.Render(w, r, e.ErrUnauthorized(e.ErrDoesntOwnTag))
 		return
 	}
 
@@ -225,16 +225,16 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 		edit_tag_data.ID,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
 	link_id, err := util.GetLinkIDFromTagID(edit_tag_data.ID)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	} else if err = util.CalculateAndSetGlobalCats(link_id); err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
@@ -277,12 +277,25 @@ func DeleteTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// get link ID before deleting
+	link_id, err := util.GetLinkIDFromTagID(delete_tag_data.ID)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
 	// delete
 	_, err = db.Client.Exec(
 		"DELETE FROM Tags WHERE id = ?;",
 		delete_tag_data.ID,
 	)
 	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// set global cats
+	if err = util.CalculateAndSetGlobalCats(link_id); err != nil {
 		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}

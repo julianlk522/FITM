@@ -326,13 +326,48 @@ func AlphabetizeOverlapScoreCats(scores map[string]float32) []string {
 }
 
 func SetGlobalCats(link_id string, text string) error {
-	_, err := db.Client.Exec(`
+
+	// determine diff to adjust spellfix ranks
+	var old_cats_str string
+	err := db.Client.QueryRow(
+		"SELECT global_cats FROM Links WHERE id = ?;",
+		link_id,
+	).Scan(&old_cats_str)
+	if err != nil {
+		return err
+	}
+
+	var new_cats = strings.Split(text, ",")
+	var old_cats = strings.Split(old_cats_str, ",")
+
+	var added_cats []string
+	for _, cat := range new_cats {
+		if !slices.Contains(old_cats, cat) {
+			added_cats = append(added_cats, cat)
+		}
+	}
+	var removed_cats []string
+	for _, cat := range old_cats {
+		if !slices.Contains(new_cats, cat) {
+			removed_cats = append(removed_cats, cat)
+		}
+	}
+
+	// set link new cats
+	_, err = db.Client.Exec(`
 		UPDATE Links 
 		SET global_cats = ? 
 		WHERE id = ?`,
 		text,
 		link_id)
 	if err != nil {
+		return err
+	}
+
+	if err = IncrementSpellfixRanksForCats(added_cats); err != nil {
+		return err
+	}
+	if err = DecrementSpellfixRanksForCats(removed_cats); err != nil {
 		return err
 	}
 
