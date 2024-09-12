@@ -76,8 +76,8 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		if err := util.ObtainYouTubeMetaData(request); err != nil {
 
 			// if unable to get YT metadata, try treating as normal URL
-			// (in case of, e.g., example.com/youtube.com/watch?v=1234)
-			// though this should not happen per util.TestIsYouTubeVideoLink cases
+			// (in case of, e.g., example.com/youtube.com/watch?v=1234
+			// though this should not happen per util.TestIsYouTubeVideoLink cases)
 			if err = util.ObtainURLMetaData(request); err != nil {
 				render.Render(w, r, e.ErrInvalidRequest(err))
 				return
@@ -179,6 +179,12 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
+	}
+
+	err = util.IncrementSpellfixRanksForCats(strings.Split(request.Cats, ","))
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 

@@ -23,7 +23,7 @@ var TestClient *sql.DB
 
 func TestMain(m *testing.M) {
 	var err error
-	TestClient, err = sql.Open("sqlite3", "file::memory:?cache=shared")
+	TestClient, err = sql.Open("sqlite-spellfix1", "file::memory:?cache=shared")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -63,6 +63,13 @@ func TestMain(m *testing.M) {
 		log.Fatalf("in-memory DB did not receive dump data: %s", err)
 	}
 	log.Printf("verified dump data added to test DB")
+
+	// verify spellfix working
+	_, err = TestClient.Exec("SELECT word, rank FROM global_cats_spellfix;")
+	if err != nil {
+		log.Fatalf("in-memory DB did not receive spellfix: %s", err)
+	}
+	log.Printf("verified spellfix loaded into test DB")
 
 	m.Run()
 }

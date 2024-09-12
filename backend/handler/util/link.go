@@ -153,18 +153,6 @@ func InvalidURLError(url string) error {
 	return fmt.Errorf("invalid URL: %s", url)
 }
 
-func LinkAlreadyAdded(url string) (bool, string) {
-	var id sql.NullString
-
-	err := db.Client.QueryRow("SELECT id FROM Links WHERE url = ?", url).Scan(&id)
-
-	if err == nil && id.Valid {
-		return true, id.String
-	} else {
-		return false, ""
-	}
-}
-
 func AssignMetadata(meta HTMLMeta, link_data *model.NewLinkRequest) {
 	switch {
 	case meta.OGDescription != "":
@@ -189,6 +177,32 @@ func AssignMetadata(meta HTMLMeta, link_data *model.NewLinkRequest) {
 
 func IsRedirect(status_code int) bool {
 	return status_code > 299 && status_code < 400
+}
+
+func LinkAlreadyAdded(url string) (bool, string) {
+	var id sql.NullString
+
+	err := db.Client.QueryRow("SELECT id FROM Links WHERE url = ?", url).Scan(&id)
+
+	if err == nil && id.Valid {
+		return true, id.String
+	} else {
+		return false, ""
+	}
+}
+
+func IncrementSpellfixRanksForCats(cats []string) error {
+	for _, cat := range cats {
+		_, err := db.Client.Exec(
+			"UPDATE global_cats_spellfix SET rank = rank + 1 WHERE word = ?;",
+			cat,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Like / unlike link

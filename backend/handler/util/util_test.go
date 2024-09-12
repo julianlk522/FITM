@@ -31,7 +31,7 @@ var (
 
 func TestMain(m *testing.M) {
 	var err error
-	TestClient, err = sql.Open("sqlite3", "file::memory:?cache=shared")
+	TestClient, err = sql.Open("sqlite-spellfix1", "file::memory:?cache=shared")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,6 +46,7 @@ func TestMain(m *testing.M) {
 	test_data_path := os.Getenv("FITM_TEST_DATA_PATH")
 	if test_data_path == "" {
 		log.Printf("FITM_TEST_DATA_PATH not set, using default path")
+		
 		_, util_file, _, _ := runtime.Caller(0)
 		util_dir := filepath.Dir(util_file)
 		db_dir := filepath.Join(util_dir, "../../db")
@@ -71,6 +72,13 @@ func TestMain(m *testing.M) {
 		log.Fatalf("in-memory DB did not receive dump data: %s", err)
 	}
 	log.Printf("verified dump data added to test DB")
+
+	// verify spellfix working
+	_, err = TestClient.Exec("SELECT word, rank FROM global_cats_spellfix;")
+	if err != nil {
+		log.Fatalf("in-memory DB did not receive spellfix: %s", err)
+	}
+	log.Printf("verified spellfix loaded into test DB")
 
 	m.Run()
 }

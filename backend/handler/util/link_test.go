@@ -3,6 +3,7 @@ package handler
 import (
 	"testing"
 
+	"github.com/julianlk522/fitm/db"
 	"github.com/julianlk522/fitm/model"
 	"github.com/julianlk522/fitm/query"
 )
@@ -139,27 +140,6 @@ func TestGetResolvedURLResponse(t *testing.T) {
 	}
 }
 
-func TestLinkAlreadyAdded(t *testing.T) {
-	var test_urls = []struct {
-		URL   string
-		Added bool
-	}{
-		{"https://stackoverflow.co/", true},
-		{"https://www.ronjarzombek.com", true},
-		{"https://somethingnotonfitm", false},
-		{"jimminy jillickers", false},
-	}
-
-	for _, u := range test_urls {
-		added, _ := LinkAlreadyAdded(u.URL)
-		if u.Added && !added {
-			t.Fatalf("expected url %s to be added", u.URL)
-		} else if !u.Added && added {
-			t.Fatalf("%s NOT added, expected error", u.URL)
-		}
-	}
-}
-
 func TestAssignMetadata(t *testing.T) {
 	mock_metas := []HTMLMeta{
 		// Auto Summary should be og:description,
@@ -253,12 +233,74 @@ func TestAssignMetadata(t *testing.T) {
 			}
 		case 4:
 			if mock_request.AutoSummary != "goopis" {
-				t.Fatalf("goopis provided but auto summary set to: %s", mock_request.AutoSummary)
+				t.Fatalf("og:sitename provided but auto summary set to: %s", mock_request.AutoSummary)
 			} else if mock_request.ImgURL != "https://i.ytimg.com/vi/XdfoXdzGmr0/maxresdefault.jpg" {
 				t.Fatal("expected og:image to be set")
 			}
 		default:
 			t.Fatal("unhandled case, you f'ed up dawg")
+		}
+	}
+}
+
+func TestLinkAlreadyAdded(t *testing.T) {
+	var test_urls = []struct {
+		URL   string
+		Added bool
+	}{
+		{"https://stackoverflow.co/", true},
+		{"https://www.ronjarzombek.com", true},
+		{"https://somethingnotonfitm", false},
+		{"jimminy jillickers", false},
+	}
+
+	for _, u := range test_urls {
+		added, _ := LinkAlreadyAdded(u.URL)
+		if u.Added && !added {
+			t.Fatalf("expected url %s to be added", u.URL)
+		} else if !u.Added && added {
+			t.Fatalf("%s NOT added, expected error", u.URL)
+		}
+	}
+}
+
+func TestIncrementSpellfixRanksForCats(t *testing.T) {
+	var test_cats = []struct {
+		Cats  []string
+		CurrentRanks []int
+		ExpectedResultRanks []int
+	}{
+		{
+			[]string{"umvc3"},
+			[]int{4}, 
+			[]int{5},
+		},
+		{
+			[]string{"coding","hacking"}, 
+			[]int{6, 2}, 
+			[]int{7, 3},
+		},
+	}
+
+	for _, tc := range test_cats {
+		err := IncrementSpellfixRanksForCats(tc.Cats)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for i, cat := range tc.Cats {
+			var rank int
+			err := db.Client.QueryRow(
+				"SELECT rank FROM global_cats_spellfix WHERE word = ?", cat,
+			).Scan(&rank)
+
+			if err != nil {
+				t.Fatal(err)
+			} else if rank != tc.ExpectedResultRanks[i] {
+				t.Fatal(
+					"expected rank for", cat, "to be", tc.ExpectedResultRanks[i], "got", rank,
+				)
+			}
 		}
 	}
 }
