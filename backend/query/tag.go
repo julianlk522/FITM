@@ -8,6 +8,7 @@ import (
 const (
 	TAG_RANKINGS_PAGE_LIMIT   = 20
 	GLOBAL_CATS_PAGE_LIMIT    = 20
+	SPELLFIX_MATCHES_LIMIT    =  3
 )
 
 // Tags Page link
@@ -252,4 +253,24 @@ LIMIT %d;`,
 		1)
 
 	return t
+}
+
+// Global Cats Spellfix Matches For Snippet
+type SpellfixMatches struct {
+	Query
+}
+
+func NewSpellfixMatchesForSnippet(snippet string) *SpellfixMatches {
+	return (&SpellfixMatches{
+		Query: Query{
+			Text: fmt.Sprintf(
+				`SELECT word, rank
+				FROM global_cats_spellfix
+				WHERE word MATCH '%s*'
+				AND top=%d;`,
+				snippet,
+				SPELLFIX_MATCHES_LIMIT,
+			),
+		},
+	})
 }

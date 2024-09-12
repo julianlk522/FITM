@@ -257,3 +257,31 @@ func TestNewTopGlobalCatCountsDuringPeriod(t *testing.T) {
 		}
 	}
 }
+
+func TestNewSpellfixMatchesForSnippet(t *testing.T) {
+	var test_snippet = "test*"
+	var expected_rankings = map[string]int{
+		"test": 11,
+		"technology": 1,
+		"tech": 2,
+	}
+
+	sql := NewSpellfixMatchesForSnippet(test_snippet)
+	// no chance for sql.Error to have been set so no need to check
+
+	rows, err := TestClient.Query(sql.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for rows.Next() {
+		var word string
+		var rank int
+
+		if err := rows.Scan(&word, &rank); err != nil {
+			t.Fatal(err)
+		} else if expected_rankings[word] != rank {
+			t.Fatalf("got %d, want %d for word %s", rank, expected_rankings[word], word)
+		}
+	}
+}
