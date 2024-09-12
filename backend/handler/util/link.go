@@ -205,6 +205,21 @@ func IncrementSpellfixRanksForCats(cats []string) error {
 	return nil
 }
 
+// Delete link
+func DecrementSpellfixRanksForCats(cats []string) error {
+	for _, cat := range cats {
+		_, err := db.Client.Exec(
+			"UPDATE global_cats_spellfix SET rank = rank - 1 WHERE word = ?;",
+			cat,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Like / unlike link
 func UserSubmittedLink(login_name string, link_id string) bool {
 	var sb sql.NullString

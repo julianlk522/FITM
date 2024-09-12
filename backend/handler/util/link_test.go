@@ -308,6 +308,48 @@ func TestIncrementSpellfixRanksForCats(t *testing.T) {
 // IsRedirect / AssignSortedCats are pretty simple
 // don't really need tests
 
+// Delete link
+func TestDecrementSpellfixRanksForCats(t *testing.T) {
+	var test_cats = []struct {
+		Cats  []string
+		CurrentRanks []int
+		ExpectedResultRanks []int
+	}{
+		{
+			[]string{"umvc3"},
+			[]int{4}, 
+			[]int{3},
+		},
+		{
+			[]string{"coding","hacking"}, 
+			[]int{6, 2}, 
+			[]int{5, 1},
+		},
+	}
+
+	for _, tc := range test_cats {
+		err := DecrementSpellfixRanksForCats(tc.Cats)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for i, cat := range tc.Cats {
+			var rank int
+			err := db.Client.QueryRow(
+				"SELECT rank FROM global_cats_spellfix WHERE word = ?", cat,
+			).Scan(&rank)
+			
+			if err != nil {
+				t.Fatal(err)
+			} else if rank != tc.ExpectedResultRanks[i] {
+				t.Fatal(
+					"expected rank for", cat, "to be", tc.ExpectedResultRanks[i], "got", rank,
+				)
+			}
+		}
+	}
+}
+
 // Like / unlike link
 func TestUserSubmittedLink(t *testing.T) {
 	var test_links = []struct {

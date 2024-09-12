@@ -182,6 +182,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// update spellfix ranks
 	err = util.IncrementSpellfixRanksForCats(strings.Split(request.Cats, ","))
 	if err != nil {
 		render.Render(w, r, e.ErrServerFail(err))
@@ -226,12 +227,29 @@ func DeleteLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// fetch global cats before deleting
+	var gc string
+	err = db.Client.QueryRow("SELECT global_cats FROM Links WHERE id = ?;", request.LinkID).Scan(&gc)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// delete
 	_, err = db.Client.Exec(
 		"DELETE FROM Links WHERE id = ?;",
 		request.LinkID,
 	)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// update spellfix ranks
+	err = util.DecrementSpellfixRanksForCats(strings.Split(gc, ","))
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)

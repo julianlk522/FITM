@@ -27,10 +27,6 @@ In order of importance:
                 ORDER BY count DESC, LOWER(global_cats) ASC;
 
             // WHEN do global cats change?
-                -new link
-                    -add the user's cats one-by-one .. easy
-                -delete link
-                    -delete the link's cats one-by-one .. easy
                 -link has global cats updated
                     -find removed cats and added cats, update each accordingly
         -search UI
