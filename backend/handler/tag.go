@@ -120,6 +120,40 @@ func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {
 	util.RenderCatCounts(counts, w, r)
 }
 
+func GetSpellfixMatchesForSnippet(w http.ResponseWriter, r *http.Request) {
+	snippet := chi.URLParam(r, "snippet")
+	if snippet == "" {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoGlobalCatsSnippet))
+		return
+	}
+
+	spfx_sql := query.NewSpellfixMatchesForSnippet(snippet)
+	var matches []model.SpellFixMatch
+	
+	rows, err := db.Client.Query(spfx_sql.Text)
+	if err != nil {
+		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var word string
+		var rank int
+		if err := rows.Scan(&word, &rank); err != nil {
+			render.Render(w, r, e.ErrInvalidRequest(err))
+			return
+		}
+		matches = append(matches, model.SpellFixMatch{
+			Word:  word,
+			Rank:  rank,
+		})
+	}
+
+	render.JSON(w, r, matches)
+	render.Status(r, http.StatusOK)
+}
+
 func GetTopContributors(w http.ResponseWriter, r *http.Request) {
 	contributors_sql := query.NewContributors()
 

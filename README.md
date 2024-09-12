@@ -4,7 +4,7 @@
 
 In order of importance:
     1. top.astro cat search
-        -spellfix1
+        -spellfix1 db setup
             -CREATE VIRTUAL TABLE global_cats_spellfix USING spellfix1
             
             // set initial global_cats_spellfix counts
@@ -25,7 +25,6 @@ In order of importance:
                 WHERE global_cats != ''
                 GROUP BY global_cats
                 ORDER BY count DESC, LOWER(global_cats) ASC;
-
         -search UI
     2. output non-2xx responses to log file
 

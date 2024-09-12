@@ -262,8 +262,8 @@ func TestNewSpellfixMatchesForSnippet(t *testing.T) {
 	var test_snippet = "test*"
 	var expected_rankings = map[string]int{
 		"test": 11,
-		"technology": 1,
 		"tech": 2,
+		"technology": 1,
 	}
 
 	sql := NewSpellfixMatchesForSnippet(test_snippet)

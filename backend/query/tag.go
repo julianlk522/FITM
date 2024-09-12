@@ -266,7 +266,7 @@ func NewSpellfixMatchesForSnippet(snippet string) *SpellfixMatches {
 			Text: fmt.Sprintf(
 				`SELECT word, rank
 				FROM global_cats_spellfix
-				WHERE word MATCH '%s*'
+				WHERE word MATCH '%s'
 				AND top=%d;`,
 				snippet,
 				SPELLFIX_MATCHES_LIMIT,

@@ -49,6 +49,11 @@ type TagPage[T Link | LinkSignedIn] struct {
 	TagRankings *[]TagRankingPublic
 }
 
+type SpellFixMatch struct {
+	Word string
+	Rank int
+}
+
 type NewTag struct {
 	LinkID string `json:"link_id"`
 	Cats   string `json:"cats"`
