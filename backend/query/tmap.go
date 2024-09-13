@@ -25,7 +25,7 @@ const BASE_CTES = `SummaryCount AS (
 ),
 LikeCount AS (
     SELECT link_id, COUNT(*) AS like_count
-    FROM 'Link Likes'
+    FROM "Link Likes"
     GROUP BY link_id
 ),
 TagCount AS (
@@ -43,22 +43,29 @@ const POSSIBLE_USER_CATS_CTE = `PossibleUserCats AS (
     WHERE submitted_by = 'LOGIN_NAME'
 )`
 
+const GLOBAL_CATS_CTE = `GlobalCatsFTS AS (
+    SELECT
+        link_id,
+        global_cats
+    FROM global_cats_fts
+)`
+
 const AUTH_CTES = `IsLiked AS (
 	SELECT link_id, COUNT(*) AS is_liked
-	FROM 'Link Likes'
+	FROM "Link Likes"
 	WHERE user_id = 'REQ_USER_ID'
 	GROUP BY id
 ),
 IsCopied AS (
 	SELECT link_id, COUNT(*) AS is_copied
-	FROM 'Link Copies'
+	FROM "Link Copies"
 	WHERE user_id = 'REQ_USER_ID'
 	GROUP BY id
 )`
 
 const USER_COPIES_CTE = `UserCopies AS (
     SELECT lc.link_id
-    FROM 'Link Copies' lc
+    FROM "Link Copies" lc
     INNER JOIN Users u ON u.id = lc.user_id
     WHERE u.login_name = 'LOGIN_NAME'
 )`
@@ -88,6 +95,8 @@ LEFT JOIN PossibleUserCats puc ON l.id = puc.link_id
 LEFT JOIN TagCount tc ON l.id = tc.link_id
 LEFT JOIN LikeCount lc ON l.id = lc.link_id
 LEFT JOIN SummaryCount sc ON l.id = sc.link_id`
+
+const GLOBAL_CATS_JOIN = "LEFT JOIN GlobalCatsFTS gc ON l.id = gc.link_id"
 
 const AUTH_JOIN = `
 LEFT JOIN IsLiked il ON l.id = il.link_id
@@ -133,22 +142,48 @@ func (q *TmapSubmitted) FromCats(cats []string) *TmapSubmitted {
 		}
 	}
 
-	var cat_clause string
-	for _, cat := range cats {
-		cat_clause += fmt.Sprintf("\nAND cats MATCH '%s'", cat)
+	var cat_match string
+	cat_match += fmt.Sprintf("'%s", cats[0])
+	for i := 1; i < len(cats); i++ {
+		cat_match += fmt.Sprintf(" AND %s", cats[i])
 	}
+	cat_match += "'"
 
-	// find line with "WHERE l.submitted_by = 'xxx'"
-	// append after
-	sw_line := regexp.MustCompile(`WHERE l.submitted_by = '.+'`).FindString(q.Text)
-
+	// find line in PUC_CTE with WHERE submitted_by = ___,
+	// add catch MATCH clause
+	puc_WHERE := regexp.MustCompile(`WHERE submitted_by = '.+'`).FindString(q.Text)
 	q.Text = strings.Replace(
 		q.Text,
-		sw_line,
-		sw_line + cat_clause,
+		puc_WHERE,
+		puc_WHERE + "\nAND cats MATCH " + cat_match,
 		1,
 	)
 
+	// prepend GC_CTE before BASE_FIELDS
+	gc_CTE := strings.Replace(
+		GLOBAL_CATS_CTE,
+		"FROM global_cats_fts",
+		"FROM global_cats_fts" + "\nWHERE global_cats MATCH " + cat_match,
+		1,
+	)
+	q.Text = strings.Replace(q.Text, BASE_FIELDS, ",\n" + gc_CTE + BASE_FIELDS, 1)
+
+	// append GC_join after PUC_join
+	q.Text = strings.Replace(
+		q.Text,
+		BASE_JOINS,
+		BASE_JOINS + "\n" + GLOBAL_CATS_JOIN,
+		1,
+	)
+
+	and_clause := `
+	AND (
+	gc.global_cats IS NOT NULL
+	OR
+	puc.user_cats IS NOT NULL
+)`
+	// prepend and_clause before ORDER
+	q.Text = strings.Replace(q.Text, ORDER, and_clause + ORDER, 1)
 	return q
 }
 

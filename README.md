@@ -31,9 +31,6 @@ In order of importance:
 
 ### Features
 
--Cat search on top.astro
-    -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads
-    -For nearly identical cats with slight differences, maybe have a prompt on load that says like "would you like to reload and include these results too?"
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
@@ -46,7 +43,8 @@ In order of importance:
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
 -look into not rendering images that dont successfully load
--surround related statements in transactions (?)
+-surround related statements in transactions
+    -(only new link as far as I can think of?)
 -improve cat count lookup speed with fts5vocab table
     -(row type)
 
@@ -205,8 +203,12 @@ Users can like listed links to boost them, so in theory the most univerally appr
     - modified https://stackoverflow.com/a/76544267 for FITM package rename
     - sourcing .bashrc from /etc/profile on if exists and readable
     - backup_now.sh on cronjob
+    - update script: process redirection, debugging double echos
 - SQLite optimization
     - FTS5 virtual table
+    - Spellfix1 extension
+        - cross-compile errors, getting correct headers/.dll files and passing correct flags to x86_64-w64-mingw32-gcc
+        - debugging debounce / re-render errors in React
 - CI/CD
     - GH actions workflow
         - Raspbian Buster firmware outdated (no Node.js 20 support needed for test runner)
