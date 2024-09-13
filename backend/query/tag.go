@@ -267,7 +267,8 @@ func NewSpellfixMatchesForSnippet(snippet string) *SpellfixMatches {
 				`SELECT word, rank
 				FROM global_cats_spellfix
 				WHERE word MATCH '%s'
-				AND top=%d;`,
+				AND top=%d
+				ORDER BY (score / rank);`,
 				snippet,
 				SPELLFIX_MATCHES_LIMIT,
 			),
