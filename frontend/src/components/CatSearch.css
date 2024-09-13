@@ -2,6 +2,10 @@ label#cat-label {
 	display: inline;
 }
 
+ol#cat-list {
+	margin-bottom: 0;
+}
+
 ul#recommendations-list {
 	display: flex;
 	gap: 5px;

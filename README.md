@@ -35,7 +35,7 @@ In order of importance:
     -Top Cats / Top Links / etc. components
     -repetition in tmap submitted/copied FromCats methods
 -Purge code duplication
-    -handler_test / util_test / query_test TestMain()s
+    -db_test, handler_test / util_test / query_test TestMain()s
 -Security
     -Look into input sequences that might produce problematic results
         -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
@@ -189,6 +189,7 @@ Users can like listed links to boost them, so in theory the most univerally appr
     - FTS5 virtual table
     - Spellfix1 extension
         - cross-compile errors, getting correct headers/.dll files and passing correct flags to x86_64-w64-mingw32-gcc
+            - .so compiled by gcc in WSL not compatible with go:alpine Docker image architecture, recompile on test runner and save path in env
         - debugging debounce / re-render errors in React
 - CI/CD
     - GH actions workflow

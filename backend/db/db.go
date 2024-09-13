@@ -46,7 +46,7 @@ func Connect() error {
 
 func LoadSpellfix() {
 	var spellfix_path string
-	
+
 	// check for FITM_TEST_DATA_PATH env var
 	// if not set, use default path
 	test_data_path := os.Getenv("FITM_TEST_DATA_PATH")
