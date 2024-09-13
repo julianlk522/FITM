@@ -25,7 +25,7 @@ In order of importance:
                 WHERE global_cats != ''
                 GROUP BY global_cats
                 ORDER BY count DESC, LOWER(global_cats) ASC;
-        -search UI
+        -add option in handler for omitted cats
     2. output non-2xx responses to log file
 
 ### Features
@@ -120,6 +120,7 @@ In order of importance:
     -repeat redirect_to cookie logic using window.location.pathname
     -repeat delete modals
         -link, tag, tmap pfp
+    -duplicate add_tag funcs (EditTag.tsx, CatSearch.tsx)
 -Other tests
     -finish handlers
     -handler utils

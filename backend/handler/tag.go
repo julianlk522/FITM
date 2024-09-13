@@ -128,7 +128,7 @@ func GetSpellfixMatchesForSnippet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	spfx_sql := query.NewSpellfixMatchesForSnippet(snippet)
-	var matches []model.SpellFixMatch
+	var matches []model.CatCount
 	
 	rows, err := db.Client.Query(spfx_sql.Text)
 	if err != nil {
@@ -139,14 +139,14 @@ func GetSpellfixMatchesForSnippet(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		var word string
-		var rank int
+		var rank int32
 		if err := rows.Scan(&word, &rank); err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
-		matches = append(matches, model.SpellFixMatch{
-			Word:  word,
-			Rank:  rank,
+		matches = append(matches, model.CatCount{
+			Category:  word,
+			Count:  rank,
 		})
 	}
 
