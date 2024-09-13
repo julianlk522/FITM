@@ -53,6 +53,7 @@ In order of importance:
 -Refactors for simplicity / accuracy
     -GetTmapCatCounts probably possible in all sql
     -Top Cats / Top Links / etc. components
+    -repetition in tmap submitted/copied FromCats methods
 -Purge code duplication
     -handler_test / util_test / query_test TestMain()s
 -Security

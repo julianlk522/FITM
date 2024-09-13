@@ -149,8 +149,6 @@ func (q *TmapSubmitted) FromCats(cats []string) *TmapSubmitted {
 	}
 	cat_match += "'"
 
-	// find line in PUC_CTE with WHERE submitted_by = ___,
-	// add catch MATCH clause
 	puc_WHERE := regexp.MustCompile(`WHERE submitted_by = '.+'`).FindString(q.Text)
 	q.Text = strings.Replace(
 		q.Text,
@@ -159,16 +157,19 @@ func (q *TmapSubmitted) FromCats(cats []string) *TmapSubmitted {
 		1,
 	)
 
-	// prepend GC_CTE before BASE_FIELDS
 	gc_CTE := strings.Replace(
 		GLOBAL_CATS_CTE,
 		"FROM global_cats_fts",
 		"FROM global_cats_fts" + "\nWHERE global_cats MATCH " + cat_match,
 		1,
 	)
-	q.Text = strings.Replace(q.Text, BASE_FIELDS, ",\n" + gc_CTE + BASE_FIELDS, 1)
+	q.Text = strings.Replace(
+		q.Text, 
+		BASE_FIELDS, 
+		",\n" + gc_CTE + BASE_FIELDS, 
+		1,
+	)
 
-	// append GC_join after PUC_join
 	q.Text = strings.Replace(
 		q.Text,
 		BASE_JOINS,
@@ -182,8 +183,12 @@ func (q *TmapSubmitted) FromCats(cats []string) *TmapSubmitted {
 	OR
 	puc.user_cats IS NOT NULL
 )`
-	// prepend and_clause before ORDER
-	q.Text = strings.Replace(q.Text, ORDER, and_clause + ORDER, 1)
+	q.Text = strings.Replace(
+		q.Text, 
+		ORDER, 
+		and_clause + ORDER, 
+		1,
+	)
 	return q
 }
 
@@ -243,19 +248,55 @@ func (q *TmapCopied) FromCats(cats []string) *TmapCopied {
 		}
 	}
 
-	var cats_clause string
-	for i := range cats {
-		cats_clause += fmt.Sprintf(
-			"\nAND cats MATCH '%s'", cats[i],
-		)
+	var cat_match string
+	cat_match += fmt.Sprintf("'%s", cats[0])
+	for i := 1; i < len(cats); i++ {
+		cat_match += fmt.Sprintf(" AND %s", cats[i])
 	}
+	cat_match += "'"
 
+	puc_WHERE := regexp.MustCompile(`WHERE submitted_by = '.+'`).FindString(q.Text)
+	q.Text = strings.Replace(
+		q.Text,
+		puc_WHERE,
+		puc_WHERE + "\nAND cats MATCH " + cat_match,
+		1,
+	)
+
+	gc_CTE := strings.Replace(
+		GLOBAL_CATS_CTE,
+		"FROM global_cats_fts",
+		"FROM global_cats_fts" + "\nWHERE global_cats MATCH " + cat_match,
+		1,
+	)
+	q.Text = strings.Replace(
+		q.Text, 
+		BASE_FIELDS, 
+		",\n" + gc_CTE + BASE_FIELDS, 
+		1,
+	)
+
+	q.Text = strings.Replace(
+		q.Text,
+		BASE_JOINS,
+		BASE_JOINS + "\n" + GLOBAL_CATS_JOIN,
+		1,
+	)
+
+	and_clause := `
+	AND (
+	gc.global_cats IS NOT NULL
+	OR
+	puc.user_cats IS NOT NULL
+)`
 	q.Text = strings.Replace(
 		q.Text, 
 		ORDER, 
-		cats_clause + ORDER,  
+		and_clause + ORDER, 
 		1,
 	)
+
+	fmt.Printf("q.Text: %s\n", q.Text)
 
 	return q
 }
