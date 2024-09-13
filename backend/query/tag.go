@@ -261,14 +261,19 @@ type SpellfixMatches struct {
 }
 
 func NewSpellfixMatchesForSnippet(snippet string) *SpellfixMatches {
+
+	// oddly, "WHERE word MATCH '%s OR %s*' doesn't work here
 	return (&SpellfixMatches{
 		Query: Query{
 			Text: fmt.Sprintf(
 				`SELECT word, rank
 				FROM global_cats_spellfix
-				WHERE word MATCH '%s'
-				AND top=%d
-				ORDER BY (score / rank);`,
+				WHERE 
+					(word MATCH '%[1]s*'
+					OR word MATCH '%[1]s')
+				AND (score / rank) <= 100
+				ORDER BY (score / rank)
+				LIMIT %[2]d;`,
 				snippet,
 				SPELLFIX_MATCHES_LIMIT,
 			),
