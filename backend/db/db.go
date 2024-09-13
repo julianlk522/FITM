@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"log"
+	"os"
 	"path/filepath"
 	"runtime"
 
@@ -44,11 +45,24 @@ func Connect() error {
 }
 
 func LoadSpellfix() {
+	var spellfix_path string
+	
+	// check for FITM_TEST_DATA_PATH env var
+	// if not set, use default path
+	test_data_path := os.Getenv("FITM_TEST_DATA_PATH")
+	if test_data_path == "" {
+		log.Print("FITM_TEST_DATA_PATH not set, attempting find spellfix at default path")
+		spellfix_path = filepath.Join(db_dir, "spellfix")
+
+	} else {
+		log.Print("attempting to find spellfix at FITM_TEST_DATA_PATH")
+		spellfix_path = test_data_path + "/spellfix"
+	}
 	sql.Register(
 		"sqlite-spellfix1",
 		&sqlite3.SQLiteDriver{
 			ConnectHook: func(c *sqlite3.SQLiteConn) error {
-				return c.LoadExtension(filepath.Join(db_dir, "spellfix"), "sqlite3_spellfix_init")
+				return c.LoadExtension(spellfix_path, "sqlite3_spellfix_init")
 			},
 		},
 	)

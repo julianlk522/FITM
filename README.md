@@ -3,30 +3,10 @@
 ## Todos
 
 In order of importance:
-    0. fix broken filtered tmap
     1. top.astro cat search
-        -spellfix1 db setup
-            -CREATE VIRTUAL TABLE global_cats_spellfix USING spellfix1
-            
-            // set initial global_cats_spellfix counts
-            -WITH RECURSIVE split(id, global_cats, str) AS 
-                (
-                SELECT id, '', global_cats||',' 
-                FROM Links
-                UNION ALL SELECT
-                id,
-                substr(str, 0, instr(str, ',')),
-                substr(str, instr(str, ',') + 1)
-                FROM split
-                WHERE str != ''
-                )
-            INSERT INTO global_cats_spellfix(word,rank)
-                SELECT global_cats, count(global_cats) as count
-                FROM split
-                WHERE global_cats != ''
-                GROUP BY global_cats
-                ORDER BY count DESC, LOWER(global_cats) ASC;
         -add option in handler for omitted cats
+            -(that way it can keep giving new recommendations without repeats)
+        -make period a dropdown list so it can be selected then paired with cats
     2. output non-2xx responses to log file
 
 ### Features
