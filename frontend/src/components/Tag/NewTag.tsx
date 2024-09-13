@@ -68,8 +68,11 @@ export default function NewTag(props: Props) {
 					{cats.map((cat) => (
 						<TagCat
 							Cat={cat}
-							EditActivated={true}
-							Deleted={deleted_cat}
+							Count={undefined}
+							Addable={false}
+							Removable={true}
+							AddedSignal={undefined}
+							DeletedSignal={deleted_cat}
 						/>
 					))}
 				</ol>

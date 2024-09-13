@@ -138,16 +138,22 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 							return (
 								<TagCat
 									Cat={cat}
-									EditActivated={false}
-									Deleted={undefined}
+									Count={undefined}
+									Removable={false}
+									Addable={false}
+									AddedSignal={undefined}
+									DeletedSignal={undefined}
 								/>
 							)
 						})
 					) : (
 						<TagCat
 							Cat={cats_split[0]}
-							EditActivated={false}
-							Deleted={undefined}
+							Count={undefined}
+							Removable={false}
+							Addable={false}
+							AddedSignal={undefined}
+							DeletedSignal={undefined}
 						/>
 					)
 				}

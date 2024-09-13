@@ -1,0 +1,9 @@
+label#cat-label {
+	display: inline;
+}
+
+ul#recommendations-list {
+	display: flex;
+	gap: 5px;
+	padding: 0;
+}

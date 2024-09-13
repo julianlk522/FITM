@@ -206,15 +206,18 @@ export default function EditTag(props: Props) {
 					{cats.map((cat) => (
 						<TagCat
 							Cat={cat}
-							EditActivated={editing}
-							Deleted={deleted_cat}
+							Count={undefined}
+							Removable={editing}
+							Addable={false}
+							AddedSignal={undefined}
+							DeletedSignal={deleted_cat}
 						/>
 					))}
 				</ol>
 			) : null}
 
 			{editing ? (
-				<form id='edit_tag_form' onSubmit={(event) => add_cat(event)}>
+				<form onSubmit={(event) => add_cat(event)}>
 					<label for='cat'>Cat</label>
 					<input type='text' id='cat' name='cat' />
 					<input type='Submit' value='Add Cat' />

@@ -1,4 +1,5 @@
 ---
+import CatSearch from '../components/CatSearch'
 import Link from '../components/Link/Link'
 import Pagination from '../components/Pagination.astro'
 import ScrollUp from '../components/ScrollUp.astro'
@@ -155,18 +156,7 @@ const page_title =
 					))
 				}
 			</div>
-			{
-				cats ? (
-					<div>
-						<p>
-							{cats.includes(',')
-								? 'Cats: '
-								: 'Cat: '}
-						</p>
-						<a href={`/top${period !== 'all' ? `?period=${period}` : ''}`}>Reset</a>
-					</div>
-				) : null
-			}
+			<CatSearch client:load />
 		</section>
 
 		{

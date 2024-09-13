@@ -4,6 +4,7 @@ li.cat {
 	padding: 0 5px;
 	border-radius: 2px;
 	background-color: var(--sky);
+	height: 25px;
 
 	p {
 		color: black;
@@ -15,4 +16,12 @@ li.cat {
 	button.img-btn {
 		filter: invert(1);
 	}
+
+	button.plus-btn {
+		padding-right: 0;
+	}
+}
+
+li.cat.addable {
+	opacity: 0.4;
 }

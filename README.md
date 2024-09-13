@@ -3,6 +3,7 @@
 ## Todos
 
 In order of importance:
+    0. fix broken filtered tmap
     1. top.astro cat search
         -spellfix1 db setup
             -CREATE VIRTUAL TABLE global_cats_spellfix USING spellfix1

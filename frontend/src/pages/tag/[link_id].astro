@@ -79,8 +79,11 @@ const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 										return (
 											<TagCat
 												Cat={tag}
-												EditActivated={false}
-												Deleted={undefined}
+												Count={undefined}
+												Addable={false}
+												Removable={false}
+												AddedSignal={undefined}
+												DeletedSignal={undefined}
 											/>
 										)
 									})}
