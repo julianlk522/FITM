@@ -50,6 +50,13 @@ const GLOBAL_CATS_CTE = `GlobalCatsFTS AS (
     FROM global_cats_fts
 )`
 
+const USER_COPIES_CTE = `UserCopies AS (
+    SELECT lc.link_id
+    FROM "Link Copies" lc
+    INNER JOIN Users u ON u.id = lc.user_id
+    WHERE u.login_name = 'LOGIN_NAME'
+)`
+
 const AUTH_CTES = `IsLiked AS (
 	SELECT link_id, COUNT(*) AS is_liked
 	FROM "Link Likes"
@@ -61,13 +68,6 @@ IsCopied AS (
 	FROM "Link Copies"
 	WHERE user_id = 'REQ_USER_ID'
 	GROUP BY id
-)`
-
-const USER_COPIES_CTE = `UserCopies AS (
-    SELECT lc.link_id
-    FROM "Link Copies" lc
-    INNER JOIN Users u ON u.id = lc.user_id
-    WHERE u.login_name = 'LOGIN_NAME'
 )`
 
 const BASE_FIELDS = `
@@ -98,12 +98,11 @@ LEFT JOIN SummaryCount sc ON l.id = sc.link_id`
 
 const GLOBAL_CATS_JOIN = "LEFT JOIN GlobalCatsFTS gc ON l.id = gc.link_id"
 
-const AUTH_JOIN = `
+const COPIED_JOIN = "INNER JOIN UserCopies uc ON l.id = uc.link_id"
+
+const AUTH_JOINS = `
 LEFT JOIN IsLiked il ON l.id = il.link_id
 LEFT JOIN IsCopied ic ON l.id = ic.link_id`
-
-const COPIED_JOIN = `
-INNER JOIN UserCopies uc ON l.id = uc.link_id`
 
 const ORDER = `
 ORDER BY lc.like_count DESC, sc.summary_count DESC, l.id DESC;`
@@ -198,7 +197,7 @@ func (q *TmapSubmitted) AsSignedInUser(req_user_id string, req_login_name string
 	fields_replacer := strings.NewReplacer(
 		BASE_CTES, BASE_CTES + ",\n" + AUTH_CTES,
 		BASE_FIELDS, BASE_FIELDS + AUTH_FIELDS,
-		BASE_JOINS, BASE_JOINS + AUTH_JOIN,
+		BASE_JOINS, BASE_JOINS + AUTH_JOINS,
 	)
 	auth_replacer := strings.NewReplacer(
 		"REQ_USER_ID", req_user_id, 
@@ -224,7 +223,7 @@ func NewTmapCopied(login_name string) *TmapCopied {
 				BASE_CTES + ",\n" +
 				POSSIBLE_USER_CATS_CTE + 
 				BASE_FIELDS + "\n" +
-				FROM +
+				FROM + "\n" +
 				COPIED_JOIN +
 				BASE_JOINS +
 				COPIED_WHERE + 
@@ -296,8 +295,6 @@ func (q *TmapCopied) FromCats(cats []string) *TmapCopied {
 		1,
 	)
 
-	fmt.Printf("q.Text: %s\n", q.Text)
-
 	return q
 }
 
@@ -305,7 +302,7 @@ func (q *TmapCopied) AsSignedInUser(req_user_id string, req_login_name string) *
 	fields_replacer := strings.NewReplacer(
 		BASE_CTES, BASE_CTES + ",\n" + AUTH_CTES,
 		BASE_FIELDS, BASE_FIELDS + AUTH_FIELDS, 
-		COPIED_JOIN, COPIED_JOIN + AUTH_JOIN,
+		COPIED_JOIN, COPIED_JOIN + AUTH_JOINS,
 	)
 	auth_replacer := strings.NewReplacer(
 		"REQ_USER_ID", req_user_id, 
@@ -356,7 +353,7 @@ var TAGGED_FIELDS = strings.Replace(
 		1,
 	), 
 	`COALESCE(puc.cats_from_user,0) AS cats_from_user`,
-	"0 AS cats_from_user", 
+	"1 AS cats_from_user", 
 	1,
 )
 
@@ -365,7 +362,7 @@ var TAGGED_JOINS = strings.Replace(
 	"LEFT JOIN PossibleUserCats puc ON l.id = puc.link_id",
 	"INNER JOIN UserCats uct ON l.id = uct.link_id",
 	1,
-) + strings.Replace(
+) + "\n" + strings.Replace(
 	COPIED_JOIN,
 	"INNER",
 	"LEFT",
@@ -398,7 +395,6 @@ func (q *TmapTagged) FromCats(cats []string) *TmapTagged {
 		cat_clause + ORDER, 
 		1,
 	)
-
 	return q
 }
 
@@ -406,7 +402,7 @@ func (q *TmapTagged) AsSignedInUser(req_user_id string, req_login_name string) *
 	fields_replacer := strings.NewReplacer(
 		BASE_CTES, BASE_CTES + ",\n" + AUTH_CTES,
 		TAGGED_FIELDS, TAGGED_FIELDS + AUTH_FIELDS, 
-		TAGGED_JOINS, TAGGED_JOINS + AUTH_JOIN,
+		TAGGED_JOINS, TAGGED_JOINS + AUTH_JOINS,
 	)
 	auth_replacer := strings.NewReplacer(
 		"REQ_USER_ID", req_user_id, 
