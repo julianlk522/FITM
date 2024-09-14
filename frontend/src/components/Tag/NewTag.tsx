@@ -39,7 +39,7 @@ export default function NewTag(props: Props) {
 		}
 
 		if (cats.includes(cat)) {
-			set_error('Cat already added')
+			set_error('Already added')
 			return
 		}
 

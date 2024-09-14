@@ -5,12 +5,16 @@ import SearchCat from './SearchCats'
 import './SearchFilters.css'
 import SearchPeriod from './SearchPeriod'
 
-export default function SearchFilters() {
-	const [period, set_period] = useState<Period>('all')
+interface Props {
+	InitialPeriod: Period
+}
+
+export default function SearchFilters(props: Props) {
+	const [period, set_period] = useState<Period>(props.InitialPeriod)
 	const [cats, set_cats] = useState<string[]>([])
 
 	// set search URL based on period and cats
-	let base_URL = `/top`
+	const base_URL = `/top`
 	let search_URL = base_URL
 	if (cats.length) {
 		search_URL += `?cats=${cats.join(',')}`
@@ -28,7 +32,7 @@ export default function SearchFilters() {
 	const deleted_cat = useSignal<string | undefined>(undefined)
 
 	// pass changed_period to SearchPeriod.tsx to allow modifying period state in SearchFilters.tsx
-	const changed_period = useSignal<Period>('all')
+	const changed_period = useSignal<Period>(props.InitialPeriod)
 
 	// Check for added cat, set state accordingly
 	effect(() => {
@@ -46,8 +50,9 @@ export default function SearchFilters() {
 
 	return (
 		<section id='search-filters'>
-			<h2>Search Filters</h2>
 			<form>
+				<h2>Search Filters</h2>
+
 				<SearchPeriod
 					SelectedPeriod={period}
 					SetPeriodSignal={changed_period}

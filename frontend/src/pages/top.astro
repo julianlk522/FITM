@@ -28,7 +28,6 @@ if (Astro.url.searchParams.get('cats')) {
 	cats = Astro.url.searchParams.get('cats') as string
 }
 let period: Period = 'all'
-let other_periods: Period[] = Periods.filter((other) => other !== 'all')
 if (
 	Astro.url.searchParams.get('period') &&
 	(Periods as readonly string[]).includes(
@@ -36,7 +35,6 @@ if (
 	)
 ) {
 	period = Astro.url.searchParams.get('period') as Period
-	other_periods = Periods.filter((other) => other !== period)
 }
 
 // Get links
@@ -142,7 +140,10 @@ const page_title =
 		</h1>
 		{period !== 'all' ? <h2 class="subtitle">({period.charAt(0).toUpperCase() + period.slice(1)})</h2> : null}
 		
-		<SearchFilters client:load />
+		<SearchFilters 
+			client:load 
+			InitialPeriod={period}
+		/>
 
 		{
 			links && links.length ? (
@@ -245,7 +246,7 @@ const page_title =
 				</>
 			) : (
 				<section>
-					<p>No links found</p>
+					<p id="no-links">No links found</p>
 					{user ? (
 						<p>
 							<a href={`/new`}>Add link</a>
@@ -279,5 +280,7 @@ const page_title =
 		display: inline-block;
 	}
 
-	
+	p#no-links {
+		margin-top: 0;
+	}
 </style>

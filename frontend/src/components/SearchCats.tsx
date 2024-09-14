@@ -14,16 +14,13 @@ interface Props {
 
 export default function SearchCat(props: Props) {
 	const [snippet, set_snippet] = useState<string>('')
-	const [populated_cats, set_populated_cats] = useState<string[]>([])
+	const [selected_cats, set_selected_cats] = useState<string[]>([])
 	const [recommended_cats, set_recommended_cats] = useState<
 		CatCount[] | undefined
 	>(undefined)
 	const [error, set_error] = useState<string | undefined>(undefined)
 
-	const timeout_ref = useRef<number | null>(null)
-	const DEBOUNCE_INTERVAL = 500
 	const MIN_SNIPPET_CHARS = 2
-
 	const search_snippet_recommendations = useCallback(async () => {
 		if (!snippet || snippet.length < MIN_SNIPPET_CHARS) {
 			set_recommended_cats(undefined)
@@ -50,6 +47,8 @@ export default function SearchCat(props: Props) {
 		}
 	}, [snippet])
 
+	const timeout_ref = useRef<number | null>(null)
+	const DEBOUNCE_INTERVAL = 500
 	useEffect(() => {
 		// refresh debounce interval if searching
 		if (snippet?.length >= MIN_SNIPPET_CHARS) {
@@ -78,12 +77,12 @@ export default function SearchCat(props: Props) {
 			return
 		}
 
-		if (populated_cats.includes(snippet)) {
-			set_error('Cat already added')
+		if (selected_cats.includes(snippet)) {
+			set_error('Already added')
 			return
 		}
 
-		set_populated_cats((prev) =>
+		set_selected_cats((prev) =>
 			[...prev, snippet].sort((a, b) => a.localeCompare(b))
 		)
 		if (!props.AddedSignal) return
@@ -96,7 +95,7 @@ export default function SearchCat(props: Props) {
 	}
 
 	// Pass added_cat / deleted_cat signals to children TagCategory.tsx
-	// to allow adding / removing them here
+	// to allow adding recommended cats / removing selected cats here
 	const added_cat = useSignal<string | undefined>(undefined)
 	const deleted_cat = useSignal<string | undefined>(undefined)
 
@@ -104,7 +103,7 @@ export default function SearchCat(props: Props) {
 	effect(() => {
 		if (added_cat.value?.length) {
 			const new_cat = added_cat.value
-			set_populated_cats((c) =>
+			set_selected_cats((c) =>
 				[...c, new_cat].sort((a, b) => {
 					return a.localeCompare(b)
 				})
@@ -119,7 +118,7 @@ export default function SearchCat(props: Props) {
 			props.AddedSignal.value = new_cat
 		} else if (deleted_cat.value) {
 			const to_delete = deleted_cat.value
-			set_populated_cats((c) => c.filter((cat) => cat !== to_delete))
+			set_selected_cats((c) => c.filter((cat) => cat !== to_delete))
 			deleted_cat.value = undefined
 
 			// send signal to parent SearchFilters.tsx
@@ -155,9 +154,9 @@ export default function SearchCat(props: Props) {
 				onClick={add_cat}
 			/>
 
-			{populated_cats.length ? (
+			{selected_cats.length ? (
 				<ol id='cat-list'>
-					{populated_cats.map((cat) => (
+					{selected_cats.map((cat) => (
 						<TagCat
 							key={cat}
 							Cat={cat}
@@ -174,7 +173,7 @@ export default function SearchCat(props: Props) {
 			{recommended_cats?.length ? (
 				<ul id='recommendations-list'>
 					{recommended_cats
-						.filter((rc) => !populated_cats.includes(rc.Category))
+						.filter((rc) => !selected_cats.includes(rc.Category))
 						.map((cat) => (
 							<TagCat
 								key={cat}
