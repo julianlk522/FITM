@@ -1,12 +1,18 @@
+import type { Signal } from '@preact/signals'
 import { effect, useSignal } from '@preact/signals'
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks'
 import { CATS_ENDPOINT } from '../constants'
 import * as types from '../types'
 import { type CatCount } from '../types'
-import './CatSearch.css'
+import './SearchCats.css'
 import TagCat from './Tag/TagCat'
 
-export default function CatSearch() {
+interface Props {
+	AddedSignal: Signal<string | undefined> | undefined
+	DeletedSignal: Signal<string | undefined> | undefined
+}
+
+export default function SearchCat(props: Props) {
 	const [snippet, set_snippet] = useState<string>('')
 	const [populated_cats, set_populated_cats] = useState<string[]>([])
 	const [recommended_cats, set_recommended_cats] = useState<
@@ -16,9 +22,10 @@ export default function CatSearch() {
 
 	const timeout_ref = useRef<number | null>(null)
 	const DEBOUNCE_INTERVAL = 500
+	const MIN_SNIPPET_CHARS = 2
 
 	const search_snippet_recommendations = useCallback(async () => {
-		if (!snippet || snippet.length < 2) {
+		if (!snippet || snippet.length < MIN_SNIPPET_CHARS) {
 			set_recommended_cats(undefined)
 			return
 		}
@@ -34,9 +41,9 @@ export default function CatSearch() {
 				throw new Error('API request failed')
 			}
 
-			const spellfix_matches = await spellfix_matches_resp.json()
+			const spellfix_matches: CatCount[] =
+				await spellfix_matches_resp.json()
 			set_recommended_cats(spellfix_matches)
-			console.log('spellfix_matches', spellfix_matches)
 		} catch (error) {
 			set_recommended_cats([])
 			set_error(error instanceof Error ? error.message : String(error))
@@ -45,7 +52,7 @@ export default function CatSearch() {
 
 	useEffect(() => {
 		// refresh debounce interval if searching
-		if (snippet?.length >= 2) {
+		if (snippet?.length >= MIN_SNIPPET_CHARS) {
 			timeout_ref.current = window.setTimeout(() => {
 				search_snippet_recommendations()
 			}, DEBOUNCE_INTERVAL)
@@ -63,11 +70,6 @@ export default function CatSearch() {
 		}
 	}, [search_snippet_recommendations])
 
-	function handle_input(event: Event) {
-		const value = (event.target as HTMLInputElement).value
-		set_snippet(value)
-	}
-
 	function add_cat(event: Event) {
 		event.preventDefault()
 
@@ -84,6 +86,9 @@ export default function CatSearch() {
 		set_populated_cats((prev) =>
 			[...prev, snippet].sort((a, b) => a.localeCompare(b))
 		)
+		if (!props.AddedSignal) return
+		props.AddedSignal.value = snippet
+
 		set_error(undefined)
 		set_recommended_cats((prev) =>
 			prev?.filter((cat) => cat.Category !== snippet)
@@ -95,8 +100,7 @@ export default function CatSearch() {
 	const added_cat = useSignal<string | undefined>(undefined)
 	const deleted_cat = useSignal<string | undefined>(undefined)
 
-	// Check for added and deleted <TagCat />s accordingly
-	// (cats can be added by clicking one of the recommendations)
+	// Listen for add / delete cat signals
 	effect(() => {
 		if (added_cat.value?.length) {
 			const new_cat = added_cat.value
@@ -109,33 +113,47 @@ export default function CatSearch() {
 				c?.filter((cat) => cat.Category !== new_cat)
 			)
 			added_cat.value = undefined
+
+			// send signal to parent SearchFilters.tsx
+			if (!props.AddedSignal) return
+			props.AddedSignal.value = new_cat
 		} else if (deleted_cat.value) {
-			set_populated_cats((c) =>
-				c.filter((cat) => cat !== deleted_cat.value)
-			)
+			const to_delete = deleted_cat.value
+			set_populated_cats((c) => c.filter((cat) => cat !== to_delete))
 			deleted_cat.value = undefined
+
+			// send signal to parent SearchFilters.tsx
+			if (!props.DeletedSignal) return
+			props.DeletedSignal.value = to_delete
+
+			// prevent weird case where deleting a hidden recommended cat causes it to suddenly appear
+			set_recommended_cats((c) =>
+				c?.filter((cat) => cat.Category !== to_delete)
+			)
 		}
 	})
 
 	return (
-		<>
-			<form id='cat-search-form' onSubmit={add_cat}>
-				<label id='cat-label' for='cat'>
-					Cats:
-				</label>
-				<br />
-				<input
-					type='text'
-					name='cat-search'
-					id='cat-search'
-					onInput={handle_input}
-					value={snippet}
-				/>
-				<input type='submit' value='Add Cat' />
-				{populated_cats?.length ? (
-					<a href={`/top?cats=${populated_cats.join(',')}`}>search</a>
-				) : null}
-			</form>
+		<div>
+			<label id='cats-search' for='cats'>
+				Cats:
+			</label>
+			<input
+				type='text'
+				name='cats'
+				id='cats'
+				onInput={(event) =>
+					set_snippet((event.target as HTMLInputElement).value)
+				}
+				onSubmit={add_cat}
+				value={snippet}
+			/>
+			<input
+				id='add-cat-filter'
+				type='submit'
+				value='Add Cat'
+				onClick={add_cat}
+			/>
 
 			{populated_cats.length ? (
 				<ol id='cat-list'>
@@ -153,24 +171,25 @@ export default function CatSearch() {
 				</ol>
 			) : null}
 
-			{/* cat / rank list */}
 			{recommended_cats?.length ? (
 				<ul id='recommendations-list'>
-					{recommended_cats.map((cat) => (
-						<TagCat
-							key={cat}
-							Cat={cat.Category}
-							Count={cat.Count}
-							Removable={false}
-							Addable={true}
-							AddedSignal={added_cat}
-							DeletedSignal={undefined}
-						/>
-					))}
+					{recommended_cats
+						.filter((rc) => !populated_cats.includes(rc.Category))
+						.map((cat) => (
+							<TagCat
+								key={cat}
+								Cat={cat.Category}
+								Count={cat.Count}
+								Removable={false}
+								Addable={true}
+								AddedSignal={added_cat}
+								DeletedSignal={undefined}
+							/>
+						))}
 				</ul>
 			) : null}
 
 			{error ? <p class='error'>{error}</p> : null}
-		</>
+		</div>
 	)
 }

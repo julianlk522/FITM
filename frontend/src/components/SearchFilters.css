@@ -1,0 +1,14 @@
+form {
+	label:is(#cats-search, #period-search) {
+		display: inline;
+
+		+ * {
+			margin-left: 5px;
+		}
+	}
+}
+
+a#search-from-filters {
+	display: block;
+	margin-top: 0.5rem;
+}

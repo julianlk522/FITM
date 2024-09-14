@@ -1,0 +1,15 @@
+input#add-cat-filter {
+	margin-left: 3px;
+}
+
+ul#recommendations-list {
+	display: flex;
+	gap: 5px;
+	padding: 0;
+}
+
+ol#cat-list,
+ul#recommendations-list {
+	margin-top: 0.5rem;
+	margin-bottom: 0;
+}

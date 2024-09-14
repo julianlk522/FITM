@@ -1,8 +1,8 @@
 ---
-import CatSearch from '../components/CatSearch'
 import Link from '../components/Link/Link'
 import Pagination from '../components/Pagination.astro'
 import ScrollUp from '../components/ScrollUp.astro'
+import SearchFilters from '../components/SearchFilters'
 import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import {
@@ -141,23 +141,8 @@ const page_title =
 			{page_title}
 		</h1>
 		{period !== 'all' ? <h2 class="subtitle">({period.charAt(0).toUpperCase() + period.slice(1)})</h2> : null}
-		<section id='search-filters'>
-			<h2>Filters</h2>
-			<div>
-				<p>Period:</p>
-				{
-					other_periods.map((other) => (
-						<a
-							class='period'
-							href={`/top?period=${other}${cats ? `&cats=${cats}` : ''}`}
-						>
-							{other}
-						</a>
-					))
-				}
-			</div>
-			<CatSearch client:load />
-		</section>
+		
+		<SearchFilters client:load />
 
 		{
 			links && links.length ? (

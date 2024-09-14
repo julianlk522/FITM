@@ -6,7 +6,6 @@ In order of importance:
     1. top.astro cat search
         -add option in handler for omitted cats
             -(that way it can keep giving new recommendations without repeats)
-        -make period a dropdown list so it can be selected then paired with cats
     2. output non-2xx responses to log file
 
 ### Features
@@ -100,7 +99,7 @@ In order of importance:
     -repeat redirect_to cookie logic using window.location.pathname
     -repeat delete modals
         -link, tag, tmap pfp
-    -duplicate add_tag funcs (EditTag.tsx, CatSearch.tsx)
+    -duplicate add_tag funcs (EditTag.tsx, SearchCats.tsx)
 -Other tests
     -finish handlers
     -handler utils
