@@ -193,10 +193,30 @@ func LinkAlreadyAdded(url string) (bool, string) {
 
 func IncrementSpellfixRanksForCats(cats []string) error {
 	for _, cat := range cats {
-		_, err := db.Client.Exec(
-			"UPDATE global_cats_spellfix SET rank = rank + 1 WHERE word = ?;",
-			cat,
-		)
+
+		// if word is not in global_cats_spellfix, insert it
+		var rank int
+		err := db.Client.QueryRow("SELECT rank FROM global_cats_spellfix WHERE word = ?;", cat).Scan(&rank)
+		if err != nil {
+			_, err = db.Client.Exec(
+				"INSERT INTO global_cats_spellfix (word, rank) VALUES (?, ?);",
+				cat,
+				1,
+			)
+			if err != nil {
+				return err
+			}
+			
+		// else increment
+		} else {
+			_, err = db.Client.Exec(
+				"UPDATE global_cats_spellfix SET rank = rank + 1 WHERE word = ?;",
+				cat,
+			)
+			if err != nil {
+				return err
+			}
+		}
 		if err != nil {
 			return err
 		}

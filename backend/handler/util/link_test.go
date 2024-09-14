@@ -277,6 +277,11 @@ func TestIncrementSpellfixRanksForCats(t *testing.T) {
 			[]string{"flowers","nerd"}, 
 			[]int{6, 1}, 
 		},
+		// cat doesn't exist: should be added to global_cats_spellfix
+		{
+			[]string{"jksfdkhsdf"}, 
+			[]int{0}, 
+		},
 	}
 
 	for _, tc := range test_cats {
