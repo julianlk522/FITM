@@ -3,13 +3,18 @@
 ## Todos
 
 In order of importance:
-    1. top.astro cat search
-        -add option in handler for omitted cats
-            -(that way it can keep giving new recommendations without repeats)
-    2. output non-2xx responses to log file
+    1. output non-2xx responses to log file
+    2. refactors / remove duplicate code
+    3. don't render shitty images
+    4. ensure HTTP responses are accurate
 
 ### Features
 
+-add option in recommended cats handler for omitted cats
+    -(that way it can keep giving new recommendations without repeats)
+-look into not rendering images that dont successfully load
+-surround related statements in transactions
+    -(only new link as far as I can think of?)
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
@@ -21,9 +26,6 @@ In order of importance:
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
--look into not rendering images that dont successfully load
--surround related statements in transactions
-    -(only new link as far as I can think of?)
 -improve cat count lookup speed with fts5vocab table
     -(row type)
 
@@ -43,6 +45,9 @@ In order of importance:
 
 ### Features
 
+-Look into broken auto og:image
+    -e.g., coolers.co image should not have been added with invalid link
+    -https://rss.com/blog/how-do-rss-feeds-work/
 -use user summaries in tmap if they exist
 -client:visible for tmap
 -SQL prepared statements
@@ -68,15 +73,19 @@ In order of importance:
         probably not realistic
     -Tiny bit more space between like/copy buttons on mobile
     -maybe go through BrowserStack and see if anything is horrendous
--Rethink CalculateGlobalCategories algo
+-Audit CalculateGlobalCategories algo
 -Implement RemoveProfilePic handler (securely) for when a user somehow ends up with a PFP that isn't found in the DB
     -should be basically impossible so not high priority
 
 ### Code Quality
 
+-robots.txt
 -VPS SSH key
--Ensure http response codes are correct
+-Ensure accurate / helpful http response codes
     -e.g., tag page for invalid link id returns 500 (should be 404)
+    -replace "message":"deleted" with just 204
+    -205 for successful logins/forms that require reload
+    -500 for server fuckups
 -Ensure consistent language:
     -get (request and retrieve things from an external source)
     -scan (copy rows from sql to structs)
@@ -84,8 +93,6 @@ In order of importance:
     -assign (take some data and a pointer and copy the data to the referenced var)
     -obtain (get, extract, assign)
     -resolve (take in a possibly incomplete form and translate to a correct form)
--Better logging?
-    (Zap)
 -Other lesser refactors and removal of duplicate code
     -duplicate handle_redirect() helpers on tag page / summary page
     -BuildTagPage helper to declutter GetTagPage handler
@@ -106,15 +113,7 @@ In order of importance:
         -TestExtractMetaDataFromGoogleAPIsResponse()
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
     -model utils
-    -look into situation where user submits a link, it gets some other tags, and they delete their original tag (breaks tmap submitted / tagged searches in current state I think?)
--Look into broken auto og:image
-    -e.g., coolers.co image should not have been added with invalid link
-    -https://rss.com/blog/how-do-rss-feeds-work/
--robots.txt
--improve status codes
-    -replace "message":"deleted" with just 204
-    -205 for successful logins/forms that require reload
-    -500 for server fuckups
+
 
 ## Why?
 
@@ -122,19 +121,7 @@ Because there's a lot of good shit on the internet that's hard to be aware of an
 
 Internet users deserve a portal that provides them an unbiased, direct view into the web's useful contents.
 
-## What would be better than the status quo?
-
-A network of links that are selected and organized by end users who closely relate to the individuals seeking those resources.
-
-e.g., if I wanted to find all of the internet resources that Tim Ferriss recommends, or that the public at large recommends about the topic of surfing, they will all be in one place for quick and easy discovery.
-
-Links are tagged with various categories to best organize and produce relevant recommendations.
-
-e.g., Vim Adventures could be tagged with 'programming', 'learning games', 'typing games', 'keyboard ergonometry', etc.
-
-Users can like listed links to boost them, so in theory the most univerally appreciated resources are easiest to find.
-
-## Why is this service different and better than existing alternatives?
+## Why is it different and better than existing alternatives?
 
 -LinkTree: only about social links for a particular person (no concept of global tree / treasure map)
 
@@ -190,6 +177,7 @@ Users can like listed links to boost them, so in theory the most univerally appr
         - cross-compile errors, getting correct headers/.dll files and passing correct flags to x86_64-w64-mingw32-gcc
             - .so compiled by gcc in WSL not compatible with go:alpine Docker image architecture, recompile on test runner and save path in env
         - debugging debounce / re-render errors in React
+        - tweaking the spellfix rankings system to improve result relevance (still WIP)
 - CI/CD
     - GH actions workflow
         - Raspbian Buster firmware outdated (no Node.js 20 support needed for test runner)
