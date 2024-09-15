@@ -36,7 +36,6 @@ In order of importance:
     -Top Cats / Top Links / etc. components
     -repetition in tmap submitted/copied FromCats methods
 -Purge code duplication
-    -db_test, handler_test / util_test / query_test TestMain()s
 -Security
     -Look into input sequences that might produce problematic results
         -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
@@ -94,6 +93,7 @@ In order of importance:
     -obtain (get, extract, assign)
     -resolve (take in a possibly incomplete form and translate to a correct form)
 -Other lesser refactors and removal of duplicate code
+    -sync.Once for db singleton?
     -duplicate handle_redirect() helpers on tag page / summary page
     -BuildTagPage helper to declutter GetTagPage handler
     -ScanTmapLinks tests
