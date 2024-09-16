@@ -191,49 +191,98 @@ func LinkAlreadyAdded(url string) (bool, string) {
 	}
 }
 
-func IncrementSpellfixRanksForCats(cats []string) error {
-	for _, cat := range cats {
+func IncrementSpellfixRanksForCats(tx *sql.Tx, cats []string) error {
 
-		// if word is not in global_cats_spellfix, insert it
-		var rank int
-		err := db.Client.QueryRow("SELECT rank FROM global_cats_spellfix WHERE word = ?;", cat).Scan(&rank)
-		if err != nil {
-			_, err = db.Client.Exec(
-				"INSERT INTO global_cats_spellfix (word, rank) VALUES (?, ?);",
-				cat,
-				1,
-			)
+	// exec as part of transaction
+	if tx != nil {
+		for _, cat := range cats {
+
+			// if word is not in global_cats_spellfix, insert it
+			var rank int
+			err := tx.QueryRow("SELECT rank FROM global_cats_spellfix WHERE word = ?;", cat).Scan(&rank)
 			if err != nil {
-				return err
+				_, err = tx.Exec(
+					"INSERT INTO global_cats_spellfix (word, rank) VALUES (?, ?);",
+					cat,
+					1,
+				)
+				if err != nil {
+					return err
+				}
+				
+			// else increment
+			} else {
+				_, err = tx.Exec(
+					"UPDATE global_cats_spellfix SET rank = rank + 1 WHERE word = ?;",
+					cat,
+				)
+				if err != nil {
+					return err
+				}
 			}
-			
-		// else increment
-		} else {
-			_, err = db.Client.Exec(
-				"UPDATE global_cats_spellfix SET rank = rank + 1 WHERE word = ?;",
-				cat,
-			)
 			if err != nil {
 				return err
 			}
 		}
-		if err != nil {
-			return err
+
+	// else run against DB connection directly
+	} else {
+		for _, cat := range cats {
+			var rank int
+			err := db.Client.QueryRow("SELECT rank FROM global_cats_spellfix WHERE word = ?;", cat).Scan(&rank)
+			if err != nil {
+				_, err = db.Client.Exec(
+					"INSERT INTO global_cats_spellfix (word, rank) VALUES (?, ?);",
+					cat,
+					1,
+				)
+				if err != nil {
+					return err
+				}
+			} else {
+				_, err = db.Client.Exec(
+					"UPDATE global_cats_spellfix SET rank = rank + 1 WHERE word = ?;",
+					cat,
+				)
+				if err != nil {
+					return err
+				}
+			}
+			if err != nil {
+				return err
+			}
 		}
 	}
+	
 
 	return nil
 }
 
 // Delete link
-func DecrementSpellfixRanksForCats(cats []string) error {
-	for _, cat := range cats {
-		_, err := db.Client.Exec(
-			"UPDATE global_cats_spellfix SET rank = rank - 1 WHERE word = ?;",
-			cat,
-		)
-		if err != nil {
-			return err
+func DecrementSpellfixRanksForCats(tx *sql.Tx, cats []string) error {
+
+	// exec as part of transaction
+	if tx != nil {
+		for _, cat := range cats {
+			_, err := tx.Exec(
+				"UPDATE global_cats_spellfix SET rank = rank - 1 WHERE word = ?;",
+				cat,
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+	// else run against DB connection directly
+	} else {
+		for _, cat := range cats {
+			_, err := db.Client.Exec(
+				"UPDATE global_cats_spellfix SET rank = rank - 1 WHERE word = ?;",
+				cat,
+			)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

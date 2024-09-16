@@ -353,8 +353,15 @@ func SetGlobalCats(link_id string, text string) error {
 		}
 	}
 
+	// start transaction
+	tx, err := db.Client.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	// set link new cats
-	_, err = db.Client.Exec(`
+	_, err = tx.Exec(`
 		UPDATE Links 
 		SET global_cats = ? 
 		WHERE id = ?`,
@@ -364,10 +371,16 @@ func SetGlobalCats(link_id string, text string) error {
 		return err
 	}
 
-	if err = IncrementSpellfixRanksForCats(added_cats); err != nil {
+	// update spellfix
+	if err = IncrementSpellfixRanksForCats(tx, added_cats); err != nil {
 		return err
 	}
-	if err = DecrementSpellfixRanksForCats(removed_cats); err != nil {
+	if err = DecrementSpellfixRanksForCats(tx, removed_cats); err != nil {
+		return err
+	}
+
+	// commit
+	if err = tx.Commit(); err != nil {
 		return err
 	}
 

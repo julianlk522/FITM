@@ -105,11 +105,19 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	// sort cats
 	request.Cats = util.AlphabetizeCats(request.NewLink.Cats)
 
-	// TODO: combine into single transaction
-	// Insert Summary(ies)
-	// (might have user-submitted, Auto Summary, or both)
+	// Start Transaction
+	tx, err := db.Client.Begin()
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+	defer tx.Rollback()
+
+	// insert summary(ies)
+	// (might have user-submitted, auto, or both)
+	// auto summary
 	if request.AutoSummary != "" {
-		_, err := db.Client.Exec(
+		_, err := tx.Exec(
 			"INSERT INTO Summaries VALUES(?,?,?,?,?);",
 			uuid.New().String(),
 			request.AutoSummary,
@@ -126,9 +134,10 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	// user summary
 	if request.NewLink.Summary != "" {
-		_, err := db.Client.Exec(
+		req_user_id := r.Context().Value(m.UserIDKey).(string)
+		_, err := tx.Exec(
 			"INSERT INTO Summaries VALUES(?,?,?,?,?);",
 			uuid.New().String(),
 			request.NewLink.Summary,
@@ -137,15 +146,15 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 			request.SubmitDate,
 		)
 		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrServerFail(err))
 			return
 		} else {
 			request.SummaryCount += 1
 		}
 	}
 
-	// Insert tag
-	_, err := db.Client.Exec(
+	// insert tag
+	_, err = tx.Exec(
 		"INSERT INTO Tags VALUES(?,?,?,?,?);",
 		uuid.New().String(),
 		request.ID,
@@ -154,7 +163,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		request.SubmitDate,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
@@ -166,8 +175,8 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		request.Summary  = ""
 	}
 
-	// Insert link
-	_, err = db.Client.Exec(
+	// insert link
+	_, err = tx.Exec(
 		"INSERT INTO Links VALUES(?,?,?,?,?,?,?);",
 		request.ID,
 		request.URL,
@@ -178,13 +187,22 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		request.ImgURL,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
-	// update spellfix ranks
-	err = util.IncrementSpellfixRanksForCats(strings.Split(request.Cats, ","))
+	// increment spellfix ranks
+	err = util.IncrementSpellfixRanksForCats(
+		tx, 
+		strings.Split(request.Cats, ","),
+	)
 	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// Commit
+	if err = tx.Commit(); err != nil {
 		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
@@ -228,6 +246,7 @@ func DeleteLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// fetch global cats before deleting
+	// (to properly update spellfix ranks)
 	var gc string
 	err = db.Client.QueryRow("SELECT global_cats FROM Links WHERE id = ?;", request.LinkID).Scan(&gc)
 	if err != nil {
@@ -235,8 +254,16 @@ func DeleteLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// start transaction
+	tx, err := db.Client.Begin()
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+	defer tx.Rollback()
+
 	// delete
-	_, err = db.Client.Exec(
+	_, err = tx.Exec(
 		"DELETE FROM Links WHERE id = ?;",
 		request.LinkID,
 	)
@@ -245,9 +272,18 @@ func DeleteLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// update spellfix ranks
-	err = util.DecrementSpellfixRanksForCats(strings.Split(gc, ","))
+	// update spellfix
+	err = util.DecrementSpellfixRanksForCats(
+		tx,
+		strings.Split(gc, ","),
+	)
 	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// commit
+	if err = tx.Commit(); err != nil {
 		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}

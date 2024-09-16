@@ -285,7 +285,7 @@ func TestIncrementSpellfixRanksForCats(t *testing.T) {
 	}
 
 	for _, tc := range test_cats {
-		err := IncrementSpellfixRanksForCats(tc.Cats)
+		err := IncrementSpellfixRanksForCats(nil, tc.Cats)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -327,7 +327,7 @@ func TestDecrementSpellfixRanksForCats(t *testing.T) {
 	}
 
 	for _, tc := range test_cats {
-		err := DecrementSpellfixRanksForCats(tc.Cats)
+		err := DecrementSpellfixRanksForCats(nil, tc.Cats)
 		if err != nil {
 			t.Fatal(err)
 		}
