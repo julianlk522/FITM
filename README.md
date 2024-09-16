@@ -32,7 +32,6 @@ In order of importance:
 ### Code Quality
 
 -Refactors for simplicity / accuracy
-    -repetition in tmap submitted/copied FromCats methods
     -Top Cats / Top Links / etc. components
     -move tmap cats json above links
 -Purge code duplication

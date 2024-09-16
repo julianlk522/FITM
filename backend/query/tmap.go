@@ -133,61 +133,7 @@ func NewTmapSubmitted(login_name string) *TmapSubmitted {
 const SUBMITTED_WHERE = `WHERE l.submitted_by = 'LOGIN_NAME'`
 
 func (q *TmapSubmitted) FromCats(cats []string) *TmapSubmitted {
-
-	// escape any "." in cats
-	for i := 0; i < len(cats); i++ {
-		if strings.Contains(cats[i], ".") {
-			cats[i] = strings.Replace(cats[i], `.`, `"."`, 1)
-		}
-	}
-
-	var cat_match string
-	cat_match += fmt.Sprintf("'%s", cats[0])
-	for i := 1; i < len(cats); i++ {
-		cat_match += fmt.Sprintf(" AND %s", cats[i])
-	}
-	cat_match += "'"
-
-	puc_WHERE := regexp.MustCompile(`WHERE submitted_by = '.+'`).FindString(q.Text)
-	q.Text = strings.Replace(
-		q.Text,
-		puc_WHERE,
-		puc_WHERE + "\nAND cats MATCH " + cat_match,
-		1,
-	)
-
-	gc_CTE := strings.Replace(
-		GLOBAL_CATS_CTE,
-		"FROM global_cats_fts",
-		"FROM global_cats_fts" + "\nWHERE global_cats MATCH " + cat_match,
-		1,
-	)
-	q.Text = strings.Replace(
-		q.Text, 
-		BASE_FIELDS, 
-		",\n" + gc_CTE + BASE_FIELDS, 
-		1,
-	)
-
-	q.Text = strings.Replace(
-		q.Text,
-		BASE_JOINS,
-		BASE_JOINS + "\n" + GLOBAL_CATS_JOIN,
-		1,
-	)
-
-	and_clause := `
-	AND (
-	gc.global_cats IS NOT NULL
-	OR
-	puc.user_cats IS NOT NULL
-)`
-	q.Text = strings.Replace(
-		q.Text, 
-		ORDER, 
-		and_clause + ORDER, 
-		1,
-	)
+	q.Text = FromUserOrGlobalCats(q.Text, cats)
 	return q
 }
 
@@ -239,62 +185,7 @@ const COPIED_WHERE = `
 WHERE submitted_by != 'LOGIN_NAME'`
 
 func (q *TmapCopied) FromCats(cats []string) *TmapCopied {
-
-	// escape any "." in cats
-	for i := 0; i < len(cats); i++ {
-		if strings.Contains(cats[i], ".") {
-			cats[i] = strings.Replace(cats[i], `.`, `"."`, 1)
-		}
-	}
-
-	var cat_match string
-	cat_match += fmt.Sprintf("'%s", cats[0])
-	for i := 1; i < len(cats); i++ {
-		cat_match += fmt.Sprintf(" AND %s", cats[i])
-	}
-	cat_match += "'"
-
-	puc_WHERE := regexp.MustCompile(`WHERE submitted_by = '.+'`).FindString(q.Text)
-	q.Text = strings.Replace(
-		q.Text,
-		puc_WHERE,
-		puc_WHERE + "\nAND cats MATCH " + cat_match,
-		1,
-	)
-
-	gc_CTE := strings.Replace(
-		GLOBAL_CATS_CTE,
-		"FROM global_cats_fts",
-		"FROM global_cats_fts" + "\nWHERE global_cats MATCH " + cat_match,
-		1,
-	)
-	q.Text = strings.Replace(
-		q.Text, 
-		BASE_FIELDS, 
-		",\n" + gc_CTE + BASE_FIELDS, 
-		1,
-	)
-
-	q.Text = strings.Replace(
-		q.Text,
-		BASE_JOINS,
-		BASE_JOINS + "\n" + GLOBAL_CATS_JOIN,
-		1,
-	)
-
-	and_clause := `
-	AND (
-	gc.global_cats IS NOT NULL
-	OR
-	puc.user_cats IS NOT NULL
-)`
-	q.Text = strings.Replace(
-		q.Text, 
-		ORDER, 
-		and_clause + ORDER, 
-		1,
-	)
-
+	q.Text = FromUserOrGlobalCats(q.Text, cats)
 	return q
 }
 
@@ -375,16 +266,9 @@ AND l.id NOT IN
 	(SELECT link_id FROM UserCopies)`
 
 func (q *TmapTagged) FromCats(cats []string) *TmapTagged {
-
-	// escape any "." in cats
-	for i := 0; i < len(cats); i++ {
-		if strings.Contains(cats[i], ".") {
-			cats[i] = strings.Replace(cats[i], `.`, `"."`, 1)
-		}
-	}
-
+	escaped := GetCatsWithEscapedPeriods(cats)
 	var cat_clause string
-	for _, cat := range cats {
+	for _, cat := range escaped {
 		cat_clause += fmt.Sprintf(
 			"\nAND uct.user_cats MATCH '%s'", cat)
 	}
@@ -413,4 +297,70 @@ func (q *TmapTagged) AsSignedInUser(req_user_id string, req_login_name string) *
 	q.Text = auth_replacer.Replace(q.Text)
 
 	return q
+}
+
+func FromUserOrGlobalCats(q string, cats []string) string {
+	escaped := GetCatsWithEscapedPeriods(cats)
+	var cat_match string
+	cat_match += fmt.Sprintf("'%s", escaped[0])
+	for i := 1; i < len(escaped); i++ {
+		cat_match += fmt.Sprintf(" AND %s", escaped[i])
+	}
+	cat_match += "'"
+
+	puc_WHERE := regexp.MustCompile(`WHERE submitted_by = '.+'`).FindString(q)
+	q = strings.Replace(
+		q,
+		puc_WHERE,
+		puc_WHERE + "\nAND cats MATCH " + cat_match,
+		1,
+	)
+
+	gc_CTE := strings.Replace(
+		GLOBAL_CATS_CTE,
+		"FROM global_cats_fts",
+		"FROM global_cats_fts" + "\nWHERE global_cats MATCH " + cat_match,
+		1,
+	)
+	q = strings.Replace(
+		q, 
+		BASE_FIELDS, 
+		",\n" + gc_CTE + BASE_FIELDS, 
+		1,
+	)
+
+	q = strings.Replace(
+		q,
+		BASE_JOINS,
+		BASE_JOINS + "\n" + GLOBAL_CATS_JOIN,
+		1,
+	)
+
+	and_clause := `
+	AND (
+	gc.global_cats IS NOT NULL
+	OR
+	puc.user_cats IS NOT NULL
+)`
+	q = strings.Replace(
+		q, 
+		ORDER, 
+		and_clause + ORDER, 
+		1,
+	)
+
+	return q
+}
+
+func GetCatsWithEscapedPeriods(cats []string) []string {
+	var escaped []string
+	for i := 0; i < len(cats); i++ {
+		if strings.Contains(cats[i], ".") {
+			escaped = append(escaped, strings.Replace(cats[i], `.`, `'.'`, 1))
+		} else {
+			escaped = append(escaped, cats[i])
+		}
+	}
+
+	return escaped
 }
