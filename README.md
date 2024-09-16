@@ -5,8 +5,8 @@
 In order of importance:
     1. output non-2xx responses to log file
     2. refactors / remove duplicate code
-    3. don't render shitty images
-    4. ensure HTTP responses are accurate
+    3. ensure HTTP responses are accurate
+    4. don't render shitty images
 
 ### Features
 
@@ -32,9 +32,9 @@ In order of importance:
 ### Code Quality
 
 -Refactors for simplicity / accuracy
-    -GetTmapCatCounts probably possible in all sql
-    -Top Cats / Top Links / etc. components
     -repetition in tmap submitted/copied FromCats methods
+    -Top Cats / Top Links / etc. components
+    -move tmap cats json above links
 -Purge code duplication
 -Security
     -Look into input sequences that might produce problematic results
@@ -107,6 +107,10 @@ In order of importance:
     -repeat delete modals
         -link, tag, tmap pfp
     -duplicate add_tag funcs (EditTag.tsx, SearchCats.tsx)
+    -GetCatCountsFromTmapLinks probably possible in all sql
+        -actually pretty clunky to achieve (break apart all global/user_cats_fts into words each time)
+            -maybe consider revisiting if global/user_cats_fts vocab created for some reason later
+        -also not that important since input is limited to user's tmap links, not entire links table. not going to be processing any more than a few hundred or thousand tags at absolute most (and not for a looong time). so perf differential is trivial
 -Other tests
     -finish handlers
     -handler utils

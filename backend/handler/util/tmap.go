@@ -82,12 +82,17 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	all_links := slices.Concat(*submitted, *copied, *tagged)
 	var cat_counts *[]model.CatCount
 	if has_cat_filter {
-		cat_counts = GetTmapCatCounts(&all_links, cats)
+		cat_counts = GetCatCountsFromTmapLinks(
+			&all_links, 
+			&model.TmapCatCountsOpts{
+				OmittedCats: cats,
+			},
+		)
 	} else {
-		cat_counts = GetTmapCatCounts(&all_links, nil)
+		cat_counts = GetCatCountsFromTmapLinks(&all_links, nil)
 	}
 
-	sections := &model.TreasureMapSections[T]{
+	sections := &model.TmapSections[T]{
 		Submitted: submitted,
 		Copied:    copied,
 		Tagged:    tagged,
@@ -95,14 +100,14 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	}
 
 	if has_cat_filter {
-		return model.FilteredTreasureMap[T]{
-			TreasureMapSections: sections,
+		return model.FilteredTmap[T]{
+			TmapSections: sections,
 		}, nil
 
 	} else {
-		return model.TreasureMap[T]{
+		return model.Tmap[T]{
 			Profile:             profile,
-			TreasureMapSections: sections,
+			TmapSections: sections,
 		}, nil
 	}
 }
@@ -196,7 +201,7 @@ func ScanTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](sql query.Query) (
 // Omit any cats passed via omitted_cats
 // (omit used to retrieve subcats by passing directly searched cats)
 // TODO: refactor to make this clearer
-func GetTmapCatCounts[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, omitted_cats []string) *[]model.CatCount {
+func GetCatCountsFromTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, opts *model.TmapCatCountsOpts) *[]model.CatCount {
 	counts := []model.CatCount{}
 	found_cats := []string{}
 	var found bool
@@ -211,8 +216,10 @@ func GetTmapCatCounts[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, omi
 		}
 
 		for _, cat := range strings.Split(cats, ",") {
-			if omitted_cats != nil && slices.Contains(omitted_cats, cat) {
-				continue
+			if 
+				opts != nil && 
+				slices.Contains(opts.OmittedCats, cat) {
+					continue
 			}
 
 			found = false
@@ -231,14 +238,12 @@ func GetTmapCatCounts[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, omi
 
 			if !found {
 				counts = append(counts, model.CatCount{Category: cat, Count: 1})
-
-				// add to found cats
 				found_cats = append(found_cats, cat)
 			}
 		}
 	}
 
-	SortAndLimitCatCounts(&counts, 12)
+	SortAndLimitCatCounts(&counts, TMAP_CATS_PAGE_LIMIT)
 
 	return &counts
 }
