@@ -3,6 +3,8 @@
 ## Todos
 
 In order of importance:
+    0. fix rate limit
+        -combine secret + timestamp (update every 5 mins)
     1. output non-2xx responses to log file
     2. refactors / remove duplicate code
     3. ensure HTTP responses are accurate
@@ -12,6 +14,7 @@ In order of importance:
 
 -add option in recommended cats handler for omitted cats
     -(that way it can keep giving new recommendations without repeats)
+-auto-populate cats when URL params used
 -look into not rendering images that dont successfully load
 -Pagination
     -User Treasure Map
@@ -27,9 +30,17 @@ In order of importance:
 -improve cat count lookup speed with fts5vocab table
     -(row type)
 
+
+random stuff
+- replace double quotes in page title if it includes them
+- new tag cat search
+- confirm / fix rate limits
+
 ### Code Quality
 
 -Refactors for simplicity / accuracy
+    -replace spellfix transactions with triggers
+        -(that way can make changes over CLI without worrying about unsync)
     -Top Cats / Top Links / etc. components
     -move tmap cats json above links
 -Purge code duplication
@@ -108,6 +119,7 @@ In order of importance:
         -actually pretty clunky to achieve (break apart all global/user_cats_fts into words each time)
             -maybe consider revisiting if global/user_cats_fts vocab created for some reason later
         -also not that important since input is limited to user's tmap links, not entire links table. not going to be processing any more than a few hundred or thousand tags at absolute most (and not for a looong time). so perf differential is trivial
+    -os.LookupEnv
 -Other tests
     -finish handlers
     -handler utils
