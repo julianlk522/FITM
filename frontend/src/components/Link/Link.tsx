@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks'
+import { useEffect, useState } from 'preact/hooks'
 import { LINKS_ENDPOINT } from '../../constants'
 import * as types from '../../types'
 import { format_long_date } from '../../util/format_date'
@@ -33,13 +33,27 @@ export default function Link(props: Props) {
 		Summary: summary,
 		SummaryCount: summary_count,
 		TagCount: tag_count,
-		ImgURL: img_url,
+		ImgURL: saved_img_url,
 	} = props.Link
 
 	const [is_copied, set_is_copied] = useState(props.Link.IsCopied)
 	const [is_liked, set_is_liked] = useState(props.Link.IsLiked)
 	const [like_count, set_like_count] = useState(props.Link.LikeCount)
 	const [show_delete_modal, set_show_delete_modal] = useState(false)
+	const [img_url, set_img_url] = useState(saved_img_url)
+
+	// unset img_url if fails to resolve
+	useEffect(() => {
+		if (saved_img_url) {
+			// use Image constructor so no CORS issues, even locally
+			const img = new Image()
+			img.onload = () => set_img_url(saved_img_url)
+			img.onerror = () => set_img_url(undefined)
+
+			// test
+			img.src = saved_img_url
+		}
+	}, [saved_img_url])
 
 	const is_your_link = user && submitted_by === user
 

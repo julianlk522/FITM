@@ -3,16 +3,14 @@
 ## Todos
 
 In order of importance:
-    1. refactors / remove duplicate code
-    2. ensure HTTP responses are accurate
-    3. don't render shitty images
+    1. Allow viewing newest links per period instead of top
+    2. More
 
 ### Features
 
 -add option in recommended cats handler for omitted cats
     -(that way it can keep giving new recommendations without repeats)
 -auto-populate cats when URL params used
--look into not rendering images that dont successfully load
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
@@ -82,6 +80,7 @@ random stuff
 
 -robots.txt
 -VPS SSH key
+-find way to cache github.com/lestrrat-go/httpcc in GHA workflow
 -Ensure accurate / helpful http response codes
     -e.g., tag page for invalid link id returns 500 (should be 404)
     -replace "message":"deleted" with just 204
@@ -172,6 +171,8 @@ Internet users deserve a portal that provides them an unbiased, direct view into
     - finally got it by authenticating DockerHub acct. via CLI (docker login)
 - Linode
     - Getting connections other than SSH (http/https) to open despite firewall config explicitly allowing them
+    - other firewall problems:
+        - allow only implicit outbound SSH so git pull possible (and explicit inbound for ad hoc connections from trusted machine)
 - LetsEncrypt / Certbot / NameCheap SSL
 - tmux
     - detach from / reattach to SSH session to safely exit terminal and leave running
