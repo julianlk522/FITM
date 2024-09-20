@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LOG_FILE="/var/log/fitm_update.log"
+LOG_FILE="/var/log/fitm/update.log"
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1"
 }
