@@ -3,8 +3,6 @@
 ## Todos
 
 In order of importance:
-    0. fix rate limit
-        -combine secret + timestamp (update every 5 mins)
     1. output non-2xx responses to log file
     2. refactors / remove duplicate code
     3. ensure HTTP responses are accurate
@@ -27,14 +25,11 @@ In order of importance:
     -automatically correct 'nsfw' to 'NSFW'
     -Tests
     -Restrict from tmap/top unless specifically chosen in filter
--improve cat count lookup speed with fts5vocab table
-    -(row type)
 
 
 random stuff
 - replace double quotes in page title if it includes them
 - new tag cat search
-- confirm / fix rate limits
 
 ### Code Quality
 
@@ -126,6 +121,8 @@ random stuff
         -TestExtractMetaDataFromGoogleAPIsResponse()
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
     -model utils
+-improve cat count lookup speed with fts5vocab table
+    -(row type)
 
 
 ## Why?

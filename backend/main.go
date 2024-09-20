@@ -44,43 +44,39 @@ func main() {
 		// }
 	}()
 
-	// Router-wide middleware
-	// Logger
-	// https://github.com/go-chi/chi/blob/6fedde2a70dc2adce0a3dc41b8aebc0b2bec8185/middleware/logger.go#L32C20-L33C46: Logger should go before any other middleware that may change
+	// ROUTER-WIDE MIDDLEWARE
+	// LOGGER
+	// should go before any other middleware that may change
 	// the response, such as middleware.Recoverer
+	// (https://github.com/go-chi/chi/blob/6fedde2a70dc2adce0a3dc41b8aebc0b2bec8185/middleware/logger.go#L32C20-L33C46)
 	r.Use(middleware.Logger)
 
-	// Rate Limit
-	httprate_options := httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusTooManyRequests)
-		w.Write([]byte(`{"message": "too many requests"}`))
-	})
+	// RATE LIMIT
+	// per minute (overall)
+	// absolute max before all traffic stopped
+	r.Use(httprate.LimitAll(
+		3000,
+		time.Minute,
+	))
+	// per minute (IP)
+	// because Netlify is lame and won't let me rate limit on their end,
+	// this needs to cover all concurrent traffic coming from the frontend
+	// shared across all users (hence it being really high)
 	r.Use(httprate.Limit(
-		60,
+		2400,
 		1*time.Minute,
 		httprate.WithKeyFuncs(httprate.KeyByIP),
 	))
-	r.Use(
-		httprate.Limit(
-			60,
-			time.Minute,
-			httprate.WithKeyFuncs(func(r *http.Request) (string, error) {
-				return r.Header.Get("Authorization"), nil
-			}),
-			httprate_options,
-		))
+	// per second (IP)
+	// (stop short bursts quickly)
+	r.Use(httprate.Limit(
+		100,
+		1*time.Second,
+		httprate.WithKeyFuncs(httprate.KeyByIP),
+	))
 
 	// CORS
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{
-			"https://fitm.online", 
-			"https://fitm.online/*",
-			"https://www.fitm.online",
-			"https://www.fitm.online/*",
-			// "http://localhost:4321",
-			// "http://localhost:4321/*",
-		},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{
 			"Authorization",
