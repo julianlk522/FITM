@@ -12,7 +12,7 @@ type Contributor,
 type PaginatedLinks,
 type Period,
 } from '../types'
-import fetch_with_handle_redirect from '../util/rate_limit'
+import fetch_with_handle_redirect from '../util/fetch_with_handle_redirect'
 
 // Auth
 const token = Astro.cookies.get('token')?.value

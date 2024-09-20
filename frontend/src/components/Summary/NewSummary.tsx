@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks'
 import { SUMMARIES_ENDPOINT } from '../../constants'
 import { is_error_response } from '../../types'
-import fetch_with_handle_redirect from '../../util/rate_limit'
+import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
 import './NewSummary.css'
 
 interface Props {

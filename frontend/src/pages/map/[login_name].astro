@@ -9,8 +9,8 @@ import { TMAP_ENDPOINT } from '../../constants'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import type { FilteredTreasureMap, Profile, TreasureMap } from '../../types'
 import { tmap_sections } from '../../types'
+import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
 import { format_short_date } from '../../util/format_date'
-import fetch_with_handle_redirect from '../../util/rate_limit'
 
 // Auth
 const token = Astro.cookies.get('token')?.value

@@ -5,7 +5,7 @@ import TagCat from '../../components/Tag/TagCat'
 import { TAGS_ENDPOINT } from '../../constants'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import type { TagPage } from '../../types'
-import fetch_with_handle_redirect from '../../util/rate_limit'
+import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
 import CSRLastUpdated from '../../components/Tag/CSRLastUpdated'
 
 const token = Astro.cookies.get('token')?.value
