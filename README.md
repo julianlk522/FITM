@@ -3,10 +3,9 @@
 ## Todos
 
 In order of importance:
-    1. output non-2xx responses to log file
-    2. refactors / remove duplicate code
-    3. ensure HTTP responses are accurate
-    4. don't render shitty images
+    1. refactors / remove duplicate code
+    2. ensure HTTP responses are accurate
+    3. don't render shitty images
 
 ### Features
 
@@ -120,6 +119,8 @@ random stuff
     -handler utils
         -TestExtractMetaDataFromGoogleAPIsResponse()
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
+    -middleware
+        -test err responses are logged to $FITM_ERR_LOG_FILE
     -model utils
 -improve cat count lookup speed with fts5vocab table
     -(row type)
@@ -195,3 +196,11 @@ Internet users deserve a portal that provides them an unbiased, direct view into
             - no networking, configure manually with nmcli
         - didn't want private test data stored on GH: store on test runner local filesystem and pass path as GH Actions secret through workflow .yml file to Docker container where test suite runs
         - GH deploy key (SSH)
+- Rate limiting
+    - limiting from backend only not possible while using Netlify
+        - Netlify CDN using numerous edge servers with hidden IPs: no way to whitelist appropriate server IPs
+    - limiting from frontend only not practical / useful
+        - Netlify only offers to Enterprise clients, but even if it were available it would not prevent abuse via direct communication to server
+    - compromise by adding multiple IP-based rate limits to be shared among frontend and all users making requests from client, plus app-wide hard limit
+        - 1min timeframe for ordinary usage limits,
+        - 1sec timeframe for quick abuse resolution

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/httprate"
 	"github.com/go-chi/jwtauth/v5"
@@ -49,7 +48,10 @@ func main() {
 	// should go before any other middleware that may change
 	// the response, such as middleware.Recoverer
 	// (https://github.com/go-chi/chi/blob/6fedde2a70dc2adce0a3dc41b8aebc0b2bec8185/middleware/logger.go#L32C20-L33C46)
-	r.Use(middleware.Logger)
+
+	// split logger used to pass info from requests with status code 300+
+	// to err log file
+	r.Use(m.SplitRequestLogger(m.FileLogFormatter))
 
 	// RATE LIMIT
 	// per minute (overall)
