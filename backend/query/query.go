@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"strings"
 
 	e "github.com/julianlk522/fitm/error"
 )
@@ -27,4 +28,17 @@ func GetPeriodClause(period string) (clause string, err error) {
 	}
 
 	return fmt.Sprintf("submit_date >= date('now', '-%d days')", days), nil
+}
+
+func GetCatsWithEscapedPeriods(cats []string) []string {
+	var escaped []string
+	for i := 0; i < len(cats); i++ {
+		if strings.Contains(cats[i], ".") {
+			escaped = append(escaped, strings.Replace(cats[i], `.`, `"."`, 1))
+		} else {
+			escaped = append(escaped, cats[i])
+		}
+	}
+
+	return escaped
 }

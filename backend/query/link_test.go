@@ -99,7 +99,7 @@ func TestFromCats(t *testing.T) {
 		// ensure that cats with "." have surrounded it in quotes
 		for _, cat := range tc.Cats {
 			if strings.Contains(cat, ".") && !strings.Contains(links_sql.Text, `"."`) {
-				t.Fatalf("failed to escape period in cat: %s", cat)
+				t.Fatalf("failed to escape period in cat: '%s'", cat)
 			}
 		}
 		

@@ -115,17 +115,12 @@ func (l *TopLinks) FromCats(cats []string) *TopLinks {
 		return l
 	}
 
-	// for any cats with "." surround them in double quotes
-	for i := 0; i < len(cats); i++ {
-		if strings.Contains(cats[i], ".") {
-			cats[i] = strings.Replace(cats[i], `.`, `"."`, 1)
-		}
-	}
+	cats = GetCatsWithEscapedPeriods(cats)
 
 	// build clause from cats
 	clause := fmt.Sprintf(`WHERE global_cats MATCH '%s`, cats[0])
 	for i := 1; i < len(cats); i++ {
-		clause += fmt.Sprintf(` 
+		clause += fmt.Sprintf(`
 		AND %s`, cats[i])
 	}
 	clause += `'`
@@ -254,19 +249,13 @@ func NewContributors() *Contributors {
 const CONTRIBUTORS_CATS_FROM = `INNER JOIN CatsFilter f ON l.id = f.link_id`
 
 func (c *Contributors) FromCats(cats []string) *Contributors {
-
-	// escape any "." in cats
-	for i := 0; i < len(cats); i++ {
-		if strings.Contains(cats[i], ".") {
-			cats[i] = strings.Replace(cats[i], `.`, `"."`, 1)
-		}
-	}
+	cats = GetCatsWithEscapedPeriods(cats)
 
 	clause := fmt.Sprintf("WHERE global_cats MATCH '%s", cats[0])
 	for i := 1; i < len(cats); i++ {
 		clause += fmt.Sprintf(" AND %s", cats[i])
 	}
-	clause += `'`
+	clause += "'"
 
 	// build CTE
 	cats_cte := fmt.Sprintf(

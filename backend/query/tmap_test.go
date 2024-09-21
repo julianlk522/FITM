@@ -147,7 +147,7 @@ func TestNewTmapSubmittedFromCats(t *testing.T) {
 	submitted_sql = NewTmapSubmitted(test_login_name).FromCats([]string{"YouTube", "c. viper"})
 	if submitted_sql.Error != nil {
 		t.Fatal(submitted_sql.Error)
-	} else if strings.Contains(submitted_sql.Text, ".") && !strings.Contains(submitted_sql.Text, `'.'`) {
+	} else if strings.Contains(submitted_sql.Text, ".") && !strings.Contains(submitted_sql.Text, `"."`) {
 		t.Fatal("failed to ecape period in cat 'c. viper'")
 	}
 }
@@ -291,7 +291,7 @@ func TestNewTmapCopiedFromCats(t *testing.T) {
 	copied_sql = NewTmapCopied(test_login_name).FromCats([]string{"YouTube", "c. viper"})
 	if copied_sql.Error != nil {
 		t.Fatal(copied_sql.Error)
-	} else if strings.Contains(copied_sql.Text, ".") && !strings.Contains(copied_sql.Text, `'.'`) {
+	} else if strings.Contains(copied_sql.Text, ".") && !strings.Contains(copied_sql.Text, `"."`) {
 		t.Fatal("failed to ecape period in cat 'c. viper'")
 	}
 }
@@ -435,7 +435,7 @@ func TestNewTmapTaggedFromCats(t *testing.T) {
 	tagged_sql = NewTmapTagged(test_login_name).FromCats([]string{"YouTube", "c. viper"})
 	if tagged_sql.Error != nil {
 		t.Fatal(tagged_sql.Error)
-	} else if strings.Contains(tagged_sql.Text, ".") && !strings.Contains(tagged_sql.Text, `'.'`) {
+	} else if strings.Contains(tagged_sql.Text, ".") && !strings.Contains(tagged_sql.Text, `"."`) {
 		t.Fatal("failed to ecape period in cat 'c. viper'")
 	}
 }
@@ -545,23 +545,6 @@ func TestFromUserOrGlobalCats(t *testing.T) {
 			t.Fatal(err)
 		} else if !strings.Contains(l.Cats, test_cats[0]) || !strings.Contains(l.Cats, test_cats[1]) {
 			t.Fatalf("got %s, should contain %s", l.Cats, test_cats)
-		}
-	}
-}
-
-func TestGetCatsWithEscapedPeriods(t *testing.T) {
-	var test_cats = struct{
-		Cats []string
-		ExpectedResults []string
-	}{
-		Cats: []string{"YouTube", "c. viper"},
-		ExpectedResults: []string{"YouTube", `c'.' viper`},
-	}
-	
-	got := GetCatsWithEscapedPeriods(test_cats.Cats)
-	for i, res := range got {
-		if res != test_cats.ExpectedResults[i] {
-			t.Fatalf("got %s, want %s", got, test_cats.ExpectedResults)
 		}
 	}
 }

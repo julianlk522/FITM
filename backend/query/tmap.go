@@ -351,16 +351,3 @@ func FromUserOrGlobalCats(q string, cats []string) string {
 
 	return q
 }
-
-func GetCatsWithEscapedPeriods(cats []string) []string {
-	var escaped []string
-	for i := 0; i < len(cats); i++ {
-		if strings.Contains(cats[i], ".") {
-			escaped = append(escaped, strings.Replace(cats[i], `.`, `'.'`, 1))
-		} else {
-			escaped = append(escaped, cats[i])
-		}
-	}
-
-	return escaped
-}

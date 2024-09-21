@@ -258,18 +258,19 @@ func TestNewTopGlobalCatCountsDuringPeriod(t *testing.T) {
 	}
 }
 
+const TEST_SNIPPET = "test"
+
 func TestNewSpellfixMatchesForSnippet(t *testing.T) {
-	var test_snippet = "test*"
 	var expected_rankings = map[string]int{
 		"test": 11,
 		"tech": 2,
 		"technology": 1,
 	}
 
-	sql := NewSpellfixMatchesForSnippet(test_snippet)
+	matches_sql := NewSpellfixMatchesForSnippet(TEST_SNIPPET)
 	// no chance for sql.Error to have been set so no need to check
 
-	rows, err := TestClient.Query(sql.Text)
+	rows, err := TestClient.Query(matches_sql.Text)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -282,6 +283,34 @@ func TestNewSpellfixMatchesForSnippet(t *testing.T) {
 			t.Fatal(err)
 		} else if expected_rankings[word] != rank {
 			t.Fatalf("got %d, want %d for word %s", rank, expected_rankings[word], word)
+		}
+	}
+}
+
+func TestOmitCats(t *testing.T) {
+	var expected_rankings = map[string]int{
+		// "test": 11, // filter out
+		"tech": 2,
+		"technology": 1,
+	}
+	matches_sql := NewSpellfixMatchesForSnippet(TEST_SNIPPET)
+	err := matches_sql.OmitCats([]string{TEST_SNIPPET})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rows, err := TestClient.Query(matches_sql.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for rows.Next() {
+		var word string
+		var count int
+		if err := rows.Scan(&word, &count); err != nil {
+			t.Fatal(err)
+		} else if expected_rankings[word] != count {
+			t.Fatalf("got %d, want %d for word %s", count, expected_rankings[word], word)
 		}
 	}
 }
