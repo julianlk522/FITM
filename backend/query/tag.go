@@ -311,16 +311,18 @@ func (s *SpellfixMatches) OmitCats(cats []string) error {
 		}
 	}
 
+	distance_clause := fmt.Sprintf(
+		"WHERE distance <= %d",
+		SPELLFIX_DISTANCE_LIMIT,
+	)
+
 	s.Text = strings.Replace(
 		s.Text,
+		distance_clause,
 		fmt.Sprintf(
-			"WHERE distance <= %d",
-			SPELLFIX_DISTANCE_LIMIT,
-		),
-		fmt.Sprintf(
-			`WHERE distance <= %d
+			`%s
 			AND word NOT IN (%s)`,
-			SPELLFIX_DISTANCE_LIMIT,
+			distance_clause,
 			not_in_clause,
 		),
 		1,

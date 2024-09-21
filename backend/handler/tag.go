@@ -128,20 +128,30 @@ func GetSpellfixMatchesForSnippet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	spfx_sql := query.NewSpellfixMatchesForSnippet(snippet)
-	var matches []model.CatCount
+
+	omitted_params := r.URL.Query().Get("omitted")
+	if omitted_params != "" {
+		omitted_words := strings.Split(omitted_params, ",")
+		err := spfx_sql.OmitCats(omitted_words)
+		if err != nil {
+			render.Render(w, r, e.ErrServerFail(err))
+			return
+		}
+	}
 	
 	rows, err := db.Client.Query(spfx_sql.Text)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 	defer rows.Close()
 
+	var matches []model.CatCount
 	for rows.Next() {
 		var word string
 		var rank int32
 		if err := rows.Scan(&word, &rank); err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrServerFail(err))
 			return
 		}
 		matches = append(matches, model.CatCount{

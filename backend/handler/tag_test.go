@@ -9,7 +9,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	m "github.com/julianlk522/fitm/middleware"
+	"github.com/julianlk522/fitm/model"
 )
 
 func TestAddTag(t *testing.T) {
@@ -319,6 +321,110 @@ func TestDeleteTag(t *testing.T) {
 				res.StatusCode,
 				tr,
 			)
+		}
+	}
+}
+
+func TestGetSpellfixMatchesForSnippet(t *testing.T) {
+	var test_requests = []struct {
+		Snippet string
+		OmittedCats string
+		ExpectedStatusCode int
+		Results map[string]int32
+	}{
+		{
+			Snippet: "test",
+			OmittedCats: "",
+			ExpectedStatusCode: 200,
+			Results: map[string]int32{
+				"test": 11,
+				"tech": 2,
+				"technology": 1,
+			},
+		},
+		{
+			Snippet: "test",
+			OmittedCats: "test",
+			ExpectedStatusCode: 200,
+			Results: map[string]int32{
+				"tech": 2,
+				"technology": 1,
+			},
+		},
+		{
+			Snippet: "test",
+			OmittedCats: "tech,technology",
+			ExpectedStatusCode: 200,
+			Results: map[string]int32{
+				"test": 11,
+			},
+		},
+		{
+			Snippet: "",
+			OmittedCats: "",
+			ExpectedStatusCode: 404,
+			Results: nil,
+		},
+		{
+			Snippet: "",
+			OmittedCats: "test",
+			ExpectedStatusCode: 404,
+			Results: nil,
+		},
+	}
+
+	// define route
+	// (otherwise cannot pass URL params without modifying handler implementation)
+	r := chi.NewRouter()
+	r.Get("/cats/{snippet}", GetSpellfixMatchesForSnippet)
+
+	for _, tr := range test_requests {
+		req, err := http.NewRequest("GET", "/cats/"+tr.Snippet, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if tr.OmittedCats != "" {
+			q := req.URL.Query()
+			q.Add("omitted", tr.OmittedCats)
+			req.URL.RawQuery = q.Encode()
+		}
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		if w.Code != tr.ExpectedStatusCode {
+			b, err := io.ReadAll(w.Body)
+			if err != nil {
+				t.Fatal("failed but unable to read response body bytes")
+			}
+			t.Fatalf(
+				"expected status code %d, got %d (test request %+v) \n%s", 
+				tr.ExpectedStatusCode,
+				w.Code,
+				tr,
+				string(b),
+			)
+		}
+
+		// check results if valid request
+		if w.Code > 200 {
+			continue
+		}
+		
+		b, err := io.ReadAll(w.Body)
+		if err != nil {
+			t.Fatal("failed but unable to read response body bytes")
+		}
+		var results []model.CatCount
+		err = json.Unmarshal(b, &results)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, res := range results {
+			if tr.Results[res.Category] != res.Count {
+				t.Fatalf("expected %d, got %d", tr.Results[res.Category], res.Count)
+			}
 		}
 	}
 }
