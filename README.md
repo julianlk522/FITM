@@ -4,12 +4,15 @@
 
 In order of importance:
     1. Allow viewing newest links per period instead of top
+        -"Sort By" dropdown (SearchSort.tsx) in SearchFilters
+        -add optional "sort" param to GetTopLinks handler
+            -rating (default)
+            -newest
+            -num tags / summaries? (probably not; not very useful)
     2. More
 
 ### Features
 
--add option in recommended cats handler for omitted cats
-    -(that way it can keep giving new recommendations without repeats)
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
@@ -33,6 +36,7 @@ random stuff
     -replace spellfix transactions with triggers
         -(that way can make changes over CLI without worrying about unsync)
     -Top Cats / Top Links / etc. components
+    -remove needless _limit() methods
     -move tmap cats json above links
 -Purge code duplication
 -Security
@@ -43,15 +47,15 @@ random stuff
 
 ### Features
 
+-use user summaries in tmap if they exist
+-client:visible for tmap
 -Look into broken auto og:image
     -e.g., coolers.co image should not have been added with invalid link
     -https://rss.com/blog/how-do-rss-feeds-work/
--use user summaries in tmap if they exist
--client:visible for tmap
 -SQL prepared statements
     -more important if truly does help prevent injection... verify
--Redis caching
 -Favorite tmaps?
+-Redis caching
 -Show number of copies along with number of likes in frontend
 -Better way to visualize how Global Cats are determined?
 -Guidelines / heuristics for avoiding "marooned" tags
@@ -62,7 +66,6 @@ random stuff
 -Optional summaries that can be edited if you submit / like enough links with a certain cat?
     -i.e., if you submit enough links with cat "FOSS" you get to add a wiki-like summary of "FOSS" that appears on the top page when it is applied alone
 -Tmap period filter?
--Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
     -subtitle probably should not be h2
     -original favicon.ico
@@ -71,9 +74,10 @@ random stuff
         probably not realistic
     -Tiny bit more space between like/copy buttons on mobile
     -maybe go through BrowserStack and see if anything is horrendous
--Audit CalculateGlobalCategories algo
 -Implement RemoveProfilePic handler (securely) for when a user somehow ends up with a PFP that isn't found in the DB
     -should be basically impossible so not high priority
+-Audit CalculateGlobalCategories algo
+-Improve profile pic upload?
 
 ### Code Quality
 

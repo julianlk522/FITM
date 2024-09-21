@@ -30,10 +30,13 @@ export default function SearchCat(props: Props) {
 			return
 		}
 
+		let spellfix_matches_url = CATS_ENDPOINT + `/${snippet}`
+		if (selected_cats.length) {
+			spellfix_matches_url += `?omitted=${selected_cats.join(',')}`
+		}
+
 		try {
-			const spellfix_matches_resp = await fetch(
-				CATS_ENDPOINT + `/${snippet}`
-			)
+			const spellfix_matches_resp = await fetch(spellfix_matches_url)
 			if (!spellfix_matches_resp.ok) {
 				const msg: types.ErrorResponse =
 					await spellfix_matches_resp.json()
@@ -48,7 +51,7 @@ export default function SearchCat(props: Props) {
 			set_recommended_cats([])
 			set_error(error instanceof Error ? error.message : String(error))
 		}
-	}, [snippet])
+	}, [snippet, selected_cats])
 
 	const timeout_ref = useRef<number | null>(null)
 	const DEBOUNCE_INTERVAL = 500
