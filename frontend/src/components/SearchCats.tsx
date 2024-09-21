@@ -8,13 +8,16 @@ import './SearchCats.css'
 import TagCat from './Tag/TagCat'
 
 interface Props {
+	InitialCats: string[]
 	AddedSignal: Signal<string | undefined> | undefined
 	DeletedSignal: Signal<string | undefined> | undefined
 }
 
 export default function SearchCat(props: Props) {
 	const [snippet, set_snippet] = useState<string>('')
-	const [selected_cats, set_selected_cats] = useState<string[]>([])
+	const [selected_cats, set_selected_cats] = useState<string[]>(
+		props.InitialCats
+	)
 	const [recommended_cats, set_recommended_cats] = useState<
 		CatCount[] | undefined
 	>(undefined)

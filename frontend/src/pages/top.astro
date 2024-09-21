@@ -127,21 +127,17 @@ const is_only_page =
 	page === 1
 	&& data.NextPage === -1
 
-const page_title =
-	cats
-		? cats
-		: 'Top Rated'
 ---
 
 <BaseLayout Title='Top Links / Cats / Contributors'>
 	<main>
 		<h1>
-			{page_title}
+			Top (Rating)
 		</h1>
-		{period !== 'all' ? <h2 class="subtitle">({period.charAt(0).toUpperCase() + period.slice(1)})</h2> : null}
 		
 		<SearchFilters 
 			client:load 
+			InitialCats={cats?.split(',')}
 			InitialPeriod={period}
 		/>
 

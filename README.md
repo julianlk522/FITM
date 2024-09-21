@@ -10,7 +10,6 @@ In order of importance:
 
 -add option in recommended cats handler for omitted cats
     -(that way it can keep giving new recommendations without repeats)
--auto-populate cats when URL params used
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links

@@ -6,12 +6,13 @@ import './SearchFilters.css'
 import SearchPeriod from './SearchPeriod'
 
 interface Props {
+	InitialCats: string[] | undefined
 	InitialPeriod: Period
 }
 
 export default function SearchFilters(props: Props) {
 	const [period, set_period] = useState<Period>(props.InitialPeriod)
-	const [cats, set_cats] = useState<string[]>([])
+	const [cats, set_cats] = useState<string[]>(props.InitialCats ?? [])
 
 	// set search URL based on period and cats
 	const base_URL = `/top`
@@ -58,15 +59,14 @@ export default function SearchFilters(props: Props) {
 					SetPeriodSignal={changed_period}
 				/>
 				<SearchCat
+					InitialCats={props.InitialCats ?? []}
 					AddedSignal={added_cat}
 					DeletedSignal={deleted_cat}
 				/>
 
-				{cats?.length || period ? (
-					<a id='search-from-filters' href={search_URL}>
-						Search
-					</a>
-				) : null}
+				<a id='search-from-filters' href={search_URL}>
+					Search
+				</a>
 			</form>
 		</section>
 	)
