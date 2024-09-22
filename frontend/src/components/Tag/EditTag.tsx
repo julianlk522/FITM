@@ -4,8 +4,8 @@ import { TAGS_ENDPOINT } from '../../constants'
 import type { Tag } from '../../types'
 import { is_error_response } from '../../types'
 import { format_long_date } from '../../util/format_date'
+import SearchCats from '../Search/SearchCats'
 import './EditTag.css'
-import TagCat from './TagCat'
 interface Props {
 	LinkID: string
 	Token: string | undefined
@@ -23,53 +23,25 @@ export default function EditTag(props: Props) {
 	const initial_cats = tag ? tag.Cats.split(',') : []
 
 	const [cats, set_cats] = useState<string[]>(initial_cats)
+	const [editing, set_editing] = useState(false)
+	const [error, set_error] = useState<string | undefined>(undefined)
+	const [show_delete_modal, set_show_delete_modal] = useState(false)
 
-	// Pass deleted_cat signal to children TagCategory.tsx
-	// to allow removing their cat in this EditTag.tsx parent
+	// pass added/deleted_cat signals to allow modifying cats state in SearchCats.tsx
+	const added_cat = useSignal<string | undefined>(undefined)
 	const deleted_cat = useSignal<string | undefined>(undefined)
 
-	// Check for deleted cat and set cats accordingly
+	// Check for updated cats, set state accordingly
 	effect(() => {
-		if (deleted_cat.value) {
+		if (added_cat.value?.length) {
+			const new_cat = added_cat.value
+			set_cats((c) => [...c, new_cat])
+			added_cat.value = undefined
+		} else if (deleted_cat.value) {
 			set_cats((c) => c.filter((cat) => cat !== deleted_cat.value))
 			deleted_cat.value = undefined
 		}
 	})
-
-	const [editing, set_editing] = useState(false)
-	const [error, set_error] = useState<string | undefined>(undefined)
-
-	// confirm before deleting tag
-	const [show_delete_modal, set_show_delete_modal] = useState(false)
-
-	function add_cat(event: SubmitEvent) {
-		event.preventDefault()
-
-		const form = event.target as HTMLFormElement
-		const formData = new FormData(form)
-		const cat = formData.get('cat')?.toString()
-
-		if (!cat) {
-			set_error('Input is empty')
-			return
-		}
-
-		if (cats.includes(cat)) {
-			set_error('Already added')
-			return
-		}
-
-		set_cats(
-			[...cats, cat].sort((a, b) => {
-				return a.localeCompare(b)
-			})
-		)
-		set_error(undefined)
-
-		const cat_field = document.getElementById('cat') as HTMLInputElement
-		cat_field.value = ''
-		return
-	}
 
 	async function confirm_changes() {
 		if (!token) {
@@ -120,9 +92,10 @@ export default function EditTag(props: Props) {
 		if (is_error_response(edit_tag_data)) {
 			set_error(edit_tag_data.error)
 			return
-		} else {
-			window.location.reload()
 		}
+
+		// reload if successful
+		window.location.reload()
 	}
 
 	async function handle_delete() {
@@ -146,7 +119,7 @@ export default function EditTag(props: Props) {
 			},
 			body: JSON.stringify({ tag_id: tag.ID }),
 		})
-		if (delete_resp.status !== 204) {
+		if (is_error_response(delete_resp) || delete_resp.status !== 204) {
 			console.error(delete_resp)
 			const err_msg = await delete_resp.json()
 			set_error(err_msg.error)
@@ -158,8 +131,8 @@ export default function EditTag(props: Props) {
 	}
 
 	return (
-		<section id='edit-tag'>
-			<div id='user_tags_title_bar'>
+		<form id='edit-tag' onSubmit={(e) => e.preventDefault()}>
+			<div id='user-tags-title-bar'>
 				<h2>Your Tag</h2>
 
 				<button
@@ -199,29 +172,16 @@ export default function EditTag(props: Props) {
 				) : null}
 			</div>
 
-			{error ? <p class='error'>{`Error: ${error}`}</p> : null}
+			{error ? <p class='error'>{error}</p> : null}
 
-			{tag || (editing && cats.length) ? (
-				<ol id='cat-list'>
-					{cats.map((cat) => (
-						<TagCat
-							Cat={cat}
-							Count={undefined}
-							Removable={editing}
-							Addable={false}
-							AddedSignal={undefined}
-							DeletedSignal={deleted_cat}
-						/>
-					))}
-				</ol>
-			) : null}
-
-			{editing ? (
-				<form onSubmit={(event) => add_cat(event)}>
-					<label for='cat'>Cat</label>
-					<input type='text' id='cat' name='cat' />
-					<input type='Submit' value='Add Cat' />
-				</form>
+			{tag || editing ? (
+				<SearchCats
+					AbbreviatedCatsText
+					InitialCats={initial_cats}
+					AddedSignal={added_cat}
+					DeletedSignal={deleted_cat}
+					Removable={editing}
+				/>
 			) : null}
 
 			{tag ? (
@@ -231,20 +191,17 @@ export default function EditTag(props: Props) {
 			)}
 
 			{show_delete_modal ? (
-				<>
-					{/* delete modal */}
-					<dialog class='delete-tag-modal' open>
-						<p>Delete your tag?</p>
-						<button onClick={handle_delete}>Yes</button>
-						<button
-							autofocus
-							onClick={() => set_show_delete_modal(false)}
-						>
-							Cancel
-						</button>
-					</dialog>
-				</>
+				<dialog class='delete-tag-modal' open>
+					<p>Delete your tag?</p>
+					<button onClick={handle_delete}>Yes</button>
+					<button
+						autofocus
+						onClick={() => set_show_delete_modal(false)}
+					>
+						Cancel
+					</button>
+				</dialog>
 			) : null}
-		</section>
+		</form>
 	)
 }

@@ -8,9 +8,11 @@ import TagCat from '../Tag/TagCat'
 import './SearchCats.css'
 
 interface Props {
+	AbbreviatedCatsText?: boolean
 	InitialCats: string[]
 	AddedSignal: Signal<string | undefined> | undefined
 	DeletedSignal: Signal<string | undefined> | undefined
+	Removable?: boolean
 }
 
 export default function SearchCats(props: Props) {
@@ -143,9 +145,9 @@ export default function SearchCats(props: Props) {
 	})
 
 	return (
-		<div>
+		<div id='search-cats-container'>
 			<label id='search-cats' for='cats'>
-				Tag Cats:
+				{props.AbbreviatedCatsText ? 'Cats:' : 'Tag Cats:'}
 			</label>
 			<input
 				type='text'
@@ -172,7 +174,7 @@ export default function SearchCats(props: Props) {
 							key={cat}
 							Cat={cat}
 							Count={undefined}
-							Removable={true}
+							Removable={props.Removable ?? true}
 							Addable={false}
 							AddedSignal={undefined}
 							DeletedSignal={deleted_cat}

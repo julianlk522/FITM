@@ -1,13 +1,3 @@
-form {
-	label:is(#search-period, #search-sort-by, #search-cats) {
-		display: inline;
-
-		+ * {
-			margin-left: 5px;
-		}
-	}
-}
-
 a#search-from-filters {
 	display: block;
 	width: fit-content;

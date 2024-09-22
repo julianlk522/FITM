@@ -121,6 +121,14 @@ let user = Astro.cookies.get('user')?.value
 			textarea {
 				max-width: 100%;
 			}
+
+			label:is(#search-period, #search-sort-by, #search-cats) {
+				display: inline;
+
+				+ * {
+					margin-left: 5px;
+				}
+			}
 		}
 		img {
 			height: auto;

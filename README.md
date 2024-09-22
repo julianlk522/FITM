@@ -3,8 +3,6 @@
 ## Todos
 
 In order of importance:
-    0. add tag cat search to all relevant places where it is missing
-        -new tag
     0.5. replace title double quotes if they already exist
     1. refactors / purge duplicate code
     2. More
@@ -39,6 +37,7 @@ random stuff
     -Top Cats / Top Links / etc. components
     -remove needless _limit() methods
     -move tmap cats json above links
+    -optional Props to replace "undefined"
 -Purge code duplication
 -Security
     -Look into input sequences that might produce problematic results
