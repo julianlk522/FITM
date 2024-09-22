@@ -24,12 +24,12 @@ func TestLoadSpellfix(t *testing.T) {
 	test_data_path := os.Getenv("FITM_TEST_DATA_PATH")
 	if test_data_path != "" {
 		log.Print("FITM_TEST_DATA_PATH found: loading test data to run spellfix check against")
-		
+
 		Client, err := sql.Open("sqlite-spellfix1", "file::memory:?cache=shared")
 		if err != nil {
 			t.Fatalf("could not open in-memory DB: %s", err)
 		}
-		sql_dump_path := filepath.Join(db_dir, "fitm_test.db.sql")
+		sql_dump_path := filepath.Join(test_data_path, "fitm_test.db.sql")
 		sql_dump, err := os.ReadFile(sql_dump_path)
 		if err != nil {
 			t.Fatal(err)
@@ -40,6 +40,7 @@ func TestLoadSpellfix(t *testing.T) {
 		}
 		log.Print("loaded test data (TestLoadSpellfix)")
 	}
+	
 	_, err := Client.Exec(`SELECT word, rank FROM global_cats_spellfix;`)
 	if err != nil {
 		t.Fatal(err)

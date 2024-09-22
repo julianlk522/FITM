@@ -3,7 +3,15 @@
 ## Todos
 
 In order of importance:
-    1. More
+    0. add tag cat search to all relevant places where it is missing
+        -new tag
+        -new link
+    0.5. replace title double quotes if they already exist
+    1. refactors / purge duplicate code
+    2. More
+    3. find some way to cache the stupid github.com/lestrrat-go/httpcc download
+    4. replace spellfix transactions with triggers
+    5. use user summaries in tmap if they exist
 
 ### Features
 
@@ -83,13 +91,6 @@ random stuff
     -replace "message":"deleted" with just 204
     -205 for successful logins/forms that require reload
     -500 for server fuckups
--Ensure consistent language:
-    -get (request and retrieve things from an external source)
-    -scan (copy rows from sql to structs)
-    -extract (some data and carve out a different data type from it)
-    -assign (take some data and a pointer and copy the data to the referenced var)
-    -obtain (get, extract, assign)
-    -resolve (take in a possibly incomplete form and translate to a correct form)
 -Other lesser refactors and removal of duplicate code
     -sync.Once for db singleton?
     -duplicate handle_redirect() helpers on tag page / summary page
@@ -120,6 +121,13 @@ random stuff
     -model utils
 -improve cat count lookup speed with fts5vocab table
     -(row type)
+-Ensure consistent language:
+    -get (request and retrieve things from an external source)
+    -scan (copy rows from sql to structs)
+    -extract (some data and carve out a different data type from it)
+    -assign (take some data and a pointer and copy the data to the referenced var)
+    -obtain (get, extract, assign)
+    -resolve (take in a possibly incomplete form and translate to a correct form)
 
 
 ## Why?
