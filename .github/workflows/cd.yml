@@ -36,6 +36,7 @@ jobs:
                     -v ${{ github.workspace }}/backend:/backend \
                     -v ${{ env.FITM_TEST_DATA_PATH }}:/test_data \
                     -e FITM_TEST_DATA_PATH=/test_data \
+                    -e FITM_ERR_LOG_FILE=/test_data/err.log \
                     -e FITM_JWT_SECRET=${{ env.FITM_JWT_SECRET }} \
                     fitm-backend-test:latest
 
