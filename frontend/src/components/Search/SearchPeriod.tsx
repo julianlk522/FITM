@@ -1,6 +1,6 @@
 import type { Signal } from '@preact/signals'
 import type { ChangeEvent } from 'preact/compat'
-import { Periods, type Period } from '../types'
+import { Periods, type Period } from '../../types'
 
 interface Props {
 	SelectedPeriod: Period

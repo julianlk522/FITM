@@ -1,6 +1,6 @@
 import type { Signal } from '@preact/signals'
 import type { ChangeEvent } from 'preact/compat'
-import { SortMetrics, type SortMetric } from '../types'
+import { SortMetrics, type SortMetric } from '../../types'
 
 interface Props {
 	SelectedSortBy: SortMetric

@@ -1,11 +1,11 @@
 import type { Signal } from '@preact/signals'
 import { effect, useSignal } from '@preact/signals'
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks'
-import { CATS_ENDPOINT } from '../constants'
-import * as types from '../types'
-import { type CatCount } from '../types'
+import { CATS_ENDPOINT } from '../../constants'
+import * as types from '../../types'
+import { type CatCount } from '../../types'
+import TagCat from '../Tag/TagCat'
 import './SearchCats.css'
-import TagCat from './Tag/TagCat'
 
 interface Props {
 	InitialCats: string[]

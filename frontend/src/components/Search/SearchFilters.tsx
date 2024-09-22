@@ -1,6 +1,6 @@
 import { effect, useSignal } from '@preact/signals'
 import { useState } from 'preact/hooks'
-import type { Period, SortMetric } from '../types'
+import type { Period, SortMetric } from '../../types'
 import SearchCat from './SearchCats'
 import './SearchFilters.css'
 import SearchPeriod from './SearchPeriod'
