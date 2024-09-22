@@ -244,7 +244,7 @@ func TestAddLink(t *testing.T) {
 		{
 			Payload: map[string]string{
 				"url":     "google.com",
-				"cats":    "test",
+				"cats":    "watermelon",
 				"summary": "test",
 			},
 			Valid: true,
@@ -252,7 +252,7 @@ func TestAddLink(t *testing.T) {
 		{
 			Payload: map[string]string{
 				"url":     "about.google.com",
-				"cats":    "test",
+				"cats":    "watermelon",
 				"summary": "testy",
 			},
 			Valid: true,
@@ -260,7 +260,7 @@ func TestAddLink(t *testing.T) {
 		{
 			Payload: map[string]string{
 				"url":     "https://www.google.com/search/howsearchworks/?fg=1",
-				"cats":    "test",
+				"cats":    "watermelon",
 				"summary": "testiest",
 			},
 			Valid: true,
@@ -268,7 +268,7 @@ func TestAddLink(t *testing.T) {
 		{
 			Payload: map[string]string{
 				"url":     "https://www.google.com/search/howsearchworks/features/",
-				"cats":    "test",
+				"cats":    "watermelon",
 				"summary": "",
 			},
 			Valid: true,

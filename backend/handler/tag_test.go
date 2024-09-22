@@ -423,7 +423,7 @@ func TestGetSpellfixMatchesForSnippet(t *testing.T) {
 		}
 		for _, res := range results {
 			if tr.Results[res.Category] != res.Count {
-				t.Fatalf("expected %d, got %d", tr.Results[res.Category], res.Count)
+				t.Fatalf("expected %d for cat %s, got %d", tr.Results[res.Category], res.Category, res.Count)
 			}
 		}
 	}
