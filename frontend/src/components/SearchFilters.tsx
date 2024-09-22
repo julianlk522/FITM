@@ -1,25 +1,30 @@
 import { effect, useSignal } from '@preact/signals'
 import { useState } from 'preact/hooks'
-import type { Period } from '../types'
+import type { Period, SortMetric } from '../types'
 import SearchCat from './SearchCats'
 import './SearchFilters.css'
 import SearchPeriod from './SearchPeriod'
+import SearchSortBy from './SearchSortBy'
 
 interface Props {
-	InitialCats: string[] | undefined
 	InitialPeriod: Period
+	InitialSortBy: SortMetric
+	InitialCats: string[] | undefined
 }
 
 export default function SearchFilters(props: Props) {
 	const [period, set_period] = useState<Period>(props.InitialPeriod)
+	const [sort_by, set_sort_by] = useState<SortMetric>(props.InitialSortBy)
 	const [cats, set_cats] = useState<string[]>(props.InitialCats ?? [])
 
 	// set search URL based on period and cats
 	const base_URL = `/top`
 	let search_URL = base_URL
+
 	if (cats.length) {
 		search_URL += `?cats=${cats.join(',')}`
 	}
+
 	if (period !== 'all') {
 		if (cats.length) {
 			search_URL += `&period=${period}`
@@ -28,15 +33,33 @@ export default function SearchFilters(props: Props) {
 		}
 	}
 
-	// pass added/deleted_cat signals to allow modifying cats state in SearchCat.tsx
-	const added_cat = useSignal<string | undefined>(undefined)
-	const deleted_cat = useSignal<string | undefined>(undefined)
+	if (sort_by !== 'rating') {
+		if (cats.length || period !== 'all') {
+			search_URL += `&sort_by=${sort_by}`
+		} else {
+			search_URL += `?sort_by=${sort_by}`
+		}
+	}
 
 	// pass changed_period to SearchPeriod.tsx to allow modifying period state in SearchFilters.tsx
 	const changed_period = useSignal<Period>(props.InitialPeriod)
 
-	// Check for added cat, set state accordingly
+	// pass changed_sort_by to SearchSortBy.tsx to allow modifying sort_by state in SearchFilters.tsx
+	const changed_sort_by = useSignal<SortMetric>(props.InitialSortBy)
+
+	// pass added/deleted_cat signals to allow modifying cats state in SearchCat.tsx
+	const added_cat = useSignal<string | undefined>(undefined)
+	const deleted_cat = useSignal<string | undefined>(undefined)
+
+	// Check for update period / sort_by / cats, set state accordingly
 	effect(() => {
+		if (changed_period.value) {
+			set_period(changed_period.value)
+		}
+		if (changed_sort_by.value) {
+			set_sort_by(changed_sort_by.value)
+		}
+
 		if (added_cat.value?.length) {
 			const new_cat = added_cat.value
 			set_cats((c) => [...c, new_cat])
@@ -44,8 +67,6 @@ export default function SearchFilters(props: Props) {
 		} else if (deleted_cat.value) {
 			set_cats((c) => c.filter((cat) => cat !== deleted_cat.value))
 			deleted_cat.value = undefined
-		} else if (changed_period.value) {
-			set_period(changed_period.value)
 		}
 	})
 
@@ -58,6 +79,12 @@ export default function SearchFilters(props: Props) {
 					SelectedPeriod={period}
 					SetPeriodSignal={changed_period}
 				/>
+
+				<SearchSortBy
+					SelectedSortBy={sort_by}
+					SetSortBySignal={changed_sort_by}
+				/>
+
 				<SearchCat
 					InitialCats={props.InitialCats ?? []}
 					AddedSignal={added_cat}

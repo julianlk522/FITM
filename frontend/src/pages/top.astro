@@ -7,10 +7,12 @@ import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constan
 import BaseLayout from '../layouts/BaseLayout.astro'
 import {
 Periods,
+SortMetrics,
 type CatCount,
 type Contributor,
 type PaginatedLinks,
 type Period,
+type SortMetric,
 } from '../types'
 import fetch_with_handle_redirect from '../util/fetch_with_handle_redirect'
 
@@ -19,14 +21,6 @@ const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
 
 // Params
-let page = 1
-if (Astro.url.searchParams.get('page')) {
-	page = parseInt(Astro.url.searchParams.get('page') as string)
-}
-let cats: string | undefined
-if (Astro.url.searchParams.get('cats')) {
-	cats = Astro.url.searchParams.get('cats') as string
-}
 let period: Period = 'all'
 if (
 	Astro.url.searchParams.get('period') &&
@@ -36,32 +30,64 @@ if (
 ) {
 	period = Astro.url.searchParams.get('period') as Period
 }
+let sort_by: SortMetric = 'rating'
+if (
+	Astro.url.searchParams.get('sort_by') && (SortMetrics as readonly string[]).includes(
+		Astro.url.searchParams.get('sort_by') as SortMetric
+	)) {
+		sort_by = Astro.url.searchParams.get('sort_by') as SortMetric
+	}
+let cats: string | undefined
+if (Astro.url.searchParams.get('cats')) {
+	cats = Astro.url.searchParams.get('cats') as string
+}
+let page = 1
+if (Astro.url.searchParams.get('page')) {
+	page = parseInt(Astro.url.searchParams.get('page') as string)
+}
 
 // Get links
 let links_url = LINKS_ENDPOINT
 
-let has_period = false
-if (period !== 'all') {
-	has_period = true
-	links_url += `?period=${period}`
-}
+// edit URL params accordingly
+// cats
 let has_cats = false
 if (cats) {
 	has_cats = true
+	links_url += `?cats=${cats}`
+}
 
-	if (has_period) {
-		links_url += `&cats=${cats}`
+// period
+let has_period = false
+if (period !== 'all') {
+	has_period = true
+
+	if (has_cats) {
+		links_url += `&period=${period}`
 	} else {
-		links_url += `?cats=${cats}`
+		links_url += `?period=${period}`
 	}
 }
-if (has_period || has_cats) {
+
+// sort by
+let has_sort_by = false
+if (sort_by !== 'rating') {
+	has_sort_by = true
+
+	if (has_cats || has_period) {
+		links_url += `&sort_by=${sort_by}`
+	} else {
+		links_url += `?sort_by=${sort_by}`
+	}
+}
+
+// page
+if (has_cats || has_period || has_sort_by) {
 	links_url += `&page=${page}`
 } else {
 	links_url += `?page=${page}`
 }
 
-// Links
 const get_links_resp = await (token
 	? fetch_with_handle_redirect(links_url, {
 			headers: { Authorization: `Bearer ${token}` },
@@ -123,6 +149,8 @@ if (links && links.length) {
 	top_contributors = await contributors_resp.Response.json()
 }
 
+const page_title = (cats ? cats : "Top") + (sort_by !== 'rating' ? " (Newest)" : " (Rating)")
+
 const is_only_page = 
 	page === 1
 	&& data.NextPage === -1
@@ -131,14 +159,13 @@ const is_only_page =
 
 <BaseLayout Title='Top Links / Cats / Contributors'>
 	<main>
-		<h1>
-			Top (Rating)
-		</h1>
+		<h1>{page_title}</h1>
 		
 		<SearchFilters 
 			client:load 
-			InitialCats={cats?.split(',')}
 			InitialPeriod={period}
+			InitialSortBy={sort_by}
+			InitialCats={cats?.split(',')}
 		/>
 
 		{
@@ -151,7 +178,7 @@ const is_only_page =
 								{top_cats.map((cat) => (
 									<li>
 										<a
-											href={`/top?cats=${cat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
+											href={`/top?cats=${cat.Category}${period !== 'all' ? `&period=${period}` : ''}${sort_by !== 'rating' ? `&sort_by=newest` : ''}`}
 										>
 											{cat.Category}
 										</a>
@@ -168,7 +195,7 @@ const is_only_page =
 									{top_subcats.map((subcat) => (
 										<li>
 											<a
-												href={`/top?cats=${cats + ',' + subcat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
+												href={`/top?cats=${cats + ',' + subcat.Category}${period !== 'all' ? `&period=${period}` : ''}${sort_by !== 'rating' ? `&sort_by=newest` : ''}`}
 											>
 												{subcat.Category}
 											</a>

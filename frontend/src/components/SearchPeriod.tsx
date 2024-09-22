@@ -15,7 +15,7 @@ export default function SearchPeriod(props: Props) {
 	}
 	return (
 		<div>
-			<label id='period-search' for='period'>
+			<label id='search-period' for='period'>
 				Period:
 			</label>
 			<select

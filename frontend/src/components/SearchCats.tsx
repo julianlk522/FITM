@@ -140,7 +140,7 @@ export default function SearchCat(props: Props) {
 
 	return (
 		<div>
-			<label id='cats-search' for='cats'>
+			<label id='search-cats' for='cats'>
 				Cats:
 			</label>
 			<input
@@ -155,8 +155,9 @@ export default function SearchCat(props: Props) {
 			/>
 			<input
 				id='add-cat-filter'
+				title='Add inputed cat to search filters'
 				type='submit'
-				value='Add Cat'
+				value='Add'
 				onClick={add_cat}
 			/>
 

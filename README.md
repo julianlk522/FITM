@@ -3,13 +3,7 @@
 ## Todos
 
 In order of importance:
-    1. Allow viewing newest links per period instead of top
-        -"Sort By" dropdown (SearchSort.tsx) in SearchFilters
-        -add optional "sort" param to GetTopLinks handler
-            -rating (default)
-            -newest
-            -num tags / summaries? (probably not; not very useful)
-    2. More
+    1. More
 
 ### Features
 

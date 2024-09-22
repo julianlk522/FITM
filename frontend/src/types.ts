@@ -49,6 +49,9 @@ type PaginatedLinks = {
 const Periods = ['day', 'week', 'month', 'year', 'all'] as const
 type Period = (typeof Periods)[number]
 
+const SortMetrics = ['rating', 'newest'] as const
+type SortMetric = (typeof SortMetrics)[number]
+
 // TAG
 type Tag = {
 	ID: number
@@ -105,7 +108,7 @@ type TreasureMap = FilteredTreasureMap & { Profile: Profile }
 
 const tmap_sections = ['Submitted', 'Copied', 'Tagged'] as const
 
-export { Periods, is_error_response, tmap_sections }
+export { Periods, SortMetrics, is_error_response, tmap_sections }
 export type {
 	CatCount,
 	Contributor,
@@ -116,6 +119,7 @@ export type {
 	Period,
 	Profile,
 	ResponseAndRedirect,
+	SortMetric,
 	Summary,
 	SummaryPage,
 	Tag,
