@@ -1,9 +1,10 @@
+import { effect, useSignal } from '@preact/signals'
 import { useState } from 'preact/hooks'
 import { LINKS_ENDPOINT } from '../../constants'
 import * as types from '../../types'
 import { is_error_response } from '../../types'
 import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
-import NewTag from '../Tag/NewTag'
+import SearchCats from '../Search/SearchCats'
 import NewLink from './NewLink'
 import './NewLinks.css'
 interface Props {
@@ -124,6 +125,22 @@ export default function NewLinks(props: Props) {
 		return
 	}
 
+	// pass added/deleted_cat signals to allow modifying cats state in SearchCats.tsx
+	const added_cat = useSignal<string | undefined>(undefined)
+	const deleted_cat = useSignal<string | undefined>(undefined)
+
+	// Check for updated cats, set state accordingly
+	effect(() => {
+		if (added_cat.value?.length) {
+			const new_cat = added_cat.value
+			set_cats((c) => [...c, new_cat])
+			added_cat.value = undefined
+		} else if (deleted_cat.value) {
+			set_cats((c) => c.filter((cat) => cat !== deleted_cat.value))
+			deleted_cat.value = undefined
+		}
+	})
+
 	return (
 		<>
 			<section id='new-link'>
@@ -149,10 +166,10 @@ export default function NewLinks(props: Props) {
 					/>
 					<label for='summary'>Summary (optional)</label>
 					<textarea id='summary' name='summary' rows={3} cols={50} />
-					<NewTag
-						Cats={cats}
-						SetCats={set_cats}
-						SetError={set_error}
+					<SearchCats
+						InitialCats={[]}
+						AddedSignal={added_cat}
+						DeletedSignal={deleted_cat}
 					/>
 					<input id='submit-new-link' type='submit' value='Submit' />
 				</form>

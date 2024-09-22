@@ -1,7 +1,7 @@
 import { effect, useSignal } from '@preact/signals'
 import { useState } from 'preact/hooks'
 import type { Period, SortMetric } from '../../types'
-import SearchCat from './SearchCats'
+import SearchCats from './SearchCats'
 import './SearchFilters.css'
 import SearchPeriod from './SearchPeriod'
 import SearchSortBy from './SearchSortBy'
@@ -47,7 +47,7 @@ export default function SearchFilters(props: Props) {
 	// pass changed_sort_by to SearchSortBy.tsx to allow modifying sort_by state in SearchFilters.tsx
 	const changed_sort_by = useSignal<SortMetric>(props.InitialSortBy)
 
-	// pass added/deleted_cat signals to allow modifying cats state in SearchCat.tsx
+	// pass added/deleted_cat signals to allow modifying cats state in SearchCats.tsx
 	const added_cat = useSignal<string | undefined>(undefined)
 	const deleted_cat = useSignal<string | undefined>(undefined)
 
@@ -85,7 +85,7 @@ export default function SearchFilters(props: Props) {
 					SetSortBySignal={changed_sort_by}
 				/>
 
-				<SearchCat
+				<SearchCats
 					InitialCats={props.InitialCats ?? []}
 					AddedSignal={added_cat}
 					DeletedSignal={deleted_cat}

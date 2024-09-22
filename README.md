@@ -5,7 +5,6 @@
 In order of importance:
     0. add tag cat search to all relevant places where it is missing
         -new tag
-        -new link
     0.5. replace title double quotes if they already exist
     1. refactors / purge duplicate code
     2. More

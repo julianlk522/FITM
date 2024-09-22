@@ -13,7 +13,7 @@ interface Props {
 	DeletedSignal: Signal<string | undefined> | undefined
 }
 
-export default function SearchCat(props: Props) {
+export default function SearchCats(props: Props) {
 	const [snippet, set_snippet] = useState<string>('')
 	const [selected_cats, set_selected_cats] = useState<string[]>(
 		props.InitialCats
@@ -51,7 +51,7 @@ export default function SearchCat(props: Props) {
 			set_recommended_cats([])
 			set_error(error instanceof Error ? error.message : String(error))
 		}
-	}, [snippet, selected_cats])
+	}, [snippet])
 
 	const timeout_ref = useRef<number | null>(null)
 	const DEBOUNCE_INTERVAL = 500
@@ -122,6 +122,8 @@ export default function SearchCat(props: Props) {
 			// send signal to parent SearchFilters.tsx
 			if (!props.AddedSignal) return
 			props.AddedSignal.value = new_cat
+
+			set_error(undefined)
 		} else if (deleted_cat.value) {
 			const to_delete = deleted_cat.value
 			set_selected_cats((c) => c.filter((cat) => cat !== to_delete))
@@ -135,13 +137,15 @@ export default function SearchCat(props: Props) {
 			set_recommended_cats((c) =>
 				c?.filter((cat) => cat.Category !== to_delete)
 			)
+
+			set_error(undefined)
 		}
 	})
 
 	return (
 		<div>
 			<label id='search-cats' for='cats'>
-				Cats:
+				Tag Cats:
 			</label>
 			<input
 				type='text'
