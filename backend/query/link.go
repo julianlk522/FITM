@@ -178,7 +178,6 @@ func (l *TopLinks) SortBy(order_by string) *TopLinks {
 	// newest
 	// rating (default)
 
-	// any other value should use default but set TopLinks.Error
 	updated_order_by_clause := `
 	ORDER BY `
 	switch order_by {
@@ -187,7 +186,6 @@ func (l *TopLinks) SortBy(order_by string) *TopLinks {
 		case "rating":
 			updated_order_by_clause += "like_count DESC, summary_count DESC, submit_date DESC"
 		default:
-			updated_order_by_clause += "like_count DESC, summary_count DESC, submit_date DESC"
 			l.Error = fmt.Errorf("invalid order_by value")
 			return l
 	}

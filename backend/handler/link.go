@@ -34,6 +34,12 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 		links_sql = links_sql.DuringPeriod(period_params)
 	}
 
+	// sort by
+	sort_params := r.URL.Query().Get("sort_by")
+	if sort_params != "" {
+		links_sql = links_sql.SortBy(sort_params)
+	}
+
 	// auth fields
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if req_user_id != "" {

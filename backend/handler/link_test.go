@@ -24,6 +24,7 @@ func TestGetLinks(t *testing.T) {
 			Params: map[string]string{
 				"cats": "",
 				"period": "",
+				"sort_by": "",
 				"req_user_id": "",
 				"req_login_name": "",
 			},
@@ -34,6 +35,7 @@ func TestGetLinks(t *testing.T) {
 			Params: map[string]string{
 				"cats": "",
 				"period": "",
+				"sort_by": "",
 				"req_user_id": "",
 				"req_login_name": "",
 			},
@@ -44,6 +46,7 @@ func TestGetLinks(t *testing.T) {
 			Params: map[string]string{
 				"cats": "umvc3",
 				"period": "",
+				"sort_by": "",
 				"req_user_id": "",
 				"req_login_name": "",
 			},
@@ -54,6 +57,29 @@ func TestGetLinks(t *testing.T) {
 			Params: map[string]string{
 				"cats": "umvc3",
 				"period": "day",
+				"sort_by": "",
+				"req_user_id": "",
+				"req_login_name": "",
+			},
+			Page: 1,
+			Valid: true,
+		},
+		{
+			Params: map[string]string{
+				"cats": "umvc3",
+				"period": "week",
+				"sort_by": "newest",
+				"req_user_id": "",
+				"req_login_name": "",
+			},
+			Page: 1,
+			Valid: true,
+		},
+		{
+			Params: map[string]string{
+				"cats": "umvc3",
+				"period": "month",
+				"sort_by": "rating",
 				"req_user_id": "",
 				"req_login_name": "",
 			},
@@ -64,6 +90,7 @@ func TestGetLinks(t *testing.T) {
 			Params: map[string]string{
 				"cats": "umvc3",
 				"period": "poop",
+				"sort_by": "",
 				"req_user_id": "",
 				"req_login_name": "",
 			},
@@ -74,6 +101,7 @@ func TestGetLinks(t *testing.T) {
 			Params: map[string]string{
 				"cats": "",
 				"period": "",
+				"sort_by": "",
 				"req_user_id": "3",
 				"req_login_name": "jlk",
 			},
@@ -85,11 +113,24 @@ func TestGetLinks(t *testing.T) {
 			Params: map[string]string{
 				"cats": "",
 				"period": "",
+				"sort_by": "",
 				"req_user_id": "",
 				"req_login_name": "",
 			},
 			Page: -1,
 			Valid: true,
+		},
+		// fails: sort_by must be either "rating" or "newest"
+		{
+			Params: map[string]string{
+				"cats": "",
+				"period": "",
+				"sort_by": "invalid",
+				"req_user_id": "",
+				"req_login_name": "",
+			},
+			Page: 1,
+			Valid: false,
 		},
 	}
 
