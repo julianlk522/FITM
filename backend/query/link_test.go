@@ -3,9 +3,12 @@ package query
 import (
 	"database/sql"
 	"testing"
+	"time"
 
 	"fmt"
 	"strings"
+
+	"github.com/julianlk522/fitm/model"
 )
 
 // Links
@@ -168,6 +171,84 @@ func TestLinksDuringPeriod(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer rows.Close()
+	}
+}
+
+func TestLinksSortBy(t *testing.T) {
+	var test_sorts = []struct {
+		Sort  string
+		Valid bool
+	}{
+		{"newest", true},
+		{"rating", true},
+		{"invalid", false},
+	}
+
+	for _, ts := range test_sorts {
+		links_sql := NewTopLinks().SortBy(ts.Sort)
+		if ts.Valid && links_sql.Error != nil {
+			t.Fatal(links_sql.Error)
+		} else if !ts.Valid && links_sql.Error == nil {
+			t.Fatalf("expected error for sort %s", ts.Sort)
+		}
+
+		rows, err := TestClient.Query(links_sql.Text)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer rows.Close()
+		
+		// scan links
+		var links []model.Link
+		for rows.Next() {
+			link := model.Link{}
+			err := rows.Scan(
+				&link.ID,
+				&link.URL,
+				&link.SubmittedBy,
+				&link.SubmitDate,
+				&link.Cats,
+				&link.Summary,
+				&link.SummaryCount,
+				&link.TagCount,
+				&link.LikeCount,
+				&link.ImgURL,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+			links = append(links, link)
+		}
+
+		if !ts.Valid {
+			continue
+		}
+
+		// verify results correctly sorted
+		if ts.Sort == "rating" {
+			var last_like_count int64 = 999 // arbitrary high number
+			for _, link := range links {
+				if link.LikeCount > last_like_count {
+					t.Fatalf("link like count %d above previous min %d", link.LikeCount, last_like_count)
+				} else if link.LikeCount < last_like_count {
+					last_like_count = link.LikeCount
+				}
+			}
+		} else if ts.Sort == "newest" {
+			last_date := time.Now() // most recent
+			for _, link := range links {
+				sd, err := time.Parse("2006-01-02T15:04:05Z07:00", link.SubmitDate)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if sd.After(last_date) {
+					t.Fatalf("link date %s after last date %s", sd, last_date)
+				} else if sd.Before(last_date) {
+					last_date = sd
+				}
+			}
+		}
 	}
 }
 

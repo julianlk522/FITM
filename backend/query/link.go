@@ -172,6 +172,36 @@ func (l *TopLinks) DuringPeriod(period string) *TopLinks {
 	return l
 }
 
+func (l *TopLinks) SortBy(order_by string) *TopLinks {
+
+	// acceptable order_by values:
+	// newest
+	// rating (default)
+
+	// any other value should use default but set TopLinks.Error
+	updated_order_by_clause := `
+	ORDER BY `
+	switch order_by {
+		case "newest":
+			updated_order_by_clause += "submit_date DESC, like_count DESC, summary_count DESC"
+		case "rating":
+			updated_order_by_clause += "like_count DESC, summary_count DESC, submit_date DESC"
+		default:
+			updated_order_by_clause += "like_count DESC, summary_count DESC, submit_date DESC"
+			l.Error = fmt.Errorf("invalid order_by value")
+			return l
+	}
+
+	l.Text = strings.Replace(
+		l.Text,
+		LINKS_ORDER_BY,
+		updated_order_by_clause,
+		1,
+	)
+
+	return l
+}
+
 func (l *TopLinks) AsSignedInUser(req_user_id string) *TopLinks {
 
 	// append auth CTEs
