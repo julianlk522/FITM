@@ -3,12 +3,15 @@
 ## Todos
 
 In order of importance:
+    0.25. remove tag cats after submitting link
     0.5. replace title double quotes if they already exist
     1. refactors / purge duplicate code
     2. More
     3. find some way to cache the stupid github.com/lestrrat-go/httpcc download
     4. replace spellfix transactions with triggers
     5. use user summaries in tmap if they exist
+    6. make sure global_cats_spellfix is synced
+        - e.g., "web dev" shows 1 result but seems to not actually have any...
 
 ### Features
 

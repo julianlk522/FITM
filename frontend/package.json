@@ -10,11 +10,11 @@
 		"astro": "astro"
 	},
 	"dependencies": {
-		"@astrojs/check": "^0.7.0",
-		"@astrojs/netlify": "^5.5.1",
-		"@astrojs/preact": "^3.5.0",
+		"@astrojs/check": "^0.9.3",
+		"@astrojs/netlify": "^5.5.3",
+		"@astrojs/preact": "^3.5.3",
 		"@netlify/edge-functions": "^2.11.0",
-		"astro": "^4.10.3",
+		"astro": "^4.15.9",
 		"jsonwebtoken": "^9.0.2",
 		"preact": "^10.22.0",
 		"typescript": "^5.4.5"
