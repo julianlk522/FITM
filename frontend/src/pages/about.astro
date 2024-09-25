@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets'
 import cornucopia from '../../public/cornucopia.png'
+import search_diagram from '../../public/fitm_search_diagram.webp'
 import ScrollUp from '../components/ScrollUp.astro'
 import BaseLayout from '../layouts/BaseLayout.astro'
 ---
@@ -8,7 +9,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 <BaseLayout Title='About FITM'>
 	<main>
 		<h1>About</h1>
-		<Image src={cornucopia} alt='a cornucopia of links' />
+		<Image id="cornucopia" src={cornucopia} alt='a cornucopia of links' />
 		<section>
 			<p>
 				The <strong>Flexible Internet Treasure Map (FITM)</strong>
@@ -84,7 +85,9 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 
 			<p>Please don't be alarmed by mention of "stacking cats" or things of that nature. No animals were harmed in making this site.</p>
 
-			<p>In FITM searches, the top (most frequent) cats will be listed along with returned links matching your desired parameters. Searches with cat filters return top <em>overlapping</em> cats. In other words, the most frequent cats found across the subsection of links returned in your search, not including your given cat filter(s). Tentatively these are called subcats.</p>
+			<p>In FITM searches, the top (most frequent) cats will be listed along with returned links matching your desired parameters. Searches with cat filters return top <em>subcats</em>. In other words, the most frequent cats found across the subsection of links returned in your search, not including your given cat filter(s).</p>
+
+			<Image id="search-diagram" src={search_diagram} alt='a diagram of how FITM searches work' quality="high" />
 
 			<h3 id="core-actions" class="subsection">Core Actions</h3>
 			<ol>
@@ -199,7 +202,14 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 	img {
 		display: flex;
 		margin: 0 auto;
+	}
+
+	img#cornucopia {
 		max-height: 150px;
+	}
+	img#search-diagram {
+		margin-top: 2rem;
+		max-height: 500px;
 	}
 	.subsection {
 		margin-top: 2rem;
@@ -210,7 +220,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 	}
 
 	@media (min-width: 680px) {
-		img {
+		img#cornucopia {
 			max-height: 200px;
 		}
 	}
