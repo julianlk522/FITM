@@ -3,13 +3,14 @@
 ## Todos
 
 In order of importance:
-    1. refactors / purge duplicate code
-    2. More
-    3. find some way to cache the stupid github.com/lestrrat-go/httpcc download
-    4. replace spellfix transactions with triggers
-    5. use user summaries in tmap if they exist
-    6. make sure global_cats_spellfix is synced
-        - e.g., "web dev" shows 1 result but seems to not actually have any...
+    1. prevent "Just a moment..." auto summary
+    2. make sure that user summary is always used unless auto summary has more likes
+    3. use user summaries in tmap if they exist
+    4. refactors / purge duplicate code
+    5. More
+    6. NSFW tags
+        -hide from top / tmap unless you check a box or something
+    7. find some way to cache the stupid github.com/lestrrat-go/httpcc download
 
 ### Features
 
@@ -27,15 +28,14 @@ In order of importance:
 
 
 random stuff
-- prevent "Just a moment..." auto summary
 - improve visual for global tag calculation
-- make sure that user summary is always used unless auto summary has more likes
 
 ### Code Quality
 
 -Refactors for simplicity / accuracy
     -replace spellfix transactions with triggers
         -(that way can make changes over CLI without worrying about unsync)
+        -too complicated for now ... workaround might be just resetting on cron job or something
     -Top Cats / Top Links / etc. components
     -remove needless _limit() methods
     -move tmap cats json above links
@@ -49,15 +49,9 @@ random stuff
 
 ### Features
 
--use user summaries in tmap if they exist
 -client:visible for tmap
--Look into broken auto og:image
-    -e.g., coolers.co image should not have been added with invalid link
-    -https://rss.com/blog/how-do-rss-feeds-work/
--SQL prepared statements
-    -more important if truly does help prevent injection... verify
--Favorite tmaps?
--Redis caching
+-use user summaries in tmap if they exist
+-favorite / followed tmaps?
 -Show number of copies along with number of likes in frontend
 -Better way to visualize how Global Cats are determined?
 -Guidelines / heuristics for avoiding "marooned" tags
@@ -65,8 +59,6 @@ random stuff
     -always use "and" instead of "&" unless part of proper noun
     -describe the containing group, not the object if one of many
         -e.g., channels not channel
--Optional summaries that can be edited if you submit / like enough links with a certain cat?
-    -i.e., if you submit enough links with cat "FOSS" you get to add a wiki-like summary of "FOSS" that appears on the top page when it is applied alone
 -Tmap period filter?
 -Improve frontend A11y/semantic markup/looks
     -subtitle probably should not be h2
@@ -76,16 +68,22 @@ random stuff
         probably not realistic
     -Tiny bit more space between like/copy buttons on mobile
     -maybe go through BrowserStack and see if anything is horrendous
+-Redis caching
 -Implement RemoveProfilePic handler (securely) for when a user somehow ends up with a PFP that isn't found in the DB
     -should be basically impossible so not high priority
--Audit CalculateGlobalCategories algo
+-Optional summaries that can be edited if you submit / like enough links with a certain cat?
+    -i.e., if you submit enough links with cat "FOSS" you get to add a wiki-like summary of "FOSS" that appears on the top page when it is applied alone
+-Audit CalculateGlobalCategories algo?
 -Improve profile pic upload?
 
 ### Code Quality
 
--robots.txt
--VPS SSH key
 -find way to cache github.com/lestrrat-go/httpcc in GHA workflow
+-Look into broken auto og:image
+    -e.g., coolers.co image should not have been added with invalid link
+    -https://rss.com/blog/how-do-rss-feeds-work/
+-SQL prepared statements
+    -more important if truly does help prevent injection... verify
 -Ensure accurate / helpful http response codes
     -e.g., tag page for invalid link id returns 500 (should be 404)
     -replace "message":"deleted" with just 204
@@ -96,12 +94,7 @@ random stuff
     -duplicate handle_redirect() helpers on tag page / summary page
     -BuildTagPage helper to declutter GetTagPage handler
     -ScanTmapLinks tests
-    -helpers for DB actions
-        -(new link, new summary, update summary, etc.)
-    -Fix SQL identifiers to use double quotes (?)
-        -verify first
-    -Move backend validation to /model unless using additional controller logic, e.g., JWT
-    -repeat check for "." in cats
+    -Fix SQL identifiers to use "" and string literals to use ''
     -repeat redirect_to cookie logic using window.location.pathname
     -repeat delete modals
         -link, tag, tmap pfp
@@ -110,6 +103,8 @@ random stuff
         -actually pretty clunky to achieve (break apart all global/user_cats_fts into words each time)
             -maybe consider revisiting if global/user_cats_fts vocab created for some reason later
         -also not that important since input is limited to user's tmap links, not entire links table. not going to be processing any more than a few hundred or thousand tags at absolute most (and not for a looong time). so perf differential is trivial
+    -helpers for DB actions
+        -(new link, new summary, update summary, etc.)
     -os.LookupEnv
 -Other tests
     -finish handlers
@@ -119,8 +114,10 @@ random stuff
     -middleware
         -test err responses are logged to $FITM_ERR_LOG_FILE
     -model utils
+-VPS SSH key
 -improve cat count lookup speed with fts5vocab table
     -(row type)
+-Ensure backend validation is all in /model unless using additional controller logic, e.g., JWT
 -Ensure consistent language:
     -get (request and retrieve things from an external source)
     -scan (copy rows from sql to structs)
@@ -128,13 +125,6 @@ random stuff
     -assign (take some data and a pointer and copy the data to the referenced var)
     -obtain (get, extract, assign)
     -resolve (take in a possibly incomplete form and translate to a correct form)
-
-
-## Why?
-
-Because there's a lot of good shit on the internet that's hard to be aware of and, to a lesser extent, hard to find even when you know about it.
-
-Internet users deserve a portal that provides them an unbiased, direct view into the web's useful contents.
 
 ## Why is it different and better than existing alternatives?
 
@@ -179,6 +169,7 @@ Internet users deserve a portal that provides them an unbiased, direct view into
     - other firewall problems:
         - allow only implicit outbound SSH so git pull possible (and explicit inbound for ad hoc connections from trusted machine)
 - LetsEncrypt / Certbot / NameCheap SSL
+    - Certbot CLI
 - tmux
     - detach from / reattach to SSH session to safely exit terminal and leave running
 - YouTube Data API
@@ -210,3 +201,5 @@ Internet users deserve a portal that provides them an unbiased, direct view into
     - compromise by adding multiple IP-based rate limits to be shared among frontend and all users making requests from client, plus app-wide hard limit
         - 1min timeframe for ordinary usage limits,
         - 1sec timeframe for quick abuse resolution
+- Bot traffic
+    - add Netlify edge func to identify and block bot user agents
