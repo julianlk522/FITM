@@ -3,7 +3,6 @@
 ## Todos
 
 In order of importance:
-    0.25. remove tag cats after submitting link
     0.5. replace title double quotes if they already exist
     1. refactors / purge duplicate code
     2. More
@@ -30,8 +29,8 @@ In order of importance:
 
 random stuff
 - replace double quotes in page title if it includes them
-- new tag cat search
 - prevent "Just a moment..." auto summary
+- improve visual for global tag calculation
 
 ### Code Quality
 

@@ -170,6 +170,7 @@ export default function NewLinks(props: Props) {
 						InitialCats={[]}
 						AddedSignal={added_cat}
 						DeletedSignal={deleted_cat}
+						SubmittedLinks={submitted_links}
 					/>
 					<input id='submit-new-link' type='submit' value='Submit' />
 				</form>

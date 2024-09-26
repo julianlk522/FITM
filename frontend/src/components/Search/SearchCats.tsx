@@ -14,6 +14,7 @@ interface Props {
 	InitialCats: string[]
 	AddedSignal: Signal<string | undefined> | undefined
 	DeletedSignal: Signal<string | undefined> | undefined
+	SubmittedLinks?: types.Link[]
 }
 
 export default function SearchCats(props: Props) {
@@ -147,6 +148,12 @@ export default function SearchCats(props: Props) {
 			set_error(undefined)
 		}
 	})
+
+	useEffect(() => {
+		if (props.SubmittedLinks && props.SubmittedLinks.length) {
+			set_snippet("")
+		}
+	}, [props.SubmittedLinks])
 
 	return (
 		<div id='search-cats-container'>
