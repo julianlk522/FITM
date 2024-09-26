@@ -1,7 +1,8 @@
 ---
 import { Image } from 'astro:assets'
 import cornucopia from '../../public/cornucopia.png'
-import search_diagram from '../../public/fitm_search_diagram.webp'
+import search_diagram from '../../public/search_diagram.webp'
+import search_diagram_narrow from '../../public/search_diagram_narrow.webp'
 import ScrollUp from '../components/ScrollUp.astro'
 import BaseLayout from '../layouts/BaseLayout.astro'
 ---
@@ -26,58 +27,6 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 		</section>
 
 		<section>
-			<h3>"But Search Engines?"</h3>
-			<p>
-				Search engines help a bit with indexing the web,
-				but they don't think like people so they&apos;re limited as personal aides.
-			</p>
-			<p>
-				For example, high <abbr title="Search Engine Optimization">SEO</abbr> is not always relevant to content quality.
-				Awesome things on the web are sometimes absent in search results because they are served unencrypted
-				or in less semantic HTML markup. Users who care more
-				about result novelty than presentation don&apos;t benefit from this approach.
-			</p>
-			<p>
-				Search engines also are incentivized to promote results from
-				high-paying bidders. Maybe this is a
-				feature, not a bug, depending on who you ask. Do big budgets and marketing passion reliably produce high quality web content? If you're not sure about that, you may be in the right place. (You will never see ads on FITM).
-			</p>
-			<p>
-				Arguably, a simple enough proxy for a link's quality is the number of
-				people who decide, for one reason or another, to upvote it. It's then trivial to find good content by sorting on like count.
-			</p>
-			<p>
-				But, of course, results are also usually only meant to be about a specific topic (you know, the one you searched for). In FITM, links are tagged with 1+ <em><a href="#cats">cats</a></em>. You can stack desired cats in
-				searches to efficiently and reliably find pages that match some
-				theme(s).
-			</p>
-		</section>
-
-		<section>
-			<h3>"Reddit?"</h3>
-			<p>
-				Some might argue that this purpose has been achieved (done well,
-				and for a long time, even) by Reddit.
-			</p>
-			<p>
-				Reddit is an invaluable resource
-				and a blessing to the internet. It is an inspiration to FITM. But they are
-				different in that Reddit is
-				primarily a <em>communication</em> hub while FITM is primarily a <em>data</em> hub. FITM is not meant for topical
-				discussion, only web resource sharing and
-				discovery (with a few text submission actions in support of that goal: see <a href="#core-actions">Core Actions</a> below).
-			</p>
-			<p>
-				FITM also aims to use cat-stacking to serve users
-				interested in <em>intersecting</em> themes while Reddit is home
-				to communities defined by a <em>single</em> theme. Traditional WWW
-				searches make it hard to find sites that appeal to multiple
-				interests at once, especially if they aren't common or obviously
-				related.
-			</p>
-		</section>
-
-		<section>
 			<h2>How FITM Works</h2>
 
 			<h3 id="cats" class="subsection">Cats?</h3>
@@ -89,6 +38,8 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 
 			<Image id="search-diagram" src={search_diagram} alt='a diagram of how FITM searches work' quality="high" />
 
+			<Image id="search-diagram-narrow" src={search_diagram_narrow} alt='a diagram of how FITM searches work' quality="high" />
+
 			<h3 id="core-actions" class="subsection">Core Actions</h3>
 			<ol>
 				<li><strong>Summarize</strong></li>
@@ -96,10 +47,6 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 				<li><strong>Like</strong></li>
 				<li><strong>Tag</strong></li>
 			</ol>
-
-			<p>
-				These will help you to develop valuable treasure maps, coveted across the lands.
-			</p>
 
 			<h3 class="subsection">Summarize</h3>
 			<p>
@@ -153,9 +100,9 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 			<p>
 				Each link is also associated with a <em>global tag</em>,
 				which filters the results of searches made outside of any single
-				user's map. For example, on the <a
-				href='/top?period=week'>Top Rated (Week)</a
-			> page.
+				user's map (i.e., on the <a
+				href='/top'>Top</a
+			> page).
 			</p>
 			<p>
 				<em>Global tags</em> are calculated automatically by the age of every
@@ -174,21 +121,65 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 		</section>
 
 		<section>
+			<h2>What's the Point?</h2>
+			<p>Why should you use FITM? What problems does it address that existing search or sharing tools don't?</p>
+			<h3 class="subsection">Search Engines</h3>
+			<p>
+				Search engines help with indexing the web,
+				but they don't think like people so they&apos;re limited in ability to understand your wishes and make useful recommendations.
+			</p>
+			<p>
+				<abbr title="Search Engine Optimization">SEO</abbr> is not always relevant to content quality.
+				Awesome things on the web are sometimes absent in search results because they are served unencrypted,
+				or in less semantic HTML markup, or because they&apos;re a few years old. Or, maybe a site ranks highly given specific search terms but is otherwise quite hard to discover. How could you even know to search for something <a href="https://presidentialham.com/">like this</a>? (safe for work.) Users who care most
+				about result novelty than presentation don&apos;t necessarily benefit from SEO-driven rankings.
+			</p>
+			<p>
+				Search engines also are incentivized to promote results from
+				high-paying bidders. Maybe this is a
+				feature, not a bug, depending on who you ask. Do big budgets and marketing passion reliably produce high quality web content? If you're not sure about that, you may be in the right place. (You will never see ads on FITM).
+			</p>
+			<p>
+				Arguably, a simple enough proxy for a link's quality is the number of
+				<em>people</em> who decide, for one reason or another, to upvote it. It's then trivial to find good content by sorting on like count.
+			</p>
+			<p>
+				But, of course, like count alone is not enough. Searches are also generally only meant to be about a specific topic. In FITM, links are tagged with 1+ <em><a href="#cats">cats</a></em>. You can stack desired cats in
+				searches to efficiently and reliably find pages that match some
+				theme(s). You can also specify a time period (last day, week, month, or year) during which the returned links must have been posted.
+			</p>
+
+			<h3 class="subsection">Reddit</h3>
+			<p>
+				Some might argue that the goal of categorizing web content was achieved years ago by Reddit.
+			</p>
+			<p>
+				Reddit is an invaluable resource
+				and a blessing to the internet. It is an inspiration to FITM. But they are
+				different in that Reddit is
+				primarily a <em>communication</em> hub while FITM is primarily a <em>data</em> hub. FITM is not meant for topical
+				discussion, only web resource sharing and
+				discovery (with a few text submission actions in support of that goal: see <a href="#core-actions">Core Actions</a> above).
+			</p>
+			<p>
+				FITM also aims to use <em><a href="#cats">cat-stacking</a></em> to serve users
+				interested in <em>intersecting</em> themes while Reddit is home
+				to communities defined by a <em>single</em> theme. Traditional WWW
+				searches make it hard to find sites that appeal to multiple
+				interests at once, especially if they aren't common or obviously
+				related.
+			</p>
+		</section>
+
+		<section>
 			<h2>Additional Notes</h2>
 
 			<h3 id="global-tag-calculation" class="subsection">Global Tag Calculation</h3>
-			<p>Note: constructive criticism welcomed for this system. Please see the <a href="/feedback">feedback page</a> for FITM contact info.</p>
-			<p>For a cat to be added to link <code>L</code>'s' global tags, it must have a score &ge;25% of <code>L</code>'s' highest <em>cat score</em>.</p>
-			<p>Scores for cat <code>C</code> of link <code>L</code> are calculated as sum of scores from each occurence of <code>C</code> in one of <code>L</code>'s' tags, weighted by the number of cats in the tag containing the occurence.</p>
-			<p>Weights for tag <code>T</code> are calculated as <em>lifespan overlap percentage</em> of <code>T</code>, divided by <code>T</code>'s number of cats'. </p>
-			<p>Lifespan overlap percentage for tag <code>T</code> of link <code>L</code> is the percentage of <code>L</code>'s time on FITM that  <code>T</code> has remained in its current state since edits.</p>
-
-			<h3 class="subsection">Profile Pic Upload</h3>
-			<p>File format: .JPG, .JPEG, .PNG, .WEBP</p>
-			<p>File size: &le;10MB</p>
-			<p>
-				Aspect ratio: 0.5:1 &dash; 2:1
-			</p>
+			<p>Note: <a href="/feedback">constructive criticism welcomed</a> for this system.</p>
+			<p>For a cat to be added to link <code>L</code>'s global tags, it's <em>score</em> must be &ge;25% of the highest score among <code>L</code>'s cats.</p>
+			<p><em>Scores</em> for cat <code>C</code> of link <code>L</code> are calculated as the sum of scores from each occurence of <code>C</code> in one of <code>L</code>'s tags. Each score is weighted by the number of cats in the tag containing the occurence.</p>
+			<p>Weights for tag <code>T</code> are calculated as <em>lifespan overlap percentage</em> of <code>T</code>, divided by <code>T</code>'s number of cats. </p>
+			<p>Lifespan overlap percentage for tag <code>T</code> of link <code>L</code> is the percentage of <code>L</code>'s time on FITM that  <code>T</code> has remained in its current state since creation or last edit.</p>
 		</section>
 
 		<ScrollUp />
@@ -207,9 +198,13 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 	img#cornucopia {
 		max-height: 150px;
 	}
+	img#search-diagram-narrow,
 	img#search-diagram {
 		margin-top: 2rem;
 		max-height: 500px;
+	}
+	img#search-diagram {
+		display: none;
 	}
 	.subsection {
 		margin-top: 2rem;
@@ -222,6 +217,14 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 	@media (min-width: 680px) {
 		img#cornucopia {
 			max-height: 200px;
+		}
+
+		img#search-diagram-narrow {
+			display: none;
+		}
+
+		img#search-diagram {
+			display: block;
 		}
 	}
 </style>

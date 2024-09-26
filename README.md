@@ -31,6 +31,7 @@ In order of importance:
 random stuff
 - replace double quotes in page title if it includes them
 - new tag cat search
+- prevent "Just a moment..." auto summary
 
 ### Code Quality
 
