@@ -3,7 +3,6 @@
 ## Todos
 
 In order of importance:
-    0.5. replace title double quotes if they already exist
     1. refactors / purge duplicate code
     2. More
     3. find some way to cache the stupid github.com/lestrrat-go/httpcc download
@@ -28,9 +27,9 @@ In order of importance:
 
 
 random stuff
-- replace double quotes in page title if it includes them
 - prevent "Just a moment..." auto summary
 - improve visual for global tag calculation
+- make sure that user summary is always used unless auto summary has more likes
 
 ### Code Quality
 

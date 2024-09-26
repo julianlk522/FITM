@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/http"
+	"strings"
 
 	e "github.com/julianlk522/fitm/error"
 	util "github.com/julianlk522/fitm/model/util"
@@ -46,6 +47,10 @@ func (s *NewSummaryRequest) Bind(r *http.Request) error {
 		return e.SummaryLengthExceedsLimit(util.SUMMARY_CHAR_LIMIT)
 	}
 
+	if strings.Contains(s.Text, "\"") {
+		s.Text = strings.ReplaceAll(s.Text, "\"", "'")
+	}
+
 	s.ID = uuid.New().String()
 	s.LastUpdated = util.NEW_LONG_TIMESTAMP()
 
@@ -77,6 +82,13 @@ func (es *EditSummaryRequest) Bind(r *http.Request) error {
 	}
 	if es.Text == "" {
 		return e.ErrNoSummaryReplacementText
+	} else if len(es.Text) > util.SUMMARY_CHAR_LIMIT {
+		return e.SummaryLengthExceedsLimit(util.SUMMARY_CHAR_LIMIT)
 	}
+
+	if strings.Contains(es.Text, "\"") {
+		es.Text = strings.ReplaceAll(es.Text, "\"", "'")
+	}
+
 	return nil
 }
