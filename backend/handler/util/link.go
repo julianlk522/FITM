@@ -134,7 +134,11 @@ func GetResolvedURLResponse(url string) (*http.Response, error) {
 
 	for _, prefix := range protocols {
 		fullURL := prefix + url
-		resp, err := http.Get(fullURL)
+
+		// set FITM user agent
+		req, _ := http.NewRequest("GET", fullURL, nil)
+		req.Header.Set("User-Agent", "FITM-Bot (https://fitm.online/about)")
+		resp, err := http.DefaultClient.Do(req)
 
 		if err != nil || resp.StatusCode == http.StatusNotFound {
 			continue
