@@ -9,13 +9,17 @@ import './SearchCats.css'
 
 interface Props {
 	AbbreviatedCatsText?: boolean
+	Addable?: boolean
+	Removable?: boolean
 	InitialCats: string[]
 	AddedSignal: Signal<string | undefined> | undefined
 	DeletedSignal: Signal<string | undefined> | undefined
-	Removable?: boolean
 }
 
 export default function SearchCats(props: Props) {
+	const {AbbreviatedCatsText: abbreviated_cats_text, Removable: removable} = props
+	const addable = props.Addable ?? true
+
 	const [snippet, set_snippet] = useState<string>('')
 	const [selected_cats, set_selected_cats] = useState<string[]>(
 		props.InitialCats
@@ -146,26 +150,29 @@ export default function SearchCats(props: Props) {
 
 	return (
 		<div id='search-cats-container'>
-			<label id='search-cats' for='cats'>
-				{props.AbbreviatedCatsText ? 'Cats:' : 'Tag Cats:'}
+			
+			{addable ? <>
+				<label id='search-cats' for='cats'>
+				{abbreviated_cats_text ? 'Cats:' : 'Tag Cats:'}
 			</label>
-			<input
-				type='text'
-				name='cats'
-				id='cats'
-				onInput={(event) =>
-					set_snippet((event.target as HTMLInputElement).value)
-				}
-				onSubmit={add_cat}
-				value={snippet}
-			/>
-			<input
-				id='add-cat-filter'
-				title='Add inputed cat to search filters'
-				type='submit'
-				value='Add'
-				onClick={add_cat}
-			/>
+				<input
+					type='text'
+					name='cats'
+					id='cats'
+					onInput={(event) =>
+						set_snippet((event.target as HTMLInputElement).value)
+					}
+					onSubmit={add_cat}
+					value={snippet}
+				/>
+				<input
+					id='add-cat-filter'
+					title='Add cat'
+					type='submit'
+					value='Add'
+					onClick={add_cat}
+				/>
+			</> : null}
 
 			{selected_cats.length ? (
 				<ol id='cat-list'>
@@ -174,7 +181,7 @@ export default function SearchCats(props: Props) {
 							key={cat}
 							Cat={cat}
 							Count={undefined}
-							Removable={props.Removable ?? true}
+							Removable={removable ?? true}
 							Addable={false}
 							AddedSignal={undefined}
 							DeletedSignal={deleted_cat}

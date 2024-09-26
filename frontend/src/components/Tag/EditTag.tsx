@@ -180,6 +180,7 @@ export default function EditTag(props: Props) {
 					InitialCats={initial_cats}
 					AddedSignal={added_cat}
 					DeletedSignal={deleted_cat}
+					Addable={editing}
 					Removable={editing}
 				/>
 			) : null}
