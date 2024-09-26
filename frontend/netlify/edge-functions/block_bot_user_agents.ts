@@ -40,7 +40,7 @@ export default async (request: Request, context: Context) => {
 	let is_bot = false
 
 	bot_user_agents.forEach((ua) => {
-		if (ua_headers?.includes(ua.toLowerCase())) {
+		if (!ua_headers || ua_headers?.includes(ua.toLowerCase())) {
 			is_bot = true
 		}
 	})
