@@ -1,4 +1,3 @@
-import { effect, useSignal } from '@preact/signals'
 import { useState } from 'preact/hooks'
 import { LINKS_ENDPOINT } from '../../constants'
 import * as types from '../../types'
@@ -125,22 +124,6 @@ export default function NewLinks(props: Props) {
 		return
 	}
 
-	// pass added/deleted_cat signals to allow modifying cats state in SearchCats.tsx
-	const added_cat = useSignal<string | undefined>(undefined)
-	const deleted_cat = useSignal<string | undefined>(undefined)
-
-	// Check for updated cats, set state accordingly
-	effect(() => {
-		if (added_cat.value?.length) {
-			const new_cat = added_cat.value
-			set_cats((c) => [...c, new_cat])
-			added_cat.value = undefined
-		} else if (deleted_cat.value) {
-			set_cats((c) => c.filter((cat) => cat !== deleted_cat.value))
-			deleted_cat.value = undefined
-		}
-	})
-
 	return (
 		<>
 			<section id='new-link'>
@@ -167,9 +150,8 @@ export default function NewLinks(props: Props) {
 					<label for='summary'>Summary (optional)</label>
 					<textarea id='summary' name='summary' rows={3} cols={50} />
 					<SearchCats
-						InitialCats={[]}
-						AddedSignal={added_cat}
-						DeletedSignal={deleted_cat}
+						SelectedCats={cats}
+						SetSelectedCats={set_cats}
 						SubmittedLinks={submitted_links}
 					/>
 					<input id='submit-new-link' type='submit' value='Submit' />

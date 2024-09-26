@@ -1,6 +1,5 @@
-import type { Signal } from '@preact/signals'
 import { effect, useSignal } from '@preact/signals'
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks'
+import { useCallback, useEffect, useRef, useState, type Dispatch, type StateUpdater } from 'preact/hooks'
 import { CATS_ENDPOINT } from '../../constants'
 import * as types from '../../types'
 import { type CatCount } from '../../types'
@@ -11,20 +10,16 @@ interface Props {
 	AbbreviatedCatsText?: boolean
 	Addable?: boolean
 	Removable?: boolean
-	InitialCats: string[]
-	AddedSignal: Signal<string | undefined> | undefined
-	DeletedSignal: Signal<string | undefined> | undefined
+	SelectedCats: string[]
+	SetSelectedCats: Dispatch<StateUpdater<string[]>>
 	SubmittedLinks?: types.Link[]
 }
 
 export default function SearchCats(props: Props) {
-	const {AbbreviatedCatsText: abbreviated_cats_text, Removable: removable} = props
+	const {AbbreviatedCatsText: abbreviated_cats_text, Removable: removable, SelectedCats: selected_cats, SetSelectedCats: set_selected_cats} = props
 	const addable = props.Addable ?? true
 
 	const [snippet, set_snippet] = useState<string>('')
-	const [selected_cats, set_selected_cats] = useState<string[]>(
-		props.InitialCats
-	)
 	const [recommended_cats, set_recommended_cats] = useState<
 		CatCount[] | undefined
 	>(undefined)
@@ -98,8 +93,6 @@ export default function SearchCats(props: Props) {
 		set_selected_cats((prev) =>
 			[...prev, snippet].sort((a, b) => a.localeCompare(b))
 		)
-		if (!props.AddedSignal) return
-		props.AddedSignal.value = snippet
 
 		set_error(undefined)
 		set_recommended_cats((prev) =>
@@ -107,12 +100,12 @@ export default function SearchCats(props: Props) {
 		)
 	}
 
-	// Pass added_cat / deleted_cat signals to children TagCategory.tsx
+	// Pass added_cat / deleted_cat signals to children TagCat.tsx
 	// to allow adding recommended cats / removing selected cats here
 	const added_cat = useSignal<string | undefined>(undefined)
 	const deleted_cat = useSignal<string | undefined>(undefined)
 
-	// Listen for add / delete cat signals
+	// Listen for add / delete cat signals from TagCat
 	effect(() => {
 		if (added_cat.value?.length) {
 			const new_cat = added_cat.value
@@ -126,19 +119,11 @@ export default function SearchCats(props: Props) {
 			)
 			added_cat.value = undefined
 
-			// send signal to parent SearchFilters.tsx
-			if (!props.AddedSignal) return
-			props.AddedSignal.value = new_cat
-
 			set_error(undefined)
 		} else if (deleted_cat.value) {
 			const to_delete = deleted_cat.value
 			set_selected_cats((c) => c.filter((cat) => cat !== to_delete))
 			deleted_cat.value = undefined
-
-			// send signal to parent SearchFilters.tsx
-			if (!props.DeletedSignal) return
-			props.DeletedSignal.value = to_delete
 
 			// prevent weird case where deleting a hidden recommended cat causes it to suddenly appear
 			set_recommended_cats((c) =>

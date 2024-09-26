@@ -47,26 +47,13 @@ export default function SearchFilters(props: Props) {
 	// pass changed_sort_by to SearchSortBy.tsx to allow modifying sort_by state in SearchFilters.tsx
 	const changed_sort_by = useSignal<SortMetric>(props.InitialSortBy)
 
-	// pass added/deleted_cat signals to allow modifying cats state in SearchCats.tsx
-	const added_cat = useSignal<string | undefined>(undefined)
-	const deleted_cat = useSignal<string | undefined>(undefined)
-
-	// Check for update period / sort_by / cats, set state accordingly
+	// Check for update period / sort_by, set state accordingly
 	effect(() => {
 		if (changed_period.value) {
 			set_period(changed_period.value)
 		}
 		if (changed_sort_by.value) {
 			set_sort_by(changed_sort_by.value)
-		}
-
-		if (added_cat.value?.length) {
-			const new_cat = added_cat.value
-			set_cats((c) => [...c, new_cat])
-			added_cat.value = undefined
-		} else if (deleted_cat.value) {
-			set_cats((c) => c.filter((cat) => cat !== deleted_cat.value))
-			deleted_cat.value = undefined
 		}
 	})
 
@@ -86,9 +73,8 @@ export default function SearchFilters(props: Props) {
 				/>
 
 				<SearchCats
-					InitialCats={props.InitialCats ?? []}
-					AddedSignal={added_cat}
-					DeletedSignal={deleted_cat}
+					SelectedCats={cats}
+					SetSelectedCats={set_cats}
 				/>
 
 				<a id='search-from-filters' href={search_URL}>

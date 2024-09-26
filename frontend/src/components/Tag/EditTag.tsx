@@ -1,4 +1,3 @@
-import { effect, useSignal } from '@preact/signals'
 import { useState } from 'preact/hooks'
 import { TAGS_ENDPOINT } from '../../constants'
 import type { Tag } from '../../types'
@@ -26,22 +25,6 @@ export default function EditTag(props: Props) {
 	const [editing, set_editing] = useState(false)
 	const [error, set_error] = useState<string | undefined>(undefined)
 	const [show_delete_modal, set_show_delete_modal] = useState(false)
-
-	// pass added/deleted_cat signals to allow modifying cats state in SearchCats.tsx
-	const added_cat = useSignal<string | undefined>(undefined)
-	const deleted_cat = useSignal<string | undefined>(undefined)
-
-	// Check for updated cats, set state accordingly
-	effect(() => {
-		if (added_cat.value?.length) {
-			const new_cat = added_cat.value
-			set_cats((c) => [...c, new_cat])
-			added_cat.value = undefined
-		} else if (deleted_cat.value) {
-			set_cats((c) => c.filter((cat) => cat !== deleted_cat.value))
-			deleted_cat.value = undefined
-		}
-	})
 
 	async function confirm_changes() {
 		if (!token) {
@@ -177,9 +160,8 @@ export default function EditTag(props: Props) {
 			{tag || editing ? (
 				<SearchCats
 					AbbreviatedCatsText
-					InitialCats={initial_cats}
-					AddedSignal={added_cat}
-					DeletedSignal={deleted_cat}
+					SelectedCats={cats}
+					SetSelectedCats={set_cats}
 					Addable={editing}
 					Removable={editing}
 				/>
