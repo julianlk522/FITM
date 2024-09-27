@@ -219,8 +219,10 @@ func RenderDeleted(w http.ResponseWriter, r *http.Request) {
 // Calculate global summary
 func CalculateAndSetGlobalSummary(link_id string) error {
 
-	// (Summary with the most upvotes is the global summary)
-	get_summary_like_counts_sql := fmt.Sprintf(`SELECT text
+	// Summary with the most upvotes is the global summary
+	// (unless auto summary, then use summary with 2nd most upvotes if there
+	// are multiple)
+	get_summary_like_counts_sql := fmt.Sprintf(`SELECT text, submitted_by
 	FROM Summaries
 	LEFT JOIN
 		(
@@ -232,16 +234,27 @@ func CalculateAndSetGlobalSummary(link_id string) error {
 	WHERE link_id = '%s'
 	GROUP BY Summaries.id
 	ORDER BY like_count DESC, text ASC
-	LIMIT 1
+	LIMIT 2
 	`, link_id)
-	var top_summary_text string
-
-	err := db.Client.QueryRow(get_summary_like_counts_sql).Scan(&top_summary_text)
+	
+	rows, err := db.Client.Query(get_summary_like_counts_sql)
 	if err != nil {
 		return err
 	}
+	var top_summary_text string
+	for rows.Next() {
+		var author string
+		err = rows.Scan(&top_summary_text, &author)
+		if err != nil {
+			return err
 
-	// Set global summary if not already set to query result
+		// prefer top user-submitted summary to auto summary
+		} else if author == db.AUTO_SUMMARY_USER_ID {
+			continue
+		}
+	}
+
+	// Set global summary if not already set to top result
 	check_global_summary_sql := fmt.Sprintf(`
 		SELECT global_summary 
 		FROM Links 

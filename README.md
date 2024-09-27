@@ -3,13 +3,15 @@
 ## Todos
 
 In order of importance:
-    1. make sure that user summary is always used unless auto summary has more likes
-    2. use user summaries in tmap if they exist
-    3. refactors / purge duplicate code
-    4. More
-    5. NSFW tags
+    1. use user summaries in tmap if they exist
+    2. refactors / purge duplicate code
+    3. More
+    4. NSFW tags
         -hide from top / tmap unless you check a box or something
-    6. find some way to cache the stupid github.com/lestrrat-go/httpcc download
+    5. find some way to cache the stupid github.com/lestrrat-go/httpcc download
+
+nice to do:
+- privacy policy about scraping websites / FITM-Bot user agent, etc.
 
 ### Features
 
