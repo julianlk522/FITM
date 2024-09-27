@@ -227,3 +227,7 @@ func TestDeleteProfilePic(t *testing.T) {
 		}
 	}
 }
+
+func TestGetTreasureMap(t *testing.T) {
+	// TODO
+}

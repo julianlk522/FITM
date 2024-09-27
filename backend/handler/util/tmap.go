@@ -34,6 +34,8 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	copied_sql := query.NewTmapCopied(login_name)
 	tagged_sql := query.NewTmapTagged(login_name)
 
+	// Apply params
+	// cats filter
 	cats_params := r.URL.Query().Get("cats")
 	has_cat_filter := cats_params != ""
 
@@ -56,14 +58,30 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 		tagged_sql = tagged_sql.FromCats(cats)
 	}
 
+	// auth (add IsLiked, IsCopied)
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 
-	// Requesting user signed in: get IsLiked / IsCopied for each link
 	if req_user_id != "" {
 		submitted_sql = submitted_sql.AsSignedInUser(req_user_id, req_login_name)
 		copied_sql = copied_sql.AsSignedInUser(req_user_id, req_login_name)
 		tagged_sql = tagged_sql.AsSignedInUser(req_user_id, req_login_name)
+	}
+
+	// nsfw
+	var nsfw_params string
+	if r.URL.Query().Get("nsfw") != "" {
+		nsfw_params = r.URL.Query().Get("nsfw")
+	} else if r.URL.Query().Get("NSFW") != "" {
+		nsfw_params = r.URL.Query().Get("NSFW")
+	}
+
+    if nsfw_params == "true" {
+		submitted_sql = submitted_sql.NSFW()
+		copied_sql = copied_sql.NSFW()
+		tagged_sql = tagged_sql.NSFW()
+	} else if nsfw_params != "false" && nsfw_params != "" {
+		return nil, e.ErrInvalidNSFWParams
 	}
 
 	submitted, err := ScanTmapLinks[T](submitted_sql.Query)
