@@ -76,6 +76,9 @@ func (t *NewTagRequest) Bind(r *http.Request) error {
 		return e.ErrDuplicateCats
 	}
 
+	// capitalize 'nsfw' if found
+	t.NewTag.Cats = util.CapitalizeNSFWCatIfNotAlready(t.NewTag.Cats)
+
 	t.ID = uuid.New().String()
 	t.Cats = util.TrimExcessAndTrailingSpaces(t.NewTag.Cats)
 	t.LastUpdated = util.NEW_LONG_TIMESTAMP()
@@ -104,6 +107,9 @@ func (et *EditTagRequest) Bind(r *http.Request) error {
 		case util.HasDuplicateCats(et.Cats):
 			return e.ErrDuplicateCats
 	}
+
+	// capitalize 'nsfw' if found
+	et.Cats = util.CapitalizeNSFWCatIfNotAlready(et.Cats)
 
 	et.Cats = util.TrimExcessAndTrailingSpaces(et.Cats)
 	et.LastUpdated = util.NEW_LONG_TIMESTAMP()

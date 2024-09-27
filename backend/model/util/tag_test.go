@@ -4,6 +4,24 @@ import (
 	"testing"
 )
 
+func TestCapitalizeNSFWCatIfNotAlready(t *testing.T) {
+	var test_cats = []struct {
+		Cats  string
+		Want  string
+	}{
+		{"nsfw", "NSFW"},
+		{"not,present", "not,present"},
+		{"some,cats,first,nsfw", "some,cats,first,NSFW"},
+	}
+
+	for _, tc := range test_cats {
+		got := CapitalizeNSFWCatIfNotAlready(tc.Cats)
+		if got != tc.Want {
+			t.Fatalf("got %s, want %s", got, tc.Want)
+		}
+	}
+}
+
 func TestTrimExcessAndTrailingSpaces(t *testing.T) {
 	var test_cats = []struct {
 		Cats string
