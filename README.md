@@ -42,6 +42,8 @@ random stuff
     -move tmap cats json above links
     -optional Props to replace "undefined"
 -Purge code duplication
+-Readability
+    -ErrServerFail => Err500 etc.
 -Security
     -Look into input sequences that might produce problematic results
         -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
@@ -86,6 +88,7 @@ random stuff
 -SQL prepared statements
     -more important if truly does help prevent injection... verify
 -Ensure accurate / helpful http response codes
+    -start by making sure all ErrInvalidRequests are actually that
     -e.g., tag page for invalid link id returns 500 (should be 404)
     -replace "message":"deleted" with just 204
     -205 for successful logins/forms that require reload

@@ -24,7 +24,7 @@ func GetSummaryPage(w http.ResponseWriter, r *http.Request) {
 
 	link_exists, err := util.LinkExists(link_id)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	} else if !link_exists {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLinkWithID))
@@ -33,7 +33,7 @@ func GetSummaryPage(w http.ResponseWriter, r *http.Request) {
 
 	summary_page, err := util.BuildSummaryPageForLink(link_id, r)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
@@ -47,21 +47,30 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Verify links exists
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	link_exists, err := util.LinkExists(summary_data.LinkID)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	} else if !link_exists {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLinkWithID))
 		return
 	}
 
+	// Begin transaction
+	tx, err := db.Client.Begin()
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+	defer tx.Rollback()
+
 	summary_id, err := util.GetIDOfUserSummaryForLink(req_user_id, summary_data.LinkID)
 	if err != nil {
-		if err == sql.ErrNoRows {
 
-			// Create new summary
+		// Create summary if not already exists
+		if err == sql.ErrNoRows {
 			_, err = db.Client.Exec(
 				`INSERT INTO Summaries VALUES (?,?,?,?,?)`,
 				summary_data.ID,
@@ -71,12 +80,12 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 				summary_data.LastUpdated,
 			)
 			if err != nil {
-				render.Render(w, r, e.ErrInvalidRequest(err))
+				render.Render(w, r, e.ErrServerFail(err))
 				return
 			}
 
 		} else {
-			render.Render(w, r, e.ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrServerFail(err))
 			return
 		}
 
@@ -91,7 +100,7 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 			summary_data.LinkID,
 		)
 		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrServerFail(err))
 			return
 		}
 
@@ -101,14 +110,20 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 			summary_id,
 		)
 		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrServerFail(err))
 			return
 		}
 	}
 
 	err = util.CalculateAndSetGlobalSummary(summary_data.LinkID)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// Commit
+	if err = tx.Commit(); err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
@@ -123,10 +138,11 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Verify requesting user submitted summary
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	owns_summary, err := util.SummarySubmittedByUser(delete_data.SummaryID, req_user_id)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	} else if !owns_summary {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrDoesntOwnSummary))
@@ -135,31 +151,46 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 
 	link_id, err := util.GetLinkIDFromSummaryID(delete_data.SummaryID)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
+	// Verify not last summary for link
 	is_last_summary_for_link, err := util.LinkHasOneSummaryLeft(link_id)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	} else if is_last_summary_for_link {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrLastSummary))
 		return
 	}
 
+	// Begin transaction
+	tx, err := db.Client.Begin()
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+	defer tx.Rollback()
+
 	_, err = db.Client.Exec(
 		`DELETE FROM Summaries WHERE id = ?`,
 		delete_data.SummaryID,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
 	err = util.CalculateAndSetGlobalSummary(link_id)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// Commit
+	if err = tx.Commit(); err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
@@ -173,6 +204,7 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Verify summary exists
 	var link_id sql.NullString
 	err := db.Client.QueryRow(
 		"SELECT link_id FROM Summaries WHERE id = ?",
@@ -183,33 +215,44 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Verify requesting user exists
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	user_exists, err := util.UserExists(req_login_name)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 		} else if !user_exists {
 			render.Render(w, r, e.ErrInvalidRequest(e.ErrNoUserWithLoginName))
 		}
 		
+	// Verify requesting user not attempting to like their own summary
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	owns_summary, err := util.SummarySubmittedByUser(summary_id, req_user_id)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	} else if owns_summary {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrCannotLikeOwnSummary))
 		return
 	}
 
+	// Verify requesting user has not already liked
 	already_liked, err := util.UserHasLikedSummary(req_user_id, summary_id)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	} else if already_liked {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrSummaryAlreadyLiked))
 		return
 	}
+
+	// Begin transaction
+	tx, err := db.Client.Begin()
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+	defer tx.Rollback()
 
 	_, err = db.Client.Exec(
 		`INSERT INTO 'Summary Likes' VALUES (?,?,?)`,
@@ -218,13 +261,19 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 		req_user_id,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
 	err = util.CalculateAndSetGlobalSummary(link_id.String)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// Commit
+	if err = tx.Commit(); err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
@@ -239,20 +288,10 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
-	already_liked, err := util.UserHasLikedSummary(req_user_id, summary_id)
-	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
-		return
-	} else if !already_liked {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrSummaryNotLiked))
-		return
-	}
-
-	// save link id before delete
-	// so global summary can be updated
+	// Verify summary exists
+	// and save link id for later global summary update
 	var link_id sql.NullString
-	err = db.Client.QueryRow(
+	err := db.Client.QueryRow(
 		"SELECT link_id FROM Summaries WHERE id = ?",
 		summary_id,
 	).Scan(&link_id)
@@ -261,18 +300,43 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Verify requesting user has liked summary
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	already_liked, err := util.UserHasLikedSummary(req_user_id, summary_id)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	} else if !already_liked {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrSummaryNotLiked))
+		return
+	}
+
+	// Begin transaction
+	tx, err := db.Client.Begin()
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+	defer tx.Rollback()
+
 	_, err = db.Client.Exec(
 		`DELETE FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?`, req_user_id,
 		summary_id,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoSummaryWithID))
+		render.Render(w, r, e.ErrServerFail(e.ErrNoSummaryWithID))
 		return
 	}
 
 	err = util.CalculateAndSetGlobalSummary(link_id.String)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// Commit
+	if err = tx.Commit(); err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
