@@ -21,35 +21,17 @@ func TestGetLinks(t *testing.T) {
 		Valid bool
 	}{
 		{
-			Params: map[string]string{
-				"cats": "",
-				"period": "",
-				"sort_by": "",
-				"req_user_id": "",
-				"req_login_name": "",
-			},
+			Params: map[string]string{},
 			Page: 0,
 			Valid: true,
 		},
 		{
-			Params: map[string]string{
-				"cats": "",
-				"period": "",
-				"sort_by": "",
-				"req_user_id": "",
-				"req_login_name": "",
-			},
+			Params: map[string]string{},
 			Page: 1,
 			Valid: true,
 		},
 		{
-			Params: map[string]string{
-				"cats": "umvc3",
-				"period": "",
-				"sort_by": "",
-				"req_user_id": "",
-				"req_login_name": "",
-			},
+			Params: map[string]string{"cats": "umvc3"},
 			Page: 1,
 			Valid: true,
 		},
@@ -57,9 +39,6 @@ func TestGetLinks(t *testing.T) {
 			Params: map[string]string{
 				"cats": "umvc3",
 				"period": "day",
-				"sort_by": "",
-				"req_user_id": "",
-				"req_login_name": "",
 			},
 			Page: 1,
 			Valid: true,
@@ -69,8 +48,6 @@ func TestGetLinks(t *testing.T) {
 				"cats": "umvc3",
 				"period": "week",
 				"sort_by": "newest",
-				"req_user_id": "",
-				"req_login_name": "",
 			},
 			Page: 1,
 			Valid: true,
@@ -80,8 +57,6 @@ func TestGetLinks(t *testing.T) {
 				"cats": "umvc3",
 				"period": "month",
 				"sort_by": "rating",
-				"req_user_id": "",
-				"req_login_name": "",
 			},
 			Page: 1,
 			Valid: true,
@@ -90,18 +65,12 @@ func TestGetLinks(t *testing.T) {
 			Params: map[string]string{
 				"cats": "umvc3",
 				"period": "poop",
-				"sort_by": "",
-				"req_user_id": "",
-				"req_login_name": "",
 			},
 			Page: 1,
 			Valid: false,
 		},
 		{
 			Params: map[string]string{
-				"cats": "",
-				"period": "",
-				"sort_by": "",
 				"req_user_id": "3",
 				"req_login_name": "jlk",
 			},
@@ -110,27 +79,37 @@ func TestGetLinks(t *testing.T) {
 		},
 		// passes because middlware corrects negative pages to 1
 		{
-			Params: map[string]string{
-				"cats": "",
-				"period": "",
-				"sort_by": "",
-				"req_user_id": "",
-				"req_login_name": "",
-			},
+			Params: map[string]string{},
 			Page: -1,
 			Valid: true,
 		},
 		// fails: sort_by must be either "rating" or "newest"
 		{
-			Params: map[string]string{
-				"cats": "",
-				"period": "",
-				"sort_by": "invalid",
-				"req_user_id": "",
-				"req_login_name": "",
-			},
+			Params: map[string]string{"sort_by": "invalid"},
 			Page: 1,
 			Valid: false,
+		},
+		// nsfw params may be "true", "false", or absent but not anything else
+		{
+			Params: map[string]string{"nsfw": "true"},
+			Page: 1,
+			Valid: true,
+		},
+		{
+			Params: map[string]string{"nsfw": "false"},
+			Page: 1,
+			Valid: true,
+		},
+		{
+			Params: map[string]string{"nsfw": "invalid"},
+			Page: 1,
+			Valid: false,
+		},
+		// NSFW in caps also valid
+		{
+			Params: map[string]string{"NSFW": "true"},
+			Page: 1,
+			Valid: true,
 		},
 	}
 

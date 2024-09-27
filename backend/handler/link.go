@@ -46,6 +46,21 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 		links_sql = links_sql.AsSignedInUser(req_user_id)
 	}
 
+	// nsfw
+	var nsfw_params string
+	if r.URL.Query().Get("nsfw") != "" {
+		nsfw_params = r.URL.Query().Get("nsfw")
+	} else if r.URL.Query().Get("NSFW") != "" {
+		nsfw_params = r.URL.Query().Get("NSFW")
+	}
+
+    if nsfw_params == "true" {
+		links_sql = links_sql.NSFW()
+	} else if nsfw_params != "false" && nsfw_params != "" {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrInvalidNSFWParams))
+		return
+	}
+
 	// pagination
 	page := r.Context().Value(m.PageKey).(int)
 	links_sql = links_sql.Page(page)
