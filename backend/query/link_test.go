@@ -326,6 +326,88 @@ func TestPage(t *testing.T) {
 	}
 }
 
+func TestNSFW(t *testing.T) {
+	links_sql := NewTopLinks().NSFW()
+	// no opportunity for links_sql.Error to have been set
+
+	rows, err := TestClient.Query(links_sql.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+
+	// verify does not conflict with other filter methods
+	links_sql = NewTopLinks().
+		FromCats([]string{"search", "engine", "NSFW"}).
+		DuringPeriod("year").
+		AsSignedInUser(test_user_id).
+		SortBy("newest").
+		Page(1).
+		NSFW()
+
+	rows, err = TestClient.Query(links_sql.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// verify link with ID 76 is present in results
+	// (link with ID 76 is only link in test data with 'NSFW' in cats)
+	var l model.LinkSignedIn
+	for rows.Next() {
+		if err := rows.Scan(
+			&l.ID,
+			&l.URL,
+			&l.SubmittedBy,
+			&l.SubmitDate,
+			&l.Cats,
+			&l.Summary,
+			&l.SummaryCount,
+			&l.TagCount,
+			&l.LikeCount,
+			&l.ImgURL,
+			&l.IsLiked,
+			&l.IsCopied,
+		); err != nil {
+			t.Fatal(err)
+		} else if l.ID != "76" {
+			t.Fatalf("got %s, want 76", l.ID)
+		}
+	}
+
+	// attempt same query without .NSFW() and verify link NOT present
+	links_sql = NewTopLinks().
+		FromCats([]string{"search", "engine", "NSFW"}).
+		DuringPeriod("year").AsSignedInUser(test_user_id).
+		SortBy("newest").
+		Page(1)
+
+	rows, err = TestClient.Query(links_sql.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for rows.Next() {
+		if err := rows.Scan(
+			&l.ID,
+			&l.URL,
+			&l.SubmittedBy,
+			&l.SubmitDate,
+			&l.Cats,
+			&l.Summary,
+			&l.SummaryCount,
+			&l.TagCount,
+			&l.LikeCount,
+			&l.ImgURL,
+			&l.IsLiked,
+			&l.IsCopied,
+		); err != nil {
+			t.Fatal(err)
+		} else if l.ID == "76" {
+			t.Fatalf("got %s, want nil", l.ID)
+		}
+	}
+}
+
 // Contributors
 func TestNewContributors(t *testing.T) {
 	contributors_sql := NewContributors()

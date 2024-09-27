@@ -89,6 +89,11 @@ const LINKS_AUTH_JOINS = `
 LEFT JOIN IsLiked il ON l.id = il.link_id
 LEFT JOIN IsCopied ic ON l.id = ic.link_id`
 
+const LINKS_WHERE_NO_NSFW_CATS = `
+WHERE l.id NOT IN (
+	SELECT link_id FROM global_cats_fts WHERE global_cats MATCH 'NSFW'
+)`
+
 const LINKS_ORDER_BY = ` 
 ORDER BY 
     like_count DESC, 
@@ -103,6 +108,7 @@ func NewTopLinks() *TopLinks {
 				LINKS_BASE_FIELDS +
 				LINKS_FROM + 
 				LINKS_BASE_JOINS +
+				LINKS_WHERE_NO_NSFW_CATS +
 				LINKS_ORDER_BY +
 				UNPAGINATED_LIMIT_CLAUSE,
 		},
@@ -165,7 +171,7 @@ func (l *TopLinks) DuringPeriod(period string) *TopLinks {
 	l.Text = strings.Replace(
 		l.Text,
 		LINKS_ORDER_BY,
-		"\n" + "WHERE " + clause + LINKS_ORDER_BY,
+		"\n" + "AND " + clause + LINKS_ORDER_BY,
 		1,
 	)
 
@@ -246,6 +252,27 @@ func (l *TopLinks) Page(page int) *TopLinks {
 		UNPAGINATED_LIMIT_CLAUSE, 
 		_PaginateLimitClause(page), 
 	1)
+
+	return l
+}
+
+func (l *TopLinks) NSFW() *TopLinks {
+
+	// remove NSFW clause
+	l.Text = strings.Replace(
+		l.Text,
+		LINKS_WHERE_NO_NSFW_CATS,
+		"",
+		1,
+	)
+
+	// replace AND with WHERE in .DuringPeriod clause
+	l.Text = strings.Replace(
+		l.Text,
+		"AND submit_date",
+		"WHERE submit_date",
+		1,
+	)
 
 	return l
 }
