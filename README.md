@@ -3,7 +3,7 @@
 ## Todos
 
 In order of importance:
-    1. use user summaries in tmap if they exist
+    1. fix summary assignment so auto summary DOES win if it has MORE likes
     2. NSFW tags
         -Restrict from tmap/top unless opt in
         -automatically correct 'nsfw' to 'NSFW'
@@ -20,6 +20,7 @@ In order of importance:
 
 nice to do:
 - privacy policy about scraping websites / FITM-Bot user agent, etc.
+- original 404
 
 ### Features
 

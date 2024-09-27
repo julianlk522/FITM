@@ -43,6 +43,14 @@ const POSSIBLE_USER_CATS_CTE = `PossibleUserCats AS (
     WHERE submitted_by = 'LOGIN_NAME'
 )`
 
+const POSSIBLE_USER_SUMMARY_CTE = `PossibleUserSummary AS (
+    SELECT
+        link_id, text as user_summary
+    FROM Summaries
+    INNER JOIN Users u ON u.id = submitted_by
+	WHERE u.login_name = 'LOGIN_NAME'
+)`
+
 const GLOBAL_CATS_CTE = `GlobalCatsFTS AS (
     SELECT
         link_id,
@@ -78,7 +86,7 @@ SELECT
     l.submit_date,
     COALESCE(puc.user_cats, l.global_cats) AS cats,
     COALESCE(puc.cats_from_user,0) AS cats_from_user,
-    COALESCE(l.global_summary, '') AS summary,
+    COALESCE(pus.user_summary, l.global_summary, '') AS summary,
     COALESCE(sc.summary_count, 0) AS summary_count,
     COALESCE(lc.like_count, 0) AS like_count,
     COALESCE(tc.tag_count, 0) AS tag_count,
@@ -92,6 +100,7 @@ const FROM = `FROM Links l`
 
 const BASE_JOINS = `
 LEFT JOIN PossibleUserCats puc ON l.id = puc.link_id
+LEFT JOIN PossibleUserSummary pus ON l.id = pus.link_id
 LEFT JOIN TagCount tc ON l.id = tc.link_id
 LEFT JOIN LikeCount lc ON l.id = lc.link_id
 LEFT JOIN SummaryCount sc ON l.id = sc.link_id`
@@ -117,7 +126,8 @@ func NewTmapSubmitted(login_name string) *TmapSubmitted {
 		Query: Query{
 			Text: 
 			"WITH " + BASE_CTES + ",\n" +
-			POSSIBLE_USER_CATS_CTE +
+			POSSIBLE_USER_CATS_CTE + ",\n" +
+			POSSIBLE_USER_SUMMARY_CTE +
 			BASE_FIELDS + "\n" +
 			FROM +
 			BASE_JOINS + "\n" +
@@ -167,7 +177,8 @@ func NewTmapCopied(login_name string) *TmapCopied {
 			Text: 
 				"WITH " + USER_COPIES_CTE + ",\n" +
 				BASE_CTES + ",\n" +
-				POSSIBLE_USER_CATS_CTE + 
+				POSSIBLE_USER_CATS_CTE + ",\n" +
+				POSSIBLE_USER_SUMMARY_CTE +
 				BASE_FIELDS + "\n" +
 				FROM + "\n" +
 				COPIED_JOIN +
@@ -217,6 +228,7 @@ func NewTmapTagged(login_name string) *TmapTagged {
 			Text: 
 				"WITH " + BASE_CTES + ",\n" +
 				USER_CATS_CTE + ",\n" +
+				POSSIBLE_USER_SUMMARY_CTE + ",\n" +
 				USER_COPIES_CTE + 
 				TAGGED_FIELDS + "\n" +
 				FROM +
