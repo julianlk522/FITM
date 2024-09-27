@@ -155,16 +155,6 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verify not last summary for link
-	is_last_summary_for_link, err := util.LinkHasOneSummaryLeft(link_id)
-	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
-		return
-	} else if is_last_summary_for_link {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrLastSummary))
-		return
-	}
-
 	// Begin transaction
 	tx, err := db.Client.Begin()
 	if err != nil {
