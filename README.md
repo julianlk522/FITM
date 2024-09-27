@@ -4,11 +4,19 @@
 
 In order of importance:
     1. use user summaries in tmap if they exist
-    2. refactors / purge duplicate code
-    3. More
-    4. NSFW tags
-        -hide from top / tmap unless you check a box or something
-    5. find some way to cache the stupid github.com/lestrrat-go/httpcc download
+    2. NSFW tags
+        -Restrict from tmap/top unless opt in
+        -automatically correct 'nsfw' to 'NSFW'
+        -Tests
+    3. touch up global cats visual, add to about
+    4. More
+    5. refactors
+    6. find some way to cache the stupid github.com/lestrrat-go/httpcc download
+    7. about page guidelines / heuristics for avoiding "marooned" tags
+        -only proper nouns / abbreviations should be capitalized
+        -prefer "and" over "&" unless part of proper noun
+        -describe the collection in plural if part of one
+            -e.g., channels not channel
 
 nice to do:
 - privacy policy about scraping websites / FITM-Bot user agent, etc.
@@ -22,62 +30,42 @@ nice to do:
         -Subcats
     -Global Cats
     -Global Subcats
--NSFW tags:
-    -automatically correct 'nsfw' to 'NSFW'
-    -Tests
-    -Restrict from tmap/top unless specifically chosen in filter
-
-
-random stuff
-- improve visual for global tag calculation
 
 ### Code Quality
 
--Refactors for simplicity / accuracy
-    -replace spellfix transactions with triggers
-        -(that way can make changes over CLI without worrying about unsync)
-        -too complicated for now ... workaround might be just resetting on cron job or something
-    -Top Cats / Top Links / etc. components
+-Purge duplication
+-Simplicity / accuracy
     -remove needless _limit() methods
-    -move tmap cats json above links
     -optional Props to replace "undefined"
--Purge code duplication
+        -Link: IsSummaryPage / IsTagPage / IsTmapPage
+    -Top Cats / Top Links / etc. components
+    -move tmap cats json above links
 -Readability
     -ErrServerFail => Err500 etc.
 -Security
     -Look into input sequences that might produce problematic results
         -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
+    -fuzz test
 
 ## To-Maybe-Dos
 
 ### Features
 
--client:visible for tmap
--use user summaries in tmap if they exist
 -favorite / followed tmaps?
 -Show number of copies along with number of likes in frontend
--Better way to visualize how Global Cats are determined?
--Guidelines / heuristics for avoiding "marooned" tags
-    -only proper nouns / abbreviations should be capitalized?
-    -always use "and" instead of "&" unless part of proper noun
-    -describe the containing group, not the object if one of many
-        -e.g., channels not channel
--Tmap period filter?
 -Improve frontend A11y/semantic markup/looks
+    -button titles
     -subtitle probably should not be h2
     -original favicon.ico
-    -button titles
-    -Link preview img srcset?
-        probably not realistic
     -Tiny bit more space between like/copy buttons on mobile
     -maybe go through BrowserStack and see if anything is horrendous
--Redis caching
--Implement RemoveProfilePic handler (securely) for when a user somehow ends up with a PFP that isn't found in the DB
-    -should be basically impossible so not high priority
--Optional summaries that can be edited if you submit / like enough links with a certain cat?
-    -i.e., if you submit enough links with cat "FOSS" you get to add a wiki-like summary of "FOSS" that appears on the top page when it is applied alone
+    -Link preview img srcset?
+        probably not realistic
+-Tmap period filter?
 -Audit CalculateGlobalCategories algo?
 -Improve profile pic upload?
+    -cropping, more file formats, etc.
+-Redis caching
 
 ### Code Quality
 
@@ -94,34 +82,35 @@ random stuff
     -205 for successful logins/forms that require reload
     -500 for server fuckups
 -Other lesser refactors and removal of duplicate code
-    -sync.Once for db singleton?
-    -duplicate handle_redirect() helpers on tag page / summary page
-    -BuildTagPage helper to declutter GetTagPage handler
-    -ScanTmapLinks tests
     -Fix SQL identifiers to use "" and string literals to use ''
-    -repeat redirect_to cookie logic using window.location.pathname
-    -repeat delete modals
-        -link, tag, tmap pfp
     -duplicate add_tag funcs (EditTag.tsx, SearchCats.tsx)
+    -duplicate handle_redirect() helpers on tag page / summary page
+    -duplicate redirect_to cookie logic using window.location.pathname
+    -duplicate delete modals
+        -link, tag, tmap pfp
+    -BuildTagPage helper to declutter GetTagPage handler
+    -helpers for DB actions
+        -(new link, new summary, update summary, etc.)
+    -os.LookupEnv?
+        -not sure if makes any practical difference
+    -Ensure backend validation is all in /model unless using additional controller logic, e.g., JWT
+    -sync.Once for db singleton?
     -GetCatCountsFromTmapLinks probably possible in all sql
         -actually pretty clunky to achieve (break apart all global/user_cats_fts into words each time)
             -maybe consider revisiting if global/user_cats_fts vocab created for some reason later
         -also not that important since input is limited to user's tmap links, not entire links table. not going to be processing any more than a few hundred or thousand tags at absolute most (and not for a looong time). so perf differential is trivial
-    -helpers for DB actions
-        -(new link, new summary, update summary, etc.)
-    -os.LookupEnv
 -Other tests
-    -finish handlers
     -handler utils
         -TestExtractMetaDataFromGoogleAPIsResponse()
         -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
+        -ScanTmapLinks
+    -finish handlers
     -middleware
-        -test err responses are logged to $FITM_ERR_LOG_FILE
+        -test err responses are logged to $FITM_ERR_LOG_FILE?
     -model utils
 -VPS SSH key
 -improve cat count lookup speed with fts5vocab table
     -(row type)
--Ensure backend validation is all in /model unless using additional controller logic, e.g., JWT
 -Ensure consistent language:
     -get (request and retrieve things from an external source)
     -scan (copy rows from sql to structs)
@@ -129,6 +118,9 @@ random stuff
     -assign (take some data and a pointer and copy the data to the referenced var)
     -obtain (get, extract, assign)
     -resolve (take in a possibly incomplete form and translate to a correct form)
+-replace spellfix transactions with triggers
+    -(that way can make changes over CLI without worrying about unsync)
+    -too complicated for now ... workaround might be just resetting on cron job or something though that requires downtime...
 
 ## Why is it different and better than existing alternatives?
 

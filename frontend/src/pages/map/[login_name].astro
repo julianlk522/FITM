@@ -162,6 +162,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 
 		{used_sections.length ? 
 			<>
+				{/* Overview */}
 				<section id='overview' class='flex'>
 					<div>
 						<h2>{cats ? 'Top Subcats' : 'Top Cats'}</h2>
@@ -198,6 +199,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 					</div>
 				</section>
 
+			{/* Links Sections */}
 			{
 				used_sections.map((s) => {
 					return (
