@@ -258,8 +258,8 @@ func (q *TmapCopied) NSFW() *TmapCopied {
 	// swap AND to WHERE in WHERE clause
 	q.Text = strings.Replace(
 		q.Text,
-		"AND l.submitted_by !=",
-		"WHERE l.submitted_by !=",
+		"AND submitted_by !=",
+		"WHERE submitted_by !=",
 		1,
 	)
 	return q
