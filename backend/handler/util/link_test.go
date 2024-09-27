@@ -128,6 +128,8 @@ func TestGetResolvedURLResponse(t *testing.T) {
 		{"about.google.com", true},
 		{"julianlk.com/notreal", false},
 		{"gobblety gook", false},
+		// TODO: get the fucking user agent headers to actually apply and 
+		// add test case e.g., https://neal.fun/deep-sea
 	}
 
 	for _, u := range test_urls {
