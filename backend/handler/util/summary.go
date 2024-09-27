@@ -220,38 +220,37 @@ func RenderDeleted(w http.ResponseWriter, r *http.Request) {
 func CalculateAndSetGlobalSummary(link_id string) error {
 
 	// Summary with the most upvotes is the global summary
-	// (unless auto summary, then use summary with 2nd most upvotes if there
-	// are multiple)
-	get_summary_like_counts_sql := fmt.Sprintf(`SELECT text, submitted_by
-	FROM Summaries
-	LEFT JOIN
-		(
-		SELECT summary_id, count(*) as like_count
-		FROM 'Summary Likes'
-		GROUP BY summary_id
-		)
-	ON Summaries.id = summary_id
-	WHERE link_id = '%s'
-	GROUP BY Summaries.id
-	ORDER BY like_count DESC, text ASC
-	LIMIT 2
-	`, link_id)
-	
-	rows, err := db.Client.Query(get_summary_like_counts_sql)
+	// UNLESS 1st is auto summary and tied with 2nd place, 
+	// then use 2nd place
+	var top_summary_text string
+	err := db.Client.QueryRow(`WITH RankedSummaries AS (
+		SELECT 
+			s.text,
+			s.submitted_by,
+			COALESCE(sl.like_count, 0) AS like_count,
+			ROW_NUMBER() OVER (
+			ORDER BY 
+				COALESCE(sl.like_count, 0) DESC, 
+				CASE WHEN s.submitted_by = ? THEN 1 ELSE 0 END,
+				s.text ASC
+			) AS rank
+		FROM Summaries s
+		LEFT JOIN (
+			SELECT summary_id, COUNT(*) AS like_count
+			FROM "Summary Likes"
+			GROUP BY summary_id
+		) sl ON s.id = sl.summary_id
+		WHERE s.link_id = ?
+	)
+	SELECT text
+	FROM RankedSummaries
+	WHERE rank = 1`, 
+	db.AUTO_SUMMARY_USER_ID, 
+	link_id,
+	).Scan(&top_summary_text)
+
 	if err != nil {
 		return err
-	}
-	var top_summary_text string
-	for rows.Next() {
-		var author string
-		err = rows.Scan(&top_summary_text, &author)
-		if err != nil {
-			return err
-
-		// prefer top user-submitted summary to auto summary
-		} else if author == db.AUTO_SUMMARY_USER_ID {
-			continue
-		}
 	}
 
 	// Set global summary if not already set to top result

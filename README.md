@@ -3,16 +3,15 @@
 ## Todos
 
 In order of importance:
-    1. fix summary assignment so auto summary DOES win if it has MORE likes
-    2. NSFW tags
+    1. NSFW tags
         -Restrict from tmap/top unless opt in
         -automatically correct 'nsfw' to 'NSFW'
         -Tests
-    3. touch up global cats visual, add to about
-    4. More
-    5. refactors
-    6. find some way to cache the stupid github.com/lestrrat-go/httpcc download
-    7. about page guidelines / heuristics for avoiding "marooned" tags
+    2. touch up global cats visual, add to about
+    3. More
+    4. refactors
+    5. find some way to cache the stupid github.com/lestrrat-go/httpcc download
+    6. about page guidelines / heuristics for avoiding "marooned" tags
         -only proper nouns / abbreviations should be capitalized
         -prefer "and" over "&" unless part of proper noun
         -describe the collection in plural if part of one
