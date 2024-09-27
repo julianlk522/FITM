@@ -91,6 +91,8 @@ func TestNewTmapSubmitted(t *testing.T) {
 			t.Fatalf("SubmittedBy != test login_name (%s)", test_req_login_name)
 		} else if l.TagCount == 0 {
 			t.Fatalf("TagCount == 0: %+v", l)
+		} else if strings.Contains(l.Cats, "NSFW") {
+			t.Fatal("should not contain NSFW in base query")
 		}
 
 		// remove from submitted_ids if returned by query
@@ -188,6 +190,41 @@ func TestNewTmapSubmittedAsSignedInUser(t *testing.T) {
 	}
 }
 
+func TestNewTmapSubmittedNSFW(t *testing.T) {
+	submitted_sql := NewTmapSubmitted("bradley").NSFW()
+	rows, err := TestClient.Query(submitted_sql.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// verify test_login_name's tmap contains link with NSFW tag
+	var found_NSFW_link bool
+	for rows.Next() {
+		var l model.TmapLink
+		if err := rows.Scan(
+			&l.ID,
+			&l.URL,
+			&l.SubmittedBy,
+			&l.SubmitDate,
+			&l.Cats,
+			&l.CatsFromUser,
+			&l.Summary,
+			&l.SummaryCount,
+			&l.LikeCount,
+			&l.TagCount,
+			&l.ImgURL,
+		); err != nil {
+			t.Fatal(err)
+		} else if strings.Contains(l.Cats, "NSFW") {
+			found_NSFW_link = true
+		}
+	}
+
+	if !found_NSFW_link {
+		t.Fatal("bradley's tmap does not but should contain link with NSFW tag")
+	}
+}
+
 // Copied
 func TestNewTmapCopied(t *testing.T) {
 	copied_sql := NewTmapCopied(test_login_name)
@@ -219,6 +256,8 @@ func TestNewTmapCopied(t *testing.T) {
 			t.Fatal(err)
 		} else if l.TagCount == 0 {
 			t.Fatal("TagCount == 0")
+		} else if strings.Contains(l.Cats, "NSFW") {
+			t.Fatal("should not contain NSFW in base query")
 		}
 
 		// check that tmap owner has copied
@@ -329,6 +368,43 @@ func TestNewTmapCopiedAsSignedInUser(t *testing.T) {
 		); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestNewTmapCopiedNSFW(t *testing.T) {
+	// test_login_name (jlk) should have copied 1 link with NSFW tag
+
+	copied_sql := NewTmapCopied(test_login_name).NSFW()
+	rows, err := TestClient.Query(copied_sql.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+
+	var found_NSFW_link bool
+	for rows.Next() {
+		var l model.TmapLink
+		if err := rows.Scan(
+			&l.ID,
+			&l.URL,
+			&l.SubmittedBy,
+			&l.SubmitDate,
+			&l.Cats,
+			&l.CatsFromUser,
+			&l.Summary,
+			&l.SummaryCount,
+			&l.LikeCount,
+			&l.TagCount,
+			&l.ImgURL,
+		); err != nil {
+			t.Fatal(err)
+		} else if strings.Contains(l.Cats, "NSFW") {
+			found_NSFW_link = true
+		}
+	}
+
+	if !found_NSFW_link {
+		t.Fatal("jlk's tmap does not but should contain 1 copied link with NSFW tag")
 	}
 }
 
@@ -473,6 +549,43 @@ func TestNewTmapTaggedAsSignedInUser(t *testing.T) {
 		); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestNewTmapTaggedNSFW(t *testing.T) {
+	// test_login_name (jlk) should have tagged 1 link with NSFW tag
+
+	copied_sql := NewTmapTagged(test_login_name).NSFW()
+	rows, err := TestClient.Query(copied_sql.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+
+	var found_NSFW_link bool
+	for rows.Next() {
+		var l model.TmapLink
+		if err := rows.Scan(
+			&l.ID,
+			&l.URL,
+			&l.SubmittedBy,
+			&l.SubmitDate,
+			&l.Cats,
+			&l.CatsFromUser,
+			&l.Summary,
+			&l.SummaryCount,
+			&l.LikeCount,
+			&l.TagCount,
+			&l.ImgURL,
+		); err != nil {
+			t.Fatal(err)
+		} else if strings.Contains(l.Cats, "NSFW") {
+			found_NSFW_link = true
+		}
+	}
+
+	if !found_NSFW_link {
+		t.Fatal("jlk's tmap does not but should contain 1 tagged link with NSFW tag")
 	}
 }
 

@@ -173,6 +173,26 @@ func (q *TmapSubmitted) AsSignedInUser(req_user_id string, req_login_name string
 	return q
 }
 
+func (q *TmapSubmitted) NSFW() *TmapSubmitted {
+
+	// remove NSFW clause
+	q.Text = strings.Replace(
+		q.Text,
+		NO_NSFW_CATS_WHERE,
+		"",
+		1,
+	)
+
+	// swap AND to WHERE in WHERE clause
+	q.Text = strings.Replace(
+		q.Text,
+		"AND l.submitted_by",
+		"WHERE l.submitted_by",
+		1,
+	)
+	return q
+}
+
 // Copied links submitted by other users (global cats replaced with user-assigned if user has tagged)
 type TmapCopied struct {
 	Query
@@ -222,6 +242,26 @@ func (q *TmapCopied) AsSignedInUser(req_user_id string, req_login_name string) *
 	q.Text = fields_replacer.Replace(q.Text)
 	q.Text = auth_replacer.Replace(q.Text)
 
+	return q
+}
+
+func (q *TmapCopied) NSFW() *TmapCopied {
+
+	// remove NSFW clause
+	q.Text = strings.Replace(
+		q.Text,
+		NO_NSFW_CATS_WHERE,
+		"",
+		1,
+	)
+
+	// swap AND to WHERE in WHERE clause
+	q.Text = strings.Replace(
+		q.Text,
+		"AND l.submitted_by !=",
+		"WHERE l.submitted_by !=",
+		1,
+	)
 	return q
 }
 
@@ -317,6 +357,26 @@ func (q *TmapTagged) AsSignedInUser(req_user_id string, req_login_name string) *
 	q.Text = fields_replacer.Replace(q.Text)
 	q.Text = auth_replacer.Replace(q.Text)
 
+	return q
+}
+
+func (q *TmapTagged) NSFW() *TmapTagged {
+
+	// remove NSFW clause
+	q.Text = strings.Replace(
+		q.Text,
+		NO_NSFW_CATS_WHERE,
+		"",
+		1,
+	)
+
+	// swap AND to WHERE in WHERE clause
+	q.Text = strings.Replace(
+		q.Text,
+		"AND submitted_by !=",
+		"WHERE submitted_by !=",
+		1,
+	)
 	return q
 }
 
