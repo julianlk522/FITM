@@ -40,7 +40,8 @@ func TestNewTmapSubmitted(t *testing.T) {
 	var submitted_ids []string
 
 	submitted_ids_sql := fmt.Sprintf(
-		`SELECT id FROM Links WHERE submitted_by = '%s'`,
+		`SELECT id FROM Links WHERE submitted_by = '%s'
+		AND global_cats NOT LIKE '%%NSFW%%'`, // exclude NSFW in base query
 		test_req_login_name,
 	)
 

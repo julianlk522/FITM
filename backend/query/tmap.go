@@ -113,6 +113,11 @@ const AUTH_JOINS = `
 LEFT JOIN IsLiked il ON l.id = il.link_id
 LEFT JOIN IsCopied ic ON l.id = ic.link_id`
 
+const NO_NSFW_CATS_WHERE = `
+WHERE l.id NOT IN (
+	SELECT link_id FROM global_cats_fts WHERE global_cats MATCH 'NSFW'
+)`
+
 const ORDER = `
 ORDER BY lc.like_count DESC, sc.summary_count DESC, l.id DESC;`
 
@@ -130,7 +135,8 @@ func NewTmapSubmitted(login_name string) *TmapSubmitted {
 			POSSIBLE_USER_SUMMARY_CTE +
 			BASE_FIELDS + "\n" +
 			FROM +
-			BASE_JOINS + "\n" +
+			BASE_JOINS +
+			NO_NSFW_CATS_WHERE +
 			SUBMITTED_WHERE + 
 			ORDER,
 		},
@@ -140,7 +146,8 @@ func NewTmapSubmitted(login_name string) *TmapSubmitted {
 	return q
 }
 
-const SUBMITTED_WHERE = `WHERE l.submitted_by = 'LOGIN_NAME'`
+const SUBMITTED_WHERE = `
+AND l.submitted_by = 'LOGIN_NAME'`
 
 func (q *TmapSubmitted) FromCats(cats []string) *TmapSubmitted {
 	q.Text = FromUserOrGlobalCats(q.Text, cats)
@@ -183,6 +190,7 @@ func NewTmapCopied(login_name string) *TmapCopied {
 				FROM + "\n" +
 				COPIED_JOIN +
 				BASE_JOINS +
+				NO_NSFW_CATS_WHERE +
 				COPIED_WHERE + 
 				ORDER,
 		},
@@ -193,7 +201,7 @@ func NewTmapCopied(login_name string) *TmapCopied {
 }
 
 const COPIED_WHERE = ` 
-WHERE submitted_by != 'LOGIN_NAME'`
+AND submitted_by != 'LOGIN_NAME'`
 
 func (q *TmapCopied) FromCats(cats []string) *TmapCopied {
 	q.Text = FromUserOrGlobalCats(q.Text, cats)
@@ -233,6 +241,7 @@ func NewTmapTagged(login_name string) *TmapTagged {
 				TAGGED_FIELDS + "\n" +
 				FROM +
 				TAGGED_JOINS +
+				NO_NSFW_CATS_WHERE +
 				TAGGED_WHERE + 
 				ORDER,
 		},
@@ -273,7 +282,7 @@ var TAGGED_JOINS = strings.Replace(
 )
 
 const TAGGED_WHERE = `
-WHERE submitted_by != 'LOGIN_NAME'
+AND submitted_by != 'LOGIN_NAME'
 AND l.id NOT IN
 	(SELECT link_id FROM UserCopies)`
 
