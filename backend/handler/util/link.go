@@ -124,8 +124,10 @@ func ObtainURLMetaData(request *model.NewLinkRequest) error {
 	// remove trailing slash
 	request.URL = strings.TrimSuffix(request.URL, "/")
 
-	meta := ExtractMetaFromHTMLTokens(resp.Body)
-	AssignMetadata(meta, request)
+	if resp.StatusCode != http.StatusForbidden {
+		meta := ExtractMetaFromHTMLTokens(resp.Body)
+		AssignMetadata(meta, request)
+	}
 
 	return nil
 }

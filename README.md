@@ -3,14 +3,13 @@
 ## Todos
 
 In order of importance:
-    1. prevent "Just a moment..." auto summary
-    2. make sure that user summary is always used unless auto summary has more likes
-    3. use user summaries in tmap if they exist
-    4. refactors / purge duplicate code
-    5. More
-    6. NSFW tags
+    1. make sure that user summary is always used unless auto summary has more likes
+    2. use user summaries in tmap if they exist
+    3. refactors / purge duplicate code
+    4. More
+    5. NSFW tags
         -hide from top / tmap unless you check a box or something
-    7. find some way to cache the stupid github.com/lestrrat-go/httpcc download
+    6. find some way to cache the stupid github.com/lestrrat-go/httpcc download
 
 ### Features
 
