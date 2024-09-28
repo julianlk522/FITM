@@ -302,9 +302,9 @@ func TestAsSignedInUser(t *testing.T) {
 func TestPage(t *testing.T) {
 	var links_sql = NewTopLinks()
 
-	want1 := strings.Replace(links_sql.Text, UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT+1), 1)
-	want2 := strings.Replace(links_sql.Text, UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, LINKS_PAGE_LIMIT), 1)
-	want3 := strings.Replace(links_sql.Text, UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, 2*LINKS_PAGE_LIMIT), 1)
+	want1 := strings.Replace(links_sql.Text, LINKS_UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT+1), 1)
+	want2 := strings.Replace(links_sql.Text, LINKS_UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, LINKS_PAGE_LIMIT), 1)
+	want3 := strings.Replace(links_sql.Text, LINKS_UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, 2*LINKS_PAGE_LIMIT), 1)
 
 	var test_cases = []struct {
 		Page int

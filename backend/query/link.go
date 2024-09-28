@@ -11,7 +11,7 @@ const (
 )
 
 // Links
-var UNPAGINATED_LIMIT_CLAUSE = fmt.Sprintf(
+var LINKS_UNPAGINATED_LIMIT_CLAUSE = fmt.Sprintf(
 	` 
 	LIMIT %d;`, 
 	LINKS_PAGE_LIMIT,
@@ -89,7 +89,7 @@ const LINKS_AUTH_JOINS = `
 LEFT JOIN IsLiked il ON l.id = il.link_id
 LEFT JOIN IsCopied ic ON l.id = ic.link_id`
 
-const LINKS_WHERE_NO_NSFW_CATS = `
+const LINKS_NO_NSFW_CATS_WHERE = `
 WHERE l.id NOT IN (
 	SELECT link_id FROM global_cats_fts WHERE global_cats MATCH 'NSFW'
 )`
@@ -108,9 +108,9 @@ func NewTopLinks() *TopLinks {
 				LINKS_BASE_FIELDS +
 				LINKS_FROM + 
 				LINKS_BASE_JOINS +
-				LINKS_WHERE_NO_NSFW_CATS +
+				LINKS_NO_NSFW_CATS_WHERE +
 				LINKS_ORDER_BY +
-				UNPAGINATED_LIMIT_CLAUSE,
+				LINKS_UNPAGINATED_LIMIT_CLAUSE,
 		},
 	})
 }
@@ -242,26 +242,12 @@ func (l *TopLinks) AsSignedInUser(req_user_id string) *TopLinks {
 	return l
 }
 
-func (l *TopLinks) Page(page int) *TopLinks {
-	if page == 0 {
-		return l
-	}
-
-	l.Text = strings.Replace(
-		l.Text, 
-		UNPAGINATED_LIMIT_CLAUSE, 
-		_PaginateLimitClause(page), 
-	1)
-
-	return l
-}
-
 func (l *TopLinks) NSFW() *TopLinks {
 
 	// remove NSFW clause
 	l.Text = strings.Replace(
 		l.Text,
-		LINKS_WHERE_NO_NSFW_CATS,
+		LINKS_NO_NSFW_CATS_WHERE,
 		"",
 		1,
 	)
@@ -273,6 +259,20 @@ func (l *TopLinks) NSFW() *TopLinks {
 		"WHERE submit_date",
 		1,
 	)
+
+	return l
+}
+
+func (l *TopLinks) Page(page int) *TopLinks {
+	if page == 0 {
+		return l
+	}
+
+	l.Text = strings.Replace(
+		l.Text, 
+		LINKS_UNPAGINATED_LIMIT_CLAUSE, 
+		_PaginateLimitClause(page), 
+	1)
 
 	return l
 }
