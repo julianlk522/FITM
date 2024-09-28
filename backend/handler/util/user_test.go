@@ -93,7 +93,7 @@ func TestHasAcceptableAspectRatio(t *testing.T) {
 // Delete profile pic
 func TestUserWithIDHasProfilePic(t *testing.T) {
 	var test_users = []struct {
-		ID string
+		ID            string
 		HasProfilePic bool
 	}{
 		// jlk has profile pic

@@ -105,7 +105,7 @@ func TestFromCats(t *testing.T) {
 				t.Fatalf("failed to escape period in cat: '%s'", cat)
 			}
 		}
-		
+
 		rows, err := TestClient.Query(links_sql.Text)
 		if err != nil && err != sql.ErrNoRows {
 			t.Fatal(err)
@@ -197,7 +197,7 @@ func TestLinksSortBy(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer rows.Close()
-		
+
 		// scan links
 		var links []model.Link
 		for rows.Next() {
@@ -449,7 +449,7 @@ func TestNewContributors(t *testing.T) {
 func TestContributorsFromCats(t *testing.T) {
 	contributors_sql := NewContributors().FromCats(
 		[]string{
-			"umvc3", 
+			"umvc3",
 			"c. viper",
 		},
 	)
@@ -467,7 +467,7 @@ FROM Links l`,
 		`SELECT
 count(l.id) as count, l.global_cats
 FROM Links l`,
-	1)
+		1)
 
 	rows, err := TestClient.Query(contributors_sql.Text)
 	if err != nil && err != sql.ErrNoRows {

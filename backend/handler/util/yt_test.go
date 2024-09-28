@@ -36,8 +36,8 @@ func TestObtainYouTubeMetaData(t *testing.T) {
 
 func TestExtractYouTubeVideoID(t *testing.T) {
 	var test_urls = []struct {
-		URL   string
-		ID    string
+		URL string
+		ID  string
 	}{
 		{"https://www.youtube.com/watch?v=9bZkp7q19f0", "9bZkp7q19f0"},
 		{"https://www.youtube.com/watch?v=9bZkp7q19f0&feature=player_embedded", "9bZkp7q19f0"},

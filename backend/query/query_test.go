@@ -21,14 +21,14 @@ func TestMain(m *testing.M) {
 }
 
 func TestGetCatsWithEscapedPeriods(t *testing.T) {
-	var test_cats = struct{
-		Cats []string
+	var test_cats = struct {
+		Cats            []string
 		ExpectedResults []string
 	}{
-		Cats: []string{"YouTube", "c. viper"},
+		Cats:            []string{"YouTube", "c. viper"},
 		ExpectedResults: []string{"YouTube", `c"." viper`},
 	}
-	
+
 	got := GetCatsWithEscapedPeriods(test_cats.Cats)
 	for i, res := range got {
 		if res != test_cats.ExpectedResults[i] {

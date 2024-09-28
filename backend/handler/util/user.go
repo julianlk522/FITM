@@ -55,7 +55,7 @@ func GetJWTFromLoginName(login_name string) (string, error) {
 	}
 
 	claims := map[string]interface{}{
-		"user_id": id.String, 
+		"user_id":    id.String,
 		"login_name": login_name,
 	}
 
@@ -64,9 +64,9 @@ func GetJWTFromLoginName(login_name string) (string, error) {
 		return "", e.ErrNoJWTSecretEnv
 	}
 	auth := jwtauth.New(
-		"HS256", 
-		[]byte(secret), 
-		nil, 
+		"HS256",
+		[]byte(secret),
+		nil,
 		jwt.WithAcceptableSkew(6*time.Hour),
 	)
 	_, token, err := auth.Encode(claims)
@@ -100,5 +100,5 @@ func UserWithIDHasProfilePic(user_id string) bool {
 	if err := db.Client.QueryRow("SELECT pfp FROM Users WHERE id = ?", user_id).Scan(&p); err != nil {
 		return false
 	}
-		return p.Valid
+	return p.Valid
 }

@@ -18,7 +18,6 @@ nice to do:
 - privacy policy about scraping websites / FITM-Bot user agent, etc.
 - original 404
 - sync rpi test data with updated (with NSFW tags)
-- gofmt
 
 ### Features
 

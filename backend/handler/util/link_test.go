@@ -31,7 +31,7 @@ func TestScanLinks(t *testing.T) {
 }
 
 func TestPaginateLinks(t *testing.T) {
-	
+
 	// no links
 	links_sql := query.NewTopLinks().FromCats([]string{"umvc3"}).DuringPeriod("day").Page(1)
 
@@ -52,9 +52,9 @@ func TestPaginateLinks(t *testing.T) {
 	} else {
 		t.Fatalf("expected type %T, got %T (no links)", model.PaginatedLinks[model.Link]{}, res)
 	}
-	
+
 	// single page
-	links_sql = query.NewTopLinks().FromCats([]string{"umvc3","flowers"}).Page(1)
+	links_sql = query.NewTopLinks().FromCats([]string{"umvc3", "flowers"}).Page(1)
 	links, err = ScanLinks[model.Link](links_sql)
 	if err != nil {
 		t.Fatal(err)
@@ -97,7 +97,7 @@ func TestPaginateLinks(t *testing.T) {
 func TestObtainURLMetaData(t *testing.T) {
 	var test_requests = []struct {
 		request *model.NewLinkRequest
-		Valid bool
+		Valid   bool
 	}{
 		{&model.NewLinkRequest{NewLink: &model.NewLink{URL: "abc.com"}}, true},
 		{&model.NewLinkRequest{NewLink: &model.NewLink{URL: "www.abc.com"}}, true},
@@ -128,7 +128,7 @@ func TestGetResolvedURLResponse(t *testing.T) {
 		{"about.google.com", true},
 		{"julianlk.com/notreal", false},
 		{"gobblety gook", false},
-		// TODO: get the fucking user agent headers to actually apply and 
+		// TODO: get the fucking user agent headers to actually apply and
 		// add test case e.g., https://neal.fun/deep-sea
 	}
 
@@ -268,21 +268,21 @@ func TestLinkAlreadyAdded(t *testing.T) {
 
 func TestIncrementSpellfixRanksForCats(t *testing.T) {
 	var test_cats = []struct {
-		Cats  []string
+		Cats         []string
 		CurrentRanks []int
 	}{
 		{
 			[]string{"umvc3"},
-			[]int{4}, 
+			[]int{4},
 		},
 		{
-			[]string{"flowers","nerd"}, 
-			[]int{6, 1}, 
+			[]string{"flowers", "nerd"},
+			[]int{6, 1},
 		},
 		// cat doesn't exist: should be added to global_cats_spellfix
 		{
-			[]string{"jksfdkhsdf"}, 
-			[]int{0}, 
+			[]string{"jksfdkhsdf"},
+			[]int{0},
 		},
 	}
 
@@ -300,9 +300,9 @@ func TestIncrementSpellfixRanksForCats(t *testing.T) {
 
 			if err != nil {
 				t.Fatal(err)
-			} else if rank != tc.CurrentRanks[i] + 1 {
+			} else if rank != tc.CurrentRanks[i]+1 {
 				t.Fatal(
-					"expected rank for", cat, "to be", tc.CurrentRanks[i] + 1, "got", rank,
+					"expected rank for", cat, "to be", tc.CurrentRanks[i]+1, "got", rank,
 				)
 			}
 		}
@@ -315,16 +315,16 @@ func TestIncrementSpellfixRanksForCats(t *testing.T) {
 // Delete link
 func TestDecrementSpellfixRanksForCats(t *testing.T) {
 	var test_cats = []struct {
-		Cats  []string
+		Cats         []string
 		CurrentRanks []int
 	}{
 		{
 			[]string{"test"},
-			[]int{11}, 
+			[]int{11},
 		},
 		{
-			[]string{"coding","hacking"}, 
-			[]int{6, 2}, 
+			[]string{"coding", "hacking"},
+			[]int{6, 2},
 		},
 	}
 
@@ -339,12 +339,12 @@ func TestDecrementSpellfixRanksForCats(t *testing.T) {
 			err := db.Client.QueryRow(
 				"SELECT rank FROM global_cats_spellfix WHERE word = ?", cat,
 			).Scan(&rank)
-			
+
 			if err != nil {
 				t.Fatal(err)
-			} else if rank != tc.CurrentRanks[i] - 1 {
+			} else if rank != tc.CurrentRanks[i]-1 {
 				t.Fatal(
-					"expected rank for", cat, "to be", tc.CurrentRanks[i] - 1, "got", rank,
+					"expected rank for", cat, "to be", tc.CurrentRanks[i]-1, "got", rank,
 				)
 			}
 		}

@@ -31,7 +31,6 @@ func GetTagPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	// refresh global cats before querying
 	util.CalculateAndSetGlobalCats(link_id)
 
@@ -90,7 +89,7 @@ func GetTagPage(w http.ResponseWriter, r *http.Request) {
 			TagRankings: tag_rankings,
 		})
 	}
-	
+
 }
 
 func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {
@@ -138,7 +137,7 @@ func GetSpellfixMatchesForSnippet(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	
+
 	rows, err := db.Client.Query(spfx_sql.Text)
 	if err != nil {
 		render.Render(w, r, e.ErrServerFail(err))
@@ -155,8 +154,8 @@ func GetSpellfixMatchesForSnippet(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		matches = append(matches, model.CatCount{
-			Category:  word,
-			Count:  rank,
+			Category: word,
+			Count:    rank,
 		})
 	}
 
@@ -172,7 +171,6 @@ func GetTopContributors(w http.ResponseWriter, r *http.Request) {
 		cats := strings.Split(cats_params, ",")
 		contributors_sql = contributors_sql.FromCats(cats)
 	}
-	
 
 	period_params := r.URL.Query().Get("period")
 	if period_params != "" {

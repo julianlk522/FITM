@@ -132,7 +132,7 @@ func TestAddTag(t *testing.T) {
 			}
 		} else if !tr.Valid && res.StatusCode != 400 {
 			t.Fatalf(
-				"expected status code 400, got %d (test request %+v)", 
+				"expected status code 400, got %d (test request %+v)",
 				res.StatusCode,
 				tr.Payload,
 			)
@@ -142,8 +142,8 @@ func TestAddTag(t *testing.T) {
 
 func TestEditTag(t *testing.T) {
 	test_tag_requests := []struct {
-		Payload map[string]string
-		Valid   bool
+		Payload            map[string]string
+		Valid              bool
 		ExpectedStatusCode int
 	}{
 		{
@@ -151,7 +151,7 @@ func TestEditTag(t *testing.T) {
 				"tag_id": "1",
 				"cats":   "",
 			},
-			Valid: false,
+			Valid:              false,
 			ExpectedStatusCode: 400,
 		},
 		{
@@ -159,7 +159,7 @@ func TestEditTag(t *testing.T) {
 				"tag_id": "1",
 				"cats":   "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123",
 			},
-			Valid: false,
+			Valid:              false,
 			ExpectedStatusCode: 400,
 		},
 		// too many cats
@@ -168,7 +168,7 @@ func TestEditTag(t *testing.T) {
 				"tag_id": "1",
 				"cats":   "0,1,2,3,4,5,6,7,8,9,0,1,2",
 			},
-			Valid: false,
+			Valid:              false,
 			ExpectedStatusCode: 400,
 		},
 		// duplicate cats
@@ -177,7 +177,7 @@ func TestEditTag(t *testing.T) {
 				"tag_id": "1",
 				"cats":   "0,1,2,3,3",
 			},
-			Valid: false,
+			Valid:              false,
 			ExpectedStatusCode: 400,
 		},
 		// should fail because user jlk _did not_ submit tag with ID 10
@@ -186,7 +186,7 @@ func TestEditTag(t *testing.T) {
 				"tag_id": "10",
 				"cats":   "testtest",
 			},
-			Valid: false,
+			Valid:              false,
 			ExpectedStatusCode: 403,
 		},
 		// should pass because user jlk _has_ submitted tag with ID 32
@@ -195,7 +195,7 @@ func TestEditTag(t *testing.T) {
 				"tag_id": "32",
 				"cats":   "hello,kitty",
 			},
-			Valid: true,
+			Valid:              true,
 			ExpectedStatusCode: 200,
 		},
 	}
@@ -230,7 +230,7 @@ func TestEditTag(t *testing.T) {
 				t.Fatal("failed but unable to read request body bytes")
 			} else {
 				t.Fatalf(
-					"expected status code %d, got %d (test request %+v)\n%s", 
+					"expected status code %d, got %d (test request %+v)\n%s",
 					tr.ExpectedStatusCode,
 					res.StatusCode,
 					tr.Payload,
@@ -239,7 +239,7 @@ func TestEditTag(t *testing.T) {
 			}
 		} else if !tr.Valid && res.StatusCode != tr.ExpectedStatusCode {
 			t.Fatalf(
-				"expected status code %d, got %d", 
+				"expected status code %d, got %d",
 				tr.ExpectedStatusCode,
 				res.StatusCode,
 			)
@@ -249,32 +249,32 @@ func TestEditTag(t *testing.T) {
 
 func TestDeleteTag(t *testing.T) {
 	var test_requests = []struct {
-		TagID string
-		Valid  bool
+		TagID              string
+		Valid              bool
 		ExpectedStatusCode int
 	}{
 		// jlk did not submit tag 11
 		{
-			TagID: "11",
-			Valid:  false,
+			TagID:              "11",
+			Valid:              false,
 			ExpectedStatusCode: 403,
 		},
 		// not a real tag
 		{
-			TagID: "-1",
-			Valid:  false,
+			TagID:              "-1",
+			Valid:              false,
 			ExpectedStatusCode: 400,
 		},
 		// jlk _did_ submit tag 34
 		{
-			TagID: "34",
-			Valid:  true,
+			TagID:              "34",
+			Valid:              true,
 			ExpectedStatusCode: 204,
 		},
 		// tag with ID 156 is only tag for link 108: should fail
 		{
-			TagID: "156",
-			Valid:  false,
+			TagID:              "156",
+			Valid:              false,
 			ExpectedStatusCode: 400,
 		},
 	}
@@ -309,14 +309,14 @@ func TestDeleteTag(t *testing.T) {
 				t.Fatal("failed but unable to read request body bytes")
 			}
 			t.Fatalf(
-				"expected status code 204, got %d (test request %+v) \n%s", 
+				"expected status code 204, got %d (test request %+v) \n%s",
 				res.StatusCode,
 				tr,
 				text,
 			)
 		} else if !tr.Valid && res.StatusCode != tr.ExpectedStatusCode {
 			t.Fatalf(
-				"expected status code %d, got %d (test request %+v)", 
+				"expected status code %d, got %d (test request %+v)",
 				tr.ExpectedStatusCode,
 				res.StatusCode,
 				tr,
@@ -327,49 +327,49 @@ func TestDeleteTag(t *testing.T) {
 
 func TestGetSpellfixMatchesForSnippet(t *testing.T) {
 	var test_requests = []struct {
-		Snippet string
-		OmittedCats string
+		Snippet            string
+		OmittedCats        string
 		ExpectedStatusCode int
-		Results map[string]int32
+		Results            map[string]int32
 	}{
 		{
-			Snippet: "test",
-			OmittedCats: "",
+			Snippet:            "test",
+			OmittedCats:        "",
 			ExpectedStatusCode: 200,
 			Results: map[string]int32{
-				"test": 11,
-				"tech": 2,
+				"test":       11,
+				"tech":       2,
 				"technology": 1,
 			},
 		},
 		{
-			Snippet: "test",
-			OmittedCats: "test",
+			Snippet:            "test",
+			OmittedCats:        "test",
 			ExpectedStatusCode: 200,
 			Results: map[string]int32{
-				"tech": 2,
+				"tech":       2,
 				"technology": 1,
 			},
 		},
 		{
-			Snippet: "test",
-			OmittedCats: "tech,technology",
+			Snippet:            "test",
+			OmittedCats:        "tech,technology",
 			ExpectedStatusCode: 200,
 			Results: map[string]int32{
 				"test": 11,
 			},
 		},
 		{
-			Snippet: "",
-			OmittedCats: "",
+			Snippet:            "",
+			OmittedCats:        "",
 			ExpectedStatusCode: 404,
-			Results: nil,
+			Results:            nil,
 		},
 		{
-			Snippet: "",
-			OmittedCats: "test",
+			Snippet:            "",
+			OmittedCats:        "test",
 			ExpectedStatusCode: 404,
-			Results: nil,
+			Results:            nil,
 		},
 	}
 
@@ -399,7 +399,7 @@ func TestGetSpellfixMatchesForSnippet(t *testing.T) {
 				t.Fatal("failed but unable to read response body bytes")
 			}
 			t.Fatalf(
-				"expected status code %d, got %d (test request %+v) \n%s", 
+				"expected status code %d, got %d (test request %+v) \n%s",
 				tr.ExpectedStatusCode,
 				w.Code,
 				tr,
@@ -411,7 +411,7 @@ func TestGetSpellfixMatchesForSnippet(t *testing.T) {
 		if w.Code > 200 {
 			continue
 		}
-		
+
 		b, err := io.ReadAll(w.Body)
 		if err != nil {
 			t.Fatal("failed but unable to read response body bytes")

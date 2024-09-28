@@ -198,7 +198,7 @@ func UserHasLikedSummary(user_id string, summary_id string) (bool, error) {
 	var summary_like_id sql.NullString
 
 	err := db.Client.QueryRow(
-		"SELECT id FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?", user_id, 
+		"SELECT id FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?", user_id,
 		summary_id,
 	).Scan(&summary_like_id)
 	if err != nil {
@@ -220,7 +220,7 @@ func RenderDeleted(w http.ResponseWriter, r *http.Request) {
 func CalculateAndSetGlobalSummary(link_id string) error {
 
 	// Summary with the most upvotes is the global summary
-	// UNLESS 1st is auto summary and tied with 2nd place, 
+	// UNLESS 1st is auto summary and tied with 2nd place,
 	// then use 2nd place
 	var top_summary_text string
 	err := db.Client.QueryRow(`WITH RankedSummaries AS (
@@ -244,9 +244,9 @@ func CalculateAndSetGlobalSummary(link_id string) error {
 	)
 	SELECT text
 	FROM RankedSummaries
-	WHERE rank = 1`, 
-	db.AUTO_SUMMARY_USER_ID, 
-	link_id,
+	WHERE rank = 1`,
+		db.AUTO_SUMMARY_USER_ID,
+		link_id,
 	).Scan(&top_summary_text)
 
 	if err != nil {

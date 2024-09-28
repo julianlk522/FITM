@@ -34,64 +34,63 @@ func ScanLinks[T model.Link | model.LinkSignedIn](get_links_sql *query.TopLinks)
 	var links interface{}
 
 	switch any(new(T)).(type) {
-		case *model.Link:
-			var signed_out_links = []model.Link{}
+	case *model.Link:
+		var signed_out_links = []model.Link{}
 
-			for rows.Next() {
-				i := model.Link{}
-				err := rows.Scan(
-					&i.ID,
-					&i.URL,
-					&i.SubmittedBy,
-					&i.SubmitDate,
-					&i.Cats,
-					&i.Summary,
-					&i.SummaryCount,
-					&i.TagCount,
-					&i.LikeCount,
-					&i.ImgURL,
-				)
-				if err != nil {
-					return nil, err
-				}
-				signed_out_links = append(signed_out_links, i)
+		for rows.Next() {
+			i := model.Link{}
+			err := rows.Scan(
+				&i.ID,
+				&i.URL,
+				&i.SubmittedBy,
+				&i.SubmitDate,
+				&i.Cats,
+				&i.Summary,
+				&i.SummaryCount,
+				&i.TagCount,
+				&i.LikeCount,
+				&i.ImgURL,
+			)
+			if err != nil {
+				return nil, err
+			}
+			signed_out_links = append(signed_out_links, i)
+		}
+
+		links = &signed_out_links
+
+	case *model.LinkSignedIn:
+		var signed_in_links = []model.LinkSignedIn{}
+
+		for rows.Next() {
+			i := model.LinkSignedIn{}
+			if err := rows.Scan(
+				&i.ID,
+				&i.URL,
+				&i.SubmittedBy,
+				&i.SubmitDate,
+				&i.Cats,
+				&i.Summary,
+				&i.SummaryCount,
+				&i.TagCount,
+				&i.LikeCount,
+				&i.ImgURL,
+				&i.IsLiked,
+				&i.IsCopied,
+			); err != nil {
+				return nil, err
 			}
 
-			links = &signed_out_links
+			signed_in_links = append(signed_in_links, i)
+		}
 
-		case *model.LinkSignedIn:
-			var signed_in_links = []model.LinkSignedIn{}
-
-			for rows.Next() {
-				i := model.LinkSignedIn{}
-				if err := rows.Scan(
-					&i.ID,
-					&i.URL,
-					&i.SubmittedBy,
-					&i.SubmitDate,
-					&i.Cats,
-					&i.Summary,
-					&i.SummaryCount,
-					&i.TagCount,
-					&i.LikeCount,
-					&i.ImgURL,
-					&i.IsLiked,
-					&i.IsCopied,
-				); err != nil {
-					return nil, err
-				}
-
-				signed_in_links = append(signed_in_links, i)
-			}
-
-			links = &signed_in_links
+		links = &signed_in_links
 	}
-	
 
 	return links.(*[]T), nil
 }
 
-func PaginateLinks[T model.LinkSignedIn | model.Link](links *[]T, page int) (interface{}) {
+func PaginateLinks[T model.LinkSignedIn | model.Link](links *[]T, page int) interface{} {
 	if links == nil || len(*links) == 0 {
 		return &model.PaginatedLinks[model.Link]{NextPage: -1}
 	}
@@ -110,7 +109,7 @@ func PaginateLinks[T model.LinkSignedIn | model.Link](links *[]T, page int) (int
 	}
 }
 
-// Add link (non-YT) 
+// Add link (non-YT)
 func ObtainURLMetaData(request *model.NewLinkRequest) error {
 	resp, err := GetResolvedURLResponse(request.NewLink.URL)
 	if err != nil {
@@ -218,8 +217,8 @@ func IncrementSpellfixRanksForCats(tx *sql.Tx, cats []string) error {
 				if err != nil {
 					return err
 				}
-				
-			// else increment
+
+				// else increment
 			} else {
 				_, err = tx.Exec(
 					"UPDATE global_cats_spellfix SET rank = rank + 1 WHERE word = ?;",
@@ -234,7 +233,7 @@ func IncrementSpellfixRanksForCats(tx *sql.Tx, cats []string) error {
 			}
 		}
 
-	// else run against DB connection directly
+		// else run against DB connection directly
 	} else {
 		for _, cat := range cats {
 			var rank int
@@ -262,7 +261,6 @@ func IncrementSpellfixRanksForCats(tx *sql.Tx, cats []string) error {
 			}
 		}
 	}
-	
 
 	return nil
 }
@@ -282,7 +280,7 @@ func DecrementSpellfixRanksForCats(tx *sql.Tx, cats []string) error {
 			}
 		}
 
-	// else run against DB connection directly
+		// else run against DB connection directly
 	} else {
 		for _, cat := range cats {
 			_, err := db.Client.Exec(

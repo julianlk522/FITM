@@ -286,7 +286,7 @@ func TestGetCatCountsFromTmapLinks(t *testing.T) {
 		var omit = []string{"test"}
 
 		cat_counts = GetCatCountsFromTmapLinks(
-			&l, 
+			&l,
 			&model.TmapCatCountsOpts{
 				OmittedCats: omit,
 			},

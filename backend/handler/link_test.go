@@ -17,99 +17,99 @@ func TestGetLinks(t *testing.T) {
 
 	test_get_links_requests := []struct {
 		Params map[string]string
-		Page int
-		Valid bool
+		Page   int
+		Valid  bool
 	}{
 		{
 			Params: map[string]string{},
-			Page: 0,
-			Valid: true,
+			Page:   0,
+			Valid:  true,
 		},
 		{
 			Params: map[string]string{},
-			Page: 1,
-			Valid: true,
+			Page:   1,
+			Valid:  true,
 		},
 		{
 			Params: map[string]string{"cats": "umvc3"},
-			Page: 1,
-			Valid: true,
+			Page:   1,
+			Valid:  true,
 		},
 		{
 			Params: map[string]string{
-				"cats": "umvc3",
+				"cats":   "umvc3",
 				"period": "day",
 			},
-			Page: 1,
+			Page:  1,
 			Valid: true,
 		},
 		{
 			Params: map[string]string{
-				"cats": "umvc3",
-				"period": "week",
+				"cats":    "umvc3",
+				"period":  "week",
 				"sort_by": "newest",
 			},
-			Page: 1,
+			Page:  1,
 			Valid: true,
 		},
 		{
 			Params: map[string]string{
-				"cats": "umvc3",
-				"period": "month",
+				"cats":    "umvc3",
+				"period":  "month",
 				"sort_by": "rating",
 			},
-			Page: 1,
+			Page:  1,
 			Valid: true,
 		},
 		{
 			Params: map[string]string{
-				"cats": "umvc3",
+				"cats":   "umvc3",
 				"period": "poop",
 			},
-			Page: 1,
+			Page:  1,
 			Valid: false,
 		},
 		{
 			Params: map[string]string{
-				"req_user_id": "3",
+				"req_user_id":    "3",
 				"req_login_name": "jlk",
 			},
-			Page: 1,
+			Page:  1,
 			Valid: true,
 		},
 		// passes because middlware corrects negative pages to 1
 		{
 			Params: map[string]string{},
-			Page: -1,
-			Valid: true,
+			Page:   -1,
+			Valid:  true,
 		},
 		// fails: sort_by must be either "rating" or "newest"
 		{
 			Params: map[string]string{"sort_by": "invalid"},
-			Page: 1,
-			Valid: false,
+			Page:   1,
+			Valid:  false,
 		},
 		// nsfw params may be "true", "false", or absent but not anything else
 		{
 			Params: map[string]string{"nsfw": "true"},
-			Page: 1,
-			Valid: true,
+			Page:   1,
+			Valid:  true,
 		},
 		{
 			Params: map[string]string{"nsfw": "false"},
-			Page: 1,
-			Valid: true,
+			Page:   1,
+			Valid:  true,
 		},
 		{
 			Params: map[string]string{"nsfw": "invalid"},
-			Page: 1,
-			Valid: false,
+			Page:   1,
+			Valid:  false,
 		},
 		// NSFW in caps also valid
 		{
 			Params: map[string]string{"NSFW": "true"},
-			Page: 1,
-			Valid: true,
+			Page:   1,
+			Valid:  true,
 		},
 	}
 
@@ -125,7 +125,7 @@ func TestGetLinks(t *testing.T) {
 		ctx = context.WithValue(ctx, m.UserIDKey, tglr.Params["req_user_id"])
 		ctx = context.WithValue(ctx, m.LoginNameKey, tglr.Params["req_login_name"])
 		r = r.WithContext(ctx)
-		
+
 		q := r.URL.Query()
 		for k, v := range tglr.Params {
 			q.Add(k, v)
@@ -151,8 +151,8 @@ func TestGetLinks(t *testing.T) {
 			)
 		} else if !tglr.Valid && res.StatusCode != http.StatusBadRequest {
 			t.Errorf(
-				"expected Bad Request, got %d (test request %+v)", 
-				res.StatusCode, 
+				"expected Bad Request, got %d (test request %+v)",
+				res.StatusCode,
 				tglr.Params,
 			)
 		}
@@ -296,7 +296,7 @@ func TestAddLink(t *testing.T) {
 			)
 		} else if !tr.Valid && res.StatusCode != 400 {
 			t.Fatalf(
-				"expected status code 400, got %d (test request %+v)", 
+				"expected status code 400, got %d (test request %+v)",
 				res.StatusCode,
 				tr.Payload,
 			)
@@ -306,26 +306,26 @@ func TestAddLink(t *testing.T) {
 
 func TestDeleteLink(t *testing.T) {
 	var test_requests = []struct {
-		LinkID string
-		Valid  bool
+		LinkID             string
+		Valid              bool
 		ExpectedStatusCode int
 	}{
 		// jlk did not submit link 0
 		{
-			LinkID: "0",
-			Valid:  false,
+			LinkID:             "0",
+			Valid:              false,
 			ExpectedStatusCode: 403,
 		},
 		// not a real link
 		{
-			LinkID: "-1",
-			Valid:  false,
+			LinkID:             "-1",
+			Valid:              false,
 			ExpectedStatusCode: 400,
 		},
 		// jlk _did_ submit link 7
 		{
-			LinkID: "7",
-			Valid:  true,
+			LinkID:             "7",
+			Valid:              true,
 			ExpectedStatusCode: 204,
 		},
 	}
@@ -356,13 +356,13 @@ func TestDeleteLink(t *testing.T) {
 
 		if tr.Valid && res.StatusCode != 204 {
 			t.Fatalf(
-				"expected status code 204, got %d (test request %+v)", 
+				"expected status code 204, got %d (test request %+v)",
 				res.StatusCode,
 				tr,
 			)
 		} else if !tr.Valid && res.StatusCode != tr.ExpectedStatusCode {
 			t.Fatalf(
-				"expected status code %d, got %d (test request %+v)", 
+				"expected status code %d, got %d (test request %+v)",
 				tr.ExpectedStatusCode,
 				res.StatusCode,
 				tr,

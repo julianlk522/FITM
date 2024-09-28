@@ -211,10 +211,10 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		render.Render(w, r, e.ErrServerFail(err))
 		return
-		} else if !user_exists {
-			render.Render(w, r, e.ErrInvalidRequest(e.ErrNoUserWithLoginName))
-		}
-		
+	} else if !user_exists {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoUserWithLoginName))
+	}
+
 	// Verify requesting user not attempting to like their own summary
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	owns_summary, err := util.SummarySubmittedByUser(summary_id, req_user_id)

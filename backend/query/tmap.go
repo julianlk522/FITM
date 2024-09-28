@@ -129,16 +129,15 @@ type TmapSubmitted struct {
 func NewTmapSubmitted(login_name string) *TmapSubmitted {
 	q := &TmapSubmitted{
 		Query: Query{
-			Text: 
-			"WITH " + BASE_CTES + ",\n" +
-			POSSIBLE_USER_CATS_CTE + ",\n" +
-			POSSIBLE_USER_SUMMARY_CTE +
-			BASE_FIELDS + "\n" +
-			FROM +
-			BASE_JOINS +
-			NO_NSFW_CATS_WHERE +
-			SUBMITTED_WHERE + 
-			ORDER,
+			Text: "WITH " + BASE_CTES + ",\n" +
+				POSSIBLE_USER_CATS_CTE + ",\n" +
+				POSSIBLE_USER_SUMMARY_CTE +
+				BASE_FIELDS + "\n" +
+				FROM +
+				BASE_JOINS +
+				NO_NSFW_CATS_WHERE +
+				SUBMITTED_WHERE +
+				ORDER,
 		},
 	}
 	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
@@ -158,12 +157,12 @@ func (q *TmapSubmitted) AsSignedInUser(req_user_id string, req_login_name string
 
 	// 2 replacers required: cannot be achieved with 1 since REQ_USER_ID/REQ_LOGIN_NAME replacements must be applied to auth fields/from _after_ they are inserted
 	fields_replacer := strings.NewReplacer(
-		BASE_CTES, BASE_CTES + ",\n" + AUTH_CTES,
-		BASE_FIELDS, BASE_FIELDS + AUTH_FIELDS,
-		BASE_JOINS, BASE_JOINS + AUTH_JOINS,
+		BASE_CTES, BASE_CTES+",\n"+AUTH_CTES,
+		BASE_FIELDS, BASE_FIELDS+AUTH_FIELDS,
+		BASE_JOINS, BASE_JOINS+AUTH_JOINS,
 	)
 	auth_replacer := strings.NewReplacer(
-		"REQ_USER_ID", req_user_id, 
+		"REQ_USER_ID", req_user_id,
 		"REQ_LOGIN_NAME", req_login_name,
 	)
 
@@ -201,8 +200,7 @@ type TmapCopied struct {
 func NewTmapCopied(login_name string) *TmapCopied {
 	q := &TmapCopied{
 		Query: Query{
-			Text: 
-				"WITH " + USER_COPIES_CTE + ",\n" +
+			Text: "WITH " + USER_COPIES_CTE + ",\n" +
 				BASE_CTES + ",\n" +
 				POSSIBLE_USER_CATS_CTE + ",\n" +
 				POSSIBLE_USER_SUMMARY_CTE +
@@ -211,7 +209,7 @@ func NewTmapCopied(login_name string) *TmapCopied {
 				COPIED_JOIN +
 				BASE_JOINS +
 				NO_NSFW_CATS_WHERE +
-				COPIED_WHERE + 
+				COPIED_WHERE +
 				ORDER,
 		},
 	}
@@ -230,12 +228,12 @@ func (q *TmapCopied) FromCats(cats []string) *TmapCopied {
 
 func (q *TmapCopied) AsSignedInUser(req_user_id string, req_login_name string) *TmapCopied {
 	fields_replacer := strings.NewReplacer(
-		BASE_CTES, BASE_CTES + ",\n" + AUTH_CTES,
-		BASE_FIELDS, BASE_FIELDS + AUTH_FIELDS, 
-		COPIED_JOIN, COPIED_JOIN + AUTH_JOINS,
+		BASE_CTES, BASE_CTES+",\n"+AUTH_CTES,
+		BASE_FIELDS, BASE_FIELDS+AUTH_FIELDS,
+		COPIED_JOIN, COPIED_JOIN+AUTH_JOINS,
 	)
 	auth_replacer := strings.NewReplacer(
-		"REQ_USER_ID", req_user_id, 
+		"REQ_USER_ID", req_user_id,
 		"REQ_LOGIN_NAME", req_login_name,
 	)
 
@@ -273,16 +271,15 @@ type TmapTagged struct {
 func NewTmapTagged(login_name string) *TmapTagged {
 	q := &TmapTagged{
 		Query: Query{
-			Text: 
-				"WITH " + BASE_CTES + ",\n" +
+			Text: "WITH " + BASE_CTES + ",\n" +
 				USER_CATS_CTE + ",\n" +
 				POSSIBLE_USER_SUMMARY_CTE + ",\n" +
-				USER_COPIES_CTE + 
+				USER_COPIES_CTE +
 				TAGGED_FIELDS + "\n" +
 				FROM +
 				TAGGED_JOINS +
 				NO_NSFW_CATS_WHERE +
-				TAGGED_WHERE + 
+				TAGGED_WHERE +
 				ORDER,
 		},
 	}
@@ -301,11 +298,11 @@ var TAGGED_FIELDS = strings.Replace(
 	strings.Replace(
 		BASE_FIELDS,
 		"COALESCE(puc.user_cats, l.global_cats) AS cats",
-		"uct.user_cats", 
+		"uct.user_cats",
 		1,
-	), 
+	),
 	`COALESCE(puc.cats_from_user,0) AS cats_from_user`,
-	"1 AS cats_from_user", 
+	"1 AS cats_from_user",
 	1,
 )
 
@@ -335,9 +332,9 @@ func (q *TmapTagged) FromCats(cats []string) *TmapTagged {
 	}
 
 	q.Text = strings.Replace(
-		q.Text, 
-		ORDER, 
-		cat_clause + ORDER, 
+		q.Text,
+		ORDER,
+		cat_clause+ORDER,
 		1,
 	)
 	return q
@@ -345,12 +342,12 @@ func (q *TmapTagged) FromCats(cats []string) *TmapTagged {
 
 func (q *TmapTagged) AsSignedInUser(req_user_id string, req_login_name string) *TmapTagged {
 	fields_replacer := strings.NewReplacer(
-		BASE_CTES, BASE_CTES + ",\n" + AUTH_CTES,
-		TAGGED_FIELDS, TAGGED_FIELDS + AUTH_FIELDS, 
-		TAGGED_JOINS, TAGGED_JOINS + AUTH_JOINS,
+		BASE_CTES, BASE_CTES+",\n"+AUTH_CTES,
+		TAGGED_FIELDS, TAGGED_FIELDS+AUTH_FIELDS,
+		TAGGED_JOINS, TAGGED_JOINS+AUTH_JOINS,
 	)
 	auth_replacer := strings.NewReplacer(
-		"REQ_USER_ID", req_user_id, 
+		"REQ_USER_ID", req_user_id,
 		"REQ_LOGIN_NAME", req_login_name,
 	)
 
@@ -393,27 +390,27 @@ func FromUserOrGlobalCats(q string, cats []string) string {
 	q = strings.Replace(
 		q,
 		puc_WHERE,
-		puc_WHERE + "\nAND cats MATCH " + cat_match,
+		puc_WHERE+"\nAND cats MATCH "+cat_match,
 		1,
 	)
 
 	gc_CTE := strings.Replace(
 		GLOBAL_CATS_CTE,
 		"FROM global_cats_fts",
-		"FROM global_cats_fts" + "\nWHERE global_cats MATCH " + cat_match,
+		"FROM global_cats_fts"+"\nWHERE global_cats MATCH "+cat_match,
 		1,
 	)
 	q = strings.Replace(
-		q, 
-		BASE_FIELDS, 
-		",\n" + gc_CTE + BASE_FIELDS, 
+		q,
+		BASE_FIELDS,
+		",\n"+gc_CTE+BASE_FIELDS,
 		1,
 	)
 
 	q = strings.Replace(
 		q,
 		BASE_JOINS,
-		BASE_JOINS + "\n" + GLOBAL_CATS_JOIN,
+		BASE_JOINS+"\n"+GLOBAL_CATS_JOIN,
 		1,
 	)
 
@@ -424,9 +421,9 @@ func FromUserOrGlobalCats(q string, cats []string) string {
 	puc.user_cats IS NOT NULL
 )`
 	q = strings.Replace(
-		q, 
-		ORDER, 
-		and_clause + ORDER, 
+		q,
+		ORDER,
+		and_clause+ORDER,
 		1,
 	)
 

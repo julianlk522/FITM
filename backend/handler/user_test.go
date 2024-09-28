@@ -177,20 +177,20 @@ func TestEditAbout(t *testing.T) {
 
 func TestDeleteProfilePic(t *testing.T) {
 	var test_requests = []struct {
-		UserID string
-		Valid  bool
+		UserID             string
+		Valid              bool
 		ExpectedStatusCode int
 	}{
 		{
 			// jlk has a profile pic: should be able to delete it
-			UserID: test_user_id,
-			Valid:     true,
+			UserID:             test_user_id,
+			Valid:              true,
 			ExpectedStatusCode: 204,
 		},
 		{
 			// bradley does not have a profile pic: should fail
-			UserID: "9",
-			Valid:     false,
+			UserID:             "9",
+			Valid:              false,
 			ExpectedStatusCode: 400,
 		},
 	}

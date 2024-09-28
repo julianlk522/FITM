@@ -54,7 +54,7 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 		nsfw_params = r.URL.Query().Get("NSFW")
 	}
 
-    if nsfw_params == "true" {
+	if nsfw_params == "true" {
 		links_sql = links_sql.NSFW()
 	} else if nsfw_params != "false" && nsfw_params != "" {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrInvalidNSFWParams))
@@ -189,11 +189,11 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if request.NewLink.Summary != "" {
-		request.Summary  = request.NewLink.Summary
+		request.Summary = request.NewLink.Summary
 	} else if request.AutoSummary != "" {
-		request.Summary  = request.AutoSummary
+		request.Summary = request.AutoSummary
 	} else {
-		request.Summary  = ""
+		request.Summary = ""
 	}
 
 	// insert link
@@ -214,7 +214,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	// increment spellfix ranks
 	err = util.IncrementSpellfixRanksForCats(
-		tx, 
+		tx,
 		strings.Split(request.Cats, ","),
 	)
 	if err != nil {
@@ -250,7 +250,7 @@ func DeleteLink(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
-	
+
 	link_exists, err := util.LinkExists(request.LinkID)
 	if err != nil {
 		render.Render(w, r, e.ErrInvalidRequest(err))

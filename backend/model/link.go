@@ -34,7 +34,7 @@ type VYTVideoItems struct {
 }
 
 type YTVideoSnippet struct {
-	Title  string `json:"title"`
+	Title      string `json:"title"`
 	Thumbnails struct {
 		Default struct {
 			URL string `json:"url"`
@@ -90,7 +90,7 @@ type NewLinkRequest struct {
 }
 
 func (l *NewLinkRequest) Bind(r *http.Request) error {
-	
+
 	// URL
 	if l.NewLink.URL == "" {
 		return e.ErrNoURL

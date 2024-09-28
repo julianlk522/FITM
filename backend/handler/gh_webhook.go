@@ -19,12 +19,12 @@ func HandleGitHubWebhook(w http.ResponseWriter, r *http.Request) {
 	if signkey_secret == "" {
 		render.Render(w, r, e.ErrServerFail(e.ErrNoWebhookSecret))
 	}
-	
+
 	signature_header := r.Header.Get("X-Hub-Signature-256")
 	if signature_header == "" {
 		render.Render(w, r, e.ErrUnauthorized(e.ErrNoWebhookSignature))
 	}
-	
+
 	// get signature, skipping "sha256="
 	gh_hash := signature_header[7:]
 
@@ -35,10 +35,10 @@ func HandleGitHubWebhook(w http.ResponseWriter, r *http.Request) {
 		log.Print("Cannot read GH webhook request payload")
 		render.Render(w, r, e.ErrInvalidRequest(err))
 	}
-	
+
 	// generate new hmac using secret
 	server_hash := hmac.New(
-		sha256.New, 
+		sha256.New,
 		[]byte(signkey_secret),
 	)
 	// update hash object with payload

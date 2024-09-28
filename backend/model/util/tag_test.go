@@ -6,8 +6,8 @@ import (
 
 func TestCapitalizeNSFWCatIfNotAlready(t *testing.T) {
 	var test_cats = []struct {
-		Cats  string
-		Want  string
+		Cats string
+		Want string
 	}{
 		{"nsfw", "NSFW"},
 		{"not,present", "not,present"},

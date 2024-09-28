@@ -20,9 +20,9 @@ func ScanTagPageLink[T model.Link | model.LinkSignedIn](link_sql *query.TagPageL
 	var link interface{}
 
 	switch any(new(T)).(type) {
-		case *model.Link:
-			var l = &model.Link{}
-			if err := db.Client.
+	case *model.Link:
+		var l = &model.Link{}
+		if err := db.Client.
 			QueryRow(link_sql.Text).
 			Scan(
 				&l.ID,
@@ -35,13 +35,13 @@ func ScanTagPageLink[T model.Link | model.LinkSignedIn](link_sql *query.TagPageL
 				&l.LikeCount,
 				&l.ImgURL,
 			); err != nil {
-				return nil, err
-			}
+			return nil, err
+		}
 
-			link = l
-		case *model.LinkSignedIn:
-			var l = &model.LinkSignedIn{}
-			if err := db.Client.
+		link = l
+	case *model.LinkSignedIn:
+		var l = &model.LinkSignedIn{}
+		if err := db.Client.
 			QueryRow(link_sql.Text).
 			Scan(
 				&l.ID,
@@ -55,11 +55,11 @@ func ScanTagPageLink[T model.Link | model.LinkSignedIn](link_sql *query.TagPageL
 				&l.ImgURL,
 				&l.IsLiked,
 				&l.IsCopied,
-				); err != nil {
-				return nil, err
-			}
+			); err != nil {
+			return nil, err
+		}
 
-			link = l
+		link = l
 	}
 
 	return link.(*T), nil
@@ -321,7 +321,7 @@ func AlphabetizeOverlapScoreCats(scores map[string]float32) []string {
 		}
 		return 1
 	})
-	
+
 	return cats
 }
 

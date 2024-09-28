@@ -47,7 +47,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pw_hash, err := bcrypt.GenerateFromPassword(
-		[]byte(signup_data.Auth.Password), 
+		[]byte(signup_data.Auth.Password),
 		bcrypt.DefaultCost,
 	)
 	if err != nil {
@@ -224,7 +224,7 @@ func DeleteProfilePic(w http.ResponseWriter, r *http.Request) {
 
 	// Delete from DB
 	_, err = db.Client.Exec(
-		`UPDATE Users SET pfp = NULL WHERE id = ?`, 
+		`UPDATE Users SET pfp = NULL WHERE id = ?`,
 		req_user_id,
 	)
 	if err != nil {

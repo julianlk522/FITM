@@ -40,7 +40,7 @@ func TestLoadSpellfix(t *testing.T) {
 		}
 		log.Print("loaded test data (TestLoadSpellfix)")
 	}
-	
+
 	_, err := Client.Exec(`SELECT word, rank FROM global_cats_spellfix;`)
 	if err != nil {
 		t.Fatal(err)

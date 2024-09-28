@@ -6,14 +6,14 @@ import (
 )
 
 const (
-	LINKS_PAGE_LIMIT                = 20
-	CONTRIBUTORS_PAGE_LIMIT         = 10
+	LINKS_PAGE_LIMIT        = 20
+	CONTRIBUTORS_PAGE_LIMIT = 10
 )
 
 // Links
 var LINKS_UNPAGINATED_LIMIT_CLAUSE = fmt.Sprintf(
 	` 
-	LIMIT %d;`, 
+	LIMIT %d;`,
 	LINKS_PAGE_LIMIT,
 )
 
@@ -28,8 +28,7 @@ type TopLinks struct {
 	Query
 }
 
-const LINKS_BASE_CTES = 
-`WITH LikeCount AS (
+const LINKS_BASE_CTES = `WITH LikeCount AS (
     SELECT link_id, COUNT(*) AS like_count 
     FROM 'Link Likes'
     GROUP BY link_id
@@ -103,10 +102,9 @@ ORDER BY
 func NewTopLinks() *TopLinks {
 	return (&TopLinks{
 		Query: Query{
-			Text: 
-				LINKS_BASE_CTES +
+			Text: LINKS_BASE_CTES +
 				LINKS_BASE_FIELDS +
-				LINKS_FROM + 
+				LINKS_FROM +
 				LINKS_BASE_JOINS +
 				LINKS_NO_NSFW_CATS_WHERE +
 				LINKS_ORDER_BY +
@@ -133,7 +131,7 @@ func (l *TopLinks) FromCats(cats []string) *TopLinks {
 
 	// build CTE from clause
 	cats_cte := fmt.Sprintf(
-			`,
+		`,
 		CatsFilter AS (
 			SELECT link_id
 			FROM global_cats_fts
@@ -145,17 +143,17 @@ func (l *TopLinks) FromCats(cats []string) *TopLinks {
 	l.Text = strings.Replace(
 		l.Text,
 		LINKS_BASE_CTES,
-		LINKS_BASE_CTES + cats_cte,
-	1)
+		LINKS_BASE_CTES+cats_cte,
+		1)
 
 	// append join
 	l.Text = strings.Replace(
 		l.Text,
 		LINKS_FROM,
-		LINKS_FROM + "\n" + LINKS_CATS_JOIN,
+		LINKS_FROM+"\n"+LINKS_CATS_JOIN,
 		1,
 	)
-	
+
 	return l
 }
 
@@ -167,11 +165,11 @@ func (l *TopLinks) DuringPeriod(period string) *TopLinks {
 		l.Error = err
 		return l
 	}
-	
+
 	l.Text = strings.Replace(
 		l.Text,
 		LINKS_ORDER_BY,
-		"\n" + "AND " + clause + LINKS_ORDER_BY,
+		"\n"+"AND "+clause+LINKS_ORDER_BY,
 		1,
 	)
 
@@ -187,13 +185,13 @@ func (l *TopLinks) SortBy(order_by string) *TopLinks {
 	updated_order_by_clause := `
 	ORDER BY `
 	switch order_by {
-		case "newest":
-			updated_order_by_clause += "submit_date DESC, like_count DESC, summary_count DESC"
-		case "rating":
-			updated_order_by_clause += "like_count DESC, summary_count DESC, submit_date DESC"
-		default:
-			l.Error = fmt.Errorf("invalid order_by value")
-			return l
+	case "newest":
+		updated_order_by_clause += "submit_date DESC, like_count DESC, summary_count DESC"
+	case "rating":
+		updated_order_by_clause += "like_count DESC, summary_count DESC, submit_date DESC"
+	default:
+		l.Error = fmt.Errorf("invalid order_by value")
+		return l
 	}
 
 	l.Text = strings.Replace(
@@ -212,7 +210,7 @@ func (l *TopLinks) AsSignedInUser(req_user_id string) *TopLinks {
 	l.Text = strings.Replace(
 		l.Text,
 		LINKS_BASE_CTES,
-		LINKS_BASE_CTES + LINKS_AUTH_CTES,
+		LINKS_BASE_CTES+LINKS_AUTH_CTES,
 		1,
 	)
 
@@ -220,7 +218,7 @@ func (l *TopLinks) AsSignedInUser(req_user_id string) *TopLinks {
 	l.Text = strings.Replace(
 		l.Text,
 		LINKS_BASE_FIELDS,
-		LINKS_BASE_FIELDS + LINKS_AUTH_FIELDS,
+		LINKS_BASE_FIELDS+LINKS_AUTH_FIELDS,
 		1,
 	)
 
@@ -228,7 +226,7 @@ func (l *TopLinks) AsSignedInUser(req_user_id string) *TopLinks {
 	l.Text = strings.Replace(
 		l.Text,
 		LINKS_BASE_JOINS,
-		LINKS_BASE_JOINS + LINKS_AUTH_JOINS,
+		LINKS_BASE_JOINS+LINKS_AUTH_JOINS,
 		1,
 	)
 
@@ -269,10 +267,10 @@ func (l *TopLinks) Page(page int) *TopLinks {
 	}
 
 	l.Text = strings.Replace(
-		l.Text, 
-		LINKS_UNPAGINATED_LIMIT_CLAUSE, 
-		_PaginateLimitClause(page), 
-	1)
+		l.Text,
+		LINKS_UNPAGINATED_LIMIT_CLAUSE,
+		_PaginateLimitClause(page),
+		1)
 
 	return l
 }
@@ -314,7 +312,7 @@ func (c *Contributors) FromCats(cats []string) *Contributors {
 
 	// build CTE
 	cats_cte := fmt.Sprintf(
-	`WITH CatsFilter AS (
+		`WITH CatsFilter AS (
 	SELECT link_id
 	FROM global_cats_fts
 	%s
@@ -325,15 +323,14 @@ func (c *Contributors) FromCats(cats []string) *Contributors {
 	c.Text = strings.Replace(
 		c.Text,
 		CONTRIBUTORS_FIELDS,
-		cats_cte + "\n" + CONTRIBUTORS_FIELDS,
+		cats_cte+"\n"+CONTRIBUTORS_FIELDS,
 		1)
-
 
 	// append join
 	c.Text = strings.Replace(
 		c.Text,
 		CONTRIBUTORS_FIELDS,
-		CONTRIBUTORS_FIELDS + "\n" + CONTRIBUTORS_CATS_FROM,
+		CONTRIBUTORS_FIELDS+"\n"+CONTRIBUTORS_CATS_FROM,
 		1,
 	)
 
@@ -358,7 +355,7 @@ func (c *Contributors) DuringPeriod(period string) *Contributors {
 	c.Text = strings.Replace(
 		c.Text,
 		CONTRIBUTORS_GBOBL,
-		"\n" + "WHERE " + clause + CONTRIBUTORS_GBOBL,
+		"\n"+"WHERE "+clause+CONTRIBUTORS_GBOBL,
 		1)
 
 	return c

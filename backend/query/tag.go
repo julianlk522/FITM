@@ -8,10 +8,10 @@ import (
 )
 
 const (
-	TAG_RANKINGS_PAGE_LIMIT   = 20
-	GLOBAL_CATS_PAGE_LIMIT    = 20
+	TAG_RANKINGS_PAGE_LIMIT = 20
+	GLOBAL_CATS_PAGE_LIMIT  = 20
 	SPELLFIX_DISTANCE_LIMIT = 100
-	SPELLFIX_MATCHES_LIMIT    =  3
+	SPELLFIX_MATCHES_LIMIT  = 3
 )
 
 // Tags Page link
@@ -182,11 +182,11 @@ func NewTopGlobalCatCounts() *GlobalCatCounts {
 
 func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
 	cats := strings.Split(cats_params, ",")
-	
+
 	// build match clause
 	match_cats := make([]string, len(cats))
 	copy(match_cats, cats)
-	
+
 	// escape periods
 	// (not required for MATCH clause but required for NOT IN)
 	cats = GetCatsWithEscapedPeriods(cats)

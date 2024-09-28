@@ -17,14 +17,14 @@ func init() {
 	var err error
 	FileLogFormatter, err = NewSplitLogFormatter(
 		log.New(
-			os.Stdout, 
-			"", 
+			os.Stdout,
+			"",
 			log.LstdFlags,
 		),
 	)
-    if err != nil {
-        log.Fatal(err)
-    }
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // creates a new SplitLogFormatter
@@ -35,7 +35,7 @@ func NewSplitLogFormatter(logger middleware.LoggerInterface) (*SplitLogFormatter
 		return nil, err
 	}
 	log.Printf("logging errs to %s", os.Getenv("FITM_ERR_LOG_FILE"))
-	
+
 	return &SplitLogFormatter{
 		DefaultLogFormatter: middleware.DefaultLogFormatter{
 			Logger:  logger,
@@ -66,7 +66,7 @@ func SplitRequestLogger(f *SplitLogFormatter) func(next http.Handler) http.Handl
 	}
 }
 
-// CustomResponseWriter wraps the http.ResponseWriter to capture any 
+// CustomResponseWriter wraps the http.ResponseWriter to capture any
 // custom status text
 type CustomResponseWriter struct {
 	http.ResponseWriter
@@ -103,7 +103,7 @@ type SplitLogEntry struct {
 
 func (l *SplitLogEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
 	l.LogEntry.Write(status, bytes, header, elapsed, extra)
-	
+
 	if status > 299 {
 		status_text := "Unknown Error"
 		if crw, ok := extra.(*CustomResponseWriter); ok {

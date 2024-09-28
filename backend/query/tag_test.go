@@ -201,8 +201,8 @@ func TestNewTopGlobalCatCountsSubcatsOfCats(t *testing.T) {
 			t.Fatal(err)
 		} else if count != c.Count {
 			t.Fatalf(
-				"got %d, want %d for cat %s", 
-				count, 
+				"got %d, want %d for cat %s",
+				count,
 				c.Count,
 				c.Category,
 			)
@@ -262,8 +262,8 @@ const TEST_SNIPPET = "test"
 
 func TestNewSpellfixMatchesForSnippet(t *testing.T) {
 	var expected_rankings = map[string]int{
-		"test": 11,
-		"tech": 2,
+		"test":       11,
+		"tech":       2,
 		"technology": 1,
 	}
 
@@ -290,7 +290,7 @@ func TestNewSpellfixMatchesForSnippet(t *testing.T) {
 func TestOmitCats(t *testing.T) {
 	var expected_rankings = map[string]int{
 		// "test": 11, // filter out
-		"tech": 2,
+		"tech":       2,
 		"technology": 1,
 	}
 	matches_sql := NewSpellfixMatchesForSnippet(TEST_SNIPPET)
