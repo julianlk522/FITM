@@ -17,6 +17,7 @@ const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
 
 // Params
+// login_name
 const { login_name } = Astro.params
 if (!login_name) {
 	return Astro.redirect('/')
@@ -24,6 +25,7 @@ if (!login_name) {
 const is_signed_in_user = login_name === user
 let page_title = `${login_name}'s Treasure Map`
 
+// cats
 let cats: string | undefined
 let cats_split: string[] = []
 if (Astro.url.searchParams.get('cats')) {
@@ -35,14 +37,27 @@ if (Astro.url.searchParams.get('cats')) {
 	}
 }
 
+// nsfw
+let nsfw = false
+if (Astro.url.searchParams.get('nsfw') && Astro.url.searchParams.get('nsfw') === 'true') {
+	nsfw = true
+}
+
 // Get Tmap
 let tmap: TreasureMap | FilteredTreasureMap
 let tmap_url = TMAP_ENDPOINT + `/${login_name}`
 if (cats_split.length) {
 	tmap_url += `?cats=${cats_split[0]}`
-
 	for (let i = 1; i < cats_split.length; i++) {
 		tmap_url += `,${cats_split[i]}`
+	}
+}
+
+if (nsfw) {
+	if (cats) {
+		tmap_url += `&nsfw=true`
+	} else {
+		tmap_url += `?nsfw=true`
 	}
 }
 
@@ -82,7 +97,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
 		<h2 class="subtitle">
-			{profile ? `created: ${format_short_date(profile.Created)}` : '(Filtered)'}
+			{profile ? `created: ${format_short_date(profile.Created)}` : `(Filtered${nsfw ? ', NSFW' : ''})`}
 		</h2>
 
 		<!-- Profile  -->
@@ -120,45 +135,55 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 		)
 		: null}
 			
-		<!-- Category Filter -->
-		{cats ? <section id='cat-filter' class="flex">
-			<div>
-				<h2>Cat Filter</h2>
-				<p id="transfer-to-global-map">
-					<a href={`/top?cats=${cats}`}>Transfer to Global Treasure Map</a>
-				</p>
-				<p id='reset-cat-filter'>
-					<a href={`/map/${login_name}`}>Reset</a>
-				</p>
-			</div>
-			<ul id='cat-list'>
-				{
-					cats_split.length > 1 ? (
-						cats_split.map((cat) => {
-							return (
-								<TagCat
-									Cat={cat}
-									Count={undefined}
-									Removable={false}
-									Addable={false}
-									AddedSignal={undefined}
-									DeletedSignal={undefined}
-								/>
-							)
-						})
-					) : (
-						<TagCat
-							Cat={cats_split[0]}
-							Count={undefined}
-							Removable={false}
-							Addable={false}
-							AddedSignal={undefined}
-							DeletedSignal={undefined}
-						/>
-					)
-				}
-			</ul>
-		</section> : null}
+		<!-- Filters -->
+		<section id='filters'>
+
+			<!-- NSFW -->
+			<p id="nsfw-filter">NSFW links:</p>
+			<span>
+				{nsfw ? <a href={`/map/${login_name}${cats ? `?cats=${cats}` : ''}`}>hide</a> : <a href={`/map/${login_name}${cats ? `?cats=${cats}&nsfw=true` : '?nsfw=true'}`}>show</a>}
+			</span>
+
+			<!-- Categories -->
+			{cats ? <div id='cat-filter-container' class="flex">
+				<div>
+					<p id="cat-filter">Cats:</p>
+					<span id='reset-cat-filter'>
+						<a href={`/map/${login_name}`}>reset</a>
+					</span>
+					<p id="transfer-to-global-map">
+						<a href={`/top?cats=${cats}`}>Transfer cats to Global Treasure Map</a>
+					</p>
+				</div>
+				<ul id='cat-list'>
+					{
+						cats_split.length > 1 ? (
+							cats_split.map((cat) => {
+								return (
+									<TagCat
+										Cat={cat}
+										Count={undefined}
+										Removable={false}
+										Addable={false}
+										AddedSignal={undefined}
+										DeletedSignal={undefined}
+									/>
+								)
+							})
+						) : (
+							<TagCat
+								Cat={cats_split[0]}
+								Count={undefined}
+								Removable={false}
+								Addable={false}
+								AddedSignal={undefined}
+								DeletedSignal={undefined}
+							/>
+						)
+					}
+				</ul>
+			</div> : null}
+		</section>
 
 		{used_sections.length ? 
 			<>
@@ -245,7 +270,10 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 				})
 			}
 			</>
-		: null}
+		: <section>
+			<p id="no-links">No links found.</p>
+			<p>&macr;&bsol;&lowbar;&lpar;&#x30c4;&rpar;&lowbar;&sol;&macr;</p>
+		</section>}
 
 		<ScrollUp />
 	</main>
@@ -257,17 +285,23 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 		text-align: left;
 	}
 
-	#cat-filter {
-		display: flex;
-		flex-direction: column;
-
-		#transfer-to-global-map,
-		#reset-cat-filter {
-			margin: 0;
+	section#filters {
+		p#nsfw-filter,
+		p#cat-filter {
+			display: inline;
 		}
+		#cat-filter-container {
+			display: flex;
+			flex-direction: column;
 
-		#cat-list {
-			margin-bottom: 0;
+			#transfer-to-global-map,
+			#reset-cat-filter {
+				margin: 0;
+			}
+
+			#cat-list {
+				margin-bottom: 0;
+			}
 		}
 	}
 
@@ -318,18 +352,24 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 		}
 	}
 
-	@media (min-width: 480px) {
-		#cat-filter {
-			flex-direction: row;
+	p#no-links {
+		margin-top: 0;
+	}
 
-			#transfer-to-global-map,
-			#reset-cat-filter {
-				margin: 0;
-			}
-			
-			#cat-list {
-				margin: 0 auto;
-				align-content: center;
+	@media (min-width: 480px) {
+		section#filters {
+			#cat-filter-container {
+				flex-direction: row;
+
+				#transfer-to-global-map,
+				#reset-cat-filter {
+					margin: 0;
+				}
+				
+				#cat-list {
+					margin: 0 auto;
+					align-content: center;
+				}
 			}
 		}
 		#overview {

@@ -80,7 +80,7 @@ let user = Astro.cookies.get('user')?.value
 			margin-bottom: 1rem;
 		}
 		h2 {
-			font-size: 1.5rem;
+			font-size: 1.25rem;
 		}
 		h2.subtitle {
 			font-size: 1rem;
@@ -202,6 +202,12 @@ let user = Astro.cookies.get('user')?.value
 
 			a {
 				color: red;
+			}
+		}
+
+		@media (min-width: 400px) {
+			h2 {
+				font-size: 1.5rem;
 			}
 		}
 

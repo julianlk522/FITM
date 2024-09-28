@@ -3,10 +3,11 @@
 ## Todos
 
 In order of importance:
+    0. fix cats input so enter applies new cat intead of confirming edits
+    0.5. ensure removing cat from tag decrements spellfix rank
     1. NSFW tags
-        -Restrict from tmap/top unless opt in
         -automatically correct 'nsfw' to 'NSFW'
-        -Tests
+            -frontend
     2. touch up global cats visual, add to about
     3. More
     4. refactors
@@ -20,6 +21,8 @@ In order of importance:
 nice to do:
 - privacy policy about scraping websites / FITM-Bot user agent, etc.
 - original 404
+- sync rpi test data with updated (with NSFW tags)
+- gofmt
 
 ### Features
 
@@ -40,6 +43,8 @@ nice to do:
         -Link: IsSummaryPage / IsTagPage / IsTmapPage
     -Top Cats / Top Links / etc. components
     -move tmap cats json above links
+    -move contributors queries from query/link.go to query/contributors.go
+        -will also allow sharing WHERE_NO_NSFW_CATS between TopLinks / tmap queries
 -Readability
     -ErrServerFail => Err500 etc.
 -Security
@@ -83,6 +88,8 @@ nice to do:
     -500 for server fuckups
 -Other lesser refactors and removal of duplicate code
     -Fix SQL identifiers to use "" and string literals to use ''
+    -duplicate SearchParams dropdown components
+        -merge Period / SortBy into same component with unique options set as props
     -duplicate add_tag funcs (EditTag.tsx, SearchCats.tsx)
     -duplicate handle_redirect() helpers on tag page / summary page
     -duplicate redirect_to cookie logic using window.location.pathname

@@ -76,9 +76,9 @@ export default function SearchFilters(props: Props) {
 					SetSortBySignal={changed_sort_by}
 				/>
 
-				<SearchCats SelectedCats={cats} SetSelectedCats={set_cats} />
-
 				<SearchNSFW NSFW={nsfw} SetNSFW={set_nsfw} />
+
+				<SearchCats SelectedCats={cats} SetSelectedCats={set_cats} />
 
 				<a id='search-from-filters' href={search_URL}>
 					Search
