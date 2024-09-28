@@ -21,6 +21,7 @@ const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
 
 // Params
+// period
 let period: Period = 'all'
 if (
 	Astro.url.searchParams.get('period') &&
@@ -30,6 +31,7 @@ if (
 ) {
 	period = Astro.url.searchParams.get('period') as Period
 }
+// sort by
 let sort_by: SortMetric = 'rating'
 if (
 	Astro.url.searchParams.get('sort_by') && (SortMetrics as readonly string[]).includes(
@@ -37,10 +39,17 @@ if (
 	)) {
 		sort_by = Astro.url.searchParams.get('sort_by') as SortMetric
 	}
+// cats
 let cats: string | undefined
 if (Astro.url.searchParams.get('cats')) {
 	cats = Astro.url.searchParams.get('cats') as string
 }
+// nsfw
+let nsfw: boolean = false
+if (Astro.url.searchParams.get('nsfw') && Astro.url.searchParams.get('nsfw') === 'true') {
+	nsfw = true
+}
+// page
 let page = 1
 if (Astro.url.searchParams.get('page')) {
 	page = parseInt(Astro.url.searchParams.get('page') as string)
@@ -56,7 +65,6 @@ if (cats) {
 	has_cats = true
 	links_url += `?cats=${cats}`
 }
-
 // period
 let has_period = false
 if (period !== 'all') {
@@ -68,7 +76,6 @@ if (period !== 'all') {
 		links_url += `?period=${period}`
 	}
 }
-
 // sort by
 let has_sort_by = false
 if (sort_by !== 'rating') {
@@ -80,9 +87,18 @@ if (sort_by !== 'rating') {
 		links_url += `?sort_by=${sort_by}`
 	}
 }
-
+// nsfw
+let has_nsfw = false
+if (nsfw) {
+	has_nsfw = true
+	if (has_cats || has_period || has_sort_by) {
+		links_url += `&nsfw=${nsfw}`
+	} else {
+		links_url += `?nsfw=${nsfw}`
+	}
+}
 // page
-if (has_cats || has_period || has_sort_by) {
+if (has_cats || has_period || has_sort_by || has_nsfw) {
 	links_url += `&page=${page}`
 } else {
 	links_url += `?page=${page}`
@@ -165,7 +181,8 @@ const is_only_page =
 			client:load 
 			InitialPeriod={period}
 			InitialSortBy={sort_by}
-			InitialCats={cats?.split(',')}
+			InitialCats={cats?.split(',') ?? []}
+			InitialNSFW={nsfw}
 		/>
 
 		{
