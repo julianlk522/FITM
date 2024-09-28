@@ -1,11 +1,11 @@
 import { effect, useSignal } from '@preact/signals'
 import { useState } from 'preact/hooks'
 import type { Period, SortMetric } from '../../types'
-import SearchCats from './SearchCats'
-import './SearchFilters.css'
-import SearchNSFW from './SearchNSFW'
-import SearchPeriod from './SearchPeriod'
-import SearchSortBy from './SearchSortBy'
+import SearchCats from './Cats'
+import './Filters.css'
+import SearchNSFW from './NSFW'
+import SearchPeriod from './Period'
+import SearchSortBy from './SortBy'
 
 interface Props {
 	InitialPeriod: Period

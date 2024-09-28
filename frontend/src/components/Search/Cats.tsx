@@ -1,10 +1,17 @@
 import { effect, useSignal } from '@preact/signals'
-import { useCallback, useEffect, useRef, useState, type Dispatch, type StateUpdater } from 'preact/hooks'
+import {
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+	type Dispatch,
+	type StateUpdater,
+} from 'preact/hooks'
 import { CATS_ENDPOINT } from '../../constants'
 import * as types from '../../types'
 import { type CatCount } from '../../types'
 import TagCat from '../Tag/TagCat'
-import './SearchCats.css'
+import './Cats.css'
 
 interface Props {
 	AbbreviatedCatsText?: boolean
@@ -16,7 +23,12 @@ interface Props {
 }
 
 export default function SearchCats(props: Props) {
-	const {AbbreviatedCatsText: abbreviated_cats_text, Removable: removable, SelectedCats: selected_cats, SetSelectedCats: set_selected_cats} = props
+	const {
+		AbbreviatedCatsText: abbreviated_cats_text,
+		Removable: removable,
+		SelectedCats: selected_cats,
+		SetSelectedCats: set_selected_cats,
+	} = props
 	const addable = props.Addable ?? true
 
 	const [snippet, set_snippet] = useState<string>('')
@@ -136,35 +148,38 @@ export default function SearchCats(props: Props) {
 
 	useEffect(() => {
 		if (props.SubmittedLinks && props.SubmittedLinks.length) {
-			set_snippet("")
+			set_snippet('')
 		}
 	}, [props.SubmittedLinks])
 
 	return (
 		<div id='search-cats-container'>
-			
-			{addable ? <>
-				<label id='search-cats' for='cats'>
-				{abbreviated_cats_text ? 'Cats:' : 'Tag Cats:'}
-			</label>
-				<input
-					type='text'
-					name='cats'
-					id='cats'
-					onInput={(event) =>
-						set_snippet((event.target as HTMLInputElement).value)
-					}
-					onSubmit={add_cat}
-					value={snippet}
-				/>
-				<input
-					id='add-cat-filter'
-					title='Add cat'
-					type='submit'
-					value='Add'
-					onClick={add_cat}
-				/>
-			</> : null}
+			{addable ? (
+				<>
+					<label id='search-cats' for='cats'>
+						{abbreviated_cats_text ? 'Cats:' : 'Tag Cats:'}
+					</label>
+					<input
+						type='text'
+						name='cats'
+						id='cats'
+						onInput={(event) =>
+							set_snippet(
+								(event.target as HTMLInputElement).value
+							)
+						}
+						onSubmit={add_cat}
+						value={snippet}
+					/>
+					<input
+						id='add-cat-filter'
+						title='Add cat'
+						type='submit'
+						value='Add'
+						onClick={add_cat}
+					/>
+				</>
+			) : null}
 
 			{selected_cats.length ? (
 				<ol id='cat-list'>

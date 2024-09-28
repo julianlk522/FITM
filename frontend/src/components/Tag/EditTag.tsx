@@ -3,7 +3,7 @@ import { TAGS_ENDPOINT } from '../../constants'
 import type { Tag } from '../../types'
 import { is_error_response } from '../../types'
 import { format_long_date } from '../../util/format_date'
-import SearchCats from '../Search/SearchCats'
+import SearchCats from '../Search/Cats'
 import './EditTag.css'
 interface Props {
 	LinkID: string
