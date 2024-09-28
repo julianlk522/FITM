@@ -57,13 +57,15 @@ const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 			/>
 		</section>
 
-		{user !== undefined ? <EditTag
-			client:load
-			LinkID={link_id}
-			Token={token}
-			UserTag={user_tag ? user_tag : undefined}
-			OnlyTag={tags.length === 1}
-		/> : <section>
+		{user !== undefined ? 
+			<EditTag
+				client:load
+				LinkID={link_id}
+				Token={token}
+				UserTag={user_tag ? user_tag : undefined}
+				OnlyTag={tags.length === 1}
+			/> 
+		: <section>
 			<p id="login-redirect-link"><a href="/login">Login</a> to start tagging links.</p>
 		</section>}
 

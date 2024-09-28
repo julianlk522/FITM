@@ -1,7 +1,7 @@
 form#edit-tag {
 	padding: 1rem 0;
 
-	#user-tags-title-bar {
+	#user-tags-header-bar {
 		display: flex;
 		align-items: center;
 		gap: 1rem;

@@ -115,10 +115,11 @@ export default function EditTag(props: Props) {
 
 	return (
 		<form id='edit-tag' onSubmit={(e) => e.preventDefault()}>
-			<div id='user-tags-title-bar'>
+			<div id='user-tags-header-bar'>
 				<h2>Your Tag</h2>
 
 				<button
+					title={editing ? 'confirm tag changes' : 'edit tag'}
 					onClick={() => {
 						set_cats(cats.sort())
 
@@ -147,6 +148,7 @@ export default function EditTag(props: Props) {
 
 				{editing && !only_tag ? (
 					<button
+						title='delete your tag'
 						class='delete-tag-btn img-btn'
 						onClick={() => set_show_delete_modal(true)}
 					>

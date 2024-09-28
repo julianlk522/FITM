@@ -89,16 +89,22 @@ export default function SearchCats(props: Props) {
 		}
 	}, [search_snippet_recommendations])
 
+	const handle_enter = (event: KeyboardEvent) => {
+		if (event.key === 'Enter') {
+			event.preventDefault()
+			add_cat(event)
+		}
+	}
+
 	function add_cat(event: Event) {
 		event.preventDefault()
-
 		if (!snippet) {
 			set_error('Input is empty')
 			return
 		}
 
-		// correct 'nsfw' to 'NSFW'
 		let new_cat = snippet
+		// correct 'nsfw' to 'NSFW'
 		if (snippet === 'nsfw') {
 			new_cat = 'NSFW'
 		}
@@ -174,7 +180,7 @@ export default function SearchCats(props: Props) {
 								(event.target as HTMLInputElement).value
 							)
 						}
-						onSubmit={add_cat}
+						onKeyPress={handle_enter}
 						value={snippet}
 					/>
 					<input
