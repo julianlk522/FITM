@@ -4,10 +4,8 @@
 
 In order of importance:
     0. fix cats input so enter applies new cat intead of confirming edits
+        -works on new link page but not edit tag page
     0.5. ensure removing cat from tag decrements spellfix rank
-    1. NSFW tags
-        -automatically correct 'nsfw' to 'NSFW'
-            -frontend
     2. touch up global cats visual, add to about
     3. More
     4. refactors

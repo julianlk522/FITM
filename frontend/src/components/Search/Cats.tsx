@@ -97,18 +97,24 @@ export default function SearchCats(props: Props) {
 			return
 		}
 
-		if (selected_cats.includes(snippet)) {
+		// correct 'nsfw' to 'NSFW'
+		let new_cat = snippet
+		if (snippet === 'nsfw') {
+			new_cat = 'NSFW'
+		}
+
+		if (selected_cats.includes(new_cat)) {
 			set_error('Already added')
 			return
 		}
 
 		set_selected_cats((prev) =>
-			[...prev, snippet].sort((a, b) => a.localeCompare(b))
+			[...prev, new_cat].sort((a, b) => a.localeCompare(b))
 		)
 
 		set_error(undefined)
 		set_recommended_cats((prev) =>
-			prev?.filter((cat) => cat.Category !== snippet)
+			prev?.filter((cat) => cat.Category !== new_cat)
 		)
 	}
 
