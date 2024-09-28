@@ -49,8 +49,8 @@ func main() {
 	// the response, such as middleware.Recoverer
 	// (https://github.com/go-chi/chi/blob/6fedde2a70dc2adce0a3dc41b8aebc0b2bec8185/middleware/logger.go#L32C20-L33C46)
 
-	// split logger used to pass info from requests with status code 300+
-	// to err log file
+	// split logger used to "tee" info from requests with status code 300+
+	// to err log file in addition to stdout
 	r.Use(m.SplitRequestLogger(m.FileLogFormatter))
 
 	// RATE LIMIT

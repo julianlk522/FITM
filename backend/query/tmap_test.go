@@ -446,7 +446,7 @@ func TestNewTmapTagged(t *testing.T) {
 		err := TestClient.QueryRow(
 			fmt.Sprintf(`SELECT id
 				FROM Tags
-				WHERE link_id = %s
+				WHERE link_id = '%s'
 				AND submitted_by = '%s'`,
 				l.ID,
 				test_login_name),
