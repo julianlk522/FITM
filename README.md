@@ -12,6 +12,11 @@ nice to do:
 - make all links except outbound ones brighter color
 - sync rpi test data with updated (with NSFW tags)
 - change monkey / bradley names
+- some preventative actions in place to prevent spamming
+    - 3+ links submitted in a minute gets acct. suspended for a day
+        - send myself an email to know to investigate
+    - probably some way to detect porn/gore and add NSFW tag
+        -(and prevent it from being removed)
 
 ### Features
 
