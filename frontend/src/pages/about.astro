@@ -180,6 +180,16 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 			<p>Lifespan overlap percentage for tag <code>T</code> of link <code>L</code> is the percentage of <code>L</code>'s time on FITM that  <code>T</code> has remained in its current state since creation or last edit.</p>
 
 			<GlobalTagCalcDiagram />
+
+			<h3 id="avoiding-marooned-links" class="subsection">Avoiding "Marooned" Links</h3>
+			<p>A <em>marooned</em> link is one having a tag cat that is intended to be equal to another cat but differs in a way that prevents proper grouping.</p>
+			<p>For example, say that cat "videos" is common. Tagging a link with cat "video" may make it hard to find because people looking for videos are likely to filter their searches using the more common "videos" cat.</p>
+			<p>Some tips to avoid this unfortunate outcome:</p>
+			<ul>
+				<li>If part of a group, prefer the group (e.g., video<strong>s</strong>) over the individual (video)</li>
+				<li>Prefer "and" over "&" unless part of a proper noun</li>
+				<li>Prefer lowercase unless part of an acronym or proper noun</li>
+			</ul>
 		</section>
 
 		<ScrollUp />

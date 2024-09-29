@@ -6,16 +6,12 @@ In order of importance:
     1. More
     2. refactors
     3. find some way to cache the stupid github.com/lestrrat-go/httpcc download
-    4. about page guidelines / heuristics for avoiding "marooned" tags
-        -only proper nouns / abbreviations should be capitalized
-        -prefer "and" over "&" unless part of proper noun
-        -describe the collection in plural if part of one
-            -e.g., channels not channel
 
 nice to do:
 - privacy policy about scraping websites / FITM-Bot user agent, etc.
 - make all links except outbound ones brighter color
 - sync rpi test data with updated (with NSFW tags)
+- change monkey / bradley names
 
 ### Features
 
