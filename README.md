@@ -3,12 +3,11 @@
 ## Todos
 
 In order of importance:
-    1. ensure removing cat from tag decrements spellfix rank
-    2. touch up global cats visual, add to about
-    3. More
-    4. refactors
-    5. find some way to cache the stupid github.com/lestrrat-go/httpcc download
-    6. about page guidelines / heuristics for avoiding "marooned" tags
+    1. touch up global cats visual, add to about
+    2. More
+    3. refactors
+    4. find some way to cache the stupid github.com/lestrrat-go/httpcc download
+    5. about page guidelines / heuristics for avoiding "marooned" tags
         -only proper nouns / abbreviations should be capitalized
         -prefer "and" over "&" unless part of proper noun
         -describe the collection in plural if part of one
@@ -17,6 +16,7 @@ In order of importance:
 nice to do:
 - privacy policy about scraping websites / FITM-Bot user agent, etc.
 - original 404
+- make all links except outbound ones brighter color
 - sync rpi test data with updated (with NSFW tags)
 
 ### Features
@@ -104,8 +104,9 @@ nice to do:
 -Other tests
     -handler utils
         -TestExtractMetaDataFromGoogleAPIsResponse()
-        -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
+        -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew / expiration
         -ScanTmapLinks
+        -Increment/DecrementSpellfixRanksForCats
     -finish handlers
     -middleware
         -test err responses are logged to $FITM_ERR_LOG_FILE?

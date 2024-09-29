@@ -201,7 +201,7 @@ func LinkAlreadyAdded(url string) (bool, string) {
 
 func IncrementSpellfixRanksForCats(tx *sql.Tx, cats []string) error {
 
-	// exec as part of transaction
+	// exec as part of transaction if tx is not nil
 	if tx != nil {
 		for _, cat := range cats {
 
@@ -268,10 +268,25 @@ func IncrementSpellfixRanksForCats(tx *sql.Tx, cats []string) error {
 // Delete link
 func DecrementSpellfixRanksForCats(tx *sql.Tx, cats []string) error {
 
-	// exec as part of transaction
+	// exec as part of transaction if tx is not nil
 	if tx != nil {
 		for _, cat := range cats {
-			_, err := tx.Exec(
+
+			// if word has rank of 1, delete it
+			var rank int
+			err := tx.QueryRow("SELECT rank FROM global_cats_spellfix WHERE word = ?;", cat).Scan(&rank)
+			if err != nil {
+				return err
+			} else if rank == 1 {
+				_, err = tx.Exec(
+					"DELETE FROM global_cats_spellfix WHERE word = ?;",
+					cat,
+				)
+				if err != nil {
+					return err
+				}
+			}
+			_, err = tx.Exec(
 				"UPDATE global_cats_spellfix SET rank = rank - 1 WHERE word = ?;",
 				cat,
 			)
