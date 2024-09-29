@@ -3,11 +3,10 @@
 ## Todos
 
 In order of importance:
-    1. touch up global cats visual, add to about
-    2. More
-    3. refactors
-    4. find some way to cache the stupid github.com/lestrrat-go/httpcc download
-    5. about page guidelines / heuristics for avoiding "marooned" tags
+    1. More
+    2. refactors
+    3. find some way to cache the stupid github.com/lestrrat-go/httpcc download
+    4. about page guidelines / heuristics for avoiding "marooned" tags
         -only proper nouns / abbreviations should be capitalized
         -prefer "and" over "&" unless part of proper noun
         -describe the collection in plural if part of one

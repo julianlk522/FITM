@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets'
 import cornucopia from '../../public/cornucopia.png'
+import GlobalTagCalcDiagram from '../components/GlobalTagCalcDiagram.astro'
 import ScrollUp from '../components/ScrollUp.astro'
 import SearchDiagram from '../components/SearchDiagram.astro'
 import BaseLayout from '../layouts/BaseLayout.astro'
@@ -177,6 +178,8 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 			<p><em>Scores</em> for cat <code>C</code> of link <code>L</code> are calculated as the sum of scores from each occurence of <code>C</code> in one of <code>L</code>'s tags. Each score is weighted by the number of cats in the tag containing the occurence.</p>
 			<p>Weights for tag <code>T</code> are calculated as <em>lifespan overlap percentage</em> of <code>T</code>, divided by <code>T</code>'s number of cats. </p>
 			<p>Lifespan overlap percentage for tag <code>T</code> of link <code>L</code> is the percentage of <code>L</code>'s time on FITM that  <code>T</code> has remained in its current state since creation or last edit.</p>
+
+			<GlobalTagCalcDiagram />
 		</section>
 
 		<ScrollUp />
