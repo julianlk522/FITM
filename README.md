@@ -14,7 +14,6 @@ In order of importance:
 
 nice to do:
 - privacy policy about scraping websites / FITM-Bot user agent, etc.
-- original 404
 - make all links except outbound ones brighter color
 - sync rpi test data with updated (with NSFW tags)
 
