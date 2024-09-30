@@ -202,7 +202,8 @@ const is_only_page =
 										<span>({cat.Count})</span>
 									</li>
 								))}
-									<li class="more"><a href="/more">more</a></li>
+									{/* TODO: replace magic number */}
+									{top_cats.length === 20 ? <li class="more"><a href="/more">more</a></li> : null}
 							</ol>
 						</section>
 					) : (
@@ -220,7 +221,8 @@ const is_only_page =
 											<span> ({subcat.Count})</span>
 										</li>
 									))}
-										<li class="more"><a href={`/more?cats=${cats}`}>more</a></li>
+										{/* TODO: replace magic number */}
+										{top_cats.length === 20 ? <li class="more"><a href="/more">more</a></li> : null}
 								</ol>
 							) : (
 								<p>No further subcats</p>

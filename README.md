@@ -3,9 +3,8 @@
 ## Todos
 
 In order of importance:
-    1. More
-    2. refactors
-    3. find some way to cache the stupid github.com/lestrrat-go/httpcc download
+    1. refactors
+    2. find some way to cache the stupid github.com/lestrrat-go/httpcc download
 
 nice to do:
 - privacy policy about scraping websites / FITM-Bot user agent, etc.
