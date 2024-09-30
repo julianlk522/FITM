@@ -10,8 +10,7 @@ import (
 const (
 	TAG_RANKINGS_PAGE_LIMIT = 20
 	GLOBAL_CATS_PAGE_LIMIT  = 20
-
-	MORE_CATS_PAGE_LIMIT    = 100
+	MORE_GLOBAL_CATS_PAGE_LIMIT = 100
 
 	SPELLFIX_DISTANCE_LIMIT = 100
 	SPELLFIX_MATCHES_LIMIT  = 3
@@ -146,7 +145,7 @@ func (o *TagRankings) Public() *TagRankings {
 	o.Text = strings.Replace(
 		o.Text,
 		TOP_OVERLAP_SCORES_BASE_FIELDS,
-		TOP_OVERLAP_SCORES_BASE_FIELDS+TOP_OVERLAP_SCORES_PUBLIC_FIELDS,
+		TOP_OVERLAP_SCORES_BASE_FIELDS + TOP_OVERLAP_SCORES_PUBLIC_FIELDS,
 		1,
 	)
 
@@ -158,7 +157,7 @@ type GlobalCatCounts struct {
 	Query
 }
 
-const GLOBAL_CAT_COUNTS_BASE = `WITH RECURSIVE split(id, global_cats, str) AS 
+const GLOBAL_CATS_BASE = `WITH RECURSIVE split(id, global_cats, str) AS 
 	(
 	SELECT id, '', global_cats||',' 
 	FROM Links
@@ -176,22 +175,24 @@ GROUP BY global_cats
 ORDER BY count DESC, LOWER(global_cats) ASC 
 `
 
-var CATS_BASE_LIMIT = fmt.Sprintf(
+var GLOBAL_CATS_BASE_LIMIT = fmt.Sprintf(
 	"LIMIT %d;",
 	GLOBAL_CATS_PAGE_LIMIT,
 )
 
-var CATS_MORE_LIMIT = fmt.Sprintf(
+var GLOBAL_CATS_MORE_LIMIT = fmt.Sprintf(
 	"LIMIT %d;",
-	MORE_CATS_PAGE_LIMIT,
+	MORE_GLOBAL_CATS_PAGE_LIMIT,
 )
 
 func NewTopGlobalCatCounts() *GlobalCatCounts {
 	return (&GlobalCatCounts{
 		Query: Query{
-			Text: GLOBAL_CAT_COUNTS_BASE,
+			Text: 
+				GLOBAL_CATS_BASE + "\n" + 
+				GLOBAL_CATS_BASE_LIMIT,
 		},
-	})._Limit()
+	})
 }
 
 func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
@@ -257,23 +258,12 @@ func (t *GlobalCatCounts) DuringPeriod(period string) *GlobalCatCounts {
 }
 
 func (t *GlobalCatCounts) More() *GlobalCatCounts {
-
-	// TODO: error if more than 1 instance of CATS_BASE_LIMIT exists
-	// since that would break the replace
-
-	// OR better idea, just trim the last line and then add CATS_MORE_LIMIT
 	t.Text = strings.Replace(
 		t.Text,
-		CATS_BASE_LIMIT,
-		CATS_MORE_LIMIT,
+		GLOBAL_CATS_BASE_LIMIT,
+		GLOBAL_CATS_MORE_LIMIT,
 		1,
 	)
-
-	return t
-}
-
-func (t *GlobalCatCounts) _Limit() *GlobalCatCounts {
-	t.Text += CATS_BASE_LIMIT
 
 	return t
 }

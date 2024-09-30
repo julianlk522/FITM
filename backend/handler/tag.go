@@ -114,13 +114,13 @@ func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if global_cats_sql.Error != nil {
-		render.Render(w, r, e.ErrInvalidRequest(global_cats_sql.Error))
+		render.Render(w, r, e.ErrServerFail(global_cats_sql.Error))
 		return
 	}
 
 	counts, err := util.ScanGlobalCatCounts(global_cats_sql)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 	util.RenderCatCounts(counts, w, r)
