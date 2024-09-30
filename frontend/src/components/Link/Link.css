@@ -23,6 +23,9 @@ a.url-anchor {
 	display: block;
 	width: fit-content;
 }
+a.url-anchor:visited {
+	color: var(--text-treasurey-dark);
+}
 
 p.url {
 	font-size: 0.9rem;
@@ -44,10 +47,6 @@ p.url {
 
 	span:first-of-type {
 		margin-left: 3px;
-	}
-
-	a:visited {
-		color: var(--text-treasurey);
 	}
 }
 .like-btn,

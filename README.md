@@ -5,17 +5,19 @@
 In order of importance:
     1. refactors
     2. find some way to cache the stupid github.com/lestrrat-go/httpcc download
+    3. make sure JWT expires
 
 nice to do:
-- privacy policy about scraping websites / FITM-Bot user agent, etc.
-- make all links except outbound ones brighter color
-- sync rpi test data with updated (with NSFW tags)
-- change monkey / bradley names
+- note somewhere about scraping websites / FITM-Bot user agent, etc.
+    - non-crawl list if anyone wants that
 - some preventative actions in place to prevent spamming
-    - 3+ links submitted in a minute gets acct. suspended for a day
+    - 3/5/10/whatever+ links submitted in a minute gets acct. suspended for a day
         - send myself an email to know to investigate
     - probably some way to detect porn/gore and add NSFW tag
         -(and prevent it from being removed)
+- sync rpi test data with updated (with NSFW tags)
+- change monkey / bradley names
+- update marvel char name tags to be uppercase
 
 ### Features
 
