@@ -1,12 +1,25 @@
-# open-internet-treasure-map
+# flexible-internet-treasure-map
 
 ## Todos
 
+In order of importance:
+    1. More
+    2. refactors
+    3. find some way to cache the stupid github.com/lestrrat-go/httpcc download
+
+nice to do:
+- privacy policy about scraping websites / FITM-Bot user agent, etc.
+- make all links except outbound ones brighter color
+- sync rpi test data with updated (with NSFW tags)
+- change monkey / bradley names
+- some preventative actions in place to prevent spamming
+    - 3+ links submitted in a minute gets acct. suspended for a day
+        - send myself an email to know to investigate
+    - probably some way to detect porn/gore and add NSFW tag
+        -(and prevent it from being removed)
+
 ### Features
 
--Cat search on index/top.astro
-    -Add or remove multiple at a time, so e.g., scanning for 3 cats does not take 3 page loads
-    -For nearly identical cats with slight differences, maybe have a prompt on load that says like "would you like to reload and include these results too?"
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
@@ -14,101 +27,104 @@
         -Subcats
     -Global Cats
     -Global Subcats
--NSFW tags:
-    -automatically correct 'nsfw' to 'NSFW'
-    -Tests
-    -Restrict from tmap/top unless specifically chosen in filter
--look into not rendering images that dont successfully load
--be sure to fix custom fetch directing to /rate-limit when it shouldnt
--add about scrollup
--make sure new link submissions show correct time
-    (they dont now.. but then it's correct elsewhere? weird)
--YT channel links
 
 ### Code Quality
 
--VPS SSH key
--Refactors for simplicity / accuracy
-    -Move backend validation to /model unless using additional controller logic, e.g., JWT
-    -GetTmapCatCounts probably possible in all sql
--Purge code duplication
-    -Astro / Preact components:
-        -Top Cats / Top Links / etc. lists
-        -search filters (top, more)
-    -handler_test / util_test TestMain()s
--CI/CD
-    -cronjob to backup db every day or so
+-Purge duplication
+-Simplicity / accuracy
+    -remove needless _limit() methods
+    -optional Props to replace "undefined"
+        -Link: IsSummaryPage / IsTagPage / IsTmapPage
+    -Top Cats / Top Links / etc. components
+    -move tmap cats json above links
+    -move contributors queries from query/link.go to query/contributors.go
+        -will also allow sharing WHERE_NO_NSFW_CATS between TopLinks / tmap queries
+-Readability
+    -ErrServerFail => Err500 etc.
 -Security
     -Look into input sequences that might produce problematic results
         -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
-    -refactor fetch_with_handle_rate_limit() to redirect to /404 in the catch block
-        -maybe have it return an object with props Response (Response or undefined) and RedirectTo ("/404". "/rate-limit", or "")
+    -fuzz test
 
 ## To-Maybe-Dos
 
 ### Features
 
--SQL prepared statements
-    -more important if truly does help prevent injection... verify
--Redis caching
--Favorite tmaps?
+-favorite / followed tmaps?
 -Show number of copies along with number of likes in frontend
--Better way to visualize how Global Cats are determined?
--Optional summaries that can be edited if you submit / like enough links with a certain cat?
-    -i.e., if you submit enough links with cat "FOSS" you get to add a wiki-like summary of "FOSS" that appears on the top page when it is applied alone
--Guidelines / heuristics for avoiding "marooned" tags
-    -only proper nouns / abbreviations should be capitalized?
--Tmap period filter?
--Improve profile pic upload?
 -Improve frontend A11y/semantic markup/looks
-    -proper favicon.ico
-    -Link preview img srcset
+    -button titles
+    -subtitle probably should not be h2
+    -original favicon.ico
     -Tiny bit more space between like/copy buttons on mobile
     -maybe go through BrowserStack and see if anything is horrendous
--Rethink CalculateGlobalCategories algo
+    -Link preview img srcset?
+        probably not realistic
+-Tmap period filter?
+-Audit CalculateGlobalCategories algo?
+-Improve profile pic upload?
+    -cropping, more file formats, etc.
+-Redis caching
 
 ### Code Quality
 
--Better logging?
-    (Zap)
--Other lesser refactors and removal of duplicate code
-    -duplicate handle_redirect() helpers on tag page / summary page
-    -BuildTagPage helper to declutter GetTagPage handler
-    -ScanTmapLinks tests
-    -helpers for DB actions
-        -(new link, new summary, update summary, etc.)
-    -Fix SQL identifiers to use double quotes (?)
-        -verify first
--Other tests
-    -finish handlers
-    -handler utils
-        -TestExtractMetaDataFromGoogleAPIsResponse()
-        -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew
-    -model utils
+-find way to cache github.com/lestrrat-go/httpcc in GHA workflow
 -Look into broken auto og:image
     -e.g., coolers.co image should not have been added with invalid link
     -https://rss.com/blog/how-do-rss-feeds-work/
--robots.txt
+-SQL prepared statements
+    -more important if truly does help prevent injection... verify
+-Ensure accurate / helpful http response codes
+    -start by making sure all ErrInvalidRequests are actually that
+    -e.g., tag page for invalid link id returns 500 (should be 404)
+    -replace "message":"deleted" with just 204
+    -205 for successful logins/forms that require reload
+    -500 for server fuckups
+-Other lesser refactors and removal of duplicate code
+    -Fix SQL identifiers to use "" and string literals to use ''
+    -duplicate SearchParams dropdown components
+        -merge Period / SortBy into same component with unique options set as props
+    -duplicate add_tag funcs (EditTag.tsx, SearchCats.tsx)
+    -duplicate handle_redirect() helpers on tag page / summary page
+    -duplicate redirect_to cookie logic using window.location.pathname
+    -duplicate delete modals
+        -link, tag, tmap pfp
+    -BuildTagPage helper to declutter GetTagPage handler
+    -helpers for DB actions
+        -(new link, new summary, update summary, etc.)
+    -os.LookupEnv?
+        -not sure if makes any practical difference
+    -Ensure backend validation is all in /model unless using additional controller logic, e.g., JWT
+    -sync.Once for db singleton?
+    -GetCatCountsFromTmapLinks probably possible in all sql
+        -actually pretty clunky to achieve (break apart all global/user_cats_fts into words each time)
+            -maybe consider revisiting if global/user_cats_fts vocab created for some reason later
+        -also not that important since input is limited to user's tmap links, not entire links table. not going to be processing any more than a few hundred or thousand tags at absolute most (and not for a looong time). so perf differential is trivial
+-Other tests
+    -handler utils
+        -TestExtractMetaDataFromGoogleAPIsResponse()
+        -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew / expiration
+        -ScanTmapLinks
+        -Increment/DecrementSpellfixRanksForCats
+    -finish handlers
+    -middleware
+        -test err responses are logged to $FITM_ERR_LOG_FILE?
+    -model utils
+-VPS SSH key
+-improve cat count lookup speed with fts5vocab table
+    -(row type)
+-Ensure consistent language:
+    -get (request and retrieve things from an external source)
+    -scan (copy rows from sql to structs)
+    -extract (some data and carve out a different data type from it)
+    -assign (take some data and a pointer and copy the data to the referenced var)
+    -obtain (get, extract, assign)
+    -resolve (take in a possibly incomplete form and translate to a correct form)
+-replace spellfix transactions with triggers
+    -(that way can make changes over CLI without worrying about unsync)
+    -too complicated for now ... workaround might be just resetting on cron job or something though that requires downtime...
 
-## Why?
-
-Because there's a lot of good shit on the internet that's hard to be aware of and, to a lesser extent, hard to find even when you know about it.
-
-Internet users deserve a portal that provides them an unbiased, direct view into the web's useful contents.
-
-## What would be better than the status quo?
-
-A network of links that are selected and organized by end users who closely relate to the individuals seeking those resources.
-
-e.g., if I wanted to find all of the internet resources that Tim Ferriss recommends, or that the public at large recommends about the topic of surfing, they will all be in one place for quick and easy discovery.
-
-Links are tagged with various categories to best organize and produce relevant recommendations.
-
-e.g., Vim Adventures could be tagged with 'programming', 'learning games', 'typing games', 'keyboard ergonometry', etc.
-
-Users can like listed links to boost them, so in theory the most univerally appreciated resources are easiest to find.
-
-## Why is this service different and better than existing alternatives?
+## Why is it different and better than existing alternatives?
 
 -LinkTree: only about social links for a particular person (no concept of global tree / treasure map)
 
@@ -141,17 +157,47 @@ Users can like listed links to boost them, so in theory the most univerally appr
 - Learning Go
     - interfaces
     - pointers
+    - testing features
 - Debugging Docker install
     - edit etc/apt/sources.list.d/docker.list to add specific Ubuntu codename to retrieve correct release package
     - repeated "dial unix /var/run/docker.sock: connect: connection refused" cryptic errors, tried editing group permissions, starting/stopping docker daemon etc. but nothing working
     - finally got it by authenticating DockerHub acct. via CLI (docker login)
 - Linode
     - Getting connections other than SSH (http/https) to open despite firewall config explicitly allowing them
+    - other firewall problems:
+        - allow only implicit outbound SSH so git pull possible (and explicit inbound for ad hoc connections from trusted machine)
 - LetsEncrypt / Certbot / NameCheap SSL
+    - Certbot CLI
 - tmux
     - detach from / reattach to SSH session to safely exit terminal and leave running
 - YouTube Data API
     - Register Google API key
 - Bash scripting
-    - modified https://stackoverflow.com/a/76544267 for FITM
+    - modified https://stackoverflow.com/a/76544267 for FITM package rename
     - sourcing .bashrc from /etc/profile on if exists and readable
+    - backup_now.sh on cronjob
+    - update script: process redirection, debugging double echos
+- SQLite optimization
+    - FTS5 virtual table
+    - Spellfix1 extension
+        - cross-compile errors, getting correct headers/.dll files and passing correct flags to x86_64-w64-mingw32-gcc
+            - .so compiled by gcc in WSL not compatible with go:alpine Docker image architecture, recompile on test runner and save path in env
+        - debugging debounce / re-render errors in React
+        - tweaking the spellfix rankings system to improve result relevance (still WIP)
+- CI/CD
+    - GH actions workflow
+        - Raspbian Buster firmware outdated (no Node.js 20 support needed for test runner)
+            - flash memory card to update to Raspbian Lite Bookworm
+            - no networking, configure manually with nmcli
+        - didn't want private test data stored on GH: store on test runner local filesystem and pass path as GH Actions secret through workflow .yml file to Docker container where test suite runs
+        - GH deploy key (SSH)
+- Rate limiting
+    - limiting from backend only not possible while using Netlify
+        - Netlify CDN using numerous edge servers with hidden IPs: no way to whitelist appropriate server IPs
+    - limiting from frontend only not practical / useful
+        - Netlify only offers to Enterprise clients, but even if it were available it would not prevent abuse via direct communication to server
+    - compromise by adding multiple IP-based rate limits to be shared among frontend and all users making requests from client, plus app-wide hard limit
+        - 1min timeframe for ordinary usage limits,
+        - 1sec timeframe for quick abuse resolution
+- Bot traffic
+    - add Netlify edge func to identify and block bot user agents

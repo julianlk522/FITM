@@ -34,6 +34,8 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	copied_sql := query.NewTmapCopied(login_name)
 	tagged_sql := query.NewTmapTagged(login_name)
 
+	// Apply params
+	// cats filter
 	cats_params := r.URL.Query().Get("cats")
 	has_cat_filter := cats_params != ""
 
@@ -56,14 +58,30 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 		tagged_sql = tagged_sql.FromCats(cats)
 	}
 
+	// auth (add IsLiked, IsCopied)
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 
-	// Requesting user signed in: get IsLiked / IsCopied for each link
 	if req_user_id != "" {
 		submitted_sql = submitted_sql.AsSignedInUser(req_user_id, req_login_name)
 		copied_sql = copied_sql.AsSignedInUser(req_user_id, req_login_name)
 		tagged_sql = tagged_sql.AsSignedInUser(req_user_id, req_login_name)
+	}
+
+	// nsfw
+	var nsfw_params string
+	if r.URL.Query().Get("nsfw") != "" {
+		nsfw_params = r.URL.Query().Get("nsfw")
+	} else if r.URL.Query().Get("NSFW") != "" {
+		nsfw_params = r.URL.Query().Get("NSFW")
+	}
+
+	if nsfw_params == "true" {
+		submitted_sql = submitted_sql.NSFW()
+		copied_sql = copied_sql.NSFW()
+		tagged_sql = tagged_sql.NSFW()
+	} else if nsfw_params != "false" && nsfw_params != "" {
+		return nil, e.ErrInvalidNSFWParams
 	}
 
 	submitted, err := ScanTmapLinks[T](submitted_sql.Query)
@@ -82,12 +100,17 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	all_links := slices.Concat(*submitted, *copied, *tagged)
 	var cat_counts *[]model.CatCount
 	if has_cat_filter {
-		cat_counts = GetTmapCatCounts(&all_links, cats)
+		cat_counts = GetCatCountsFromTmapLinks(
+			&all_links,
+			&model.TmapCatCountsOpts{
+				OmittedCats: cats,
+			},
+		)
 	} else {
-		cat_counts = GetTmapCatCounts(&all_links, nil)
+		cat_counts = GetCatCountsFromTmapLinks(&all_links, nil)
 	}
 
-	sections := &model.TreasureMapSections[T]{
+	sections := &model.TmapSections[T]{
 		Submitted: submitted,
 		Copied:    copied,
 		Tagged:    tagged,
@@ -95,14 +118,14 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	}
 
 	if has_cat_filter {
-		return model.FilteredTreasureMap[T]{
-			TreasureMapSections: sections,
+		return model.FilteredTmap[T]{
+			TmapSections: sections,
 		}, nil
 
 	} else {
-		return model.TreasureMap[T]{
-			Profile:             profile,
-			TreasureMapSections: sections,
+		return model.Tmap[T]{
+			Profile:      profile,
+			TmapSections: sections,
 		}, nil
 	}
 }
@@ -196,7 +219,7 @@ func ScanTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](sql query.Query) (
 // Omit any cats passed via omitted_cats
 // (omit used to retrieve subcats by passing directly searched cats)
 // TODO: refactor to make this clearer
-func GetTmapCatCounts[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, omitted_cats []string) *[]model.CatCount {
+func GetCatCountsFromTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, opts *model.TmapCatCountsOpts) *[]model.CatCount {
 	counts := []model.CatCount{}
 	found_cats := []string{}
 	var found bool
@@ -211,7 +234,8 @@ func GetTmapCatCounts[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, omi
 		}
 
 		for _, cat := range strings.Split(cats, ",") {
-			if omitted_cats != nil && slices.Contains(omitted_cats, cat) {
+			if opts != nil &&
+				slices.Contains(opts.OmittedCats, cat) {
 				continue
 			}
 
@@ -231,14 +255,12 @@ func GetTmapCatCounts[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, omi
 
 			if !found {
 				counts = append(counts, model.CatCount{Category: cat, Count: 1})
-
-				// add to found cats
 				found_cats = append(found_cats, cat)
 			}
 		}
 	}
 
-	SortAndLimitCatCounts(&counts, 12)
+	SortAndLimitCatCounts(&counts, TMAP_CATS_PAGE_LIMIT)
 
 	return &counts
 }

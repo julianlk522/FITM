@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"log"
 	"math"
 	"slices"
 	"strings"
@@ -21,9 +20,9 @@ func ScanTagPageLink[T model.Link | model.LinkSignedIn](link_sql *query.TagPageL
 	var link interface{}
 
 	switch any(new(T)).(type) {
-		case *model.Link:
-			var l = &model.Link{}
-			if err := db.Client.
+	case *model.Link:
+		var l = &model.Link{}
+		if err := db.Client.
 			QueryRow(link_sql.Text).
 			Scan(
 				&l.ID,
@@ -36,13 +35,13 @@ func ScanTagPageLink[T model.Link | model.LinkSignedIn](link_sql *query.TagPageL
 				&l.LikeCount,
 				&l.ImgURL,
 			); err != nil {
-				return nil, err
-			}
+			return nil, err
+		}
 
-			link = l
-		case *model.LinkSignedIn:
-			var l = &model.LinkSignedIn{}
-			if err := db.Client.
+		link = l
+	case *model.LinkSignedIn:
+		var l = &model.LinkSignedIn{}
+		if err := db.Client.
 			QueryRow(link_sql.Text).
 			Scan(
 				&l.ID,
@@ -56,11 +55,11 @@ func ScanTagPageLink[T model.Link | model.LinkSignedIn](link_sql *query.TagPageL
 				&l.ImgURL,
 				&l.IsLiked,
 				&l.IsCopied,
-				); err != nil {
-				return nil, err
-			}
+			); err != nil {
+			return nil, err
+		}
 
-			link = l
+		link = l
 	}
 
 	return link.(*T), nil
@@ -197,6 +196,40 @@ func GetLinkIDFromTagID(tag_id string) (string, error) {
 	return link_id.String, nil
 }
 
+// Delete tag
+func TagExists(tag_id string) (bool, error) {
+	var t sql.NullString
+	err := db.Client.QueryRow("SELECT id FROM Tags WHERE id = ?;", tag_id).Scan(&t)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+}
+
+func IsOnlyTag(tag_id string) (bool, error) {
+	link_id, err := GetLinkIDFromTagID(tag_id)
+	if err != nil {
+		return false, err
+	}
+
+	rows, err := db.Client.Query("SELECT id FROM Tags WHERE link_id = ?;", link_id)
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	rows.Next()
+	if rows.Next() {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 // Calculate global cats
 func CalculateAndSetGlobalCats(link_id string) error {
 	overlap_scores_sql := query.NewTagRankings(link_id)
@@ -250,8 +283,6 @@ func CalculateAndSetGlobalCats(link_id string) error {
 		}
 	}
 
-	log.Printf("overlap_scores: %v", overlap_scores)
-
 	// Alphabetize so global cats are assigned in order
 	alphabetized_cats := AlphabetizeOverlapScoreCats(overlap_scores)
 
@@ -290,18 +321,66 @@ func AlphabetizeOverlapScoreCats(scores map[string]float32) []string {
 		}
 		return 1
 	})
-	
+
 	return cats
 }
 
 func SetGlobalCats(link_id string, text string) error {
-	_, err := db.Client.Exec(`
+
+	// determine diff to adjust spellfix ranks
+	var old_cats_str string
+	err := db.Client.QueryRow(
+		"SELECT global_cats FROM Links WHERE id = ?;",
+		link_id,
+	).Scan(&old_cats_str)
+	if err != nil {
+		return err
+	}
+
+	var new_cats = strings.Split(text, ",")
+	var old_cats = strings.Split(old_cats_str, ",")
+
+	var added_cats []string
+	for _, cat := range new_cats {
+		if !slices.Contains(old_cats, cat) {
+			added_cats = append(added_cats, cat)
+		}
+	}
+	var removed_cats []string
+	for _, cat := range old_cats {
+		if !slices.Contains(new_cats, cat) {
+			removed_cats = append(removed_cats, cat)
+		}
+	}
+
+	// start transaction
+	tx, err := db.Client.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// set link new cats
+	_, err = tx.Exec(`
 		UPDATE Links 
 		SET global_cats = ? 
 		WHERE id = ?`,
 		text,
 		link_id)
 	if err != nil {
+		return err
+	}
+
+	// update spellfix
+	if err = IncrementSpellfixRanksForCats(tx, added_cats); err != nil {
+		return err
+	}
+	if err = DecrementSpellfixRanksForCats(tx, removed_cats); err != nil {
+		return err
+	}
+
+	// commit
+	if err = tx.Commit(); err != nil {
 		return err
 	}
 

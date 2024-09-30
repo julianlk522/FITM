@@ -3,13 +3,18 @@ package query
 import (
 	"fmt"
 	"strings"
+
+	e "github.com/julianlk522/fitm/error"
 )
 
 const (
-	TAGS_PAGE_LIMIT           = 20
-	TAG_RANKINGS_PAGE_LIMIT   = 20
-	GLOBAL_CATS_PAGE_LIMIT    = 20
-	MORE_CATS_PAGE_LIMIT = 100
+	TAG_RANKINGS_PAGE_LIMIT = 20
+	GLOBAL_CATS_PAGE_LIMIT  = 20
+
+	MORE_CATS_PAGE_LIMIT    = 100
+
+	SPELLFIX_DISTANCE_LIMIT = 100
+	SPELLFIX_MATCHES_LIMIT  = 3
 )
 
 // Tags Page link
@@ -192,35 +197,39 @@ func NewTopGlobalCatCounts() *GlobalCatCounts {
 func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
 	cats := strings.Split(cats_params, ",")
 
-	filter_clause := fmt.Sprintf(
-		`WHERE global_cats LIKE '%%%s%%'`,
-		cats[0],
-	)
-	for i := 1; i < len(cats); i++ {
-		filter_clause += fmt.Sprintf(
-			` 
-			OR global_cats LIKE '%%%s%%'`,
-			cats[i],
-		)
-	}
+	// build match clause
+	match_cats := make([]string, len(cats))
+	copy(match_cats, cats)
 
+	// escape periods
+	// (not required for MATCH clause but required for NOT IN)
+	cats = GetCatsWithEscapedPeriods(cats)
+
+	match_clause := fmt.Sprintf(`WHERE global_cats MATCH '%s`, match_cats[0])
+	for i := 1; i < len(match_cats); i++ {
+		match_clause += fmt.Sprintf(" AND %s", match_cats[i])
+	}
+	match_clause += `'`
+
+	// build NOT IN clause
 	for i := range cats {
 		cats[i] = "'" + cats[i] + "'"
 	}
+	not_in_clause := strings.Join(cats, ", ")
 
 	t.Text = strings.Replace(
 		t.Text,
 		"WHERE global_cats != ''",
 		fmt.Sprintf(
 			`WHERE global_cats != ''
-			AND global_cats NOT IN (%s)
-			AND id IN (
-				SELECT id 
-				FROM split 
-				%s
+	AND global_cats NOT IN (%s)
+	AND id IN (
+		SELECT link_id 
+		FROM global_cats_fts
+		%s
 			)`,
-			strings.Join(cats, ","),
-			filter_clause,
+			not_in_clause,
+			match_clause,
 		),
 		1)
 
@@ -267,4 +276,78 @@ func (t *GlobalCatCounts) _Limit() *GlobalCatCounts {
 	t.Text += CATS_BASE_LIMIT
 
 	return t
+}
+
+// Global Cats Spellfix Matches For Snippet
+type SpellfixMatches struct {
+	Query
+}
+
+func NewSpellfixMatchesForSnippet(snippet string) *SpellfixMatches {
+
+	// oddly, "WHERE word MATCH "%s OR %s*" doesn't work very well here
+	// hence the UNION
+	return (&SpellfixMatches{
+		Query: Query{
+			Text: fmt.Sprintf(
+				`WITH full_match AS (
+					SELECT word, rank, distance
+					FROM global_cats_spellfix
+					WHERE word MATCH "%[1]s"
+				),
+				partial_match AS (
+					SELECT word, rank, distance
+					FROM global_cats_spellfix
+					WHERE word MATCH "%[1]s" || '*'
+					AND word NOT IN (SELECT word FROM full_match)
+				)
+				SELECT word, rank
+				FROM (
+					SELECT * FROM full_match
+					UNION ALL
+					SELECT * FROM partial_match
+				)
+				WHERE distance <= %[2]d
+				ORDER BY distance
+				LIMIT %[3]d;`,
+				snippet,
+				SPELLFIX_DISTANCE_LIMIT,
+				SPELLFIX_MATCHES_LIMIT,
+			),
+		},
+	})
+}
+
+func (s *SpellfixMatches) OmitCats(cats []string) error {
+	if len(cats) == 0 || cats[0] == "" {
+		return e.ErrNoOmittedCats
+	}
+
+	var not_in_clause string
+	for i, cat := range cats {
+		if i == 0 {
+			not_in_clause += "'" + cat + "'"
+		} else {
+			not_in_clause += ", '" + cat + "'"
+		}
+	}
+
+	distance_clause := fmt.Sprintf(
+		"WHERE distance <= %d",
+		SPELLFIX_DISTANCE_LIMIT,
+	)
+
+	s.Text = strings.Replace(
+		s.Text,
+		distance_clause,
+		fmt.Sprintf(
+			`%s
+			AND word NOT IN (%s)`,
+			distance_clause,
+			not_in_clause,
+		),
+		1,
+	)
+
+	return nil
 }

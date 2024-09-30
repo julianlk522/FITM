@@ -11,7 +11,6 @@ var (
 	ErrNoSummaryText            error = errors.New("no summary text provided")
 	ErrNoSummaryReplacementText error = errors.New("no summary replacement text provided")
 	ErrDoesntOwnSummary         error = errors.New("not your summary")
-	ErrLastSummary              error = errors.New("last summary for link: cannot delete")
 	ErrCannotLikeOwnSummary     error = errors.New("cannot like your own summary")
 	ErrSummaryAlreadyLiked      error = errors.New("summary already liked")
 	ErrSummaryNotLiked          error = errors.New("summary not already liked")

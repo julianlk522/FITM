@@ -211,9 +211,9 @@ func TestCalculateAndSetGlobalSummary(t *testing.T) {
 		ID            string
 		GlobalSummary string
 	}{
-		{"1", "xyz"},
-		{"7", "a great summary"},
-		{"8", "Jarvy init"},
+		{"1", "test"},
+		{"10", "Doesn't seem to be a real site..."},
+		{"93", "The very first website!"},
 	}
 
 	for _, l := range test_link_ids {

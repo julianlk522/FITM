@@ -1,4 +1,6 @@
 div#profile-pic {
+	margin-bottom: 0.5rem;
+
 	img#pfp {
 		display: block;
 		max-height: 150px;
@@ -6,10 +8,24 @@ div#profile-pic {
 	}
 
 	form {
+		margin-top: 0.5rem;
+
 		#new-pic-upload-label {
-			margin-top: 0.5rem;
+			display: inline-block;
 			width: fit-content;
 			cursor: pointer;
+		}
+
+		button#delete-pfp-btn {
+			margin-left: 5px;
+		}
+
+		dialog#delete-profile-pic-modal {
+			background-color: var(--text-treasurey);
+
+			button:not(:first-of-type) {
+				margin-left: 5px;
+			}
 		}
 	}
 }

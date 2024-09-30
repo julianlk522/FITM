@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import { SUMMARIES_ENDPOINT } from '../../constants'
 import { format_long_date } from '../../util/format_date'
+import SameUserLikeCount from '../Link/SameUserLikeCount'
 import './Summary.css'
 
 interface Props {
@@ -116,7 +117,14 @@ export default function Summary(props: Props) {
 				</button>
 			) : (
 				<>
-					<button onClick={handle_delete}>Delete</button>
+					<SameUserLikeCount LikeCount={like_count} />
+					<button
+						id='delete-summary-btn'
+						class='img-btn'
+						onClick={handle_delete}
+					>
+						<img src='../../../x-lg.svg' height={20} width={20} />
+					</button>
 					{error ? <p class='error'>{error}</p> : null}
 				</>
 			)}

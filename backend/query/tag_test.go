@@ -2,6 +2,7 @@ package query
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -167,9 +168,53 @@ func TestNewTopGlobalCatCountsSubcatsOfCats(t *testing.T) {
 		t.Fatal(counts_sql.Error)
 	}
 
-	_, err := TestClient.Query(counts_sql.Text)
+	rows, err := TestClient.Query(counts_sql.Text)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	// scan
+	var counts []model.CatCount
+	for rows.Next() {
+		var c model.CatCount
+		if err := rows.Scan(&c.Category, &c.Count); err != nil {
+			t.Fatal(err)
+		}
+		counts = append(counts, c)
+	}
+
+	// verify counts
+	for _, c := range counts {
+		var count int32
+		sql := fmt.Sprintf(
+			`SELECT count(id) as count 
+			FROM LINKS 
+			WHERE global_cats LIKE '%%%s%%'
+			AND global_cats LIKE '%%%s%%'
+			AND global_cats LIKE '%%%s%%'`,
+			test_cats[0],
+			test_cats[1],
+			c.Category,
+		)
+
+		if err := TestClient.QueryRow(sql).Scan(&count); err != nil {
+			t.Fatal(err)
+		} else if count != c.Count {
+			t.Fatalf(
+				"got %d, want %d for cat %s",
+				count,
+				c.Count,
+				c.Category,
+			)
+		}
+	}
+
+	// test that "." properly escaped
+	counts_sql = NewTopGlobalCatCounts().SubcatsOfCats("YouTube,c.viper")
+	if counts_sql.Error != nil {
+		t.Fatal(counts_sql.Error)
+	} else if strings.Contains(counts_sql.Text, ".") && !strings.Contains(counts_sql.Text, `"."`) {
+		t.Fatal("failed to escape period in cat 'c. viper'")
 	}
 }
 
@@ -209,6 +254,63 @@ func TestNewTopGlobalCatCountsDuringPeriod(t *testing.T) {
 			t.Fatalf("unexpected error for period %s", tp.Period)
 		} else if !tp.Valid && tags_sql.Error == nil {
 			t.Fatalf("expected error for period %s", tp.Period)
+		}
+	}
+}
+
+const TEST_SNIPPET = "test"
+
+func TestNewSpellfixMatchesForSnippet(t *testing.T) {
+	var expected_rankings = map[string]int{
+		"test":       11,
+		"tech":       2,
+		"technology": 1,
+	}
+
+	matches_sql := NewSpellfixMatchesForSnippet(TEST_SNIPPET)
+	// no chance for sql.Error to have been set so no need to check
+
+	rows, err := TestClient.Query(matches_sql.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for rows.Next() {
+		var word string
+		var rank int
+
+		if err := rows.Scan(&word, &rank); err != nil {
+			t.Fatal(err)
+		} else if expected_rankings[word] != rank {
+			t.Fatalf("got %d, want %d for word %s", rank, expected_rankings[word], word)
+		}
+	}
+}
+
+func TestOmitCats(t *testing.T) {
+	var expected_rankings = map[string]int{
+		// "test": 11, // filter out
+		"tech":       2,
+		"technology": 1,
+	}
+	matches_sql := NewSpellfixMatchesForSnippet(TEST_SNIPPET)
+	err := matches_sql.OmitCats([]string{TEST_SNIPPET})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rows, err := TestClient.Query(matches_sql.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for rows.Next() {
+		var word string
+		var count int
+		if err := rows.Scan(&word, &count); err != nil {
+			t.Fatal(err)
+		} else if expected_rankings[word] != count {
+			t.Fatalf("got %d, want %d for word %s", count, expected_rankings[word], word)
 		}
 	}
 }

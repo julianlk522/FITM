@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+
 	m "github.com/julianlk522/fitm/middleware"
 
 	"io"
@@ -61,7 +62,7 @@ func TestSignUp(t *testing.T) {
 		},
 		{
 			Payload: map[string]string{
-				"login_name": "goolian",
+				"login_name": "jlk",
 				"password":   "testtest",
 			},
 			Valid: false,
@@ -172,4 +173,61 @@ func TestEditAbout(t *testing.T) {
 			t.Fatalf("expected status code 400, got %d (test request %+v)", res.StatusCode, tr.Payload)
 		}
 	}
+}
+
+func TestDeleteProfilePic(t *testing.T) {
+	var test_requests = []struct {
+		UserID             string
+		Valid              bool
+		ExpectedStatusCode int
+	}{
+		{
+			// jlk has a profile pic: should be able to delete it
+			UserID:             test_user_id,
+			Valid:              true,
+			ExpectedStatusCode: 204,
+		},
+		{
+			// bradley does not have a profile pic: should fail
+			UserID:             "9",
+			Valid:              false,
+			ExpectedStatusCode: 400,
+		},
+	}
+
+	for _, tr := range test_requests {
+		r := httptest.NewRequest(
+			http.MethodDelete,
+			"/pic",
+			nil,
+		)
+
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, m.UserIDKey, test_user_id)
+		r = r.WithContext(ctx)
+
+		w := httptest.NewRecorder()
+		DeleteProfilePic(w, r)
+		res := w.Result()
+		defer res.Body.Close()
+
+		if tr.Valid && res.StatusCode != tr.ExpectedStatusCode {
+			text, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Fatal("failed but unable to read request body bytes")
+			} else {
+				t.Fatalf(
+					"expected status code %d, got %d (test request %+v)\n%s", tr.ExpectedStatusCode, res.StatusCode,
+					tr,
+					text,
+				)
+			}
+		} else if !tr.Valid && res.StatusCode != tr.ExpectedStatusCode {
+			t.Fatalf("expected status code 400, got %d (test request %+v)", res.StatusCode, tr)
+		}
+	}
+}
+
+func TestGetTreasureMap(t *testing.T) {
+	// TODO
 }

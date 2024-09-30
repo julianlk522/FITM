@@ -17,7 +17,7 @@ type HTMLMeta struct {
 	OGSiteName    string
 }
 
-func GetMetaFromHTMLTokens(resp io.Reader) (hm HTMLMeta) {
+func ExtractMetaFromHTMLTokens(resp io.Reader) (hm HTMLMeta) {
 	z := html.NewTokenizer(resp)
 
 	title_tag := false

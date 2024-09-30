@@ -13,7 +13,6 @@ let user = Astro.cookies.get('user')?.value
 		<meta charset='UTF-8' />
 		<meta name='description' content='Flexible Internet Treasure Map (FITM)' />
 		<meta name='viewport' content='width=device-width' />
-		<link rel='icon' type='image/svg+xml' href='/favicon.svg' />
 		<meta name='generator' content={Astro.generator} />
 		<title>{title}</title>
 	</head>
@@ -21,6 +20,7 @@ let user = Astro.cookies.get('user')?.value
 		<a href='/'>Home</a>
 		<a href='/about'>About</a>
 		<a href='/top'>Top</a>
+		<a href='/new'>New</a>
 		{
 			user ? (
 			<a href=`/map/${user}` id="user-tmap-link">{user}</a>) : (<a href='/login' id="login-link">Login</a>)
@@ -80,7 +80,7 @@ let user = Astro.cookies.get('user')?.value
 			margin-bottom: 1rem;
 		}
 		h2 {
-			font-size: 1.5rem;
+			font-size: 1.25rem;
 		}
 		h2.subtitle {
 			font-size: 1rem;
@@ -120,6 +120,14 @@ let user = Astro.cookies.get('user')?.value
 
 			textarea {
 				max-width: 100%;
+			}
+
+			label:is(#search-period, #search-sort-by, #search-cats, #search-nsfw) {
+				display: inline;
+
+				+ * {
+					margin-left: 5px;
+				}
 			}
 		}
 		img {
@@ -198,6 +206,12 @@ let user = Astro.cookies.get('user')?.value
 
 			a {
 				color: red;
+			}
+		}
+
+		@media (min-width: 400px) {
+			h2 {
+				font-size: 1.5rem;
 			}
 		}
 

@@ -40,6 +40,18 @@ func HasDuplicateCats(cats string) bool {
 	return false
 }
 
+func CapitalizeNSFWCatIfNotAlready(cats string) string {
+	split_cats := strings.Split(cats, ",")
+
+	for i := 0; i < len(split_cats); i++ {
+		if split_cats[i] == "nsfw" {
+			split_cats[i] = "NSFW"
+		}
+	}
+
+	return strings.Join(split_cats, ",")
+}
+
 func TrimExcessAndTrailingSpaces(cats string) string {
 
 	// remove leading / trailing spaces

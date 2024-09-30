@@ -1,5 +1,26 @@
-#user_tags_title_bar {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
+form#edit-tag {
+	padding: 1rem 0;
+
+	#user-tags-header-bar {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+
+		button.delete-tag-btn {
+			margin-left: -5px;
+		}
+	}
+
+	div#search-cats-container {
+		margin-top: 5px;
+	}
+
+	dialog.delete-tag-modal {
+		z-index: 1;
+		background-color: var(--text-treasurey);
+
+		button:not(:first-of-type) {
+			margin-left: 5px;
+		}
+	}
 }

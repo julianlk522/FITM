@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/http"
+	"strings"
 
 	e "github.com/julianlk522/fitm/error"
 
@@ -33,7 +34,7 @@ type VYTVideoItems struct {
 }
 
 type YTVideoSnippet struct {
-	Title  string `json:"title"`
+	Title      string `json:"title"`
 	Thumbnails struct {
 		Default struct {
 			URL string `json:"url"`
@@ -89,12 +90,15 @@ type NewLinkRequest struct {
 }
 
 func (l *NewLinkRequest) Bind(r *http.Request) error {
+
+	// URL
 	if l.NewLink.URL == "" {
 		return e.ErrNoURL
 	} else if len(l.NewLink.URL) > util.URL_CHAR_LIMIT {
 		return e.ErrLinkURLCharsExceedLimit(util.URL_CHAR_LIMIT)
 	}
 
+	// Cats
 	switch {
 	case l.NewLink.Cats == "":
 		return e.ErrNoTagCats
@@ -106,13 +110,30 @@ func (l *NewLinkRequest) Bind(r *http.Request) error {
 		return e.ErrDuplicateCats
 	}
 
+	// Summary
 	if len(l.NewLink.Summary) > util.SUMMARY_CHAR_LIMIT {
 		return e.SummaryLengthExceedsLimit(util.SUMMARY_CHAR_LIMIT)
+	}
+
+	if strings.Contains(l.NewLink.Summary, "\"") {
+		l.NewLink.Summary = strings.ReplaceAll(l.NewLink.Summary, "\"", "'")
 	}
 
 	l.ID = uuid.New().String()
 	l.SubmitDate = util.NEW_LONG_TIMESTAMP()
 	l.LikeCount = 0
+
+	return nil
+}
+
+type DeleteLinkRequest struct {
+	LinkID string `json:"link_id"`
+}
+
+func (dl *DeleteLinkRequest) Bind(r *http.Request) error {
+	if dl.LinkID == "" {
+		return e.ErrNoLinkID
+	}
 
 	return nil
 }

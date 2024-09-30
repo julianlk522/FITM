@@ -3,6 +3,7 @@ package handler
 import (
 	"testing"
 
+	"github.com/julianlk522/fitm/db"
 	"github.com/julianlk522/fitm/model"
 	"github.com/julianlk522/fitm/query"
 )
@@ -30,7 +31,7 @@ func TestScanLinks(t *testing.T) {
 }
 
 func TestPaginateLinks(t *testing.T) {
-	
+
 	// no links
 	links_sql := query.NewTopLinks().FromCats([]string{"umvc3"}).DuringPeriod("day").Page(1)
 
@@ -51,14 +52,12 @@ func TestPaginateLinks(t *testing.T) {
 	} else {
 		t.Fatalf("expected type %T, got %T (no links)", model.PaginatedLinks[model.Link]{}, res)
 	}
-	
+
 	// single page
-	links_sql = query.NewTopLinks().FromCats([]string{"umvc3","flowers"}).Page(1)
+	links_sql = query.NewTopLinks().FromCats([]string{"umvc3", "flowers"}).Page(1)
 	links, err = ScanLinks[model.Link](links_sql)
 	if err != nil {
 		t.Fatal(err)
-	} else if len(*links) == 0 {
-		t.Fatal("expected links")
 	}
 
 	res = PaginateLinks(links, 1)
@@ -95,54 +94,30 @@ func TestPaginateLinks(t *testing.T) {
 }
 
 // Add link
-func TestIsYouTubeVideoLink(t *testing.T) {
-	var test_urls = []struct {
-		URL   string
-		Valid bool
+func TestObtainURLMetaData(t *testing.T) {
+	var test_requests = []struct {
+		request *model.NewLinkRequest
+		Valid   bool
 	}{
-		{"https://www.youtube.com/watch?v=9bZkp7q19f0", true},
-		{"https://www.youtube.com/watch?v=9bZkp7q19f0&feature=player_embedded", true},
-		{"fred.com", false},
-		{"https://www.youtube.com/watch?v=MH03ZJaNe8A", true},
-		{"https://youtu.be/uW5GjbidEHU?si=d2wJ7ADMCMMyJfQ-", true},
-		{"https://youtu.be/uW5GjbidEHU", true},
+		{&model.NewLinkRequest{NewLink: &model.NewLink{URL: "abc.com"}}, true},
+		{&model.NewLinkRequest{NewLink: &model.NewLink{URL: "www.abc.com"}}, true},
+		{&model.NewLinkRequest{NewLink: &model.NewLink{URL: "https://www.abc.com"}}, true},
+		{&model.NewLinkRequest{NewLink: &model.NewLink{URL: "about.google.com"}}, true},
+		{&model.NewLinkRequest{NewLink: &model.NewLink{URL: "julianlk.com/notreal"}}, false},
+		{&model.NewLinkRequest{NewLink: &model.NewLink{URL: "gobblety gook"}}, false},
 	}
 
-	for _, u := range test_urls {
-		return_true := IsYouTubeVideoLink(u.URL)
-		if u.Valid && !return_true {
-			t.Fatalf("expected url %s to be valid", u.URL)
-		} else if !u.Valid && return_true {
-			t.Fatalf("url %s NOT valid, expected error", u.URL)
+	for _, tr := range test_requests {
+		err := ObtainURLMetaData(tr.request)
+		if tr.Valid && err != nil {
+			t.Fatal(err)
+		} else if !tr.Valid && err == nil {
+			t.Fatalf("expected error for url %s", tr.request.NewLink.URL)
 		}
 	}
 }
 
-func TestExtractYouTubeVideoID(t *testing.T) {
-	var test_urls = []struct {
-		URL   string
-		ID    string
-	}{
-		{"https://www.youtube.com/watch?v=9bZkp7q19f0", "9bZkp7q19f0"},
-		{"https://www.youtube.com/watch?v=9bZkp7q19f0&feature=player_embedded", "9bZkp7q19f0"},
-		{"https://www.youtube.com/watch?v=MH03ZJaNe8A", "MH03ZJaNe8A"},
-		{"https://youtu.be/uW5GjbidEHU?si=d2wJ7ADMCMMyJfQ-", "uW5GjbidEHU"},
-		{"https://youtu.be/uW5GjbidEHU", "uW5GjbidEHU"},
-	}
-
-	for _, u := range test_urls {
-		id := ExtractYouTubeVideoID(u.URL)
-		if id != u.ID {
-			t.Fatalf("expected %s, got %s", u.ID, id)
-		}
-	}
-}
-
-func TestExtractMetaDataFromGoogleAPIsResponse(t *testing.T) {
-	// TODO
-}
-
-func TestResolveURL(t *testing.T) {
+func TestGetResolvedURLResponse(t *testing.T) {
 	var test_urls = []struct {
 		URL   string
 		Valid bool
@@ -153,35 +128,16 @@ func TestResolveURL(t *testing.T) {
 		{"about.google.com", true},
 		{"julianlk.com/notreal", false},
 		{"gobblety gook", false},
+		// TODO: get the fucking user agent headers to actually apply and
+		// add test case e.g., https://neal.fun/deep-sea
 	}
 
 	for _, u := range test_urls {
-		_, err := ResolveURL(u.URL)
+		_, err := GetResolvedURLResponse(u.URL)
 		if u.Valid && err != nil {
 			t.Fatal(err)
 		} else if !u.Valid && err == nil {
 			t.Fatalf("expected error for url %s", u.URL)
-		}
-	}
-}
-
-func TestLinkAlreadyAdded(t *testing.T) {
-	var test_urls = []struct {
-		URL   string
-		Added bool
-	}{
-		{"https://stackoverflow.co/", true},
-		{"https://www.ronjarzombek.com", true},
-		{"https://somethingnotonfitm", false},
-		{"jimminy jillickers", false},
-	}
-
-	for _, u := range test_urls {
-		added, _ := LinkAlreadyAdded(u.URL)
-		if u.Added && !added {
-			t.Fatalf("expected url %s to be added", u.URL)
-		} else if !u.Added && added {
-			t.Fatalf("%s NOT added, expected error", u.URL)
 		}
 	}
 }
@@ -279,7 +235,7 @@ func TestAssignMetadata(t *testing.T) {
 			}
 		case 4:
 			if mock_request.AutoSummary != "goopis" {
-				t.Fatalf("goopis provided but auto summary set to: %s", mock_request.AutoSummary)
+				t.Fatalf("og:sitename provided but auto summary set to: %s", mock_request.AutoSummary)
 			} else if mock_request.ImgURL != "https://i.ytimg.com/vi/XdfoXdzGmr0/maxresdefault.jpg" {
 				t.Fatal("expected og:image to be set")
 			}
@@ -289,8 +245,111 @@ func TestAssignMetadata(t *testing.T) {
 	}
 }
 
+func TestLinkAlreadyAdded(t *testing.T) {
+	var test_urls = []struct {
+		URL   string
+		Added bool
+	}{
+		{"https://stackoverflow.co/", true},
+		{"https://www.ronjarzombek.com", true},
+		{"https://somethingnotonfitm", false},
+		{"jimminy jillickers", false},
+	}
+
+	for _, u := range test_urls {
+		added, _ := LinkAlreadyAdded(u.URL)
+		if u.Added && !added {
+			t.Fatalf("expected url %s to be added", u.URL)
+		} else if !u.Added && added {
+			t.Fatalf("%s NOT added, expected error", u.URL)
+		}
+	}
+}
+
+func TestIncrementSpellfixRanksForCats(t *testing.T) {
+	var test_cats = []struct {
+		Cats         []string
+		CurrentRanks []int
+	}{
+		{
+			[]string{"umvc3"},
+			[]int{4},
+		},
+		{
+			[]string{"flowers", "nerd"},
+			[]int{6, 1},
+		},
+		// cat doesn't exist: should be added to global_cats_spellfix
+		{
+			[]string{"jksfdkhsdf"},
+			[]int{0},
+		},
+	}
+
+	for _, tc := range test_cats {
+		err := IncrementSpellfixRanksForCats(nil, tc.Cats)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for i, cat := range tc.Cats {
+			var rank int
+			err := db.Client.QueryRow(
+				"SELECT rank FROM global_cats_spellfix WHERE word = ?", cat,
+			).Scan(&rank)
+
+			if err != nil {
+				t.Fatal(err)
+			} else if rank != tc.CurrentRanks[i]+1 {
+				t.Fatal(
+					"expected rank for", cat, "to be", tc.CurrentRanks[i]+1, "got", rank,
+				)
+			}
+		}
+	}
+}
+
 // IsRedirect / AssignSortedCats are pretty simple
 // don't really need tests
+
+// Delete link
+func TestDecrementSpellfixRanksForCats(t *testing.T) {
+	var test_cats = []struct {
+		Cats         []string
+		CurrentRanks []int
+	}{
+		{
+			[]string{"test"},
+			[]int{11},
+		},
+		{
+			[]string{"coding", "hacking"},
+			[]int{6, 2},
+		},
+	}
+
+	for _, tc := range test_cats {
+		err := DecrementSpellfixRanksForCats(nil, tc.Cats)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for i, cat := range tc.Cats {
+			var rank int
+			err := db.Client.QueryRow(
+				"SELECT rank FROM global_cats_spellfix WHERE word = ?", cat,
+			).Scan(&rank)
+
+			if err != nil {
+				t.Fatal(err)
+			} else if rank != tc.CurrentRanks[i]-1 {
+				t.Fatal(
+					"expected rank for", cat, "to be", tc.CurrentRanks[i]-1, "got", rank,
+				)
+			}
+		}
+	}
+}
 
 // Like / unlike link
 func TestUserSubmittedLink(t *testing.T) {
@@ -298,7 +357,7 @@ func TestUserSubmittedLink(t *testing.T) {
 		ID                  string
 		SubmittedByTestUser bool
 	}{
-		// user goolian submitted links with ID 7, 13, 23
+		// user jlk submitted links with ID 7, 13, 23
 		// (not 0, 1, or 86)
 		{"7", true},
 		{"13", true},
@@ -323,11 +382,11 @@ func TestUserHasLikedLink(t *testing.T) {
 		ID              string
 		LikedByTestUser bool
 	}{
-		// user goolian liked links with ID 21, 24, 32
+		// user jlk liked links with ID 24, 32, 103
 		// (not 9, 11, or 15)
-		{"21", true},
 		{"24", true},
 		{"32", true},
+		{"103", true},
 		{"9", false},
 		{"11", false},
 		{"15", false},
@@ -349,7 +408,7 @@ func TestUserHasCopiedLink(t *testing.T) {
 		ID               string
 		CopiedByTestUser bool
 	}{
-		// user goolian copied links with ID 19, 31, 32
+		// user jlk copied links with ID 19, 31, 32
 		// (not 0, 1, or 99)
 		{"19", true},
 		{"31", true},

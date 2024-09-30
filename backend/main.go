@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/httprate"
 	"github.com/go-chi/jwtauth/v5"
@@ -44,40 +43,47 @@ func main() {
 		// }
 	}()
 
-	// Router-wide middleware
-	// Logger
-	r.Use(middleware.Logger)
+	// ROUTER-WIDE MIDDLEWARE
+	// LOGGER
+	// should go before any other middleware that may change
+	// the response, such as middleware.Recoverer
+	// (https://github.com/go-chi/chi/blob/6fedde2a70dc2adce0a3dc41b8aebc0b2bec8185/middleware/logger.go#L32C20-L33C46)
 
-	// Rate Limit
-	httprate_options := httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusTooManyRequests)
-		w.Write([]byte(`{"message": "too many requests"}`))
-	})
+	// split logger used to "tee" info from requests with status code 300+
+	// to err log file in addition to stdout
+	r.Use(m.SplitRequestLogger(m.FileLogFormatter))
+
+	// RATE LIMIT
+	// per minute (overall)
+	// absolute max before all traffic stopped
+	r.Use(httprate.LimitAll(
+		3000,
+		time.Minute,
+	))
+	// per minute (IP)
+	// because Netlify is lame and won't let me rate limit on their end,
+	// this needs to cover all concurrent traffic coming from the frontend
+	// shared across all users (hence it being really high)
 	r.Use(httprate.Limit(
-		60,
+		2400,
 		1*time.Minute,
 		httprate.WithKeyFuncs(httprate.KeyByIP),
 	))
-	r.Use(
-		httprate.Limit(
-			60,
-			time.Minute,
-			httprate.WithKeyFuncs(func(r *http.Request) (string, error) {
-				return r.Header.Get("Authorization"), nil
-			}),
-			httprate_options,
-		))
+	// per second (IP)
+	// (stop short bursts quickly)
+	r.Use(httprate.Limit(
+		100,
+		1*time.Second,
+		httprate.WithKeyFuncs(httprate.KeyByIP),
+	))
 
 	// CORS
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"https://*", "http://*"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{
 			"Authorization",
 			"Content-Type",
 		},
-		MaxAge: 300,
 		// Debug: true,
 	}))
 
@@ -86,9 +92,13 @@ func main() {
 	r.Post("/signup", h.SignUp)
 	r.Post("/login", h.LogIn)
 	r.Get("/pic/{file_name}", h.GetProfilePic)
-
+	
 	r.Get("/cats", h.GetTopGlobalCats) // includes subcats
+	r.Get("/cats/{snippet}", h.GetSpellfixMatchesForSnippet)
 	r.Get("/contributors", h.GetTopContributors)
+
+	// CD webhook: application update and refresh
+	r.Post("/ghwh", h.HandleGitHubWebhook)
 
 	// OPTIONAL AUTHENTICATION
 	// (bearer token used optionally to get IsLiked / IsCopied for links)
@@ -117,9 +127,11 @@ func main() {
 		// Users
 		r.Put("/about", h.EditAbout)
 		r.Post("/pic", h.UploadProfilePic)
+		r.Delete("/pic", h.DeleteProfilePic)
 
 		// Links
 		r.Post("/links", h.AddLink)
+		r.Delete("/links", h.DeleteLink)
 		r.Post("/links/{link_id}/like", h.LikeLink)
 		r.Delete("/links/{link_id}/like", h.UnlikeLink)
 		r.Post("/links/{link_id}/copy", h.CopyLink)
@@ -128,6 +140,7 @@ func main() {
 		// Tags
 		r.Post("/tags", h.AddTag)
 		r.Put("/tags", h.EditTag)
+		r.Delete("/tags", h.DeleteTag)
 
 		// Summaries
 		r.Post("/summaries", h.AddSummary)

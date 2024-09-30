@@ -31,11 +31,47 @@ func ErrInvalidRequest(err error) render.Renderer {
 	}
 }
 
+// func ErrUnauthenticated(err error) render.Renderer {
+// 	return &ErrResponse{
+// 		Err:            err,
+// 		HTTPStatusCode: 401,
+// 		StatusText:     "Unauthenticated.",
+// 		ErrorText:      err.Error(),
+// 	}
+// }
+
+func ErrUnauthorized(err error) render.Renderer {
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: 403,
+		StatusText:     "Unauthorized.",
+		ErrorText:      err.Error(),
+	}
+}
+
+func Err404(err error) render.Renderer {
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: 404,
+		StatusText:     "Resource not found.",
+		ErrorText:      err.Error(),
+	}
+}
+
 func ErrRender(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
 		HTTPStatusCode: 422,
 		StatusText:     "Error rendering response.",
+		ErrorText:      err.Error(),
+	}
+}
+
+func ErrServerFail(err error) render.Renderer {
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: 500,
+		StatusText:     "Server failed to process request.",
 		ErrorText:      err.Error(),
 	}
 }

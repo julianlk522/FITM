@@ -76,7 +76,11 @@ func (t *NewTagRequest) Bind(r *http.Request) error {
 		return e.ErrDuplicateCats
 	}
 
+	// capitalize 'nsfw' if found
+	t.NewTag.Cats = util.CapitalizeNSFWCatIfNotAlready(t.NewTag.Cats)
+
 	t.ID = uuid.New().String()
+	t.Cats = util.TrimExcessAndTrailingSpaces(t.NewTag.Cats)
 	t.LastUpdated = util.NEW_LONG_TIMESTAMP()
 
 	return nil
@@ -94,19 +98,33 @@ func (et *EditTagRequest) Bind(r *http.Request) error {
 	}
 
 	switch {
-		case et.Cats == "":
-			return e.ErrNoCats
-		case util.HasTooLongCats(et.Cats):
-			return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
-		case util.HasTooManyCats(et.Cats):
-			return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
-		case util.HasDuplicateCats(et.Cats):
-			return e.ErrDuplicateCats
+	case et.Cats == "":
+		return e.ErrNoCats
+	case util.HasTooLongCats(et.Cats):
+		return e.CatCharsExceedLimit(util.CAT_CHAR_LIMIT)
+	case util.HasTooManyCats(et.Cats):
+		return e.NumCatsExceedsLimit(util.NUM_CATS_LIMIT)
+	case util.HasDuplicateCats(et.Cats):
+		return e.ErrDuplicateCats
 	}
 
-	et.Cats = util.TrimExcessAndTrailingSpaces(et.Cats)
+	// capitalize 'nsfw' if found
+	et.Cats = util.CapitalizeNSFWCatIfNotAlready(et.Cats)
 
+	et.Cats = util.TrimExcessAndTrailingSpaces(et.Cats)
 	et.LastUpdated = util.NEW_LONG_TIMESTAMP()
+
+	return nil
+}
+
+type DeleteTagRequest struct {
+	ID string `json:"tag_id"`
+}
+
+func (dt *DeleteTagRequest) Bind(r *http.Request) error {
+	if dt.ID == "" {
+		return e.ErrNoTagID
+	}
 
 	return nil
 }

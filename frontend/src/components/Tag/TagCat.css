@@ -1,14 +1,27 @@
-.cat {
+li.cat {
 	list-style: none;
 	display: flex;
 	padding: 0 5px;
 	border-radius: 2px;
 	background-color: var(--sky);
+	height: 25px;
+
+	p {
+		color: black;
+		font-weight: bold;
+		margin: 0;
+		white-space: nowrap;
+	}
+
+	button.img-btn {
+		filter: invert(1);
+	}
+
+	button.plus-btn {
+		padding-right: 0;
+	}
 }
 
-.cat p {
-	color: black;
-	font-weight: bold;
-	margin: 0;
-	white-space: nowrap;
+li.cat.addable {
+	opacity: 0.4;
 }

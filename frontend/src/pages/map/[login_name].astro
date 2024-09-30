@@ -2,20 +2,22 @@
 import Link from '../../components/Link/Link'
 import ScrollUp from '../../components/ScrollUp.astro'
 import TagCat from "../../components/Tag/TagCat"
+import AboutText from '../../components/Tmap/AboutText'
 import EditAbout from '../../components/Tmap/EditAbout'
 import ProfilePic from '../../components/Tmap/ProfilePic'
 import { TMAP_ENDPOINT } from '../../constants'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import type { FilteredTreasureMap, Profile, TreasureMap } from '../../types'
 import { tmap_sections } from '../../types'
+import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
 import { format_short_date } from '../../util/format_date'
-import fetch_with_handle_rate_limit from '../../util/rate_limit'
 
 // Auth
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
 
 // Params
+// login_name
 const { login_name } = Astro.params
 if (!login_name) {
 	return Astro.redirect('/')
@@ -23,6 +25,7 @@ if (!login_name) {
 const is_signed_in_user = login_name === user
 let page_title = `${login_name}'s Treasure Map`
 
+// cats
 let cats: string | undefined
 let cats_split: string[] = []
 if (Astro.url.searchParams.get('cats')) {
@@ -34,31 +37,41 @@ if (Astro.url.searchParams.get('cats')) {
 	}
 }
 
+// nsfw
+let nsfw = false
+if (Astro.url.searchParams.get('nsfw') && Astro.url.searchParams.get('nsfw') === 'true') {
+	nsfw = true
+}
+
 // Get Tmap
 let tmap: TreasureMap | FilteredTreasureMap
 let tmap_url = TMAP_ENDPOINT + `/${login_name}`
 if (cats_split.length) {
 	tmap_url += `?cats=${cats_split[0]}`
-
 	for (let i = 1; i < cats_split.length; i++) {
 		tmap_url += `,${cats_split[i]}`
 	}
 }
 
+if (nsfw) {
+	if (cats) {
+		tmap_url += `&nsfw=true`
+	} else {
+		tmap_url += `?nsfw=true`
+	}
+}
+
 const tmap_resp = token
-	? await fetch_with_handle_rate_limit(tmap_url, {
+	? await fetch_with_handle_redirect(tmap_url, {
 			headers: {
 				Authorization: `Bearer ${token}`,
 			},
 		})
-	: await fetch_with_handle_rate_limit(tmap_url)
-if (!tmap_resp) {
-	return Astro.redirect('/rate-limit')
+	: await fetch_with_handle_redirect(tmap_url)
+if (!tmap_resp.Response || tmap_resp.RedirectTo) {
+	return Astro.redirect(tmap_resp.RedirectTo)
 }
-if (tmap_resp.status > 399) {
-	return Astro.redirect('/404')
-}
-tmap = await tmap_resp.json()
+tmap = await tmap_resp.Response.json()
 const used_sections = tmap_sections.filter((s) => tmap[s].length)
 
 // Display about if used (unfiltered only)
@@ -84,7 +97,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 	<main>
 		<h1>{login_name}'s Treasure Map</h1>
 		<h2 class="subtitle">
-			{profile ? `created: ${format_short_date(profile.Created)}` : '(Filtered)'}
+			{profile ? `created: ${format_short_date(profile.Created)}` : `(Filtered${nsfw ? ', NSFW' : ''})`}
 		</h2>
 
 		<!-- Profile  -->
@@ -109,18 +122,12 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 						: abbreviated_about 
 							?  <details>
 								<summary>
-									<pre>
-										<span>about:</span> {abbreviated_about}
-									</pre>
+									<AboutText About={abbreviated_about} />
 								</summary>
-								<pre>
-									<span>about:</span> {profile.About}
-								</pre>
+								<AboutText About={profile.About} />
 							</details> 
 							: profile.About.length > 0 ?
-							<pre>
-								<span>about:</span> {profile.About}
-							</pre>
+								<AboutText About={profile.About} />
 							: null
 					: null
 				}
@@ -128,44 +135,59 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 		)
 		: null}
 			
-		
+		<!-- Filters -->
+		<section id='filters'>
 
-		<!-- Category Filter -->
-		{cats ? <section id='cat-filter' class="flex">
-			<div>
-				<h2>Cat Filter</h2>
-				<p id="transfer-to-global-map">
-					<a href={`/top?cats=${cats}`}>Transfer to Global Treasure Map</a>
-				</p>
-				<p id='reset-cat-filter'>
-					<a href={`/map/${login_name}`}>Reset</a>
-				</p>
-			</div>
-			<ul id='cat-list'>
-				{
-					cats_split.length > 1 ? (
-						cats_split.map((cat) => {
-							return (
-								<TagCat
-									Cat={cat}
-									EditActivated={false}
-									Deleted={undefined}
-								/>
-							)
-						})
-					) : (
-						<TagCat
-							Cat={cats_split[0]}
-							EditActivated={false}
-							Deleted={undefined}
-						/>
-					)
-				}
-			</ul>
-		</section> : null}
+			<!-- NSFW -->
+			<p id="nsfw-filter">NSFW links:</p>
+			<span>
+				{nsfw ? <a href={`/map/${login_name}${cats ? `?cats=${cats}` : ''}`}>hide</a> : <a href={`/map/${login_name}${cats ? `?cats=${cats}&nsfw=true` : '?nsfw=true'}`}>show</a>}
+			</span>
+
+			<!-- Categories -->
+			{cats ? <div id='cat-filter-container' class="flex">
+				<div>
+					<p id="cat-filter">Cats:</p>
+					<span id='reset-cat-filter'>
+						<a href={`/map/${login_name}`}>reset</a>
+					</span>
+					<p id="transfer-to-global-map">
+						<a href={`/top?cats=${cats}`}>Transfer cats to Global Treasure Map</a>
+					</p>
+				</div>
+				<ul id='cat-list'>
+					{
+						cats_split.length > 1 ? (
+							cats_split.map((cat) => {
+								return (
+									<TagCat
+										Cat={cat}
+										Count={undefined}
+										Removable={false}
+										Addable={false}
+										AddedSignal={undefined}
+										DeletedSignal={undefined}
+									/>
+								)
+							})
+						) : (
+							<TagCat
+								Cat={cats_split[0]}
+								Count={undefined}
+								Removable={false}
+								Addable={false}
+								AddedSignal={undefined}
+								DeletedSignal={undefined}
+							/>
+						)
+					}
+				</ul>
+			</div> : null}
+		</section>
 
 		{used_sections.length ? 
 			<>
+				{/* Overview */}
 				<section id='overview' class='flex'>
 					<div>
 						<h2>{cats ? 'Top Subcats' : 'Top Cats'}</h2>
@@ -202,6 +224,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 					</div>
 				</section>
 
+			{/* Links Sections */}
 			{
 				used_sections.map((s) => {
 					return (
@@ -247,7 +270,10 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 				})
 			}
 			</>
-		: null}
+		: <section>
+			<p id="no-links">No links found.</p>
+			<p>&macr;&bsol;&lowbar;&lpar;&#x30c4;&rpar;&lowbar;&sol;&macr;</p>
+		</section>}
 
 		<ScrollUp />
 	</main>
@@ -259,23 +285,32 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 		text-align: left;
 	}
 
-	#cat-filter {
-		display: flex;
-		flex-direction: column;
-
-		#transfer-to-global-map,
-		#reset-cat-filter {
-			margin: 0;
+	section#filters {
+		p#nsfw-filter,
+		p#cat-filter {
+			display: inline;
 		}
+		#cat-filter-container {
+			display: flex;
+			flex-direction: column;
 
-		#cat-list {
-			margin-bottom: 0;
+			#transfer-to-global-map,
+			#reset-cat-filter {
+				margin: 0;
+			}
+
+			#cat-list {
+				margin-bottom: 0;
+			}
 		}
 	}
 
 	#profile {
 		padding-top: 0;
-		padding-bottom: 1rem;
+
+		astro-island:has(div#profile-pic) + pre {
+			margin-top: 1rem;
+		}
 	}
 
 	#overview {
@@ -303,7 +338,8 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 		h2 {
 			position: sticky;
 			top: 0px;
-			padding: 1rem 0 0.5rem;
+			z-index: 1;
+			padding: 1rem 0;
 			background-color: #13151a;
 		}
 
@@ -316,18 +352,24 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 		}
 	}
 
-	@media (min-width: 480px) {
-		#cat-filter {
-			flex-direction: row;
+	p#no-links {
+		margin-top: 0;
+	}
 
-			#transfer-to-global-map,
-			#reset-cat-filter {
-				margin: 0;
-			}
-			
-			#cat-list {
-				margin: 0 auto;
-				align-content: center;
+	@media (min-width: 480px) {
+		section#filters {
+			#cat-filter-container {
+				flex-direction: row;
+
+				#transfer-to-global-map,
+				#reset-cat-filter {
+					margin: 0;
+				}
+				
+				#cat-list {
+					margin: 0 auto;
+					align-content: center;
+				}
 			}
 		}
 		#overview {

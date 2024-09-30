@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/julianlk522/fitm/model"
@@ -126,16 +127,12 @@ func TestScanTagRankings(t *testing.T) {
 			SubmittedBy: "nelson",
 		},
 		{
-			Cats:        "star,wars",
-			SubmittedBy: "boolian",
-		},
-		{
 			Cats:        "i,hate,sql",
-			SubmittedBy: "Julian",
+			SubmittedBy: "Test User",
 		},
 		{
 			Cats:        "monkeys,something",
-			SubmittedBy: "goolian",
+			SubmittedBy: "jlk",
 		},
 		{
 			Cats:        "jungle,knights,monkeys,talladega",
@@ -324,7 +321,7 @@ func TestUserHasTaggedLink(t *testing.T) {
 		{"22", true},
 		{"0", false},
 		{"10", false},
-		{"15", false},
+		{"102", false},
 	}
 
 	for _, l := range test_links {
@@ -365,6 +362,32 @@ func TestUserSubmittedTagWithID(t *testing.T) {
 	}
 }
 
+// Delete tag
+func TestTagExists(t *testing.T) {
+	// TODO
+}
+
+func TestIsOnlyTag(t *testing.T) {
+	var test_tags = []struct {
+		ID     string
+		IsOnly bool
+	}{
+		{"5", true},
+		{"4", false},
+		{"35", true},
+		{"34", false},
+	}
+
+	for _, tag := range test_tags {
+		return_true, err := IsOnlyTag(tag.ID)
+		if err != nil {
+			t.Fatalf("failed with error: %s", err)
+		} else if tag.IsOnly != return_true {
+			t.Fatalf("expected tag with ID %s to be only tag", tag.ID)
+		}
+	}
+}
+
 // AlphabetizeCats() is simple usage of strings.Split / string.Join / slices.Sort
 // no point in testing
 
@@ -396,15 +419,12 @@ func TestGetLinkIDFromTagID(t *testing.T) {
 }
 
 func TestCalculateAndSetGlobalCats(t *testing.T) {
-
-	// TODO: refactor test after refactoring CalculateGlobalCatsForLink()
-
 	var test_link_ids = []struct {
 		ID         string
 		GlobalCats string
 	}{
 		{"0", "flowers"},
-		{"7", "7,baby,lucky"},
+		{"7", "7,lucky,arrest,Best,jest,Molest,winchest"},
 		{"11", "test"},
 	}
 
@@ -445,24 +465,112 @@ func TestCalculateAndSetGlobalCats(t *testing.T) {
 
 func TestSetGlobalCats(t *testing.T) {
 	var test_link_id = "11"
+	var test_cats = "reference,food"
 
-	err := SetGlobalCats(test_link_id, "foo,bar")
+	// get old spellfix ranks for test cats
+	var old_test_cats_ranks = make(map[string]int)
+	for _, cat := range strings.Split(test_cats, ",") {
+		var rank int
+		err := TestClient.QueryRow(`
+			SELECT rank
+			FROM global_cats_spellfix
+			WHERE word = ?`,
+			cat,
+		).Scan(&rank)
+		if err != nil {
+			t.Fatalf("failed with error: %s", err)
+		}
+		old_test_cats_ranks[cat] = rank
+	}
+
+	// get old spellfix ranks for link's global cats
+	var old_link_gcs string
+	err := TestClient.QueryRow(`
+		SELECT global_cats
+		FROM Links 
+		WHERE id = ?`,
+		test_link_id,
+	).Scan(&old_link_gcs)
+	if err != nil {
+		t.Fatalf("failed with error: %s", err)
+	}
+
+	var old_link_gc_ranks = make(map[string]int)
+	for _, cat := range strings.Split(old_link_gcs, ",") {
+		var rank int
+		err := TestClient.QueryRow(`
+			SELECT rank
+			FROM global_cats_spellfix
+			WHERE word = ?`,
+			cat,
+		).Scan(&rank)
+		if err != nil {
+			t.Fatalf("failed with error: %s", err)
+		}
+		old_link_gc_ranks[cat] = rank
+	}
+
+	err = SetGlobalCats(test_link_id, test_cats)
 	if err != nil {
 		t.Fatalf("failed with error: %s", err)
 	}
 
 	// confirm global cats match expected
-	var gc string
+	var new_link_gc string
 	err = TestClient.QueryRow(`
 		SELECT global_cats
 		FROM Links 
 		WHERE id = ?`,
 		test_link_id,
-	).Scan(&gc)
+	).Scan(&new_link_gc)
 
 	if err != nil {
 		t.Fatalf("failed with error: %s", err)
-	} else if gc != "foo,bar" {
-		t.Fatalf("got global cats %s, want %s", gc, "foo,bar")
+	} else if new_link_gc != test_cats {
+		t.Fatalf("got global cats %s, want %s", new_link_gc, test_cats)
+	}
+
+	// confirm test cats spellfix ranks have been incremented
+	for cat, old_rank := range old_test_cats_ranks {
+		var new_rank int
+		err := TestClient.QueryRow(`
+			SELECT rank
+			FROM global_cats_spellfix
+			WHERE word = ?`,
+			cat,
+		).Scan(&new_rank)
+		if err != nil {
+			t.Fatalf("failed with error: %s", err)
+		}
+		if new_rank != old_rank+1 {
+			t.Fatalf(
+				"expected rank for %s to be %d, got %d",
+				cat,
+				old_rank+1,
+				new_rank,
+			)
+		}
+	}
+
+	// confirm old global cats spellfix ranks have been decremented
+	for cat, old_rank := range old_link_gc_ranks {
+		var new_rank int
+		err := TestClient.QueryRow(`
+			SELECT rank
+			FROM global_cats_spellfix
+			WHERE word = ?`,
+			cat,
+		).Scan(&new_rank)
+		if err != nil {
+			t.Fatalf("failed with error: %s", err)
+		}
+		if new_rank != old_rank-1 {
+			t.Fatalf(
+				"expected rank for %s to be %d, got %d",
+				cat,
+				old_rank-1,
+				new_rank,
+			)
+		}
 	}
 }

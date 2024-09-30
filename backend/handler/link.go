@@ -3,7 +3,6 @@ package handler
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"strings"
 
@@ -35,10 +34,31 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 		links_sql = links_sql.DuringPeriod(period_params)
 	}
 
+	// sort by
+	sort_params := r.URL.Query().Get("sort_by")
+	if sort_params != "" {
+		links_sql = links_sql.SortBy(sort_params)
+	}
+
 	// auth fields
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	if req_user_id != "" {
 		links_sql = links_sql.AsSignedInUser(req_user_id)
+	}
+
+	// nsfw
+	var nsfw_params string
+	if r.URL.Query().Get("nsfw") != "" {
+		nsfw_params = r.URL.Query().Get("nsfw")
+	} else if r.URL.Query().Get("NSFW") != "" {
+		nsfw_params = r.URL.Query().Get("NSFW")
+	}
+
+	if nsfw_params == "true" {
+		links_sql = links_sql.NSFW()
+	} else if nsfw_params != "false" && nsfw_params != "" {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrInvalidNSFWParams))
+		return
 	}
 
 	// pagination
@@ -54,13 +74,13 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 	if req_user_id != "" {
 		links, err := util.ScanLinks[model.LinkSignedIn](links_sql)
 		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrServerFail(err))
 		}
 		render.JSON(w, r, util.PaginateLinks(links, page))
 	} else {
 		links, err := util.ScanLinks[model.Link](links_sql)
 		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrServerFail(err))
 		}
 		render.JSON(w, r, util.PaginateLinks(links, page))
 	}
@@ -73,65 +93,23 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if URL is YT video
-	// if so, extract ID and send request to GoogleAPIs using API key
 	if util.IsYouTubeVideoLink(request.NewLink.URL) {
+		if err := util.ObtainYouTubeMetaData(request); err != nil {
 
-		// Get ID from URL
-		id := util.ExtractYouTubeVideoID(request.NewLink.URL)
-		if id == "" {
-			render.Render(w, r, e.ErrInvalidRequest(e.ErrInvalidURL))
-			return
+			// if unable to get YT metadata, try treating as normal URL
+			// (in case of, e.g., example.com/youtube.com/watch?v=1234
+			// though this should not happen per util.TestIsYouTubeVideoLink cases)
+			if err = util.ObtainURLMetaData(request); err != nil {
+				render.Render(w, r, e.ErrInvalidRequest(err))
+				return
+			}
 		}
-
-		// Build new GoogleAPIs URL
-		API_KEY := os.Getenv("FITM_GOOGLE_API_KEY")
-		if API_KEY == "" {
-			log.Printf("Could not find API_KEY")
-			render.Status(r, http.StatusInternalServerError)
-			return
-		}
-		gAPIs_url := "https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + API_KEY + "&part=snippet"
-
-		// Request from GoogleAPIs
-		resp, err := http.Get(gAPIs_url)
-		if err != nil {
-			log.Printf("Error requesting from GoogleAPIs: %s", err)
-			render.Render(w, r, e.ErrInvalidRequest(err))
-			return
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != 200 {
-			log.Printf("Error response from GoogleAPIs: %s", err)
-			render.Render(w, r, e.ErrInvalidRequest(e.ErrInvalidURL))
-			return
-		}
-
-		// Extract URL metadata from response
-		video_data, err := util.ExtractMetaDataFromGoogleAPIsResponse(resp.Body)
-		if err != nil {
-			log.Printf("Error: %s", err)
-			render.Status(r, http.StatusInternalServerError)
-			return
-		}
-		request.AutoSummary = video_data.Items[0].Snippet.Title
-		request.ImgURL = video_data.Items[0].Snippet.Thumbnails.Default.URL
-		request.URL = "https://www.youtube.com/watch?v=" + id
 
 	} else {
-		resp, err := util.ResolveURL(request.NewLink.URL)
-		if err != nil {
+		if err := util.ObtainURLMetaData(request); err != nil {
 			render.Render(w, r, e.ErrInvalidRequest(err))
 			return
 		}
-		defer resp.Body.Close()
-
-		// save updated URL (after any redirects e.g., to wwww.)
-		// remove trailing slash
-		request.URL = strings.TrimSuffix(resp.Request.URL.String(), "/")
-
-		meta := util.GetMetaFromHTMLTokens(resp.Body)
-		util.AssignMetadata(meta, request)
 	}
 
 	// Check URL is unique
@@ -145,13 +123,22 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	req_login_name := r.Context().Value(m.LoginNameKey).(string)
 	request.SubmittedBy = req_login_name
 
-	unsorted_cats := request.NewLink.Cats
-	util.AssignSortedCats(unsorted_cats, request)
+	// sort cats
+	request.Cats = util.AlphabetizeCats(request.NewLink.Cats)
 
-	// Insert Summary(ies)
-	// (might have user-submitted, Auto Summary, or both)
+	// Start Transaction
+	tx, err := db.Client.Begin()
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+	defer tx.Rollback()
+
+	// insert summary(ies)
+	// (might have user-submitted, auto, or both)
+	// auto summary
 	if request.AutoSummary != "" {
-		_, err := db.Client.Exec(
+		_, err := tx.Exec(
 			"INSERT INTO Summaries VALUES(?,?,?,?,?);",
 			uuid.New().String(),
 			request.AutoSummary,
@@ -168,9 +155,10 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	// user summary
 	if request.NewLink.Summary != "" {
-		_, err := db.Client.Exec(
+		req_user_id := r.Context().Value(m.UserIDKey).(string)
+		_, err := tx.Exec(
 			"INSERT INTO Summaries VALUES(?,?,?,?,?);",
 			uuid.New().String(),
 			request.NewLink.Summary,
@@ -179,15 +167,15 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 			request.SubmitDate,
 		)
 		if err != nil {
-			render.Render(w, r, e.ErrInvalidRequest(err))
+			render.Render(w, r, e.ErrServerFail(err))
 			return
 		} else {
 			request.SummaryCount += 1
 		}
 	}
 
-	// Insert tag
-	_, err := db.Client.Exec(
+	// insert tag
+	_, err = tx.Exec(
 		"INSERT INTO Tags VALUES(?,?,?,?,?);",
 		uuid.New().String(),
 		request.ID,
@@ -196,20 +184,20 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		request.SubmitDate,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
 	if request.NewLink.Summary != "" {
-		request.Summary  = request.NewLink.Summary
+		request.Summary = request.NewLink.Summary
 	} else if request.AutoSummary != "" {
-		request.Summary  = request.AutoSummary
+		request.Summary = request.AutoSummary
 	} else {
-		request.Summary  = ""
+		request.Summary = ""
 	}
 
-	// Insert link
-	_, err = db.Client.Exec(
+	// insert link
+	_, err = tx.Exec(
 		"INSERT INTO Links VALUES(?,?,?,?,?,?,?);",
 		request.ID,
 		request.URL,
@@ -220,7 +208,23 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		request.ImgURL,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// increment spellfix ranks
+	err = util.IncrementSpellfixRanksForCats(
+		tx,
+		strings.Split(request.Cats, ","),
+	)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// Commit
+	if err = tx.Commit(); err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
@@ -238,6 +242,74 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, new_link)
+}
+
+func DeleteLink(w http.ResponseWriter, r *http.Request) {
+	request := &model.DeleteLinkRequest{}
+	if err := render.Bind(r, request); err != nil {
+		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
+	}
+
+	link_exists, err := util.LinkExists(request.LinkID)
+	if err != nil {
+		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
+	} else if !link_exists {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLinkWithID))
+		return
+	}
+
+	req_login_name := r.Context().Value(m.LoginNameKey).(string)
+	if !util.UserSubmittedLink(req_login_name, request.LinkID) {
+		render.Render(w, r, e.ErrUnauthorized(e.ErrDoesntOwnLink))
+		return
+	}
+
+	// fetch global cats before deleting
+	// (to properly update spellfix ranks)
+	var gc string
+	err = db.Client.QueryRow("SELECT global_cats FROM Links WHERE id = ?;", request.LinkID).Scan(&gc)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// start transaction
+	tx, err := db.Client.Begin()
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+	defer tx.Rollback()
+
+	// delete
+	_, err = tx.Exec(
+		"DELETE FROM Links WHERE id = ?;",
+		request.LinkID,
+	)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// update spellfix
+	err = util.DecrementSpellfixRanksForCats(
+		tx,
+		strings.Split(gc, ","),
+	)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// commit
+	if err = tx.Commit(); err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func LikeLink(w http.ResponseWriter, r *http.Request) {

@@ -26,6 +26,11 @@ if (!token || !user) {
 			</p>
 		</section>
 
+		<section>
+			<h2>Tips</h2>
+			<p><a href="/about#avoiding-marooned-links">Avoiding "Marooned" Links</a></p>
+		</section>
+
 		<NewLinks client:load Token={token} User={user} />
 	</main>
 </BaseLayout>
@@ -34,7 +39,10 @@ if (!token || !user) {
 	#example-cat {
 		display: inline;
 		margin: 5px;
+		padding: 0 5px;
+		border-radius: 2px;
 		color: black;
+		background-color: var(--sky);
 		font-weight: bold;
 	}
 	a {

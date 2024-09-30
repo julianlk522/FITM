@@ -1,4 +1,5 @@
 .summary {
+	position: relative;
 	margin: 1rem 0 0;
 }
 astro-island:first-of-type li.summary {
@@ -9,8 +10,18 @@ astro-island:first-of-type li.summary {
 	color: var(--text-treasurey-dark);
 }
 
+button#delete-summary-btn {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+}
+
 @media (min-width: 768px) {
 	.summary {
 		margin-top: 2rem;
+	}
+
+	button#delete-summary-btn {
+		bottom: calc(50% - 10px);
 	}
 }

@@ -2,32 +2,27 @@
 import Link from '../components/Link/Link'
 import Pagination from '../components/Pagination.astro'
 import ScrollUp from '../components/ScrollUp.astro'
+import SearchFilters from '../components/Search/Filters'
 import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import {
 Periods,
+SortMetrics,
 type CatCount,
 type Contributor,
 type PaginatedLinks,
 type Period,
+type SortMetric,
 } from '../types'
-import fetch_with_handle_rate_limit from '../util/rate_limit'
+import fetch_with_handle_redirect from '../util/fetch_with_handle_redirect'
 
 // Auth
 const token = Astro.cookies.get('token')?.value
 const user = Astro.cookies.get('user')?.value
 
 // Params
-let page = 1
-if (Astro.url.searchParams.get('page')) {
-	page = parseInt(Astro.url.searchParams.get('page') as string)
-}
-let cats: string | undefined
-if (Astro.url.searchParams.get('cats')) {
-	cats = Astro.url.searchParams.get('cats') as string
-}
+// period
 let period: Period = 'all'
-let other_periods: Period[] = Periods.filter((other) => other !== 'all')
 if (
 	Astro.url.searchParams.get('period') &&
 	(Periods as readonly string[]).includes(
@@ -35,43 +30,89 @@ if (
 	)
 ) {
 	period = Astro.url.searchParams.get('period') as Period
-	other_periods = Periods.filter((other) => other !== period)
+}
+// sort by
+let sort_by: SortMetric = 'rating'
+if (
+	Astro.url.searchParams.get('sort_by') && (SortMetrics as readonly string[]).includes(
+		Astro.url.searchParams.get('sort_by') as SortMetric
+	)) {
+		sort_by = Astro.url.searchParams.get('sort_by') as SortMetric
+	}
+// cats
+let cats: string | undefined
+if (Astro.url.searchParams.get('cats')) {
+	cats = Astro.url.searchParams.get('cats') as string
+}
+// nsfw
+let nsfw: boolean = false
+if (Astro.url.searchParams.get('nsfw') && Astro.url.searchParams.get('nsfw') === 'true') {
+	nsfw = true
+}
+// page
+let page = 1
+if (Astro.url.searchParams.get('page')) {
+	page = parseInt(Astro.url.searchParams.get('page') as string)
 }
 
 // Get links
 let links_url = LINKS_ENDPOINT
 
-let has_period = false
-if (period !== 'all') {
-	has_period = true
-	links_url += `?period=${period}`
-}
+// edit URL params accordingly
+// cats
 let has_cats = false
 if (cats) {
 	has_cats = true
+	links_url += `?cats=${cats}`
+}
+// period
+let has_period = false
+if (period !== 'all') {
+	has_period = true
 
-	if (has_period) {
-		links_url += `&cats=${cats}`
+	if (has_cats) {
+		links_url += `&period=${period}`
 	} else {
-		links_url += `?cats=${cats}`
+		links_url += `?period=${period}`
 	}
 }
-if (has_period || has_cats) {
+// sort by
+let has_sort_by = false
+if (sort_by !== 'rating') {
+	has_sort_by = true
+
+	if (has_cats || has_period) {
+		links_url += `&sort_by=${sort_by}`
+	} else {
+		links_url += `?sort_by=${sort_by}`
+	}
+}
+// nsfw
+let has_nsfw = false
+if (nsfw) {
+	has_nsfw = true
+	if (has_cats || has_period || has_sort_by) {
+		links_url += `&nsfw=${nsfw}`
+	} else {
+		links_url += `?nsfw=${nsfw}`
+	}
+}
+// page
+if (has_cats || has_period || has_sort_by || has_nsfw) {
 	links_url += `&page=${page}`
 } else {
 	links_url += `?page=${page}`
 }
 
-// Links
 const get_links_resp = await (token
-	? fetch_with_handle_rate_limit(links_url, {
+	? fetch_with_handle_redirect(links_url, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
-	: fetch_with_handle_rate_limit(links_url))
-if (get_links_resp === undefined) {
-	return Astro.redirect("/rate-limit")
+	: fetch_with_handle_redirect(links_url))
+if (!get_links_resp.Response || get_links_resp.RedirectTo) {
+	return Astro.redirect(get_links_resp.RedirectTo)
 }
-const data: PaginatedLinks = await get_links_resp.json()
+const data: PaginatedLinks = await get_links_resp.Response.json()
 const links = data.Links
 
 // Top cats
@@ -95,11 +136,11 @@ if (links && links.length) {
 			subcats_url += `&period=${period}`
 		}
 
-		const subcats_resp = await fetch_with_handle_rate_limit(subcats_url)
-		if (subcats_resp === undefined) {
-			return Astro.redirect("/rate-limit")
+		const subcats_resp = await fetch_with_handle_redirect(subcats_url)
+		if (!subcats_resp.Response || subcats_resp.RedirectTo) {
+			return Astro.redirect(subcats_resp.RedirectTo)
 		}
-		top_subcats = await subcats_resp.json()
+		top_subcats = await subcats_resp.Response.json()
 	
 	// Get cat counts
 	} else {
@@ -109,64 +150,40 @@ if (links && links.length) {
 			cats_url += `?period=${period}`
 		}
 
-		const top_cats_resp = await fetch_with_handle_rate_limit(cats_url)
-		if (top_cats_resp === undefined) {
-			return Astro.redirect("/rate-limit")
+		const top_cats_resp = await fetch_with_handle_redirect(cats_url)
+		if (!top_cats_resp.Response || top_cats_resp.RedirectTo) {
+			return Astro.redirect(top_cats_resp.RedirectTo)
 		}
-		top_cats = await top_cats_resp.json()
+		top_cats = await top_cats_resp.Response.json()
 		// [{Cat: 'umvc3', Count: 1}, ...]
 	}
 
-	const contributors_resp = await fetch_with_handle_rate_limit(contributors_url)
-	if (contributors_resp === undefined) {
-		return Astro.redirect("/rate-limit")
+	const contributors_resp = await fetch_with_handle_redirect(contributors_url)
+	if (!contributors_resp.Response || contributors_resp.RedirectTo) {
+		return Astro.redirect(contributors_resp.RedirectTo)
 	}
-	top_contributors = await contributors_resp.json()
+	top_contributors = await contributors_resp.Response.json()
 }
+
+const page_title = (cats ? cats : "Top") + (sort_by !== 'rating' ? " (Newest)" : " (Rating)")
 
 const is_only_page = 
 	page === 1
 	&& data.NextPage === -1
 
-const page_title =
-	cats
-		? cats
-		: 'Top Rated'
 ---
 
 <BaseLayout Title='Top Links / Cats / Contributors'>
 	<main>
-		<h1>
-			{page_title}
-		</h1>
-		{period !== 'all' ? <h2 class="subtitle">({period.charAt(0).toUpperCase() + period.slice(1)})</h2> : null}
-		<section id='search-filters'>
-			<h2>Filters</h2>
-			<div>
-				<p>Period:</p>
-				{
-					other_periods.map((other) => (
-						<a
-							href={`/top?period=${other}${cats ? `&cats=${cats}` : ''}`}
-						>
-							{other}
-						</a>
-					))
-				}
-			</div>
-			{
-				cats ? (
-					<div>
-						<p>
-							{cats.includes(',')
-								? 'Cats: '
-								: 'Cat: '}
-						</p>
-						<a href={`/top${period !== 'all' ? `?period=${period}` : ''}`}>Reset</a>
-					</div>
-				) : null
-			}
-		</section>
+		<h1>{page_title}</h1>
+		
+		<SearchFilters 
+			client:load 
+			InitialPeriod={period}
+			InitialSortBy={sort_by}
+			InitialCats={cats?.split(',') ?? []}
+			InitialNSFW={nsfw}
+		/>
 
 		{
 			links && links.length ? (
@@ -178,7 +195,7 @@ const page_title =
 								{top_cats.map((cat) => (
 									<li>
 										<a
-											href={`/top?cats=${cat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
+											href={`/top?cats=${cat.Category}${period !== 'all' ? `&period=${period}` : ''}${sort_by !== 'rating' ? `&sort_by=newest` : ''}`}
 										>
 											{cat.Category}
 										</a>
@@ -196,7 +213,7 @@ const page_title =
 									{top_subcats.map((subcat) => (
 										<li>
 											<a
-												href={`/top?cats=${cats + ',' + subcat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
+												href={`/top?cats=${cats + ',' + subcat.Category}${period !== 'all' ? `&period=${period}` : ''}${sort_by !== 'rating' ? `&sort_by=newest` : ''}`}
 											>
 												{subcat.Category}
 											</a>
@@ -271,7 +288,7 @@ const page_title =
 				</>
 			) : (
 				<section>
-					<p>No links found</p>
+					<p id="no-links">No links found.</p>
 					{user ? (
 						<p>
 							<a href={`/new`}>Add link</a>
@@ -285,6 +302,8 @@ const page_title =
 
 <style>
 	#search-filters {
+		padding-bottom: 1.5rem;
+
 		div {
 			display: flex;
 			align-items: center;
@@ -303,5 +322,7 @@ const page_title =
 		display: inline-block;
 	}
 
-	
+	p#no-links {
+		margin-top: 0;
+	}
 </style>

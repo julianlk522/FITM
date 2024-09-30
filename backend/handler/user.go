@@ -46,7 +46,10 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pw_hash, err := bcrypt.GenerateFromPassword([]byte(signup_data.Auth.Password), bcrypt.DefaultCost)
+	pw_hash, err := bcrypt.GenerateFromPassword(
+		[]byte(signup_data.Auth.Password),
+		bcrypt.DefaultCost,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,6 +69,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	token, err := util.GetJWTFromLoginName(signup_data.Auth.LoginName)
 	if err != nil {
+		log.Print("failed to GetJWTFromLoginName")
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	}
@@ -175,7 +179,7 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 		// Note: if, for some reason, the directory at pic_dir's path
 		// doesn't exist, this will fail
 		// shouldn't matter but just for posterity
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrCouldNotCreateProfilePic))
+		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotCreateProfilePic))
 		return
 	}
 	defer dst.Close()
@@ -185,18 +189,63 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 
 	// Save to new file
 	if _, err := io.Copy(dst, file); err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrCouldNotCopyProfilePic))
+		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotCopyProfilePic))
 		return
 	}
 
 	req_user_id := r.Context().Value(m.UserIDKey).(string)
 	_, err = db.Client.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, unique_name, req_user_id)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrCouldNotSaveProfilePic))
+		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotSaveProfilePic))
 		return
 	}
 
 	http.ServeFile(w, r, full_path)
+}
+
+func DeleteProfilePic(w http.ResponseWriter, r *http.Request) {
+	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	// protected route: JWT middleware verifies bearer token to set req_user_id
+	// (no need to check here if empty)
+
+	if has_pfp := util.UserWithIDHasProfilePic(req_user_id); !has_pfp {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoProfilePic))
+		return
+	}
+
+	// Get file path before deleting
+	var pfp string
+	err := db.Client.QueryRow(`SELECT pfp FROM Users WHERE id = ?`, req_user_id).Scan(&pfp)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+	pfp_path := pic_dir + "/" + pfp
+
+	// Delete from DB
+	_, err = db.Client.Exec(
+		`UPDATE Users SET pfp = NULL WHERE id = ?`,
+		req_user_id,
+	)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotRemoveProfilePic))
+		return
+	}
+
+	// Confirm file at path exists
+	if _, err := os.Stat(pfp_path); err == nil {
+
+		// Delete from filesystem
+		err = os.Remove(pfp_path)
+		if err != nil {
+			render.Render(w, r, e.ErrServerFail(e.ErrCouldNotRemoveProfilePic))
+			return
+		}
+	} else {
+		log.Print("pfp was not present on filesystem at saved path")
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
@@ -211,7 +260,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(err))
 		return
 	} else if !user_exists {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoUserWithLoginName))
+		render.Render(w, r, e.Err404(e.ErrNoUserWithLoginName))
 		return
 	}
 

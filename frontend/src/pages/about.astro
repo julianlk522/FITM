@@ -1,6 +1,8 @@
 ---
 import { Image } from 'astro:assets'
 import cornucopia from '../../public/cornucopia.png'
+import GlobalTagCalcDiagram from '../components/About/GlobalTagCalcDiagram.astro'
+import SearchDiagram from '../components/About/SearchDiagram.astro'
 import ScrollUp from '../components/ScrollUp.astro'
 import BaseLayout from '../layouts/BaseLayout.astro'
 ---
@@ -8,86 +10,38 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 <BaseLayout Title='About FITM'>
 	<main>
 		<h1>About</h1>
-		<Image src={cornucopia} alt='a cornucopia of links' />
+		<Image id="cornucopia" src={cornucopia} alt='a cornucopia of links' />
 		<section>
 			<p>
 				The <strong>Flexible Internet Treasure Map (FITM)</strong>
-				is a tool for sharing valuable Internet content. You can use it to map the locations of key resources hidden throughout the sprawling web.
+				is a tool for sharing valuable Internet content. You can use it to efficiently find key resources hidden throughout the sprawling web, or share ones you think other people should know about.
 			</p>
-			<p>It is an attempted solution to
-				the challenges of high obscurity and resultingly low discoverability
-				of Internet greatness, both new and old. </p>
+
+			<p>It is <em>flexible</em> because links can be organized and queried using a variety of properties that help users locate what they want.</p>
 			<p>
 				<em>Treasure</em> is intentionally vague. This site is about sharing or
 				discovering anything on the Internet that's worth sharing or
 				discovering.
 			</p>
-		</section>
 
-		<section>
-			<h3>"But Search Engines?"</h3>
-			<p>
-				Search engines help a bit with indexing the web,
-				but they don't think like people so they&apos;re limited as personal aides.
-			</p>
-			<p>
-				For example, high <abbr title="Search Engine Optimization">SEO</abbr> is not always relevant to content quality.
-				Awesome things on the web are sometimes absent in search results because they are served unencrypted
-				or in less semantic HTML markup. Users who care more
-				about result novelty than presentation don&apos;t benefit from this approach.
-			</p>
-			<p>
-				Search engines also are incentivized to promote results from
-				high-paying bidders. Maybe this is a
-				feature, not a bug, depending on who you ask. Do big budgets and marketing passion reliably produce high quality web content? If you're not sure about that, you may be in the right place. (You will <em>never</em> see ads on FITM).
-			</p>
-			<p>
-				Arguably, a simple enough proxy for a link's quality is the number of
-				people who decide, for one reason or another, to upvote it. It's then trivial to find good content by sorting on like count.
-			</p>
-			<p>
-				But, of course, results are also usually only meant to be about a specific topic (you know, the one you searched for). In FITM, links are tagged with 1+ <em><a href="#cats">cats</a></em>. You can stack desired cats in
-				searches to efficiently and reliably find pages that match some
-				theme(s).
-			</p>
-		</section>
-
-		<section>
-			<h3>"Reddit?"</h3>
-			<p>
-				Some might argue that this purpose has been achieved (done well,
-				and for a long time, even) by Reddit.
-			</p>
-			<p>
-				Reddit is an invaluable resource
-				and a blessing to the internet. It is an inspiration to FITM. But they are
-				different in that Reddit is
-				primarily a <em>communication</em> hub while FITM is primarily a <em>data</em> hub. FITM is not meant for topical
-				discussion, only web resource sharing and
-				discovery (with a few text submission actions in support of that goal: see <a href="#core-actions">Core Actions</a> below).
-			</p>
-			<p>
-				FITM also aims to use cat-stacking to serve users
-				interested in <em>intersecting</em> themes while Reddit is home
-				to communities defined by a <em>single</em> theme. Traditional WWW
-				searches make it hard to find sites that appeal to multiple
-				interests at once, especially if they aren't common or obviously
-				related. For example, if you like coding and heavy metal T_T.
-				However, if such a site exists and has been catalogued on FITM,
-				you can find it very easily by adding "coding" and "heavy metal"
-				as category filters to your search.
-			</p>
+			<p>It is an attempted solution to
+				the challenges of high obscurity and resultingly low discoverability
+				of Internet greatness, both new and old. </p>
 		</section>
 
 		<section>
 			<h2>How FITM Works</h2>
 
 			<h3 id="cats" class="subsection">Cats?</h3>
-			<p>The term <em>"cats"</em> is used often here. It&apos;s a shorthand for <em><a href="#tags">tag categories</a></em>. Cats are also a <a href="https://en.wikipedia.org/wiki/I_Can_Has_Cheezburger%3F">historically prominent Internet symbol</a>, so it seems fitting that they'd help run FITM.</p>
+			<p>The term <em>"cats"</em> is used often here. It&apos;s a shorthand for <em><a href="#tags">tag categories</a></em>. Cats are also a <a href="https://en.wikipedia.org/wiki/I_Can_Has_Cheezburger%3F">historically prominent Internet symbol</a>, so it seems fitting that they'd help run FITM. Please don't be alarmed by mention of "stacking cats" or things of that nature. No animals were harmed in making this site.</p>
 
-			<p>Please don't be alarmed by mention of "stacking cats" or things of that nature. No animals were harmed in making this site.</p>
+			<p>Links submitted to FITM are tagged with 1+ cats. You can stack desired cats in
+			searches to efficiently and reliably find pages that match some
+			theme(s). You can also specify some other filters, like a time period (last day, week, month, or year) during which the returned links must have been posted, or whether you want to see anything tagged "<abbr title="Not Safe For Work">NSFW</abbr>". (NSFW is always opt-in.)</p>
 
-			<p>In FITM searches, the top (most frequent) cats will be listed along with returned links matching your desired parameters. Searches with cat filters return top <em>overlapping</em> cats. In other words, the most frequent cats found across the subsection of links returned in your search, not including your given cat filter(s). Tentatively these are called subcats.</p>
+			<p>The top (most used) cats will be listed along with returned links matching your desired parameters. Searches with cat filters return top <em>subcats</em>. In other words, the most used cats found across the subsection of links returned in your search, not including the ones you specified.</p>
+
+			<SearchDiagram />
 
 			<h3 id="core-actions" class="subsection">Core Actions</h3>
 			<ol>
@@ -96,10 +50,6 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 				<li><strong>Like</strong></li>
 				<li><strong>Tag</strong></li>
 			</ol>
-
-			<p>
-				These will help you to develop valuable treasure maps, coveted across the lands.
-			</p>
 
 			<h3 class="subsection">Summarize</h3>
 			<p>
@@ -153,40 +103,93 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 			<p>
 				Each link is also associated with a <em>global tag</em>,
 				which filters the results of searches made outside of any single
-				user's map. For example, on the <a
-				href='/top?period=week'>Top Rated (Week)</a
-			> page.
+				user's map (i.e., on the <a
+				href='/top'>Top</a
+			> page).
+			</p>
+			<p><em>Global tags</em> are calculated automatically by the age of every
+			<em>user-submitted tag</em> and the frequency of each cat across
+			them. They are shown with each link. (Unless the link is viewed from a user's Treasure Map. Then it will show <em>that</em> user's tag.) You can also view any link's top user-submitted tags on demand.</p>
+
+			<p>Each user-submitted tag shows its <em>lifespan overlap percentage</em> (see <a href="#global-tag-calculation">Global Tag Calculation</a>), author, date of submission, and cats, of course. Tags that have kept the same combination of cats for the greatest portion of the link's lifespan are ranked highest. Editing a tag's cats will reset it's lifespan overlap percentage.</p>
+
+			<p>To clarify, not only the cats contained in the top tag rankings may be assigned globally. If many recent tags contain the same cats which are not already present in the global tag, it's likely that those too will be assigned.</p>
+
+			<p>This system is based on the assumption that cat interpretations that remain unedited
+			for a long time or that reappear across tags are most likely to be the best fits.</p>
+
+			<p>A long-unchanged tag could be bad (poorly representing its link), but if enough users disagree and submit alternative tags, their collective input will rule it out; the old tag's cats will be stripped from the link's global tag.</p>
+		</section>
+
+		<section>
+			<h2>What's the Point?</h2>
+			<p>What problems does FITM address that existing search or sharing tools don't?</p>
+			<h3 class="subsection">Search Engines</h3>
+			<p>
+				Search engines help with indexing the web,
+				but they don't think like people so they&apos;re limited in ability to understand your wishes and make useful recommendations. And they have some biases.
 			</p>
 			<p>
-				<em>Global tags</em> are calculated automatically by the age of every
-				<em>user-submitted tag</em> and the frequency of each cat across
-				them. They are shown with each link. (Unless the link is viewed from a user's Treasure Map in which case it will show that user's tag.) You can also view any link's top user-submitted tags on demand.
+				Depending on your definition of quality, <abbr title="Search Engine Optimization">SEO</abbr> <a href="https://backlinko.com/google-ranking-factors#top-8">as we know it</a> may or may not be relevant.
+				Great things on the web may be absent in search results because they're not aggressively stuffed with <a href="https://en.wikipedia.org/wiki/Keyword_research">keywords</a>, or they're not linked from many other pages, or they're not associated with an advertised company <a href="http://digitalbrandinginstitute.com/improve-brand-signals-better-seo/">brand</a>. Or, maybe a site ranks highly given specific search terms but is otherwise hard to discover. How could you even know to search for something <a href="https://presidentialham.com/">like this</a>? (safe for work.) Users who care most
+				about result <em>novelty</em> don't necessarily benefit from these ranking metrics.
+			</p>
+			<p>
+				Search engines also are incentivized to promote results from
+				those who will pay for it. Maybe this is a
+				feature, not a bug, depending on who you ask. Do ad budgets and marketing passion reliably produce high quality web content? If you're not sure about that, you may be in the right place. (You will never see ads on FITM).
+			</p>
+			<p>
+				Arguably, a simple enough proxy for a link's quality is the number of
+				<em>people</em> who decide, for one reason or another, to upvote it. It's then trivial to find good content by sorting on like count.
+			</p>
+			<p>
+				But, of course, like count alone is not enough. That's why FITM lets you parameterize your searches with <em><a href="#cats">cat-stacking</a></em> and filters for submission date and inclusion of NSFW material. You can also order results by which are newest if you prefer that to the most-liked ones.
 			</p>
 
-			<p>Each user-submitted tag shows its <em>lifespan overlap</em> percentage, author, date of submission, and cats, of course. (Tags that have remained in their current configuration for the greatest portion of the link's lifespan are ranked highest.)</p>
-
-			<p>Not only the cats contained in the top tag rankings may be assigned globally. If a large number of more recent tags contain different cats, it's likely that those too will be assigned and may even replace ones from longstanding tags.</p>
-
-			<p> The assumption is that cat interpretations that remain unedited
-				for a long time are likely to be good, along with cats that reappear across tags.</p>
-
-			<p>A long-unchanged tag could be bad, but if enough users disagree and submit alternative tags, their collective input will rule it out; the old tag's cats will be stripped from the link's global tag.</p>
+			<h3 class="subsection">Reddit</h3>
+			<p>
+				Some might argue that the goal of categorizing web content was achieved years ago by Reddit.
+			</p>
+			<p>
+				Reddit is an invaluable resource
+				and a blessing to the Internet. It is an inspiration to FITM. But they are
+				different in that Reddit is
+				primarily a <em>communication</em> hub while FITM is primarily a <em>data</em> hub. FITM is not meant for thematic
+				discussion, only web resource sharing and
+				discovery (with a few text submission actions in support of that goal: see <a href="#core-actions">Core Actions</a>).
+			</p>
+			<p>
+				FITM also aims to use cat-stacking to serve users
+				interested in <em>intersecting</em> themes while Reddit is home
+				to communities defined by a <em>single</em> theme. Traditional WWW
+				searches make it hard to find sites that appeal to multiple
+				interests at once, especially if they aren't common or obviously
+				related.
+			</p>
 		</section>
 
 		<section>
 			<h2>Additional Notes</h2>
 
-			<h3>Profile Pic Upload</h3>
-			<p>File format: .JPG, .JPEG, .PNG, .WEBP</p>
-			<p>File size: &le;10MB</p>
-			<p>
-				Aspect ratio: 0.5:1 &dash; 2:1
-			</p>
+			<h3 id="global-tag-calculation" class="subsection">Global Tag Calculation</h3>
+			<p>Note: <a href="/feedback">constructive criticism welcomed</a> for this system.</p>
+			<p>For a cat to be added to link <code>L</code>'s global tags, it's <em>score</em> must be &ge;25% of the highest score among <code>L</code>'s cats.</p>
+			<p><em>Scores</em> for cat <code>C</code> of link <code>L</code> are calculated as the sum of scores from each occurrence of <code>C</code> in one of <code>L</code>'s tags. Each score is weighted by the number of cats in the tag containing the occurrence.</p>
+			<p>Weights for tag <code>T</code> are calculated as <em>lifespan overlap percentage</em> of <code>T</code>, divided by <code>T</code>'s number of cats. </p>
+			<p>Lifespan overlap percentage for tag <code>T</code> of link <code>L</code> is the percentage of <code>L</code>'s time on FITM that  <code>T</code> has remained in its current state since creation or last edit.</p>
 
-			<h3 class="subsection">Global Tag Calculation</h3>
-			<p>Note: proposed alternatives for this system are allowed and encouraged. Please see the <a href="/feedback">feedback page</a> for FITM contact info.</p>
-			<p>To be added to a link&apos;s global tags, a cat that it has been tagged with must hold a score greater than or equal to 25% of the highest cat score for that link.</p>
-			<p>Scores for each cat are calculated by combining the weights of all occurences. Weights are calculated as lifespan overlap percentage divided by number of cats for that tag. lifespan overlap percentage is the portion of the link&apos;s lifepan during which that tag has remained in its current state with no further edits.</p>
+			<GlobalTagCalcDiagram />
+
+			<h3 id="avoiding-marooned-links" class="subsection">Avoiding "Marooned" Links</h3>
+			<p>A <em>marooned</em> link is one having a tag cat that is intended to be equal to another cat but differs in a way that prevents proper grouping.</p>
+			<p>For example, say that cat "videos" is common. Tagging a link with cat "video" may make it hard to find because people looking for videos are likely to filter their searches using the more common "videos" cat.</p>
+			<p>Some tips to avoid this unfortunate outcome:</p>
+			<ul>
+				<li>If part of a group, prefer to describe the group (e.g., video<strong>s</strong>) over the individual (video)</li>
+				<li>Prefer "and" over "&" unless part of a proper noun</li>
+				<li>Prefer lowercase unless part of an acronym or proper noun</li>
+			</ul>
 		</section>
 
 		<ScrollUp />
@@ -194,18 +197,44 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 </BaseLayout>
 
 <style>
+	section {
+		padding: 2rem 0;
+	}
 	img {
 		display: flex;
 		margin: 0 auto;
+	}
+
+	img#cornucopia {
 		max-height: 150px;
 	}
+	img#search-diagram-narrow,
+	img#search-diagram {
+		margin-top: 2rem;
+		max-height: 500px;
+	}
+	img#search-diagram {
+		display: none;
+	}
 	.subsection {
-		margin-top: 1rem;
+		margin-top: 2rem;
+	}
+
+	section h2 + h3.subsection {
+		margin-top: 0;
 	}
 
 	@media (min-width: 680px) {
-		img {
+		img#cornucopia {
 			max-height: 200px;
+		}
+
+		img#search-diagram-narrow {
+			display: none;
+		}
+
+		img#search-diagram {
+			display: block;
 		}
 	}
 </style>

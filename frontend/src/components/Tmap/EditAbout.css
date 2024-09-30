@@ -2,10 +2,11 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 0.5rem;
+	gap: 1rem;
 	margin-top: 1rem;
 
 	button#edit-about-btn {
+		align-self: start;
 		margin-right: 25%;
 	}
 

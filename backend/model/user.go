@@ -85,18 +85,22 @@ type EditProfilePicRequest struct {
 }
 
 // TREASURE MAP
-type TreasureMapSections[T TmapLink | TmapLinkSignedIn] struct {
+type TmapSections[T TmapLink | TmapLinkSignedIn] struct {
 	Submitted *[]T
 	Tagged    *[]T
 	Copied    *[]T
 	Cats      *[]CatCount
 }
 
-type TreasureMap[T TmapLink | TmapLinkSignedIn] struct {
+type Tmap[T TmapLink | TmapLinkSignedIn] struct {
 	Profile *Profile
-	*TreasureMapSections[T]
+	*TmapSections[T]
 }
 
-type FilteredTreasureMap[T TmapLink | TmapLinkSignedIn] struct {
-	*TreasureMapSections[T]
+type FilteredTmap[T TmapLink | TmapLinkSignedIn] struct {
+	*TmapSections[T]
+}
+
+type TmapCatCountsOpts struct {
+	OmittedCats []string
 }

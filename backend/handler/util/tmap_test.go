@@ -4,11 +4,12 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"slices"
+	"testing"
+
 	m "github.com/julianlk522/fitm/middleware"
 	"github.com/julianlk522/fitm/model"
 	"github.com/julianlk522/fitm/query"
-	"slices"
-	"testing"
 )
 
 // Get treausre map
@@ -84,13 +85,13 @@ func TestGetTmapForUser(t *testing.T) {
 		// verify type and filter
 		var is_filtered bool
 		switch tmap.(type) {
-		case model.TreasureMap[model.TmapLink]:
+		case model.Tmap[model.TmapLink]:
 			is_filtered = false
-		case model.TreasureMap[model.TmapLinkSignedIn]:
+		case model.Tmap[model.TmapLinkSignedIn]:
 			is_filtered = false
-		case model.FilteredTreasureMap[model.TmapLink]:
+		case model.FilteredTmap[model.TmapLink]:
 			is_filtered = true
-		case model.FilteredTreasureMap[model.TmapLinkSignedIn]:
+		case model.FilteredTmap[model.TmapLinkSignedIn]:
 			is_filtered = true
 		}
 
@@ -194,8 +195,8 @@ func TestScanTmapLinks(t *testing.T) {
 	}
 }
 
-// Category counts
-func TestGetTmapCatCounts(t *testing.T) {
+// Cat counts
+func TestGetCatCountsFromTmapLinks(t *testing.T) {
 	mock_request := &http.Request{
 		URL: &url.URL{
 			RawQuery: url.Values{
@@ -218,11 +219,11 @@ func TestGetTmapCatCounts(t *testing.T) {
 	var all_links interface{}
 
 	switch tmap.(type) {
-	case model.TreasureMap[model.TmapLink]:
+	case model.Tmap[model.TmapLink]:
 		all_links = slices.Concat(
-			*tmap.(model.TreasureMap[model.TmapLink]).Submitted,
-			*tmap.(model.TreasureMap[model.TmapLink]).Copied,
-			*tmap.(model.TreasureMap[model.TmapLink]).Tagged,
+			*tmap.(model.Tmap[model.TmapLink]).Submitted,
+			*tmap.(model.Tmap[model.TmapLink]).Copied,
+			*tmap.(model.Tmap[model.TmapLink]).Tagged,
 		)
 		l, ok := all_links.([]model.TmapLink)
 		if !ok {
@@ -238,7 +239,29 @@ func TestGetTmapCatCounts(t *testing.T) {
 			{"flowers", 1},
 		}
 
-		cat_counts := GetTmapCatCounts(&l, nil)
+		cat_counts := GetCatCountsFromTmapLinks(&l, nil)
+		for _, count := range *cat_counts {
+			for _, test_count := range unfiltered_test_cat_counts {
+				if count.Category == test_count.Cat && count.Count != test_count.Count {
+					t.Fatalf(
+						"expected count %d for cat %s, got %d",
+						test_count.Count,
+						test_count.Cat,
+						count.Count,
+					)
+				}
+			}
+		}
+
+		// test with empty omitted cats
+		// (should never happen, but should behave as if no omitted cats were passed)
+		cat_counts = GetCatCountsFromTmapLinks(
+			&l,
+			&model.TmapCatCountsOpts{
+				OmittedCats: []string{},
+			},
+		)
+
 		for _, count := range *cat_counts {
 			for _, test_count := range unfiltered_test_cat_counts {
 				if count.Category == test_count.Cat && count.Count != test_count.Count {
@@ -262,7 +285,12 @@ func TestGetTmapCatCounts(t *testing.T) {
 		}
 		var omit = []string{"test"}
 
-		cat_counts = GetTmapCatCounts(&l, omit)
+		cat_counts = GetCatCountsFromTmapLinks(
+			&l,
+			&model.TmapCatCountsOpts{
+				OmittedCats: omit,
+			},
+		)
 		for _, count := range *cat_counts {
 			for _, test_count := range filtered_test_cat_counts {
 				if count.Category == test_count.Cat && count.Count != test_count.Count {

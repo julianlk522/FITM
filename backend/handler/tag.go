@@ -12,7 +12,6 @@ import (
 	util "github.com/julianlk522/fitm/handler/util"
 	m "github.com/julianlk522/fitm/middleware"
 	"github.com/julianlk522/fitm/model"
-	modelutil "github.com/julianlk522/fitm/model/util"
 	"github.com/julianlk522/fitm/query"
 )
 
@@ -31,7 +30,6 @@ func GetTagPage(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoLinkWithID))
 		return
 	}
-
 
 	// refresh global cats before querying
 	util.CalculateAndSetGlobalCats(link_id)
@@ -91,7 +89,7 @@ func GetTagPage(w http.ResponseWriter, r *http.Request) {
 			TagRankings: tag_rankings,
 		})
 	}
-	
+
 }
 
 func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {
@@ -128,6 +126,50 @@ func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {
 	util.RenderCatCounts(counts, w, r)
 }
 
+func GetSpellfixMatchesForSnippet(w http.ResponseWriter, r *http.Request) {
+	snippet := chi.URLParam(r, "snippet")
+	if snippet == "" {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoGlobalCatsSnippet))
+		return
+	}
+
+	spfx_sql := query.NewSpellfixMatchesForSnippet(snippet)
+
+	omitted_params := r.URL.Query().Get("omitted")
+	if omitted_params != "" {
+		omitted_words := strings.Split(omitted_params, ",")
+		err := spfx_sql.OmitCats(omitted_words)
+		if err != nil {
+			render.Render(w, r, e.ErrServerFail(err))
+			return
+		}
+	}
+
+	rows, err := db.Client.Query(spfx_sql.Text)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+	defer rows.Close()
+
+	var matches []model.CatCount
+	for rows.Next() {
+		var word string
+		var rank int32
+		if err := rows.Scan(&word, &rank); err != nil {
+			render.Render(w, r, e.ErrServerFail(err))
+			return
+		}
+		matches = append(matches, model.CatCount{
+			Category: word,
+			Count:    rank,
+		})
+	}
+
+	render.JSON(w, r, matches)
+	render.Status(r, http.StatusOK)
+}
+
 func GetTopContributors(w http.ResponseWriter, r *http.Request) {
 	contributors_sql := query.NewContributors()
 
@@ -136,7 +178,6 @@ func GetTopContributors(w http.ResponseWriter, r *http.Request) {
 		cats := strings.Split(cats_params, ",")
 		contributors_sql = contributors_sql.FromCats(cats)
 	}
-	
 
 	period_params := r.URL.Query().Get("period")
 	if period_params != "" {
@@ -178,6 +219,7 @@ func AddTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// sort cats
 	tag_data.Cats = util.AlphabetizeCats(tag_data.Cats)
 
 	_, err = db.Client.Exec(
@@ -216,14 +258,11 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoTagWithID))
 		return
 	} else if !owns_tag {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrDoesntOwnTag))
+		render.Render(w, r, e.ErrUnauthorized(e.ErrDoesntOwnTag))
 		return
 	}
 
-	// trim spaces
-	edit_tag_data.Cats = modelutil.TrimExcessAndTrailingSpaces(edit_tag_data.Cats)
-
-	// alphabetize
+	// sort cats
 	edit_tag_data.Cats = util.AlphabetizeCats(edit_tag_data.Cats)
 
 	_, err = db.Client.Exec(
@@ -235,20 +274,80 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 		edit_tag_data.ID,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
 	link_id, err := util.GetLinkIDFromTagID(edit_tag_data.ID)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	} else if err = util.CalculateAndSetGlobalCats(link_id); err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, edit_tag_data)
+}
 
+func DeleteTag(w http.ResponseWriter, r *http.Request) {
+	delete_tag_data := &model.DeleteTagRequest{}
+	if err := render.Bind(r, delete_tag_data); err != nil {
+		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
+	}
+
+	tag_exists, err := util.TagExists(delete_tag_data.ID)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	} else if !tag_exists {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoTagWithID))
+		return
+	}
+
+	is_only_tag, err := util.IsOnlyTag(delete_tag_data.ID)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	} else if is_only_tag {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrCantDeleteOnlyTag))
+		return
+	}
+
+	req_login_name := r.Context().Value(m.LoginNameKey).(string)
+	owns_tag, err := util.UserSubmittedTagWithID(req_login_name, delete_tag_data.ID)
+	if err != nil {
+		render.Render(w, r, e.ErrInvalidRequest(err))
+		return
+	} else if !owns_tag {
+		render.Render(w, r, e.ErrUnauthorized(e.ErrDoesntOwnTag))
+		return
+	}
+
+	// get link ID before deleting
+	link_id, err := util.GetLinkIDFromTagID(delete_tag_data.ID)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// delete
+	_, err = db.Client.Exec(
+		"DELETE FROM Tags WHERE id = ?;",
+		delete_tag_data.ID,
+	)
+	if err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	// set global cats
+	if err = util.CalculateAndSetGlobalCats(link_id); err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

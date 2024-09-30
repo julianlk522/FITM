@@ -8,95 +8,115 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	m "github.com/julianlk522/fitm/middleware"
 	"testing"
+
+	m "github.com/julianlk522/fitm/middleware"
 )
 
 func TestGetLinks(t *testing.T) {
 
 	test_get_links_requests := []struct {
 		Params map[string]string
-		Page int
-		Valid bool
+		Page   int
+		Valid  bool
 	}{
 		{
-			Params: map[string]string{
-				"cats": "",
-				"period": "",
-				"req_user_id": "",
-				"req_login_name": "",
-			},
-			Page: 0,
-			Valid: true,
+			Params: map[string]string{},
+			Page:   0,
+			Valid:  true,
+		},
+		{
+			Params: map[string]string{},
+			Page:   1,
+			Valid:  true,
+		},
+		{
+			Params: map[string]string{"cats": "umvc3"},
+			Page:   1,
+			Valid:  true,
 		},
 		{
 			Params: map[string]string{
-				"cats": "",
-				"period": "",
-				"req_user_id": "",
-				"req_login_name": "",
-			},
-			Page: 1,
-			Valid: true,
-		},
-		{
-			Params: map[string]string{
-				"cats": "umvc3",
-				"period": "",
-				"req_user_id": "",
-				"req_login_name": "",
-			},
-			Page: 1,
-			Valid: true,
-		},
-		{
-			Params: map[string]string{
-				"cats": "umvc3",
+				"cats":   "umvc3",
 				"period": "day",
-				"req_user_id": "",
-				"req_login_name": "",
 			},
-			Page: 1,
+			Page:  1,
 			Valid: true,
 		},
 		{
 			Params: map[string]string{
-				"cats": "umvc3",
-				"period": "poop",
-				"req_user_id": "",
-				"req_login_name": "",
+				"cats":    "umvc3",
+				"period":  "week",
+				"sort_by": "newest",
 			},
-			Page: 1,
+			Page:  1,
+			Valid: true,
+		},
+		{
+			Params: map[string]string{
+				"cats":    "umvc3",
+				"period":  "month",
+				"sort_by": "rating",
+			},
+			Page:  1,
+			Valid: true,
+		},
+		{
+			Params: map[string]string{
+				"cats":   "umvc3",
+				"period": "poop",
+			},
+			Page:  1,
 			Valid: false,
 		},
 		{
 			Params: map[string]string{
-				"cats": "",
-				"period": "",
-				"req_user_id": "3",
-				"req_login_name": "goolian",
+				"req_user_id":    "3",
+				"req_login_name": "jlk",
 			},
-			Page: 1,
+			Page:  1,
 			Valid: true,
 		},
 		// passes because middlware corrects negative pages to 1
 		{
-			Params: map[string]string{
-				"cats": "",
-				"period": "",
-				"req_user_id": "",
-				"req_login_name": "",
-			},
-			Page: -1,
-			Valid: true,
+			Params: map[string]string{},
+			Page:   -1,
+			Valid:  true,
+		},
+		// fails: sort_by must be either "rating" or "newest"
+		{
+			Params: map[string]string{"sort_by": "invalid"},
+			Page:   1,
+			Valid:  false,
+		},
+		// nsfw params may be "true", "false", or absent but not anything else
+		{
+			Params: map[string]string{"nsfw": "true"},
+			Page:   1,
+			Valid:  true,
+		},
+		{
+			Params: map[string]string{"nsfw": "false"},
+			Page:   1,
+			Valid:  true,
+		},
+		{
+			Params: map[string]string{"nsfw": "invalid"},
+			Page:   1,
+			Valid:  false,
+		},
+		// NSFW in caps also valid
+		{
+			Params: map[string]string{"NSFW": "true"},
+			Page:   1,
+			Valid:  true,
 		},
 	}
-
 
 	for _, tglr := range test_get_links_requests {
 		r := httptest.NewRequest(
 			http.MethodGet,
-			"/links/top",
+			"/links",
 			nil,
 		)
 
@@ -105,7 +125,7 @@ func TestGetLinks(t *testing.T) {
 		ctx = context.WithValue(ctx, m.UserIDKey, tglr.Params["req_user_id"])
 		ctx = context.WithValue(ctx, m.LoginNameKey, tglr.Params["req_login_name"])
 		r = r.WithContext(ctx)
-		
+
 		q := r.URL.Query()
 		for k, v := range tglr.Params {
 			q.Add(k, v)
@@ -113,6 +133,7 @@ func TestGetLinks(t *testing.T) {
 		r.URL.RawQuery = q.Encode()
 
 		w := httptest.NewRecorder()
+
 		GetLinks(w, r)
 		res := w.Result()
 		defer res.Body.Close()
@@ -130,8 +151,8 @@ func TestGetLinks(t *testing.T) {
 			)
 		} else if !tglr.Valid && res.StatusCode != http.StatusBadRequest {
 			t.Errorf(
-				"expected Bad Request, got %d (test request %+v)", 
-				res.StatusCode, 
+				"expected Bad Request, got %d (test request %+v)",
+				res.StatusCode,
 				tglr.Params,
 			)
 		}
@@ -202,7 +223,7 @@ func TestAddLink(t *testing.T) {
 		{
 			Payload: map[string]string{
 				"url":     "google.com",
-				"cats":    "test",
+				"cats":    "watermelon",
 				"summary": "test",
 			},
 			Valid: true,
@@ -210,7 +231,7 @@ func TestAddLink(t *testing.T) {
 		{
 			Payload: map[string]string{
 				"url":     "about.google.com",
-				"cats":    "test",
+				"cats":    "watermelon",
 				"summary": "testy",
 			},
 			Valid: true,
@@ -218,7 +239,7 @@ func TestAddLink(t *testing.T) {
 		{
 			Payload: map[string]string{
 				"url":     "https://www.google.com/search/howsearchworks/?fg=1",
-				"cats":    "test",
+				"cats":    "watermelon",
 				"summary": "testiest",
 			},
 			Valid: true,
@@ -226,7 +247,7 @@ func TestAddLink(t *testing.T) {
 		{
 			Payload: map[string]string{
 				"url":     "https://www.google.com/search/howsearchworks/features/",
-				"cats":    "test",
+				"cats":    "watermelon",
 				"summary": "",
 			},
 			Valid: true,
@@ -274,7 +295,78 @@ func TestAddLink(t *testing.T) {
 				text,
 			)
 		} else if !tr.Valid && res.StatusCode != 400 {
-			t.Fatalf("expected status code 400, got %d", res.StatusCode)
+			t.Fatalf(
+				"expected status code 400, got %d (test request %+v)",
+				res.StatusCode,
+				tr.Payload,
+			)
+		}
+	}
+}
+
+func TestDeleteLink(t *testing.T) {
+	var test_requests = []struct {
+		LinkID             string
+		Valid              bool
+		ExpectedStatusCode int
+	}{
+		// jlk did not submit link 0
+		{
+			LinkID:             "0",
+			Valid:              false,
+			ExpectedStatusCode: 403,
+		},
+		// not a real link
+		{
+			LinkID:             "-1",
+			Valid:              false,
+			ExpectedStatusCode: 400,
+		},
+		// jlk _did_ submit link 7
+		{
+			LinkID:             "7",
+			Valid:              true,
+			ExpectedStatusCode: 204,
+		},
+	}
+
+	for _, tr := range test_requests {
+		pl, b := map[string]string{
+			"link_id": tr.LinkID,
+		}, new(bytes.Buffer)
+		err := json.NewEncoder(b).Encode(pl)
+		if err != nil {
+			t.Fatal(err)
+		}
+		r := httptest.NewRequest(
+			http.MethodDelete,
+			"/links",
+			b,
+		)
+		r.Header.Set("Content-Type", "application/json")
+
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, m.LoginNameKey, test_login_name)
+		r = r.WithContext(ctx)
+
+		w := httptest.NewRecorder()
+		DeleteLink(w, r)
+		res := w.Result()
+		defer res.Body.Close()
+
+		if tr.Valid && res.StatusCode != 204 {
+			t.Fatalf(
+				"expected status code 204, got %d (test request %+v)",
+				res.StatusCode,
+				tr,
+			)
+		} else if !tr.Valid && res.StatusCode != tr.ExpectedStatusCode {
+			t.Fatalf(
+				"expected status code %d, got %d (test request %+v)",
+				tr.ExpectedStatusCode,
+				res.StatusCode,
+				tr,
+			)
 		}
 	}
 }

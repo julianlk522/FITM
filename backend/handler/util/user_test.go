@@ -2,8 +2,6 @@ package handler
 
 import (
 	"image"
-	"path/filepath"
-	"runtime"
 
 	_ "golang.org/x/image/webp"
 
@@ -18,7 +16,7 @@ func TestLoginNameTaken(t *testing.T) {
 	}{
 		{"akjlhsdflkjhhasdf", false},
 		{"janedoe", false},
-		{"goolian", true},
+		{"jlk", true},
 	}
 
 	for _, l := range test_login_names {
@@ -37,7 +35,7 @@ func TestAuthenticateUser(t *testing.T) {
 		Password           string
 		ShouldAuthenticate bool
 	}{
-		{"goolian", "password", false},
+		{"jlk", "password", false},
 		{"monkey", "monkey", true},
 		{"monkey", "bananas", false},
 	}
@@ -69,9 +67,11 @@ func TestHasAcceptableAspectRatio(t *testing.T) {
 		{"test3.webp", true},
 	}
 
-	_, user_test_file, _, _ := runtime.Caller(0)
-	handler_util_dir := filepath.Dir(user_test_file)
-	pic_dir := filepath.Join(handler_util_dir, "../../db/profile-pics")
+	test_data_path := os.Getenv("FITM_TEST_DATA_PATH")
+	if test_data_path == "" {
+		t.Fatal("FITM_TEST_DATA_PATH not set")
+	}
+	pic_dir := test_data_path + "/profile-pics"
 
 	for _, l := range test_image_files {
 		f, err := os.Open(pic_dir + "/" + l.Name)
@@ -86,6 +86,28 @@ func TestHasAcceptableAspectRatio(t *testing.T) {
 
 		if HasAcceptableAspectRatio(img) != l.HasAcceptableAspectRatio {
 			t.Fatalf("expected image %s to be %t", l.Name, l.HasAcceptableAspectRatio)
+		}
+	}
+}
+
+// Delete profile pic
+func TestUserWithIDHasProfilePic(t *testing.T) {
+	var test_users = []struct {
+		ID            string
+		HasProfilePic bool
+	}{
+		// jlk has profile pic
+		{test_user_id, true},
+		// nelson does not have profile pic
+		{"nelson", false},
+	}
+
+	for _, u := range test_users {
+		return_true := UserWithIDHasProfilePic(u.ID)
+		if u.HasProfilePic && !return_true {
+			t.Fatalf("expected user %s to have profile pic", u.ID)
+		} else if !u.HasProfilePic && return_true {
+			t.Fatalf("user %s NOT have profile pic, expected error", u.ID)
 		}
 	}
 }

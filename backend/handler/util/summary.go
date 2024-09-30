@@ -198,7 +198,7 @@ func UserHasLikedSummary(user_id string, summary_id string) (bool, error) {
 	var summary_like_id sql.NullString
 
 	err := db.Client.QueryRow(
-		"SELECT id FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?", user_id, 
+		"SELECT id FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?", user_id,
 		summary_id,
 	).Scan(&summary_like_id)
 	if err != nil {
@@ -219,29 +219,41 @@ func RenderDeleted(w http.ResponseWriter, r *http.Request) {
 // Calculate global summary
 func CalculateAndSetGlobalSummary(link_id string) error {
 
-	// (Summary with the most upvotes is the global summary)
-	get_summary_like_counts_sql := fmt.Sprintf(`SELECT text
-	FROM Summaries
-	LEFT JOIN
-		(
-		SELECT summary_id, count(*) as like_count
-		FROM 'Summary Likes'
-		GROUP BY summary_id
-		)
-	ON Summaries.id = summary_id
-	WHERE link_id = '%s'
-	GROUP BY Summaries.id
-	ORDER BY like_count DESC, text ASC
-	LIMIT 1
-	`, link_id)
+	// Summary with the most upvotes is the global summary
+	// UNLESS 1st is auto summary and tied with 2nd place,
+	// then use 2nd place
 	var top_summary_text string
+	err := db.Client.QueryRow(`WITH RankedSummaries AS (
+		SELECT 
+			s.text,
+			s.submitted_by,
+			COALESCE(sl.like_count, 0) AS like_count,
+			ROW_NUMBER() OVER (
+			ORDER BY 
+				COALESCE(sl.like_count, 0) DESC, 
+				CASE WHEN s.submitted_by = ? THEN 1 ELSE 0 END,
+				s.text ASC
+			) AS rank
+		FROM Summaries s
+		LEFT JOIN (
+			SELECT summary_id, COUNT(*) AS like_count
+			FROM "Summary Likes"
+			GROUP BY summary_id
+		) sl ON s.id = sl.summary_id
+		WHERE s.link_id = ?
+	)
+	SELECT text
+	FROM RankedSummaries
+	WHERE rank = 1`,
+		db.AUTO_SUMMARY_USER_ID,
+		link_id,
+	).Scan(&top_summary_text)
 
-	err := db.Client.QueryRow(get_summary_like_counts_sql).Scan(&top_summary_text)
 	if err != nil {
 		return err
 	}
 
-	// Set global summary if not already set to query result
+	// Set global summary if not already set to top result
 	check_global_summary_sql := fmt.Sprintf(`
 		SELECT global_summary 
 		FROM Links 
