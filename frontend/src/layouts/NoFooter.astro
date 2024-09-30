@@ -33,11 +33,9 @@ let user = Astro.cookies.get('user')?.value
 	<style is:global>
 		:root {
 			--text: hsl(0, 0%, 92%);
-			--text-treasurey: hsl(44, 55%, 80%);
-			--text-treasurey-dark: hsl(44, 25%, 60%);
-
+			--treasurey: hsl(44, 55%, 80%);
+			--treasurey-dark: hsl(44, 25%, 60%);
 			--sky: hsl(180, 33%, 82%);
-			--sky-mild: hsla(180, 33%, 82%, 0.05);
 		}
 		html {
 			font-family: system-ui, sans-serif;
@@ -88,7 +86,7 @@ let user = Astro.cookies.get('user')?.value
 			text-align: center;
 		}
 		h2.subtitle.bg {
-			background: var(--sky-mild);
+			background: hsla(180, 33%, 82%, 0.05);
 			padding: 3px;
 		}
 		h3 {
@@ -105,7 +103,7 @@ let user = Astro.cookies.get('user')?.value
 			border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 		}
 		a {
-			color: var(--text-treasurey);
+			color: var(--treasurey);
 		}
 		form {
 			max-width: 100%;

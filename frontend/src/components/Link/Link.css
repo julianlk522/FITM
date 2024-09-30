@@ -24,7 +24,7 @@ a.url-anchor {
 	width: fit-content;
 }
 a.url-anchor:visited {
-	color: var(--text-treasurey-dark);
+	color: var(--treasurey-dark);
 }
 
 p.url {
@@ -83,7 +83,7 @@ button.delete-link-btn {
 
 dialog.delete-link-modal {
 	z-index: 1;
-	background-color: var(--text-treasurey);
+	background-color: var(--treasurey);
 
 	button:not(:first-of-type) {
 		margin-left: 5px;

@@ -81,8 +81,8 @@ const page_title = link.Summary ? `Summaries for "${link.Summary}"` : 'Link Summ
 		<section>
 			{is_signed_in ? 
 				<NewSummary client:load Token={token} LinkID={link_id} /> 
-			: <p>
-				<a id='login-redirect-link' href='#'>
+			: <p id='login-redirect-link'>
+				<a href='/login'>
 					Login
 				</a>
 				<span> to like summaries or add your own.</span>
@@ -118,8 +118,12 @@ const page_title = link.Summary ? `Summaries for "${link.Summary}"` : 'Link Summ
 </BaseLayout>
 
 <style>
-	#login-redirect-link {
-		display: inline-block;
+	p#login-redirect-link {
+		margin-top: 0;
+
+		a {
+			display: inline-block;
+		}
 	}
 
 	#top-summaries {

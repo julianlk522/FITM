@@ -7,7 +7,7 @@ astro-island:first-of-type li.summary {
 }
 
 .auto-summary {
-	color: var(--text-treasurey-dark);
+	color: var(--treasurey-dark);
 }
 
 button#delete-summary-btn {

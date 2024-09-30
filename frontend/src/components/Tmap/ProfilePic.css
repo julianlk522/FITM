@@ -21,7 +21,7 @@ div#profile-pic {
 		}
 
 		dialog#delete-profile-pic-modal {
-			background-color: var(--text-treasurey);
+			background-color: var(--treasurey);
 
 			button:not(:first-of-type) {
 				margin-left: 5px;
