@@ -61,9 +61,11 @@ func TestGetTmapForUser(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, m.UserIDKey, r.RequestingUserID)
-		ctx = context.WithValue(ctx, m.LoginNameKey, r.RequestingUserLoginName)
-
+		jwt_claims := map[string]interface{}{
+			"user_id":    r.RequestingUserID,
+			"login_name": r.RequestingUserLoginName,
+		}
+		ctx = context.WithValue(ctx, m.JWTClaimsKey, jwt_claims)
 		req = req.WithContext(ctx)
 
 		var tmap interface{}
@@ -206,9 +208,11 @@ func TestGetCatCountsFromTmapLinks(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, m.UserIDKey, "")
-	ctx = context.WithValue(ctx, m.LoginNameKey, "")
-
+	jwt_claims := map[string]interface{}{
+		"user_id":    "",
+		"login_name": "",
+	}
+	ctx = context.WithValue(ctx, m.JWTClaimsKey, jwt_claims)
 	mock_request = mock_request.WithContext(ctx)
 
 	tmap, err := GetTmapForUser[model.TmapLink]("xyz", mock_request)

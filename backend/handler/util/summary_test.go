@@ -12,8 +12,11 @@ import (
 // Get summaries
 func TestBuildSummaryPageForLink(t *testing.T) {
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, m.UserIDKey, test_user_id)
-	ctx = context.WithValue(ctx, m.LoginNameKey, test_login_name)
+	jwt_claims := map[string]interface{}{
+		"user_id":    test_user_id,
+		"login_name": test_login_name,
+	}
+	ctx = context.WithValue(ctx, m.JWTClaimsKey, jwt_claims)
 	r := (&http.Request{}).WithContext(ctx)
 
 	summary_page, err := BuildSummaryPageForLink(test_link_id, r)

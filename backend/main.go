@@ -105,7 +105,7 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(m.VerifierOptional(token_auth))
 		r.Use(m.AuthenticatorOptional(token_auth))
-		r.Use(m.JWT)
+		r.Use(m.JWTContext)
 
 		r.Get("/map/{login_name}", h.GetTreasureMap)
 
@@ -122,7 +122,7 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(jwtauth.Verifier(token_auth))
 		r.Use(jwtauth.Authenticator(token_auth))
-		r.Use(m.JWT)
+		r.Use(m.JWTContext)
 
 		// Users
 		r.Put("/about", h.EditAbout)

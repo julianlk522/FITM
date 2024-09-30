@@ -59,8 +59,8 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	}
 
 	// auth (add IsLiked, IsCopied)
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
-	req_login_name := r.Context().Value(m.LoginNameKey).(string)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
+	req_login_name := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["login_name"].(string)
 
 	if req_user_id != "" {
 		submitted_sql = submitted_sql.AsSignedInUser(req_user_id, req_login_name)

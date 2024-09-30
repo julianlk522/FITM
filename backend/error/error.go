@@ -31,14 +31,14 @@ func ErrInvalidRequest(err error) render.Renderer {
 	}
 }
 
-// func ErrUnauthenticated(err error) render.Renderer {
-// 	return &ErrResponse{
-// 		Err:            err,
-// 		HTTPStatusCode: 401,
-// 		StatusText:     "Unauthenticated.",
-// 		ErrorText:      err.Error(),
-// 	}
-// }
+func ErrUnauthenticated(err error) render.Renderer {
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: 401,
+		StatusText:     "Unauthenticated.",
+		ErrorText:      err.Error(),
+	}
+}
 
 func ErrUnauthorized(err error) render.Renderer {
 	return &ErrResponse{

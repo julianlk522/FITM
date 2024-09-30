@@ -8,6 +8,13 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
+var claims_defaults = map[string]interface{}{
+	"user_id": "",
+	"login_name": "",
+	"iat": nil,
+	"exp": nil,
+}
+
 // MODIFIED JWT VERIFIER / AUTHENTICATOR
 // (requests with no token are allowed,
 // but getting link isLiked / isCopied requires a token)
@@ -69,40 +76,25 @@ func AuthenticatorOptional(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler 
 	}
 }
 
-// Retrieve JWT claims if they are passed in request context
+// Retrieve JWT claims if passed in request context or assign empty values
 // claims = {"user_id":"1234","login_name":"johndoe", "exp": 1234567890, "iat": 1234567890}
-func JWT(next http.Handler) http.Handler {
+func JWTContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var user_id, login_name, exp, iat interface{}
 		_, claims, err := jwtauth.FromContext(r.Context())
 		if len(claims) == 0 || err != nil {
-			user_id = ""
-			login_name = ""
-			exp = nil
-			iat = nil
+			claims = claims_defaults
 		} else {
-			var ok, ok2 bool
-			user_id, ok = claims["user_id"].(string)
-			login_name, ok2 = claims["login_name"].(string)
-
-			if !ok || !ok2 {
-				user_id = ""
-				login_name = ""
-			}
-
-			exp, ok = claims["exp"].(float64)
-			iat, ok2 = claims["iat"].(float64)
-			if !ok || !ok2 {
-				exp = nil
-				iat = nil
+			for k, v := range claims {
+				if k == "user_id" || k == "login_name" {
+					_, ok := v.(string)
+					if !ok {
+						claims[k] = claims_defaults[k]
+					}
+				}
 			}
 		}
 
-		ctx := context.WithValue(r.Context(), UserIDKey, user_id)
-		ctx = context.WithValue(ctx, LoginNameKey, login_name)
-		ctx = context.WithValue(ctx, IssuedAtKey, iat)
-		ctx = context.WithValue(ctx, ExpiresAtKey, exp)
-
+		ctx := context.WithValue(r.Context(), JWTClaimsKey, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

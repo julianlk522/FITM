@@ -48,7 +48,7 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify links exists
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 	link_exists, err := util.LinkExists(summary_data.LinkID)
 	if err != nil {
 		render.Render(w, r, e.ErrServerFail(err))
@@ -139,7 +139,7 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify requesting user submitted summary
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 	owns_summary, err := util.SummarySubmittedByUser(delete_data.SummaryID, req_user_id)
 	if err != nil {
 		render.Render(w, r, e.ErrServerFail(err))
@@ -206,7 +206,7 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify requesting user exists
-	req_login_name := r.Context().Value(m.LoginNameKey).(string)
+	req_login_name := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["login_name"].(string)
 	user_exists, err := util.UserExists(req_login_name)
 	if err != nil {
 		render.Render(w, r, e.ErrServerFail(err))
@@ -216,7 +216,7 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify requesting user not attempting to like their own summary
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 	owns_summary, err := util.SummarySubmittedByUser(summary_id, req_user_id)
 	if err != nil {
 		render.Render(w, r, e.ErrServerFail(err))
@@ -291,7 +291,7 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify requesting user has liked summary
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 	already_liked, err := util.UserHasLikedSummary(req_user_id, summary_id)
 	if err != nil {
 		render.Render(w, r, e.ErrServerFail(err))

@@ -41,7 +41,7 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// auth fields
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 	if req_user_id != "" {
 		links_sql = links_sql.AsSignedInUser(req_user_id)
 	}
@@ -120,7 +120,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_login_name := r.Context().Value(m.LoginNameKey).(string)
+	req_login_name := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["login_name"].(string)
 	request.SubmittedBy = req_login_name
 
 	// sort cats
@@ -157,7 +157,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 
 	// user summary
 	if request.NewLink.Summary != "" {
-		req_user_id := r.Context().Value(m.UserIDKey).(string)
+		req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 		_, err := tx.Exec(
 			"INSERT INTO Summaries VALUES(?,?,?,?,?);",
 			uuid.New().String(),
@@ -260,7 +260,7 @@ func DeleteLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_login_name := r.Context().Value(m.LoginNameKey).(string)
+	req_login_name := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["login_name"].(string)
 	if !util.UserSubmittedLink(req_login_name, request.LinkID) {
 		render.Render(w, r, e.ErrUnauthorized(e.ErrDoesntOwnLink))
 		return
@@ -319,13 +319,13 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_login_name := r.Context().Value(m.LoginNameKey).(string)
+	req_login_name := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["login_name"].(string)
 	if util.UserSubmittedLink(req_login_name, link_id) {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrCannotLikeOwnLink))
 		return
 	}
 
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 	if util.UserHasLikedLink(req_user_id, link_id) {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrLinkAlreadyLiked))
 		return
@@ -356,7 +356,7 @@ func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 	if !util.UserHasLikedLink(req_user_id, link_id) {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrLinkNotLiked))
 		return
@@ -382,14 +382,14 @@ func CopyLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_login_name := r.Context().Value(m.LoginNameKey).(string)
+	req_login_name := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["login_name"].(string)
 	owns_link := util.UserSubmittedLink(req_login_name, link_id)
 	if owns_link {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrCannotCopyOwnLink))
 		return
 	}
 
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 	already_copied := util.UserHasCopiedLink(req_user_id, link_id)
 	if already_copied {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrLinkAlreadyCopied))
@@ -423,7 +423,7 @@ func UncopyLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 	already_copied := util.UserHasCopiedLink(req_user_id, link_id)
 	if !already_copied {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrLinkNotCopied))

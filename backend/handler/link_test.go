@@ -121,9 +121,12 @@ func TestGetLinks(t *testing.T) {
 		)
 
 		ctx := context.Background()
+		jwt_claims := map[string]interface{}{
+			"user_id":    tglr.Params["req_user_id"],
+			"login_name": tglr.Params["req_login_name"],
+		}
+		ctx = context.WithValue(ctx, m.JWTClaimsKey, jwt_claims)
 		ctx = context.WithValue(ctx, m.PageKey, tglr.Page)
-		ctx = context.WithValue(ctx, m.UserIDKey, tglr.Params["req_user_id"])
-		ctx = context.WithValue(ctx, m.LoginNameKey, tglr.Params["req_login_name"])
 		r = r.WithContext(ctx)
 
 		q := r.URL.Query()
@@ -131,9 +134,8 @@ func TestGetLinks(t *testing.T) {
 			q.Add(k, v)
 		}
 		r.URL.RawQuery = q.Encode()
-
+				
 		w := httptest.NewRecorder()
-
 		GetLinks(w, r)
 		res := w.Result()
 		defer res.Body.Close()
@@ -274,8 +276,11 @@ func TestAddLink(t *testing.T) {
 		r.Header.Set("Content-Type", "application/json")
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, m.UserIDKey, test_user_id)
-		ctx = context.WithValue(ctx, m.LoginNameKey, test_login_name)
+		jwt_claims := map[string]interface{}{
+			"user_id":    test_user_id,
+			"login_name": test_login_name,
+		}
+		ctx = context.WithValue(ctx, m.JWTClaimsKey, jwt_claims)
 		r = r.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -346,7 +351,10 @@ func TestDeleteLink(t *testing.T) {
 		r.Header.Set("Content-Type", "application/json")
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, m.LoginNameKey, test_login_name)
+		jwt_claims := map[string]interface{}{
+			"login_name": test_login_name,
+		}
+		ctx = context.WithValue(ctx, m.JWTClaimsKey, jwt_claims)
 		r = r.WithContext(ctx)
 
 		w := httptest.NewRecorder()

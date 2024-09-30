@@ -83,8 +83,11 @@ func TestAddSummary(t *testing.T) {
 		r.Header.Set("Content-Type", "application/json")
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, m.UserIDKey, test_user_id)
-		ctx = context.WithValue(ctx, m.LoginNameKey, test_login_name)
+		jwt_claims := map[string]interface{}{
+			"user_id":    test_user_id,
+			"login_name": test_login_name,
+		}
+		ctx = context.WithValue(ctx, m.JWTClaimsKey, jwt_claims)
 		r = r.WithContext(ctx)
 
 		w := httptest.NewRecorder()

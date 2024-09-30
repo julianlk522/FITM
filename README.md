@@ -3,18 +3,26 @@
 ## Todos
 
 In order of importance:
-    1. refactors
-    2. find some way to cache the stupid github.com/lestrrat-go/httpcc download
-    3. make sure JWT expires
+    1. note about scraping websites / FITM-Bot user agent, etc.
+        - add domain to non-crawl list if anyone wants it
+    2. escape slashes in cats
+        -when requesting snippet recommendations
+            -interestingly, this seems to only work without the double quotes in SQLite
+            -try /cats/* for handler
+        -when requesting to GetLinks
+            -test how GetLinks handler responds to cats_params of e.g., foo/bar
+            -try surrounding / in double quotes
+    3. find some way to cache the stupid github.com/lestrrat-go/httpcc download
+    4. anti-spam/naughty stuff
+    5. refactors
 
 nice to do:
-- note somewhere about scraping websites / FITM-Bot user agent, etc.
-    - non-crawl list if anyone wants that
 - some preventative actions in place to prevent spamming
-    - 3/5/10/whatever+ links submitted in a minute gets acct. suspended for a day
-        - send myself an email to know to investigate
+    - limit to 50 links / day
     - probably some way to detect porn/gore and add NSFW tag
-        -(and prevent it from being removed)
+        - (and prevent it from being removed)
+    - way to report links as NSFW
+
 - sync rpi test data with updated (with NSFW tags)
 - change monkey / bradley names
 - update marvel char name tags to be uppercase
@@ -44,7 +52,8 @@ nice to do:
     -ErrServerFail => Err500 etc.
 -Security
     -Look into input sequences that might produce problematic results
-        -e.g., cats with "/" in them is not escaped in URL, might be read as different route path
+    -prevent whacky chars from usernames/passwords
+        -/, ;, ", ', etc.
     -fuzz test
 
 ## To-Maybe-Dos
@@ -202,3 +211,5 @@ nice to do:
         - 1sec timeframe for quick abuse resolution
 - Bot traffic
     - add Netlify edge func to identify and block bot user agents
+- Design challenges
+    - global cats calc system

@@ -69,8 +69,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	token, err := util.GetJWTFromLoginName(signup_data.Auth.LoginName)
 	if err != nil {
-		log.Print("failed to GetJWTFromLoginName")
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
@@ -88,16 +87,16 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 
 	is_authenticated, err := util.AuthenticateUser(login_data.LoginName, login_data.Password)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	} else if !is_authenticated {
-		render.Render(w, r, e.ErrInvalidRequest(e.ErrInvalidLogin))
+		render.Render(w, r, e.ErrUnauthenticated(e.ErrInvalidLogin))
 		return
 	}
 
 	token, err := util.GetJWTFromLoginName(login_data.Auth.LoginName)
 	if err != nil {
-		render.Render(w, r, e.ErrInvalidRequest(err))
+		render.Render(w, r, e.ErrServerFail(err))
 		return
 	}
 
@@ -113,7 +112,7 @@ func EditAbout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 	_, err := db.Client.Exec(
 		`UPDATE Users SET about = ? WHERE id = ?`,
 		edit_about_data.About,
@@ -193,7 +192,7 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 	_, err = db.Client.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, unique_name, req_user_id)
 	if err != nil {
 		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotSaveProfilePic))
@@ -204,9 +203,8 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteProfilePic(w http.ResponseWriter, r *http.Request) {
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
-	// protected route: JWT middleware verifies bearer token to set req_user_id
-	// (no need to check here if empty)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
+	// protected route: JWT middleware verifies bearer token
 
 	if has_pfp := util.UserWithIDHasProfilePic(req_user_id); !has_pfp {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoProfilePic))
@@ -266,7 +264,7 @@ func GetTreasureMap(w http.ResponseWriter, r *http.Request) {
 
 	var tmap interface{}
 
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 	if req_user_id != "" {
 		tmap, err = util.GetTmapForUser[model.TmapLinkSignedIn](login_name, r)
 	} else {

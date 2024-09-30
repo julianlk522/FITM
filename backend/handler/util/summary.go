@@ -20,7 +20,7 @@ func BuildSummaryPageForLink(link_id string, r *http.Request) (interface{}, erro
 	get_link_sql := query.NewSummaryPageLink(link_id)
 	get_summaries_sql := query.NewSummariesForLink(link_id)
 
-	req_user_id := r.Context().Value(m.UserIDKey).(string)
+	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 	if req_user_id != "" {
 		get_link_sql = get_link_sql.AsSignedInUser(req_user_id)
 		get_summaries_sql = get_summaries_sql.AsSignedInUser(req_user_id)

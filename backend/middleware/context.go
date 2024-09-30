@@ -6,8 +6,5 @@ type (
 
 const (
 	PageKey      CustomKey = "page"
-	UserIDKey    CustomKey = "user_id"
-	LoginNameKey CustomKey = "login_name"
-	IssuedAtKey  CustomKey = "iat"
-	ExpiresAtKey CustomKey = "exp"
+	JWTClaimsKey       CustomKey = "jwtclaims"
 )
