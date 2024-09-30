@@ -1,17 +1,17 @@
-import type { Signal } from '@preact/signals'
 import type { ChangeEvent } from 'preact/compat'
+import type { Dispatch, StateUpdater } from 'preact/hooks'
 import { Periods, type Period } from '../../types'
 
 interface Props {
-	SelectedPeriod: Period
-	SetPeriodSignal: Signal<Period>
+	Period: Period
+	SetPeriod: Dispatch<StateUpdater<Period>>
 }
 
 export default function SearchPeriod(props: Props) {
-	const selected = props.SelectedPeriod
+	const { Period: period, SetPeriod: set_period } = props
 
 	async function handle_set_period(e: ChangeEvent<HTMLSelectElement>) {
-		props.SetPeriodSignal.value = e.currentTarget.value as Period
+		set_period(e.currentTarget.value as Period)
 	}
 	return (
 		<div>
@@ -21,8 +21,8 @@ export default function SearchPeriod(props: Props) {
 			<select
 				name='period'
 				id='period'
-				defaultValue={selected}
-				value={selected}
+				defaultValue={period}
+				value={period}
 				onChange={handle_set_period}
 			>
 				{Periods.map((per) => (
