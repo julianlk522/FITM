@@ -14,7 +14,6 @@ import (
 
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
-	"github.com/lestrrat-go/jwx/v2/jwt"
 	_ "golang.org/x/image/webp"
 
 	"time"
@@ -58,6 +57,9 @@ func GetJWTFromLoginName(login_name string) (string, error) {
 		"user_id":    id.String,
 		"login_name": login_name,
 	}
+	// TEST
+	jwtauth.SetIssuedNow(claims)
+	jwtauth.SetExpiry(claims, time.Now().Add(30*time.Second))
 
 	secret := os.Getenv("FITM_JWT_SECRET")
 	if secret == "" {
@@ -67,7 +69,6 @@ func GetJWTFromLoginName(login_name string) (string, error) {
 		"HS256",
 		[]byte(secret),
 		nil,
-		jwt.WithAcceptableSkew(6*time.Hour),
 	)
 	_, token, err := auth.Encode(claims)
 	if err != nil {

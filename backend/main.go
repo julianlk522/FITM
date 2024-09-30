@@ -24,7 +24,7 @@ var (
 )
 
 func init() {
-	token_auth = jwtauth.New("HS256", []byte(os.Getenv("FITM_JWT_SECRET")), nil, jwt.WithAcceptableSkew(6*time.Hour))
+	token_auth = jwtauth.New("HS256", []byte(os.Getenv("FITM_JWT_SECRET")), nil)
 }
 
 func main() {

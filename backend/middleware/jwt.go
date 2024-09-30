@@ -70,14 +70,16 @@ func AuthenticatorOptional(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler 
 }
 
 // Retrieve JWT claims if they are passed in request context
-// claims = {"user_id":"1234","login_name":"johndoe"}
+// claims = {"user_id":"1234","login_name":"johndoe", "exp": 1234567890, "iat": 1234567890}
 func JWT(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var user_id, login_name interface{}
+		var user_id, login_name, exp, iat interface{}
 		_, claims, err := jwtauth.FromContext(r.Context())
 		if len(claims) == 0 || err != nil {
 			user_id = ""
 			login_name = ""
+			exp = nil
+			iat = nil
 		} else {
 			var ok, ok2 bool
 			user_id, ok = claims["user_id"].(string)
@@ -87,10 +89,19 @@ func JWT(next http.Handler) http.Handler {
 				user_id = ""
 				login_name = ""
 			}
+
+			exp, ok = claims["exp"].(float64)
+			iat, ok2 = claims["iat"].(float64)
+			if !ok || !ok2 {
+				exp = nil
+				iat = nil
+			}
 		}
 
 		ctx := context.WithValue(r.Context(), UserIDKey, user_id)
 		ctx = context.WithValue(ctx, LoginNameKey, login_name)
+		ctx = context.WithValue(ctx, IssuedAtKey, iat)
+		ctx = context.WithValue(ctx, ExpiresAtKey, exp)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
