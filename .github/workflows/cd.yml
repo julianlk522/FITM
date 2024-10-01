@@ -13,14 +13,13 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Set up Docker
-              run: |
-                  docker info
-                  docker version
-
             - name: Build Docker image
               working-directory: backend
-              run: docker build -t fitm-backend-test -f ../.github/workflows/Dockerfile .
+              run: |
+                  docker build \
+                    --build-arg BUILDKIT_INLINE_CACHE=1 \
+                    -t fitm-backend-test \
+                    -f ../.github/workflows/Dockerfile .
 
             - name: Run tests in Docker
               working-directory: backend
@@ -41,7 +40,5 @@ jobs:
                     fitm-backend-test:latest
 
             - name: Clean up
-              # run even if previous steps fail
-              if: always()
-              # docker rmi: same as 'docker image rm'
-              run: docker rmi fitm-backend-test
+              if: always() # run even if previous steps fail
+              run: docker rmi fitm-backend-test # docker rmi: same as 'docker image rm'
