@@ -11,7 +11,6 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/httprate"
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/lestrrat-go/jwx/v2/jwt"
 
 	h "github.com/julianlk522/fitm/handler"
 	m "github.com/julianlk522/fitm/middleware"

@@ -3,16 +3,9 @@
 ## Todos
 
 In order of importance:
-    1. escape slashes in cats
-        -when requesting snippet recommendations
-            -interestingly, this seems to only work without the double quotes in SQLite
-            -try /cats/* for handler
-        -when requesting to GetLinks
-            -test how GetLinks handler responds to cats_params of e.g., foo/bar
-            -try surrounding / in double quotes
-    2. find some way to cache the stupid github.com/lestrrat-go/httpcc download
-    3. anti-spam/naughty stuff
-    4. refactors
+    1. find some way to cache the stupid github.com/lestrrat-go/httpcc download
+    2. anti-spam/naughty stuff
+    3. refactors
 
 nice to do:
 - some preventative actions in place to prevent spamming

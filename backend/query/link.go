@@ -119,7 +119,7 @@ func (l *TopLinks) FromCats(cats []string) *TopLinks {
 		return l
 	}
 
-	cats = GetCatsWithEscapedPeriods(cats)
+	cats = GetCatsWithEscapedChars(cats)
 
 	// build clause from cats
 	clause := fmt.Sprintf(`WHERE global_cats MATCH '%s`, cats[0])

@@ -30,11 +30,30 @@ func GetPeriodClause(period string) (clause string, err error) {
 	return fmt.Sprintf("submit_date >= date('now', '-%d days')", days), nil
 }
 
+func GetCatsWithEscapedChars(cats []string) []string {
+	pers := GetCatsWithEscapedPeriods(cats)
+	pers_fslshs := GetCatsWithEscapedForwardSlashes(pers)
+	return pers_fslshs
+}
+
 func GetCatsWithEscapedPeriods(cats []string) []string {
 	var escaped []string
 	for i := 0; i < len(cats); i++ {
 		if strings.Contains(cats[i], ".") {
-			escaped = append(escaped, strings.Replace(cats[i], `.`, `"."`, 1))
+			escaped = append(escaped, strings.ReplaceAll(cats[i], `.`, `"."`))
+		} else {
+			escaped = append(escaped, cats[i])
+		}
+	}
+
+	return escaped
+}
+
+func GetCatsWithEscapedForwardSlashes(cats []string) []string {
+	var escaped []string
+	for i := 0; i < len(cats); i++ {
+		if strings.Contains(cats[i], "/") {
+			escaped = append(escaped, strings.ReplaceAll(cats[i], `/`, `"/"`))
 		} else {
 			escaped = append(escaped, cats[i])
 		}

@@ -20,16 +20,50 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+func TestGetCatsWithEscapedChars(t *testing.T) {
+	var test_cats = struct {
+		Cats            []string
+		ExpectedResults []string
+	}{
+		Cats:            []string{"slash/slash/slash", "c. vi.per"},
+		ExpectedResults: []string{`slash"/"slash"/"slash`, `c"." vi"."per`},
+	}
+
+	got := GetCatsWithEscapedChars(test_cats.Cats)
+	for i, res := range got {
+		if res != test_cats.ExpectedResults[i] {
+			t.Fatalf("got %s, want %s", got, test_cats.ExpectedResults)
+		}
+	}
+}
+
 func TestGetCatsWithEscapedPeriods(t *testing.T) {
 	var test_cats = struct {
 		Cats            []string
 		ExpectedResults []string
 	}{
-		Cats:            []string{"YouTube", "c. viper"},
-		ExpectedResults: []string{"YouTube", `c"." viper`},
+		Cats:            []string{"YouTube", "c. viper", "cat.with.multiple.periods"},
+		ExpectedResults: []string{"YouTube", `c"." viper`, `cat"."with"."multiple"."periods`},
 	}
 
 	got := GetCatsWithEscapedPeriods(test_cats.Cats)
+	for i, res := range got {
+		if res != test_cats.ExpectedResults[i] {
+			t.Fatalf("got %s, want %s", got, test_cats.ExpectedResults)
+		}
+	}
+}
+
+func TestGetCatsWithEscapedForwardSlashes(t *testing.T) {
+	var test_cats = struct {
+		Cats            []string
+		ExpectedResults []string
+	}{
+		Cats:            []string{"slash/slash", "YouTube", "c. viper", "cat/with/multiple/slashes"},
+		ExpectedResults: []string{`slash"/"slash`, "YouTube", "c. viper", `cat"/"with"/"multiple"/"slashes`},
+	}
+
+	got := GetCatsWithEscapedForwardSlashes(test_cats.Cats)
 	for i, res := range got {
 		if res != test_cats.ExpectedResults[i] {
 			t.Fatalf("got %s, want %s", got, test_cats.ExpectedResults)
