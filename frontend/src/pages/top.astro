@@ -266,11 +266,8 @@ const is_only_page =
 							{links.map((link) => (
 								<Link
 									client:load
-									CatsFromUser={link.TagCount === 1 && link.SubmittedBy === user ? user : undefined}
-									IsSummaryPage={false}
-									IsTagPage={false}
-									IsTmapPage={false}
 									Link={link}
+									CatsFromUser={link.TagCount === 1 && link.SubmittedBy === user ? user : undefined}
 									Token={token}
 									User={user}
 								/>

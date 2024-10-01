@@ -48,10 +48,8 @@ const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 			<h2>Link:</h2>
 			<Link
 				client:load
-				IsSummaryPage={false}
-				IsTagPage={true}
-				IsTmapPage={false}
 				Link={link}
+				IsTagPage={true}
 				Token={token}
 				User={user}
 			/>

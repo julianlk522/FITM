@@ -8,9 +8,9 @@ import SameUserLikeCount from './SameUserLikeCount'
 interface Props {
 	Link: types.Link
 	CatsFromUser?: string
-	IsSummaryPage: boolean
-	IsTagPage: boolean
-	IsTmapPage: boolean
+	IsSummaryPage?: boolean
+	IsTagPage?: boolean
+	IsTmapPage?: boolean
 	Token: string | undefined
 	User: string | undefined
 }
@@ -62,10 +62,10 @@ export default function Link(props: Props) {
 		cats && user && cats_from_user === user
 			? 'your tag'
 			: cats_from_user
-			? `${cats_from_user}'s tag`
-			: tag_count === 1
-			? `${submitted_by}'s tag`
-			: 'global tag'
+				? `${cats_from_user}'s tag`
+				: tag_count === 1
+					? `${submitted_by}'s tag`
+					: 'global tag'
 	tag_attribution += ` (${tag_count})`
 	const cats_html =
 		is_tmap_page && cats_from_user
@@ -86,7 +86,7 @@ export default function Link(props: Props) {
 							</span>
 						)
 					}
-			  })
+				})
 			: split_cats?.map((cat, i) => {
 					if (i === split_cats.length - 1) {
 						return <a href={`/top?cats=${cat}`}>{cat}</a>
@@ -97,7 +97,7 @@ export default function Link(props: Props) {
 							</span>
 						)
 					}
-			  })
+				})
 
 	async function handle_like() {
 		if (!token) {

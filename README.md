@@ -32,7 +32,6 @@ nice to do:
 -Purge duplication
 -Simplicity / accuracy
     -optional Props to replace "undefined"
-        -Link: IsSummaryPage / IsTagPage / IsTmapPage
     -Top Cats / Top Links / etc. components
     -move tmap cats json above links
     -move contributors queries from query/link.go to query/contributors.go
