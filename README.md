@@ -31,7 +31,6 @@ nice to do:
 
 -Purge duplication
 -Simplicity / accuracy
-    -remove needless _limit() methods
     -optional Props to replace "undefined"
         -Link: IsSummaryPage / IsTagPage / IsTmapPage
     -Top Cats / Top Links / etc. components

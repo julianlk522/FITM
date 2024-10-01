@@ -39,7 +39,7 @@ FROM
 LEFT JOIN
 	(
 	SELECT count(*) as like_count, link_id as llink_id
-	FROM 'Link Likes'
+	FROM "Link Likes"
 	GROUP BY llink_id
 	)
 ON llink_id = links_id
@@ -78,7 +78,7 @@ func (l *SummaryPageLink) AsSignedInUser(user_id string) *SummaryPageLink {
 			LEFT JOIN
 				(
 				SELECT id as like_id, count(*) as is_liked, user_id as luser_id, link_id as like_link_id2
-				FROM 'Link Likes'
+				FROM "Link Likes"
 				WHERE luser_id = '%[1]s'
 				GROUP BY like_id
 				)
@@ -86,7 +86,7 @@ func (l *SummaryPageLink) AsSignedInUser(user_id string) *SummaryPageLink {
 			LEFT JOIN
 				(
 				SELECT id as copy_id, count(*) as is_copied, user_id as cuser_id, link_id as copy_link_id
-				FROM 'Link Copies'
+				FROM "Link Copies"
 				WHERE cuser_id = '%[1]s'
 				GROUP BY copy_id
 				)
@@ -108,7 +108,7 @@ const SUMMARIES_BASE_FIELDS = `SELECT
 	last_updated, 
 	COALESCE(count(sl.id),0) as like_count`
 
-const SUMMARIES_BASE = SUMMARIES_BASE_FIELDS + ` 
+const SUMMARIES_FROM = ` 
 FROM 
 	(
 	SELECT sumid, text, Users.login_name as ln, last_updated
@@ -120,14 +120,22 @@ FROM
 	JOIN Users 
 	ON Users.id = sb
 	) 
-LEFT JOIN 'Summary Likes' as sl 
+LEFT JOIN "Summary Likes" as sl 
 ON sl.summary_id = sumid 
-GROUP BY sumid;`
+GROUP BY sumid`
+
+var SUMMARIES_LIMIT = fmt.Sprintf(`
+LIMIT %d;`, SUMMARIES_PAGE_LIMIT)
 
 func NewSummariesForLink(link_id string) *Summaries {
-	return (&Summaries{Query: Query{Text: SUMMARIES_BASE}}).
-		_FromID(link_id).
-		_Limit(SUMMARIES_PAGE_LIMIT)
+	return (&Summaries{
+		Query: Query{
+			Text: 
+				SUMMARIES_BASE_FIELDS +
+				SUMMARIES_FROM +
+				SUMMARIES_LIMIT,
+		},
+	})._FromID(link_id)
 }
 
 func (s *Summaries) _FromID(link_id string) *Summaries {
@@ -143,32 +151,20 @@ func (s *Summaries) _FromID(link_id string) *Summaries {
 	return s
 }
 
-func (l *Summaries) _Limit(limit int) *Summaries {
-	l.Text = strings.Replace(
-		l.Text,
-		";",
-		fmt.Sprintf(`
-LIMIT %d;`,
-			limit),
-		1)
-
-	return l
-}
-
 func (s *Summaries) AsSignedInUser(user_id string) *Summaries {
 	s.Text = strings.Replace(s.Text, SUMMARIES_BASE_FIELDS, SUMMARIES_BASE_FIELDS+`, 
 	COALESCE(is_liked,0) as is_liked`, 1)
 
-	s.Text = strings.Replace(s.Text, "LEFT JOIN 'Summary Likes' as sl", fmt.Sprintf(`
+	s.Text = strings.Replace(s.Text, `LEFT JOIN "Summary Likes" as sl`, fmt.Sprintf(`
 	LEFT JOIN
 		(
 		SELECT id, count(*) as is_liked, user_id, summary_id as slsumid
-		FROM 'Summary Likes'
+		FROM "Summary Likes"
 		WHERE user_id = '%s'
 		GROUP BY id
 		)
 	ON slsumid = sumid
-	LEFT JOIN 'Summary Likes' as sl`, user_id), 1)
+	LEFT JOIN "Summary Likes" as sl`, user_id), 1)
 
 	return s
 }
