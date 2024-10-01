@@ -30,8 +30,12 @@ var (
 	ErrDoesntOwnLink error = errors.New("not your link; cannot delete")
 )
 
+func ErrMaxDailyLinkSubmissionsReached(limit int) error {
+	return fmt.Errorf("you have submitted the max amount of links for today (%d)", limit)
+}
+
 func ErrLinkURLCharsExceedLimit(limit int) error {
-	return fmt.Errorf("url too long (max %d chars)", limit)
+	return fmt.Errorf("URL too long (max %d chars)", limit)
 }
 
 func ErrGoogleAPIsRequestFail(err error) error {
@@ -48,7 +52,7 @@ func ErrGoogleAPIsResponseExtractionFail(err error) error {
 
 func ErrDuplicateLink(url string, duplicate_link_id string) error {
 	return fmt.Errorf(
-		"duplicate URL: %s\nsee /tag/%s",
+		"URL %s already submitted. See /tag/%s",
 		url,
 		duplicate_link_id,
 	)

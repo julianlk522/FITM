@@ -16,6 +16,24 @@ import (
 	"github.com/go-chi/render"
 )
 
+const MAX_DAILY_LINKS = 50
+
+func UserHasSubmittedMaxDailyLinks(login_name string) (bool, error) {
+	var count int
+	err := db.Client.QueryRow(fmt.Sprintf(`SELECT count(*)
+		FROM Links
+		WHERE submitted_by = '%s'
+		AND submit_date >= date('now', '-%d days');`, 
+		login_name, 
+		MAX_DAILY_LINKS,
+	)).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count >= MAX_DAILY_LINKS, nil
+}
+
 func RenderZeroLinks(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, &model.PaginatedLinks[model.Link]{NextPage: -1})
 	render.Status(r, http.StatusOK)

@@ -101,9 +101,9 @@ export default function NewLinks(props: Props) {
 			await new_link_resp.Response.json()
 
 		if (is_error_response(new_link_data)) {
-			if (new_link_data.error.startsWith('duplicate URL')) {
-				const dupe_URL = new_link_data.error.split('\nsee ')[1]
-				set_error('Duplicate submission')
+			if (new_link_data.error.includes('already submitted')) {
+				const dupe_URL = new_link_data.error.split('See ')[1]
+				set_error(new_link_data.error.split('See ')[0])
 				set_dupe_url(dupe_URL)
 			} else {
 				set_error(new_link_data.error)

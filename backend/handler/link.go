@@ -93,6 +93,17 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	req_login_name := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["login_name"].(string)
+	
+	// verify user has not already submitted too many links today
+	if user_submitted_max_daily_links, err := util.UserHasSubmittedMaxDailyLinks(req_login_name); err != nil {
+		render.Render(w, r, e.ErrServerFail(err))
+		return
+	} else if user_submitted_max_daily_links {
+		render.Render(w, r, e.ErrInvalidRequest(e.ErrMaxDailyLinkSubmissionsReached(util.MAX_DAILY_LINKS)))
+		return
+	}
+
 	if util.IsYouTubeVideoLink(request.NewLink.URL) {
 		if err := util.ObtainYouTubeMetaData(request); err != nil {
 
@@ -112,7 +123,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Check URL is unique
+	// verify URL is unique
 	// this comes after ResolveURL() because may mutate slightly
 	if is_duplicate, dupe_link_id := util.LinkAlreadyAdded(request.URL); is_duplicate {
 		render.Status(r, http.StatusConflict)
@@ -120,7 +131,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req_login_name := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["login_name"].(string)
+	// Verified: add link
 	request.SubmittedBy = req_login_name
 
 	// sort cats

@@ -9,7 +9,6 @@ In order of importance:
 
 nice to do:
 - some preventative actions in place to prevent spamming
-    - limit to 50 links / day
     - probably some way to detect porn/gore and add NSFW tag
         - (and prevent it from being removed)
     - way to report links as NSFW
@@ -121,6 +120,7 @@ nice to do:
     -assign (take some data and a pointer and copy the data to the referenced var)
     -obtain (get, extract, assign)
     -resolve (take in a possibly incomplete form and translate to a correct form)
+    -verify (instead of check, ensure, etc.)
 -replace spellfix transactions with triggers
     -(that way can make changes over CLI without worrying about unsync)
     -too complicated for now ... workaround might be just resetting on cron job or something though that requires downtime...
