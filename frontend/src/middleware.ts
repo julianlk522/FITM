@@ -39,7 +39,7 @@ async function handle_jwt_auth(
 						// @ts-ignore
 						context.cookies.set('user', decoded.login_name, {
 							path: '/',
-							maxAge: 21600,
+							maxAge: 14400,
 							sameSite: 'strict',
 							secure: true,
 						})

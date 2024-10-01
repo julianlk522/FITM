@@ -104,8 +104,8 @@ export default function Link(props: Props) {
 			document.cookie = `redirect_to=${window.location.pathname.replaceAll(
 				'/',
 				'%2F'
-			)}; path=/login; max-age=21600; SameSite=strict; Secure`
-			document.cookie = `redirect_action=like link ${id}; path=${window.location.pathname}; max-age=21600; SameSite=strict; Secure`
+			)}; path=/login; max-age=14400; SameSite=strict; Secure`
+			document.cookie = `redirect_action=like link ${id}; path=${window.location.pathname}; max-age=14400; SameSite=strict; Secure`
 			return (window.location.href = '/login')
 		}
 
@@ -152,8 +152,8 @@ export default function Link(props: Props) {
 			document.cookie = `redirect_to=${window.location.pathname.replaceAll(
 				'/',
 				'%2F'
-			)}; path=/login; max-age=21600; SameSite=strict; Secure`
-			document.cookie = `redirect_action=copy link ${id}; path=${window.location.pathname}; max-age=21600; SameSite=strict; Secure`
+			)}; path=/login; max-age=14400; SameSite=strict; Secure`
+			document.cookie = `redirect_action=copy link ${id}; path=${window.location.pathname}; max-age=14400; SameSite=strict; Secure`
 			return (window.location.href = '/login')
 		}
 
@@ -198,8 +198,8 @@ export default function Link(props: Props) {
 			document.cookie = `redirect_to=${window.location.pathname.replaceAll(
 				'/',
 				'%2F'
-			)}; path=/login; max-age=21600; SameSite=strict; Secure`
-			document.cookie = `redirect_action=delete link ${id}; path=${window.location.pathname}; max-age=21600; SameSite=strict; Secure`
+			)}; path=/login; max-age=14400; SameSite=strict; Secure`
+			document.cookie = `redirect_action=delete link ${id}; path=${window.location.pathname}; max-age=14400; SameSite=strict; Secure`
 			return (window.location.href = '/login')
 		} else if (!is_your_link) {
 			console.error('not your link')

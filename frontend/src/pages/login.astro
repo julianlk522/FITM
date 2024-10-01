@@ -32,7 +32,7 @@ import get_cookie from '../util/get_cookie'
 
 			if (signup_data.token) {
 				// set cookie
-				document.cookie = `token=${signup_data.token}; max-age=21600; SameSite=strict; Secure`
+				document.cookie = `token=${signup_data.token}; max-age=14400; SameSite=strict; Secure`
 
 				// redirect
 				// check if redirect_to is set
@@ -85,7 +85,7 @@ import get_cookie from '../util/get_cookie'
 
 			if (login_data.token) {
 				// set cookie
-				document.cookie = `token=${login_data.token}; max-age=21600; SameSite=strict; Secure`
+				document.cookie = `token=${login_data.token}; max-age=14400; SameSite=strict; Secure`
 
 				// redirect
 				// check if redirect_to is set

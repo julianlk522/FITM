@@ -40,7 +40,7 @@ export default function NewSummary(props: Props) {
 				document.cookie = `redirect_to=${window.location.pathname.replaceAll(
 					'/',
 					'%2F'
-				)}; path=/login; max-age=21600; SameSite=strict; Secure`
+				)}; path=/login; max-age=14400; SameSite=strict; Secure`
 			}
 
 			return (window.location.href =

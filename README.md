@@ -13,10 +13,9 @@ nice to do:
         - (and prevent it from being removed)
     - way to report links as NSFW
 
-- sync rpi test data with updated (with NSFW tags)
 - change monkey / bradley names
 - update marvel char name tags to be uppercase
-- replace cookies expiring in 21600 secs (6 hrs) with 14400 (4 hrs)
+
 - check if any remaining fetches should be wrapped in redirect util
 - replace frontend (and backend, if any) magic numbers
 
