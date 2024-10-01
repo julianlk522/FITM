@@ -15,6 +15,9 @@ nice to do:
 
 - change monkey / bradley names
 - update marvel char name tags to be uppercase
+- fix broken tests
+    - TestLoadSpellfix
+        - "no such table global_cats_spellfix"
 
 - check if any remaining fetches should be wrapped in redirect util
 

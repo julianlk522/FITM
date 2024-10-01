@@ -326,7 +326,7 @@ func (s *SpellfixMatches) OmitCats(cats []string) error {
 	}
 
 	distance_clause := fmt.Sprintf(
-		"WHERE distance <= %d",
+		"AND distance <= %d",
 		SPELLFIX_DISTANCE_LIMIT,
 	)
 

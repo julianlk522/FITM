@@ -376,13 +376,13 @@ func TestGetSpellfixMatchesForSnippet(t *testing.T) {
 		{
 			Snippet:            "",
 			OmittedCats:        "",
-			ExpectedStatusCode: 404,
+			ExpectedStatusCode: 400,
 			Results:            nil,
 		},
 		{
 			Snippet:            "",
 			OmittedCats:        "test",
-			ExpectedStatusCode: 404,
+			ExpectedStatusCode: 400,
 			Results:            nil,
 		},
 	}
@@ -390,7 +390,7 @@ func TestGetSpellfixMatchesForSnippet(t *testing.T) {
 	// define route
 	// (otherwise cannot pass URL params without modifying handler implementation)
 	r := chi.NewRouter()
-	r.Get("/cats/{snippet}", GetSpellfixMatchesForSnippet)
+	r.Get("/cats/*", GetSpellfixMatchesForSnippet)
 
 	for _, tr := range test_requests {
 		req, err := http.NewRequest("GET", "/cats/"+tr.Snippet, nil)

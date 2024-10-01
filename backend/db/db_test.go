@@ -1,7 +1,6 @@
 package db
 
 import (
-	"database/sql"
 	"log"
 	"os"
 	"path/filepath"
@@ -25,10 +24,6 @@ func TestLoadSpellfix(t *testing.T) {
 	if test_data_path != "" {
 		log.Print("FITM_TEST_DATA_PATH found: loading test data to run spellfix check against")
 
-		Client, err := sql.Open("sqlite-spellfix1", "file::memory:?cache=shared")
-		if err != nil {
-			t.Fatalf("could not open in-memory DB: %s", err)
-		}
 		sql_dump_path := filepath.Join(test_data_path, "fitm_test.db.sql")
 		sql_dump, err := os.ReadFile(sql_dump_path)
 		if err != nil {
@@ -39,10 +34,28 @@ func TestLoadSpellfix(t *testing.T) {
 			t.Fatal(err)
 		}
 		log.Print("loaded test data (TestLoadSpellfix)")
+
+		// debug schema configuration
+		rows, err := Client.Query(`
+			SELECT name FROM sqlite_master 
+			WHERE type='table';
+		`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer rows.Close()
+
+		log.Println("Tables in database:")
+		for rows.Next() {
+			var name string
+			if err := rows.Scan(&name); err != nil {
+				t.Fatal(err)
+			}
+			log.Println(name)
+		}
 	}
 
-	_, err := Client.Exec(`SELECT word, rank FROM global_cats_spellfix;`)
-	if err != nil {
+	if _, err := Client.Exec(`SELECT word, rank FROM global_cats_spellfix LIMIT 1;`); err != nil {
 		t.Fatal(err)
 	}
 }
