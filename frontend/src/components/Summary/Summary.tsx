@@ -5,14 +5,14 @@ import SameUserLikeCount from '../Link/SameUserLikeCount'
 import './Summary.css'
 
 interface Props {
-	Token: string | undefined
-	User: string | undefined
 	ID: number
 	Text: string
 	SubmittedBy: string
 	LastUpdated: string
 	LikeCount: number
-	IsLiked: boolean | undefined
+	IsLiked?: boolean
+	Token?: string
+	User?: string
 }
 
 export default function Summary(props: Props) {

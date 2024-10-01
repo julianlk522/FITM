@@ -199,10 +199,7 @@ export default function SearchCats(props: Props) {
 						<TagCat
 							key={cat}
 							Cat={cat}
-							Count={undefined}
 							Removable={removable ?? true}
-							Addable={false}
-							AddedSignal={undefined}
 							DeletedSignal={deleted_cat}
 						/>
 					))}
@@ -218,10 +215,8 @@ export default function SearchCats(props: Props) {
 								key={cat}
 								Cat={cat.Category}
 								Count={cat.Count}
-								Removable={false}
 								Addable={true}
 								AddedSignal={added_cat}
-								DeletedSignal={undefined}
 							/>
 						))}
 				</ul>

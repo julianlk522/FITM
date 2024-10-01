@@ -18,7 +18,7 @@ if (
 	period = Astro.url.searchParams.get('period') as Period
 }
 // cats
-let cats: string | undefined
+let cats = ""
 if (Astro.url.searchParams.get('cats')) {
 	cats = Astro.url.searchParams.get('cats') as string
 }
@@ -52,7 +52,7 @@ const page_title = (cats ? `${cats} (More)` : "More")
 		<SearchFilters 
 			client:load 
 			InitialPeriod={period}
-			InitialCats={cats?.split(',') ?? []}
+			InitialCats={cats.length ? cats.split(',') : []}
 			Endpoint="/more"
 		/>
 

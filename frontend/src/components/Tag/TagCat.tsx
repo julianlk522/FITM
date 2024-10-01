@@ -1,10 +1,10 @@
 interface Props {
 	Cat: string
-	Count: number | undefined
-	Addable: boolean
-	Removable: boolean
-	AddedSignal: Signal<string | undefined> | undefined
-	DeletedSignal: Signal<string | undefined> | undefined
+	Count?: number
+	Addable?: boolean
+	Removable?: boolean
+	AddedSignal?: Signal<string | undefined>
+	DeletedSignal?: Signal<string | undefined>
 }
 
 import type { Signal } from '@preact/signals'

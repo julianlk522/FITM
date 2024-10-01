@@ -16,6 +16,9 @@ nice to do:
 - sync rpi test data with updated (with NSFW tags)
 - change monkey / bradley names
 - update marvel char name tags to be uppercase
+- replace cookies expiring in 21600 secs (6 hrs) with 14400 (4 hrs)
+- check if any remaining fetches should be wrapped in redirect util
+- replace frontend (and backend, if any) magic numbers
 
 ### Features
 
@@ -31,7 +34,6 @@ nice to do:
 
 -Purge duplication
 -Simplicity / accuracy
-    -optional Props to replace "undefined"
     -Top Cats / Top Links / etc. components
     -move tmap cats json above links
     -move contributors queries from query/link.go to query/contributors.go

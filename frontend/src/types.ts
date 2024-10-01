@@ -32,13 +32,13 @@ type Link = {
 	SubmittedBy: string
 	SubmitDate: string
 	Cats: string | null
-	ImgURL: string | undefined
 	Summary: string | null
 	SummaryCount: number
 	TagCount: number
+	ImgURL?: string
 	LikeCount: number
-	IsLiked: boolean | undefined
-	IsCopied: boolean | undefined
+	IsLiked?: boolean
+	IsCopied?: boolean
 }
 
 type PaginatedLinks = {
@@ -64,7 +64,7 @@ type TagRanking = Tag & { LifeSpanOverlap: number }
 
 type TagPage = {
 	Link: Link
-	UserTag: Tag | undefined
+	UserTag?: Tag
 	TagRankings: TagRanking[]
 }
 
@@ -86,7 +86,7 @@ type Summary = {
 	SubmittedBy: string
 	LastUpdated: string
 	LikeCount: number
-	IsLiked: boolean | undefined
+	IsLiked?: boolean
 }
 
 type SummaryPage = {
@@ -95,7 +95,7 @@ type SummaryPage = {
 }
 
 // TREASURE MAP
-type TmapLink = Link & { CatsFromUser: boolean | undefined }
+type TmapLink = Link & { CatsFromUser?: boolean }
 
 type FilteredTreasureMap = {
 	Submitted: TmapLink[]

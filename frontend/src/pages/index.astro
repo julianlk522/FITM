@@ -9,7 +9,7 @@ import fetch_with_handle_redirect from '../util/fetch_with_handle_redirect'
 
 // Auth
 const token = Astro.cookies.get('token')?.value
-const user: string | undefined = Astro.cookies.get('user')?.value
+const user = Astro.cookies.get('user')?.value
 
 // Get top cats
 const top_cats_resp = await (token

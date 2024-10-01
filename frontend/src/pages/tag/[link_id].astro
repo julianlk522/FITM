@@ -55,12 +55,12 @@ const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 			/>
 		</section>
 
-		{user !== undefined ? 
+		{user ? 
 			<EditTag
 				client:load
 				LinkID={link_id}
 				Token={token}
-				UserTag={user_tag ? user_tag : undefined}
+				UserTag={user_tag}
 				OnlyTag={tags.length === 1}
 			/> 
 		: <section>
@@ -77,14 +77,7 @@ const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 								<ul id='cat-list'>
 									{tag.Cats.split(',').map((tag) => {
 										return (
-											<TagCat
-												Cat={tag}
-												Count={undefined}
-												Addable={false}
-												Removable={false}
-												AddedSignal={undefined}
-												DeletedSignal={undefined}
-											/>
+											<TagCat Cat={tag} />
 										)
 									})}
 								</ul>

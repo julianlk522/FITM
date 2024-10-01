@@ -7,17 +7,17 @@ import SearchCats from '../Search/Cats'
 import './EditTag.css'
 interface Props {
 	LinkID: string
-	Token: string | undefined
-	UserTag: Tag | undefined
 	OnlyTag: boolean
+	UserTag?: Tag
+	Token?: string
 }
 
 export default function EditTag(props: Props) {
 	const {
 		LinkID: link_id,
-		Token: token,
-		UserTag: tag,
 		OnlyTag: only_tag,
+		UserTag: tag,
+		Token: token,
 	} = props
 	const initial_cats = tag ? tag.Cats.split(',') : []
 

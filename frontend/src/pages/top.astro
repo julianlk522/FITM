@@ -40,7 +40,7 @@ if (
 		sort_by = Astro.url.searchParams.get('sort_by') as SortMetric
 	}
 // cats
-let cats: string | undefined
+let cats = ""
 if (Astro.url.searchParams.get('cats')) {
 	cats = Astro.url.searchParams.get('cats') as string
 }
@@ -181,7 +181,7 @@ const is_only_page =
 			client:load 
 			InitialPeriod={period}
 			InitialSortBy={sort_by}
-			InitialCats={cats?.split(',') ?? []}
+			InitialCats={cats.length ? cats.split(',') : []}
 			InitialNSFW={nsfw}
 		/>
 
@@ -267,7 +267,10 @@ const is_only_page =
 								<Link
 									client:load
 									Link={link}
-									CatsFromUser={link.TagCount === 1 && link.SubmittedBy === user ? user : undefined}
+									CatsFromUser={link.TagCount === 1 && link.SubmittedBy === user 
+										? user 
+										: undefined
+									}
 									Token={token}
 									User={user}
 								/>

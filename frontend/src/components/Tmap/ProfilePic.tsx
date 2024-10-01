@@ -4,9 +4,9 @@ import './ProfilePic.css'
 
 interface Props {
 	LoginName: string
-	PFP: string | undefined
-	SignedInUser: string | undefined
-	Token: string | undefined
+	PFP?: string
+	SignedInUser?: string
+	Token?: string
 }
 
 export default function ProfilePic(props: Props) {
@@ -18,7 +18,6 @@ export default function ProfilePic(props: Props) {
 	} = props
 	const [url, set_url] = useState<string | undefined>(undefined)
 	const [error, set_error] = useState<string | undefined>(undefined)
-
 	const [show_delete_modal, set_show_delete_modal] = useState<boolean>(false)
 
 	const is_signed_in_user = login_name === signed_in_user

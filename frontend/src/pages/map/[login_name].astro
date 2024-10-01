@@ -26,7 +26,7 @@ const is_signed_in_user = login_name === user
 let page_title = `${login_name}'s Treasure Map`
 
 // cats
-let cats: string | undefined
+let cats = ""
 let cats_split: string[] = []
 if (Astro.url.searchParams.get('cats')) {
 	cats = Astro.url.searchParams.get('cats') as string
@@ -82,10 +82,10 @@ let abbreviated_about: string | undefined
 
 if (!cats && tmap.hasOwnProperty('Profile')) {
 	profile = (tmap as TreasureMap).Profile
-	const has_pfp = profile.PFP !== undefined && profile.PFP.length > 0
+	const has_pfp = profile.PFP?.length > 0
 	display_pfp = has_pfp || is_signed_in_user
 
-	const has_about = profile.About !== undefined && profile.About.length > 0
+	const has_about = profile.About?.length > 0
 	display_about = has_about || is_signed_in_user
 
 	abbreviated_about = profile.About.length > 200 ? `${profile.About.slice(0, 200)}...` : undefined
@@ -101,7 +101,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 		</h2>
 
 		<!-- Profile  -->
-		 {profile !== undefined && (display_about || display_pfp) ? (
+		 {profile && (display_about || display_pfp) ? (
 			<section id="profile">
 				<ProfilePic 
 					client:load
@@ -116,8 +116,8 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 						is_signed_in_user ? 
 							<EditAbout
 								client:load 
-								token={token} 
-								initial={profile.About}
+								Token={token} 
+								Initial={profile.About}
 							/>
 						: abbreviated_about 
 							?  <details>
@@ -160,25 +160,11 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 						cats_split.length > 1 ? (
 							cats_split.map((cat) => {
 								return (
-									<TagCat
-										Cat={cat}
-										Count={undefined}
-										Removable={false}
-										Addable={false}
-										AddedSignal={undefined}
-										DeletedSignal={undefined}
-									/>
+									<TagCat Cat={cat} />
 								)
 							})
 						) : (
-							<TagCat
-								Cat={cats_split[0]}
-								Count={undefined}
-								Removable={false}
-								Addable={false}
-								AddedSignal={undefined}
-								DeletedSignal={undefined}
-							/>
+							<TagCat Cat={cats_split[0]} />
 						)
 					}
 				</ul>

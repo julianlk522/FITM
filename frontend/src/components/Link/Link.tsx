@@ -11,8 +11,8 @@ interface Props {
 	IsSummaryPage?: boolean
 	IsTagPage?: boolean
 	IsTmapPage?: boolean
-	Token: string | undefined
-	User: string | undefined
+	Token?: string
+	User?: string
 }
 
 export default function Link(props: Props) {

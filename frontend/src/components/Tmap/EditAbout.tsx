@@ -1,16 +1,17 @@
 import { useState } from 'preact/hooks'
 import { TMAP_ABOUT_ENDPOINT } from '../../constants'
 import { is_error_response } from '../../types'
+import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
 import AboutText from './AboutText'
 import './EditAbout.css'
 
 interface Props {
-	initial: string
-	token: string | undefined
+	Initial: string
+	Token?: string
 }
 
 export default function EditAbout(props: Props) {
-	const { initial, token } = props
+	const { Initial: initial, Token: token } = props
 	const abbreviated =
 		initial.length > 200 ? `${initial.slice(0, 200)}...` : undefined
 
@@ -40,16 +41,22 @@ export default function EditAbout(props: Props) {
 			return (window.location.href = '/login')
 		}
 
-		const resp = await fetch(TMAP_ABOUT_ENDPOINT, {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`,
-			},
-			body: JSON.stringify({ about }),
-		})
+		const edit_about_resp = await fetch_with_handle_redirect(
+			TMAP_ABOUT_ENDPOINT,
+			{
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify({ about }),
+			}
+		)
+		if (!edit_about_resp.Response || edit_about_resp.RedirectTo) {
+			return (window.location.href = edit_about_resp.RedirectTo ?? '/500')
+		}
 
-		const data = await resp.json()
+		const data = await edit_about_resp.Response.json()
 
 		if (is_error_response(data)) {
 			set_error(data.error)
