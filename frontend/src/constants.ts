@@ -1,3 +1,4 @@
+// API ENDPOINTS
 const API_URL = 'https://api.fitm.online:1999'
 // const API_URL = 'http://localhost:1999'
 
@@ -14,11 +15,15 @@ const TMAP_ENDPOINT = API_URL + '/map'
 const TMAP_ABOUT_ENDPOINT = API_URL + '/about'
 const TMAP_PFP_ENDPOINT = API_URL + '/pic'
 
+// PAGE LIMITS
+const LINKS_PAGE_LIMIT = 20
+
 export {
 	API_URL,
 	CATS_ENDPOINT,
 	CONTRIBUTORS_ENDPOINT,
 	LINKS_ENDPOINT,
+	LINKS_PAGE_LIMIT,
 	LOGIN_ENDPOINT,
 	SIGNUP_ENDPOINT,
 	SUMMARIES_ENDPOINT,

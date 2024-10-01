@@ -17,7 +17,6 @@ nice to do:
 - update marvel char name tags to be uppercase
 
 - check if any remaining fetches should be wrapped in redirect util
-- replace frontend (and backend, if any) magic numbers
 
 ### Features
 

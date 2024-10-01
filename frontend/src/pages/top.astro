@@ -3,7 +3,7 @@ import Link from '../components/Link/Link'
 import Pagination from '../components/Pagination.astro'
 import ScrollUp from '../components/ScrollUp.astro'
 import SearchFilters from '../components/Search/Filters'
-import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
+import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT, LINKS_PAGE_LIMIT } from '../constants'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import {
 Periods,
@@ -202,8 +202,7 @@ const is_only_page =
 										<span>({cat.Count})</span>
 									</li>
 								))}
-									{/* TODO: replace magic number */}
-									{top_cats.length === 20 ? <li class="more"><a href="/more">more</a></li> : null}
+									{top_cats.length === LINKS_PAGE_LIMIT ? <li class="more"><a href="/more">more</a></li> : null}
 							</ol>
 						</section>
 					) : (
@@ -221,8 +220,7 @@ const is_only_page =
 											<span> ({subcat.Count})</span>
 										</li>
 									))}
-										{/* TODO: replace magic number */}
-										{top_cats.length === 20 ? <li class="more"><a href="/more">more</a></li> : null}
+										{top_cats.length === LINKS_PAGE_LIMIT ? <li class="more"><a href="/more">more</a></li> : null}
 								</ol>
 							) : (
 								<p>No further subcats</p>
@@ -261,8 +259,7 @@ const is_only_page =
 							NextPage={data.NextPage}
 						/>}
 
-						{/* TODO: replace magic page limit number */}
-						<ol id='top-links' start={(page - 1) * 20 + 1}>
+						<ol id='top-links' start={(page - 1) * LINKS_PAGE_LIMIT + 1}>
 							{links.map((link) => (
 								<Link
 									client:load
