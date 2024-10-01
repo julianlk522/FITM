@@ -16,10 +16,7 @@ jobs:
             - name: Build Docker image
               working-directory: backend
               run: |
-                  docker build \
-                    --build-arg BUILDKIT_INLINE_CACHE=1 \
-                    -t fitm-backend-test \
-                    -f ../.github/workflows/Dockerfile .
+                  docker build -t fitm-backend-test -f ../.github/workflows/Dockerfile .
 
             - name: Run tests in Docker
               working-directory: backend
@@ -41,4 +38,4 @@ jobs:
 
             - name: Clean up
               if: always() # run even if previous steps fail
-              run: docker rmi fitm-backend-test # docker rmi: same as 'docker image rm'
+              run: docker rmi fitm-backend-test # docker rmi = docker image rm

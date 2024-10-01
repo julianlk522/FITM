@@ -34,25 +34,6 @@ func TestLoadSpellfix(t *testing.T) {
 			t.Fatal(err)
 		}
 		log.Print("loaded test data (TestLoadSpellfix)")
-
-		// debug schema configuration
-		rows, err := Client.Query(`
-			SELECT name FROM sqlite_master 
-			WHERE type='table';
-		`)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer rows.Close()
-
-		log.Println("Tables in database:")
-		for rows.Next() {
-			var name string
-			if err := rows.Scan(&name); err != nil {
-				t.Fatal(err)
-			}
-			log.Println(name)
-		}
 	}
 
 	if _, err := Client.Exec(`SELECT word, rank FROM global_cats_spellfix LIMIT 1;`); err != nil {
