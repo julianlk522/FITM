@@ -280,25 +280,28 @@ func NewSpellfixMatchesForSnippet(snippet string) *SpellfixMatches {
 	return (&SpellfixMatches{
 		Query: Query{
 			Text: fmt.Sprintf(
-				`WITH full_match AS (
+				`WITH combined_results AS (
 					SELECT word, rank, distance
 					FROM global_cats_spellfix
-					WHERE word MATCH "%[1]s"
+					WHERE word MATCH '%[1]s'
+					UNION ALL
+					SELECT word, rank, distance
+					FROM global_cats_spellfix
+					WHERE word MATCH '%[1]s' || '*'
 				),
-				partial_match AS (
-					SELECT word, rank, distance
-					FROM global_cats_spellfix
-					WHERE word MATCH "%[1]s" || '*'
-					AND word NOT IN (SELECT word FROM full_match)
+				ranked_results AS (
+					SELECT 
+						word, 
+						rank,
+						distance,
+						ROW_NUMBER() OVER (PARTITION BY word ORDER BY distance) AS row_num
+					FROM combined_results
 				)
 				SELECT word, rank
-				FROM (
-					SELECT * FROM full_match
-					UNION ALL
-					SELECT * FROM partial_match
-				)
-				WHERE distance <= %[2]d
-				ORDER BY distance
+				FROM ranked_results
+				WHERE row_num = 1
+				AND distance <= %[2]d
+				ORDER BY distance, rank DESC
 				LIMIT %[3]d;`,
 				snippet,
 				SPELLFIX_DISTANCE_LIMIT,

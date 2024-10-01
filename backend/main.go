@@ -94,7 +94,7 @@ func main() {
 	r.Get("/pic/{file_name}", h.GetProfilePic)
 	
 	r.Get("/cats", h.GetTopGlobalCats) // includes subcats
-	r.Get("/cats/{snippet}", h.GetSpellfixMatchesForSnippet)
+	r.Get("/cats/*", h.GetSpellfixMatchesForSnippet)
 	r.Get("/contributors", h.GetTopContributors)
 
 	// CD webhook: application update and refresh

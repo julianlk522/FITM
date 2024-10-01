@@ -127,7 +127,7 @@ func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetSpellfixMatchesForSnippet(w http.ResponseWriter, r *http.Request) {
-	snippet := chi.URLParam(r, "snippet")
+	snippet := chi.URLParam(r, "*")
 	if snippet == "" {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoGlobalCatsSnippet))
 		return
