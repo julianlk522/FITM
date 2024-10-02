@@ -47,7 +47,7 @@ async function handle_jwt_auth(
 				}
 			)
 		} catch (err) {
-			// TODO: add (saved) logging
+			// TODO: maybe add (saved) logging
 			console.log('jwt errors: ', err)
 			return Response.redirect(
 				new URL('/login', context.request.url),

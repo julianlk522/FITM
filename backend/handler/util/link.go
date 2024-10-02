@@ -23,9 +23,8 @@ func UserHasSubmittedMaxDailyLinks(login_name string) (bool, error) {
 	err := db.Client.QueryRow(fmt.Sprintf(`SELECT count(*)
 		FROM Links
 		WHERE submitted_by = '%s'
-		AND submit_date >= date('now', '-%d days');`, 
-		login_name, 
-		MAX_DAILY_LINKS,
+		AND submit_date >= date('now', '-1 days');`, 
+		login_name,
 	)).Scan(&count)
 	if err != nil {
 		return false, err

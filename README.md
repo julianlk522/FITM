@@ -3,20 +3,16 @@
 ## Todos
 
 In order of importance:
-    1. find some way to cache the stupid github.com/lestrrat-go/httpcc download
-    2. anti-spam/naughty stuff
-    3. refactors
+    1. anti-spam/naughty stuff
+    2. refactors
 
 nice to do:
+- check if any remaining fetches should be wrapped in redirect util
 - some preventative actions in place to prevent spamming
     - probably some way to detect porn/gore and add NSFW tag
         - (and prevent it from being removed)
     - way to report links as NSFW
-
-- change monkey / bradley names
 - update marvel char name tags to be uppercase
-
-- check if any remaining fetches should be wrapped in redirect util
 
 ### Features
 
@@ -119,6 +115,8 @@ nice to do:
     -obtain (get, extract, assign)
     -resolve (take in a possibly incomplete form and translate to a correct form)
     -verify (instead of check, ensure, etc.)
+-find some way to cache Go dependency downloads in GHA workflow
+    -github.com/lestrrat-go/httpcc literally the only one needed...
 -replace spellfix transactions with triggers
     -(that way can make changes over CLI without worrying about unsync)
     -too complicated for now ... workaround might be just resetting on cron job or something though that requires downtime...
