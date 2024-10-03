@@ -28,7 +28,6 @@ In order of importance:
 
 -Purge duplication
 -Simplicity / accuracy
-    -Top Contributors component
     -move tmap cats json above links
     -move contributors queries from query/link.go to query/contributors.go
         -will also allow sharing WHERE_NO_NSFW_CATS between TopLinks / tmap queries

@@ -2,6 +2,7 @@
 import ScrollUp from '../components/ScrollUp.astro'
 import SearchFilters from '../components/Search/Filters'
 import TopCats from '../components/TopCats.astro'
+import TopContributors from '../components/TopContributors.astro'
 import TopLinks from '../components/TopLinks.astro'
 import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
 import BaseLayout from '../layouts/BaseLayout.astro'
@@ -193,27 +194,7 @@ const page_title = (cats ? cats : "Top") + (sort_by !== 'rating' ? " (Newest)" :
 						/>
 					</section>
 
-					<section>
-						<h2>Top Contributors</h2>
-						<ol id="top-contributors">
-							{top_contributors.map(
-								(contributor: Contributor) => (
-									<li>
-										<strong>
-											<a
-												href={`/map/${contributor.LoginName}`}
-											>
-												{contributor.LoginName}
-											</a>
-										</strong>
-										<span>
-											({contributor.LinksSubmitted})
-										</span>
-									</li>
-								)
-							)}
-						</ol>
-					</section>
+					<TopContributors Contributors={top_contributors} />
 
 					<section>
 						<h2>Top Links</h2>

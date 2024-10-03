@@ -1,0 +1,30 @@
+---
+import type { Contributor } from '../types'
+
+interface Props {
+    Contributors: Contributor[]
+}
+const contributors = Astro.props.Contributors
+---
+
+<section>
+    <h2>Top Contributors</h2>
+    <ol id="top-contributors">
+        {contributors.map(
+            (c: Contributor) => (
+                <li>
+                    <strong>
+                        <a
+                            href={`/map/${c.LoginName}`}
+                        >
+                            {c.LoginName}
+                        </a>
+                    </strong>
+                    <span>
+                        ({c.LinksSubmitted})
+                    </span>
+                </li>
+            )
+        )}
+    </ol>
+</section>
