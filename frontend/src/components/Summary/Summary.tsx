@@ -3,11 +3,12 @@ import { SUMMARIES_ENDPOINT } from '../../constants'
 import { is_error_response } from '../../types'
 import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
 import { format_long_date } from '../../util/format_date'
+import { save_action_and_path_then_redirect_to_login } from '../../util/login_redirect'
 import SameUserLikeCount from '../Link/SameUserLikeCount'
 import './Summary.css'
 
 interface Props {
-	ID: number
+	ID: string
 	Text: string
 	SubmittedBy: string
 	LastUpdated: string
@@ -35,10 +36,10 @@ export default function Summary(props: Props) {
 
 	async function handle_like() {
 		if (!token) {
-			const encoded_url = window.location.pathname.replaceAll('/', '%2F')
-			document.cookie = `redirect_to=${encoded_url}; path=/login; max-age=14400; SameSite=strict; Secure;`
-			document.cookie = `redirect_action=like summary ${ID}; path=${window.location.pathname}; max-age=14400; SameSite=strict; Secure`
-			return (window.location.href = '/login')
+			save_action_and_path_then_redirect_to_login({
+				Action: 'like summary',
+				SummaryID: ID,
+			})
 		}
 
 		// like

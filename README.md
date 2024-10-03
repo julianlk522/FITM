@@ -28,9 +28,9 @@ In order of importance:
 
 -Purge duplication
 -Simplicity / accuracy
-    -move tmap cats json above links
     -move contributors queries from query/link.go to query/contributors.go
         -will also allow sharing WHERE_NO_NSFW_CATS between TopLinks / tmap queries
+    -move tmap cats json above links
 -Readability
     -ErrServerFail => Err500 etc.
 -Security
@@ -75,9 +75,6 @@ In order of importance:
     -Fix SQL identifiers to use "" and string literals to use ''
     -duplicate SearchParams dropdown components
         -merge Period / SortBy into same component with unique options set as props
-    -duplicate add_tag funcs (EditTag.tsx, SearchCats.tsx)
-    -duplicate handle_redirect() helpers on tag page / summary page
-    -duplicate redirect_to cookie logic using window.location.pathname
     -duplicate delete modals
         -link, tag, tmap pfp
     -BuildTagPage helper to declutter GetTagPage handler

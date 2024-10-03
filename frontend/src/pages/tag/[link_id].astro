@@ -34,14 +34,8 @@ const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 
 <BaseLayout Title={page_title}>
 	<script>
-		function handle_redirect() {
-			document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=14400; SameSite=strict; Secure`
-			return (window.location.href = '/login')
-		}
-
-		document
-			.getElementById('login-redirect-link')
-			?.addEventListener('click', handle_redirect)
+		import { assign_login_redirect_handler } from '../../util/login_redirect'
+		assign_login_redirect_handler()
 	</script>
 	<main>
 		<section>
