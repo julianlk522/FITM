@@ -12,14 +12,14 @@ export function save_action_and_path_then_redirect_to_login(
 		? redirect_action.LinkID
 		: redirect_action.SummaryID
 
-	document.cookie = `redirect_action=${redirect_action.Action} ${action_target_ID}; path=${window.location.pathname}; max-age=14400; SameSite=strict; Secure`
+	document.cookie = `redirect_action=${redirect_action.Action} ${action_target_ID}; path=${window.location.pathname}; max-age=300; SameSite=strict; Secure`
 
 	return save_path_then_redirect_to_login()
 }
 
 export function save_path_then_redirect_to_login() {
 	// store path to return to after login as cookie
-	document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=14400; SameSite=strict; Secure`
+	document.cookie = `redirect_to=${window.location.pathname.replaceAll('/', '%2F')}; path=/login; max-age=300; SameSite=strict; Secure`
 
 	return (window.location.href = '/login')
 }
