@@ -37,16 +37,17 @@ export default function EditTag(props: Props) {
 		}
 
 		const request_method = tag ? 'PUT' : 'POST'
+		const cats_str = cats.join(',')
+		const payload = tag
+			? { tag_id: tag.ID, cats: cats_str }
+			: { link_id: link_id, cats: cats_str }
 		const resp = await fetch_with_handle_redirect(TAGS_ENDPOINT, {
 			method: request_method,
 			headers: {
 				'Content-Type': 'application/json',
 				Authorization: `Bearer ${token}`,
 			},
-			body: JSON.stringify({
-				link_id: link_id,
-				cats: cats.join(','),
-			}),
+			body: JSON.stringify(payload),
 		})
 		if (!resp.Response || resp.RedirectTo) {
 			return (window.location.href = resp.RedirectTo ?? '/500')
