@@ -1,0 +1,8 @@
+dialog.delete-modal {
+	z-index: 1;
+	background-color: var(--treasurey);
+
+	button:not(:first-of-type) {
+		margin-left: 5px;
+	}
+}

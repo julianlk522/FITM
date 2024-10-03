@@ -7,6 +7,7 @@ import {
 	save_action_and_path_then_redirect_to_login,
 	save_path_then_redirect_to_login,
 } from '../../util/login_redirect'
+import DeleteModal from '../DeleteModal'
 import './Link.css'
 import SameUserLikeCount from './SameUserLikeCount'
 
@@ -410,22 +411,12 @@ export default function Link(props: Props) {
 					</button>
 
 					{show_delete_modal ? (
-						<>
-							{/* delete modal */}
-							<dialog class='delete-link-modal' open>
-								<p>
-									Are you sure you want to remove{' '}
-									<strong>{url}</strong>?
-								</p>
-								<button onClick={handle_delete}>Yes</button>
-								<button
-									autofocus
-									onClick={() => set_show_delete_modal(false)}
-								>
-									Cancel
-								</button>
-							</dialog>
-						</>
+						<DeleteModal
+							Prompt={'Are you sure you want to delete'}
+							DeleteURL={url}
+							HandleDelete={handle_delete}
+							SetShowDeleteModal={set_show_delete_modal}
+						/>
 					) : null}
 				</>
 			) : null}

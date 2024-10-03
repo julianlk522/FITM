@@ -19,13 +19,5 @@ div#profile-pic {
 		button#delete-pfp-btn {
 			margin-left: 5px;
 		}
-
-		dialog#delete-profile-pic-modal {
-			background-color: var(--treasurey);
-
-			button:not(:first-of-type) {
-				margin-left: 5px;
-			}
-		}
 	}
 }

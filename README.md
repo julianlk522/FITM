@@ -73,21 +73,19 @@ In order of importance:
     -500 for server fuckups
 -Other lesser refactors and removal of duplicate code
     -Fix SQL identifiers to use "" and string literals to use ''
-    -duplicate SearchParams dropdown components
-        -merge Period / SortBy into same component with unique options set as props
-    -duplicate delete modals
-        -link, tag, tmap pfp
     -BuildTagPage helper to declutter GetTagPage handler
-    -helpers for DB actions
-        -(new link, new summary, update summary, etc.)
     -os.LookupEnv?
         -not sure if makes any practical difference
     -Ensure backend validation is all in /model unless using additional controller logic, e.g., JWT
     -sync.Once for db singleton?
+    -helpers for DB actions?
+        -(new link, new summary, update summary, etc.)
     -GetCatCountsFromTmapLinks probably possible in all sql
         -actually pretty clunky to achieve (break apart all global/user_cats_fts into words each time)
             -maybe consider revisiting if global/user_cats_fts vocab created for some reason later
         -also not that important since input is limited to user's tmap links, not entire links table. not going to be processing any more than a few hundred or thousand tags at absolute most (and not for a looong time). so perf differential is trivial
+    -merge duplicate SearchParams dropdown components ?
+        -(merge Period / SortBy into same component with unique options set as props)
 -Other tests
     -handler utils
         -TestExtractMetaDataFromGoogleAPIsResponse()

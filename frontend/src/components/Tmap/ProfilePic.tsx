@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks'
 import { TMAP_PFP_ENDPOINT } from '../../constants'
 import { is_error_response } from '../../types'
 import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
+import DeleteModal from '../DeleteModal'
 import './ProfilePic.css'
 
 interface Props {
@@ -157,19 +158,11 @@ export default function ProfilePic(props: Props) {
 					) : null}
 
 					{show_delete_modal ? (
-						<>
-							{/* delete modal */}
-							<dialog id='delete-profile-pic-modal' open>
-								<p>Delete profile pic?</p>
-								<button onClick={handle_delete}>Yes</button>
-								<button
-									autofocus
-									onClick={() => set_show_delete_modal(false)}
-								>
-									Cancel
-								</button>
-							</dialog>
-						</>
+						<DeleteModal
+							Prompt={'Delete profile pic?'}
+							HandleDelete={handle_delete}
+							SetShowDeleteModal={set_show_delete_modal}
+						/>
 					) : null}
 				</form>
 			) : null}

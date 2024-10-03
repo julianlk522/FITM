@@ -4,6 +4,7 @@ import type { Tag } from '../../types'
 import { is_error_response } from '../../types'
 import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
 import { format_long_date } from '../../util/format_date'
+import DeleteModal from '../DeleteModal'
 import SearchCats from '../Search/Cats'
 import './EditTag.css'
 interface Props {
@@ -169,16 +170,11 @@ export default function EditTag(props: Props) {
 			)}
 
 			{show_delete_modal ? (
-				<dialog class='delete-tag-modal' open>
-					<p>Delete your tag?</p>
-					<button onClick={handle_delete}>Yes</button>
-					<button
-						autofocus
-						onClick={() => set_show_delete_modal(false)}
-					>
-						Cancel
-					</button>
-				</dialog>
+				<DeleteModal
+					Prompt={'Delete your tag?'}
+					HandleDelete={handle_delete}
+					SetShowDeleteModal={set_show_delete_modal}
+				/>
 			) : null}
 		</form>
 	)
