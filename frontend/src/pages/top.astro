@@ -3,6 +3,7 @@ import Link from '../components/Link/Link'
 import Pagination from '../components/Pagination.astro'
 import ScrollUp from '../components/ScrollUp.astro'
 import SearchFilters from '../components/Search/Filters'
+import TopCats from '../components/TopCats.astro'
 import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT, LINKS_PAGE_LIMIT } from '../constants'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import {
@@ -188,45 +189,14 @@ const is_only_page =
 		{
 			links && links.length ? (
 				<>
-					{top_cats.length ? (
-						<section>
-							<h2>Top Cats</h2>
-							<ol id='top-cats'>
-								{top_cats.map((cat) => (
-									<li>
-										<a
-											href={`/top?cats=${cat.Category}${period !== 'all' ? `&period=${period}` : ''}${sort_by !== 'rating' ? `&sort_by=newest` : ''}`}
-										>
-											{cat.Category}
-										</a>
-										<span>({cat.Count})</span>
-									</li>
-								))}
-									{top_cats.length === LINKS_PAGE_LIMIT ? <li class="more"><a href="/more">more</a></li> : null}
-							</ol>
-						</section>
-					) : (
-						<section>
-							<h2>Top Subcats</h2>
-							{top_subcats?.length ? (
-								<ol id='top-cats'>
-									{top_subcats.map((subcat) => (
-										<li>
-											<a
-												href={`/top?cats=${cats + ',' + subcat.Category}${period !== 'all' ? `&period=${period}` : ''}${sort_by !== 'rating' ? `&sort_by=newest` : ''}`}
-											>
-												{subcat.Category}
-											</a>
-											<span> ({subcat.Count})</span>
-										</li>
-									))}
-										{top_cats.length === LINKS_PAGE_LIMIT ? <li class="more"><a href="/more">more</a></li> : null}
-								</ol>
-							) : (
-								<p>No further subcats</p>
-							)}
-						</section>
-					)}
+					<section>
+						<TopCats 
+							TopCats={top_cats.length ? top_cats : top_subcats}
+							CatsParams={cats}
+							Period={period}
+							SortBy={sort_by}
+						/>
+					</section>
 
 					<section>
 						<h2>Top Contributors</h2>

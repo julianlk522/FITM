@@ -1,0 +1,76 @@
+---
+import { LINKS_PAGE_LIMIT } from '../constants'
+import type { CatCount, Period, SortMetric } from '../types'
+
+interface Props {
+    TopCats: CatCount[]
+    CatsParams?: string
+    Period?: Period
+    SortBy?: SortMetric
+    More?: boolean
+    IsTmapFromUser?: string
+}
+
+const { TopCats: top_cats, CatsParams: cats_params, Period: period, SortBy: sort_by, More: more, IsTmapFromUser: tmap_owner } = Astro.props
+const is_subcats = cats_params ? true : false
+const endpoint = tmap_owner ? `/map/${tmap_owner}` : "/top"
+---
+
+{top_cats.length ? <>
+    <h2>Top {is_subcats ? "Subcats" : "Cats"}</h2>
+    <ol id="top-cats" class={more ? 'more' : tmap_owner ? 'tmap' : ''}>
+        {
+            top_cats.map((cat) => (
+                <li>
+                    <a
+                        href={endpoint + `?cats=${is_subcats ? cats_params + ',' + cat.Category : cat.Category}${period && period !== 'all' ? `&period=${period}` : ''}${sort_by && sort_by !== 'rating' ? `&sort_by=newest` : ''}`}
+                    >
+                        {cat.Category}
+                    </a>
+                    <span> ({cat.Count})</span>
+                </li>
+            ))
+        }
+        {top_cats.length === LINKS_PAGE_LIMIT ? 
+            <li class="to-more"><a href={is_subcats ? `/more?cats=${cats_params}` : '/more'}>more</a></li> 
+        : null}
+    </ol>
+</> : is_subcats ? <p>No further subcats.</p> : <p>No cats.</p>}
+
+<style>
+    ol#top-cats {
+        li.to-more {
+			list-style-type: none;
+		}
+    }
+    ol#top-cats.tmap {
+        padding: 0.5rem;
+    }
+
+    @media (min-width: 480px) {
+        ol#top-cats {
+            flex-wrap: wrap;
+            max-height: 250px;
+        }
+        ol#top-cats.tmap {
+            max-height: 300px;
+
+            li {
+                max-width: initial;
+            }
+        }
+    }
+    
+    @media (min-width: 680px) {
+        ol#top-cats {
+            margin-bottom: 0;
+
+            li {
+                padding-right: 2rem;
+            }
+        }
+        ol#top-cats.more {
+            max-height: 1280px;
+        }
+    }
+</style>

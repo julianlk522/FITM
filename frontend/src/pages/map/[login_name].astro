@@ -5,6 +5,7 @@ import TagCat from "../../components/Tag/TagCat"
 import AboutText from '../../components/Tmap/AboutText'
 import EditAbout from '../../components/Tmap/EditAbout'
 import ProfilePic from '../../components/Tmap/ProfilePic'
+import TopCats from '../../components/TopCats.astro'
 import { TMAP_ENDPOINT } from '../../constants'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import type { FilteredTreasureMap, Profile, TreasureMap } from '../../types'
@@ -176,25 +177,11 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 				{/* Overview */}
 				<section id='overview' class='flex'>
 					<div>
-						<h2>{cats ? 'Top Subcats' : 'Top Cats'}</h2>
-						{
-							tmap.Cats.length ? (
-								<ol id="top-cats">
-									{tmap.Cats.map((cat) => (
-										<li>
-											<a
-												href={cats ? `/map/${login_name}?cats=${cats},${cat.Category}` : `/map/${login_name}?cats=${cat.Category}`}
-											>
-												{cat.Category}
-											</a>
-											<span>({cat.Count})</span>
-										</li>
-									))}
-								</ol>
-							) : (
-								<p>No further subcats.</p>
-							)
-						}
+						<TopCats
+							TopCats={tmap.Cats}
+							CatsParams={cats}
+							IsTmapFromUser={login_name}
+						/>
 					</div>
 					<div>
 						<h2>Skip to Section</h2>
@@ -308,7 +295,6 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 			padding: 0;
 		}
 
-		#top-cats,
 		#skip-to-link-section {
 			padding: 0.5rem;
 		}
@@ -354,18 +340,8 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 				}
 			}
 		}
-		#overview {
-			#top-cats {
-				max-height: 300px;
-
-				li {
-					max-width: initial;
-				}
-			}
-
-			> * {
-				max-width: 50%;
-			}
+		#overview > * {
+			max-width: 50%;
 		}
 	}
 </style>

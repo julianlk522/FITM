@@ -1,6 +1,7 @@
 ---
 import ScrollUp from "../components/ScrollUp.astro";
 import SearchFilters from "../components/Search/Filters";
+import TopCats from "../components/TopCats.astro";
 import { CATS_ENDPOINT } from "../constants";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { Periods, type CatCount, type Period } from "../types";
@@ -57,19 +58,12 @@ const page_title = (cats ? `${cats} (More)` : "More")
 		/>
 
         {top_cats?.length ? <section>
-            <h2>Top {cats ? "Subcats" : "Cats"}</h2>
-            <ol id='top-cats'>
-                {top_cats.map((cat) => (
-                    <li>
-                        <a
-                            href={`/top?cats=${cat.Category}${period !== 'all' ? `&period=${period}` : ''}`}
-                        >
-                            {cat.Category}
-                        </a>
-                        <span>({cat.Count})</span>
-                    </li>
-                ))}
-            </ol>
+           <TopCats 
+				TopCats={top_cats}
+				CatsParams={cats}
+				Period={period}
+				More
+		   />
         </section> : cats ? <p>No further subcats.</p> : <p>No cats.</p>}
         <ScrollUp />
     </main>
@@ -94,10 +88,4 @@ const page_title = (cats ? `${cats} (More)` : "More")
 	:is(li a, li strong:has(a)):has(+ span) {
 		display: inline-block;
 	}
-
-    @media (min-width: 680px) {
-        ol#top-cats {
-            max-height: 1280px;
-        }
-    }
 </style>
