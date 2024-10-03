@@ -3,7 +3,6 @@
 ## Todos
 
 In order of importance:
-    0. submission limit rule on /new
     1. refactors
         - replace message = liked, message = deleted, etc. with status code 204
     2. anti-spam/naughty stuff
