@@ -26,8 +26,9 @@ type Profile = {
 }
 
 // LINK
+// TODO: evaluate if null needed or just use optional properties
 type Link = {
-	ID: number
+	ID: string
 	URL: string
 	SubmittedBy: string
 	SubmitDate: string
@@ -54,7 +55,7 @@ type SortMetric = (typeof SortMetrics)[number]
 
 // TAG
 type Tag = {
-	ID: number
+	ID: string
 	Cats: string
 	SubmittedBy: string
 	LastUpdated: string
@@ -81,7 +82,7 @@ type Contributor = {
 
 // SUMMARY
 type Summary = {
-	ID: number
+	ID: string
 	Text: string
 	SubmittedBy: string
 	LastUpdated: string
