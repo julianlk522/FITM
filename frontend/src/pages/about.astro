@@ -53,9 +53,8 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 
 			<h3 class="subsection">Summarize</h3>
 			<p>
-				Every link added to FITM has a summary page where any user can
-				submit their summary of its content. Summaries can be upvoted,
-				making the most liked ones the most visible.
+				Every added link has a summary page where any user can
+				submit their summary of its content. Summaries can be upvoted to help the most liked ones stay most visible.
 			</p>
 			<p>
 				A link's top summary will be shown above its URL at all times to
@@ -77,8 +76,8 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 			</p>
 			<p>
 				Liking allows great content to filter to the top of searches,
-				allowing other users&mdash;even those who don't know to check your
-				Treasure Map&mdash;to find it easily.
+				so that all users&mdash;even those who don't know to check your
+				Treasure Map&mdash;can find it easily.
 			</p>
 
 			<h3 id="tags" class="subsection">Tag</h3>
@@ -191,11 +190,11 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 			</ul>
 
 			<h3 id="retrieving-metadata" class="subsection">Retrieving Metadata</h3>
-			<p>FITM employs <em>very limited</em> use of automated website scraping in order to fetch metadata for submitted links. This includes a description (AKA "Auto Summary") and a preview image, which come from <a href="https://ogp.me/">Open Graph</a> properties and other meta tags in a page's HTML head. FITM data collection can be identified by requests coming from the <strong>FITM-Bot</strong> user agent.</p>
+			<p>FITM employs <em>very limited</em> use of automated website scraping in order to fetch metadata for submitted links. This includes a description (AKA "Auto Summary") and a preview image, which come from <a href="https://ogp.me/">Open Graph</a> properties and other meta tags in a page's HTML head. FITM metadata collection can be identified by requests coming from the <strong>FITM-Bot</strong> user agent.</p>
 
 			<p>A max of 1-3 automated requests go out to each URL added here (FITM-Bot tries a couple times with different protocol prefixes, e.g., "https://" and "http://", if the first request fails). The goal is <em>not</em> to maliciously harvest other online material. It is ultimately to promote appreciation for good, public Internet sites by making them more visible. This automated scraping helps to cut down on link submission friction and pair links with eye-catching visuals, which should help encourage sharing and finding those sites here.</p>
 
-			<p><strong>Anyone can have their domain added to a non-scrape list upon request, with no further questions</strong>. Please send an email to <a href="mailto:fitm-contact@proton.me">fitm-contact@proton.me</a> if you'd like that. Frankly, though, it would be a strange decision. Bot traffic is minimal, and the point of sites being on FITM is to help them get more human visitors. If you don't want visitors, why make the site public in the first place?</p>
+			<p><strong>Anyone can have their domain added to a non-scrape list upon request, with no further questions</strong>. Please send an email to <a href="mailto:fitm-contact@proton.me">fitm-contact@proton.me</a> if you'd like that. Frankly though, it would be a strange decision. Bot traffic is minimal, and the point of sites being on FITM is to help them get more human visitors. If you don't want visitors, why make the site public in the first place?</p>
 		</section>
 
 		<ScrollUp />

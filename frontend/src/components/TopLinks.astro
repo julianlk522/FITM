@@ -1,0 +1,56 @@
+---
+import { LINKS_PAGE_LIMIT } from '../constants'
+import * as types from '../types'
+import Link from './Link/Link'
+import Pagination from './Pagination.astro'
+
+interface Props {
+    Links: types.Link[]
+    Period?: types.Period
+    Token?: string
+    User?: string
+    Page?: number
+    NextPage: number
+}
+const { Links: links, Token: token, User: user, Page: page, NextPage: next_page, Period: period } = Astro.props
+const is_only_page = next_page && next_page === -1
+---
+
+<>
+    {is_only_page ? null : <Pagination
+        Period={period ?? 'month'}
+        Page={page ?? 1}
+        NextPage={next_page}
+    />}
+    
+    <ol id='top-links' start={page ? (page - 1) * LINKS_PAGE_LIMIT + 1 : ''}>
+        {links.map((link) => (
+            <Link
+                client:load
+                Link={link}
+                CatsFromUser={link.TagCount === 1 && link.SubmittedBy === user
+                    ? user
+                    : undefined
+                }
+                Token={token}
+                User={user}
+            />
+        ))}
+    </ol>
+
+    {is_only_page ? null : <Pagination
+        Period={period ?? 'month'}
+        Page={page ?? 1}
+        NextPage={next_page}
+    />}
+</>
+
+<style>
+    #top-links {
+        max-width: calc(100% - 1rem);
+        margin: 0;
+        margin-top: 0.5rem;
+        margin-left: auto;
+        padding: 0;
+    }
+</style>

@@ -1,10 +1,9 @@
 ---
-import Link from '../components/Link/Link'
-import Pagination from '../components/Pagination.astro'
 import ScrollUp from '../components/ScrollUp.astro'
 import SearchFilters from '../components/Search/Filters'
 import TopCats from '../components/TopCats.astro'
-import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT, LINKS_PAGE_LIMIT } from '../constants'
+import TopLinks from '../components/TopLinks.astro'
+import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import {
 Periods,
@@ -168,10 +167,6 @@ if (links && links.length) {
 
 const page_title = (cats ? cats : "Top") + (sort_by !== 'rating' ? " (Newest)" : " (Rating)")
 
-const is_only_page = 
-	page === 1
-	&& data.NextPage === -1
-
 ---
 
 <BaseLayout Title='Top Links / Cats / Contributors'>
@@ -223,34 +218,14 @@ const is_only_page =
 					<section>
 						<h2>Top Links</h2>
 
-						{is_only_page ? null : <Pagination 
+						<TopLinks 
+							Links={links}
 							Period={period}
 							Page={page}
 							NextPage={data.NextPage}
-						/>}
-
-						<ol id='top-links' start={(page - 1) * LINKS_PAGE_LIMIT + 1}>
-							{links.map((link) => (
-								<Link
-									client:load
-									Link={link}
-									CatsFromUser={link.TagCount === 1 && link.SubmittedBy === user 
-										? user 
-										: undefined
-									}
-									Token={token}
-									User={user}
-								/>
-							))}
-						</ol>
-
-						{data.NextPage > 0 ? (
-							<Pagination
-								Period={period}
-								Page={page}
-								NextPage={data.NextPage}
-							/>
-						) : null}
+							Token={token}
+							User={user}
+						/>
 					</section>
 
 					<ScrollUp />

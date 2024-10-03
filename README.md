@@ -12,7 +12,7 @@ In order of importance:
 
 -little things
     - list number of NSFW links next to tmap toggle
-    - replace index.astro <img> with background-image styling
+    - replace index.astro / feedback.astro <img>s with background-image styling
 
 ### Features
 
@@ -28,7 +28,7 @@ In order of importance:
 
 -Purge duplication
 -Simplicity / accuracy
-    -Top Links / etc. components
+    -Top Contributors component
     -move tmap cats json above links
     -move contributors queries from query/link.go to query/contributors.go
         -will also allow sharing WHERE_NO_NSFW_CATS between TopLinks / tmap queries

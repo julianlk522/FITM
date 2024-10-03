@@ -1,8 +1,7 @@
 ---
-import Link from '../components/Link/Link'
-import Pagination from '../components/Pagination.astro'
 import ScrollUp from '../components/ScrollUp.astro'
 import TopCats from '../components/TopCats.astro'
+import TopLinks from '../components/TopLinks.astro'
 import { CATS_ENDPOINT, CONTRIBUTORS_ENDPOINT, LINKS_ENDPOINT } from '../constants'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { Periods, type CatCount, type Contributor, type PaginatedLinks } from '../types'
@@ -45,9 +44,6 @@ const data: PaginatedLinks = await get_links_resp.Response.json()
 const links = data.Links
 
 const other_periods = Periods.filter((other) => other !== 'month')
-
-// Pagination
-const is_only_page = data.NextPage === -1
 ---
 
 <BaseLayout Title='Welcome to FITM: The Flexible Internet Treasure Map'>
@@ -98,36 +94,14 @@ const is_only_page = data.NextPage === -1
 				}
 			</ol>
 
-			{is_only_page ? null : <Pagination 
-				Period="month"
-				Page={1}
+			<TopLinks 
+				Links={links}
 				NextPage={data.NextPage}
-			/>}
-
-			<ol id='top-links'>
-				{
-					links.map((link) => (
-						<Link
-							client:load
-							Link={link}
-							CatsFromUser={
-								link.TagCount === 1 && link.SubmittedBy === user 
-									? user 
-									: undefined
-							}
-							Token={token}
-							User={user}
-						/>
-					))
-				}
-			</ol>
-
-			{is_only_page ? null : <Pagination 
-				Period="month"
-				Page={1}
-				NextPage={data.NextPage}
-			/>}
+				Token={token}
+				User={user}
+			/>
 		</section>
+		
 		<ScrollUp />
 	</main>
 </BaseLayout>
