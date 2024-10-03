@@ -4,7 +4,6 @@
 
 In order of importance:
     1. refactors
-        - replace message = liked, message = deleted, etc. with status code 204
     2. anti-spam/naughty stuff
         - way to report links as NSFW
         - probably some way to detect porn/gore and add NSFW tag
@@ -77,6 +76,7 @@ In order of importance:
     -e.g., tag page for invalid link id returns 500 (should be 404)
     -205 for successful logins/forms that require reload
     -500 for server fuckups
+    -make sure not just using log.Fatal where there should be status
 -Other lesser refactors and removal of duplicate code
     -Fix SQL identifiers to use "" and string literals to use ''
     -BuildTagPage helper to declutter GetTagPage handler

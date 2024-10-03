@@ -7,8 +7,6 @@ import (
 
 	"net/http"
 
-	"github.com/go-chi/render"
-
 	"github.com/julianlk522/fitm/db"
 	e "github.com/julianlk522/fitm/error"
 	m "github.com/julianlk522/fitm/middleware"
@@ -209,11 +207,6 @@ func UserHasLikedSummary(user_id string, summary_id string) (bool, error) {
 	}
 
 	return summary_like_id.Valid, nil
-}
-
-func RenderDeleted(w http.ResponseWriter, r *http.Request) {
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]string{"message": "deleted"})
 }
 
 // Calculate global summary

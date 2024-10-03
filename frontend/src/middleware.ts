@@ -114,10 +114,7 @@ async function handle_redirect_action(
 	})
 
 	if (resp.status !== 200) {
-		// not a big deal if the redirect action fails. some sites don't do it by default.
-		// but would be nice to try to understand what went wrong.
-
-		// TODO: maybe add (saved) logging
+		// TODO: maybe add saved logging
 		console.error('redirect action failed')
 	} else {
 		// cleanup cookie if successful

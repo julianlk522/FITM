@@ -320,7 +320,7 @@ func DeleteLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	w.WriteHeader(http.StatusResetContent)
 }
 
 func LikeLink(w http.ResponseWriter, r *http.Request) {
@@ -350,14 +350,10 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 		req_user_id,
 	)
 	if err != nil {
-		log.Fatal(err)
+		render.Render(w, r, e.ErrServerFail(err))
 	}
 
-	like_link_data := make(map[string]string, 1)
-	like_link_data["ID"] = new_like_id
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, like_link_data)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func UnlikeLink(w http.ResponseWriter, r *http.Request) {
@@ -382,8 +378,7 @@ func UnlikeLink(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]string{"message": "deleted"})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func CopyLink(w http.ResponseWriter, r *http.Request) {
@@ -419,12 +414,7 @@ func CopyLink(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	return_json := map[string]string{
-		"ID": new_copy_id,
-	}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, return_json)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func UncopyLink(w http.ResponseWriter, r *http.Request) {
@@ -451,10 +441,5 @@ func UncopyLink(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	return_json := map[string]string{
-		"message": "deleted",
-	}
-
-	render.JSON(w, r, return_json)
-	render.Status(r, http.StatusNoContent)
+	w.WriteHeader(http.StatusNoContent)
 }

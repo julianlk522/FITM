@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks'
 import { SUMMARIES_ENDPOINT } from '../../constants'
 import { is_error_response } from '../../types'
 import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
+import { save_path_then_redirect_to_login } from '../../util/login_redirect'
 import './NewSummary.css'
 
 interface Props {
@@ -14,8 +15,13 @@ export default function NewSummary(props: Props) {
 
 	const [error, set_error] = useState<string | undefined>(undefined)
 
+	const expected_submit_status = 201
 	async function handle_submit(event: SubmitEvent, token: string) {
 		event.preventDefault()
+
+		if (!token) {
+			save_path_then_redirect_to_login()
+		}
 
 		const form = event.target as HTMLFormElement
 		const formData = new FormData(form)
@@ -36,27 +42,20 @@ export default function NewSummary(props: Props) {
 			}
 		)
 		if (!new_summary_resp.Response || new_summary_resp.RedirectTo) {
-			if (new_summary_resp.RedirectTo === '/login') {
-				document.cookie = `redirect_to=${window.location.pathname.replaceAll(
-					'/',
-					'%2F'
-				)}; path=/login; max-age=14400; SameSite=strict; Secure`
-			}
-
 			return (window.location.href =
 				new_summary_resp.RedirectTo ?? '/500')
+		} else if (
+			new_summary_resp.Response.status !== expected_submit_status
+		) {
+			const new_summary_data = await new_summary_resp.Response.json()
+			if (is_error_response(new_summary_data)) {
+				set_error(new_summary_data.error)
+				return
+			}
+			return console.error('Whoops: ', new_summary_data)
 		}
-		let new_summary_data = await new_summary_resp.Response.json()
 
-		if (is_error_response(new_summary_data)) {
-			set_error(new_summary_data.error)
-			return
-		} else {
-			form.reset()
-			window.location.reload()
-		}
-
-		return
+		return window.location.reload()
 	}
 
 	return (

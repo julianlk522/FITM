@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks'
 import { LINKS_ENDPOINT } from '../../constants'
 import * as types from '../../types'
+import { is_error_response } from '../../types'
 import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
 import { format_long_date } from '../../util/format_date'
 import {
@@ -73,6 +74,8 @@ export default function Link(props: Props) {
 					? `${submitted_by}'s tag`
 					: 'global tag'
 	tag_attribution += ` (${tag_count})`
+
+	// TODO: refactor
 	const cats_html =
 		is_tmap_page && cats_from_user
 			? split_cats?.map((cat, i) => {
@@ -105,6 +108,7 @@ export default function Link(props: Props) {
 					}
 				})
 
+	const expected_like_or_copy_action_status = 204
 	async function handle_like() {
 		if (!token) {
 			save_action_and_path_then_redirect_to_login({
@@ -114,6 +118,7 @@ export default function Link(props: Props) {
 		}
 
 		// like
+		// TODO: refactor
 		if (!is_liked) {
 			const like_resp = await fetch_with_handle_redirect(
 				LINKS_ENDPOINT + `/${id}/like`,
@@ -127,15 +132,20 @@ export default function Link(props: Props) {
 			)
 			if (!like_resp.Response || like_resp.RedirectTo) {
 				return (window.location.href = like_resp.RedirectTo ?? '/500')
+			} else if (
+				like_resp.Response.status !==
+				expected_like_or_copy_action_status
+			) {
+				const like_data = await like_resp.Response.json()
+				if (is_error_response(like_data)) {
+					return console.error('Whoops: ', like_data.error)
+				}
+				return console.error('Whoops: ', like_data)
 			}
-			const like_data = await like_resp.Response.json()
-			if (like_data.ID) {
-				set_is_liked(true)
-				set_like_count(like_count + 1)
-				return
-			} else {
-				console.error('Whoops: ', like_data)
-			}
+
+			set_is_liked(true)
+			set_like_count((prev) => prev + 1)
+			return
 
 			// unlike
 		} else {
@@ -151,15 +161,20 @@ export default function Link(props: Props) {
 			)
 			if (!unlike_resp.Response || unlike_resp.RedirectTo) {
 				return (window.location.href = unlike_resp.RedirectTo ?? '/500')
+			} else if (
+				unlike_resp.Response.status !==
+				expected_like_or_copy_action_status
+			) {
+				const unlike_data = await unlike_resp.Response.json()
+				if (is_error_response(unlike_data)) {
+					return console.error('Whoops: ', unlike_data.error)
+				}
+				return console.error('Whoops: ', unlike_data)
 			}
-			const unlike_data = await unlike_resp.Response.json()
-			if (unlike_data.message === 'deleted') {
-				set_is_liked(false)
-				set_like_count(like_count - 1)
-				return
-			} else {
-				console.error('Whoops: ', unlike_data)
-			}
+
+			set_is_liked(false)
+			set_like_count((prev) => prev - 1)
+			return
 		}
 	}
 
@@ -172,6 +187,7 @@ export default function Link(props: Props) {
 		}
 
 		// copy
+		// TODO: refactor
 		if (!is_copied) {
 			const copy_resp = await fetch_with_handle_redirect(
 				LINKS_ENDPOINT + `/${id}/copy`,
@@ -185,14 +201,19 @@ export default function Link(props: Props) {
 			)
 			if (!copy_resp.Response || copy_resp.RedirectTo) {
 				return (window.location.href = copy_resp.RedirectTo ?? '/500')
+			} else if (
+				copy_resp.Response.status !==
+				expected_like_or_copy_action_status
+			) {
+				const copy_data = await copy_resp.Response.json()
+				if (is_error_response(copy_data)) {
+					return console.error('Whoops: ', copy_data.error)
+				}
+				return console.error('Whoops: ', copy_data)
 			}
-			const copy_data = await copy_resp.Response.json()
-			if (copy_data.ID) {
-				set_is_copied(true)
-				return
-			} else {
-				console.error('Whoops: ', copy_data)
-			}
+
+			set_is_copied(true)
+			return
 
 			// uncopy
 		} else {
@@ -208,17 +229,23 @@ export default function Link(props: Props) {
 			)
 			if (!uncopy_resp.Response || uncopy_resp.RedirectTo) {
 				return (window.location.href = uncopy_resp.RedirectTo ?? '/500')
+			} else if (
+				uncopy_resp.Response.status !==
+				expected_like_or_copy_action_status
+			) {
+				const uncopy_data = await uncopy_resp.Response.json()
+				if (is_error_response(uncopy_data)) {
+					return console.error('Whoops: ', uncopy_data.error)
+				}
+				return console.error('Whoops: ', uncopy_data)
 			}
-			const uncopy_data = await uncopy_resp.Response.json()
-			if (uncopy_data.message === 'deleted') {
-				set_is_copied(false)
-				return
-			} else {
-				console.error('Whoops: ', uncopy_data)
-			}
+
+			set_is_copied(false)
+			return
 		}
 	}
 
+	const expected_delete_action_status = 205
 	async function handle_delete() {
 		if (!token) {
 			save_path_then_redirect_to_login()
@@ -237,16 +264,17 @@ export default function Link(props: Props) {
 		})
 		if (!delete_resp.Response || delete_resp.RedirectTo) {
 			return (window.location.href = delete_resp.RedirectTo ?? '/500')
+		} else if (
+			delete_resp.Response.status !== expected_delete_action_status
+		) {
+			const delete_data = await delete_resp.Response.json()
+			if (is_error_response(await delete_data)) {
+				return console.error('Whoops: ', delete_data.error)
+			}
+			return console.error('Whoops: ', delete_resp.Response)
 		}
 
-		const expected_status = 204
-		if (delete_resp.Response.status !== expected_status) {
-			console.error('WHOOPS: ', delete_resp)
-			return
-		}
-
-		// reload if successful
-		window.location.reload()
+		return window.location.reload()
 	}
 
 	return (

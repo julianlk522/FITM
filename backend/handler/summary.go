@@ -127,8 +127,7 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, summary_data)
+	w.WriteHeader(http.StatusCreated)
 }
 
 func DeleteSummary(w http.ResponseWriter, r *http.Request) {
@@ -184,7 +183,7 @@ func DeleteSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	util.RenderDeleted(w, r)
+	w.WriteHeader(http.StatusResetContent)
 }
 
 func LikeSummary(w http.ResponseWriter, r *http.Request) {
@@ -267,8 +266,7 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]string{"message": "liked"})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
@@ -330,5 +328,5 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	util.RenderDeleted(w, r)
+	w.WriteHeader(http.StatusNoContent)
 }
