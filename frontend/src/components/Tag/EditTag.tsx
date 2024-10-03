@@ -5,7 +5,7 @@ import { is_error_response } from '../../types'
 import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
 import { format_long_date } from '../../util/format_date'
 import DeleteModal from '../DeleteModal'
-import SearchCats from '../Search/Cats'
+import SearchCats from '../SearchFilters/Cats'
 import './EditTag.css'
 interface Props {
 	LinkID: string

@@ -12,7 +12,13 @@ In order of importance:
 
 -little things
     - list number of NSFW links next to tmap toggle
-    - replace index.astro / feedback.astro <img>s with background-image styling
+    - move inline SVGs to astro components
+    - give static assets simple names that make sense
+    - replace index.astro / feedback.astro <img>s with background-image styling\
+    - convert cornucopia to .webp
+
+-maybe
+    - move SameUserLikeCount.tsx / AboutText.tsx to .astro since never interactive
 
 ### Features
 

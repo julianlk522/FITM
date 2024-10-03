@@ -3,7 +3,7 @@ import { LINKS_ENDPOINT } from '../../constants'
 import * as types from '../../types'
 import { is_error_response } from '../../types'
 import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
-import SearchCats from '../Search/Cats'
+import SearchCats from '../SearchFilters/Cats'
 import NewLink from './NewLink'
 import './NewLinks.css'
 interface Props {
