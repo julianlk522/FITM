@@ -11,9 +11,6 @@ In order of importance:
         - probably some way to detect porn/gore and add NSFW tag
             - (and prevent it from being removed)
 
-nice to do:
-- update marvel char name tags to be uppercase
-
 ### Features
 
 -Pagination

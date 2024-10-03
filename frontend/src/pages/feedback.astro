@@ -1,5 +1,8 @@
 ---
+import { Image } from "astro:assets"
+import fitm_island from '../../public/fitm-island.webp'
 import NoFooter from "../layouts/NoFooter.astro"
+
 ---
 
 <NoFooter Title="Leave Feedback for FITM">
@@ -9,6 +12,16 @@ import NoFooter from "../layouts/NoFooter.astro"
 			<p>If you have an opinion about how FITM could be better, please email <a href='mailto:fitm-contact@proton.me'>fitm-contact@proton.me</a> to share it. </p>
 			<p>Your comments are appreciated and any suggestions will be considered in the next round of updates.</p>
 			<p>Thanks for stopping by!</p>
+		<Image id="fitm-island" src={fitm_island} title="an island with a chest of web treasure" alt='an island with a chest of web treasure' />
+
 		</section>
 	</main>
 </NoFooter>
+
+<style>
+	#fitm-island {
+		max-height: 350px;
+		display: block;
+		margin: 0 auto;
+	}
+</style>
