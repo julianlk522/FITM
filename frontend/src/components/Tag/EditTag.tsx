@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks'
 import { TAGS_ENDPOINT } from '../../constants'
 import type { Tag } from '../../types'
 import { is_error_response } from '../../types'
+import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
 import { format_long_date } from '../../util/format_date'
 import SearchCats from '../Search/Cats'
 import './EditTag.css'
@@ -35,50 +36,34 @@ export default function EditTag(props: Props) {
 			return (window.location.href = '/login')
 		}
 
-		let resp: Response
-
-		// new tag
-		if (!tag) {
-			resp = await fetch(TAGS_ENDPOINT, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`,
-				},
-				body: JSON.stringify({
-					link_id: link_id,
-					cats: cats.join(','),
-				}),
-			})
-
-			// edit tag
-		} else {
-			resp = await fetch(TAGS_ENDPOINT, {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`,
-				},
-				body: JSON.stringify({
-					tag_id: tag.ID,
-					cats: cats.join(','),
-				}),
-			})
+		const request_method = tag ? 'PUT' : 'POST'
+		const resp = await fetch_with_handle_redirect(TAGS_ENDPOINT, {
+			method: request_method,
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify({
+				link_id: link_id,
+				cats: cats.join(','),
+			}),
+		})
+		if (!resp.Response || resp.RedirectTo) {
+			return (window.location.href = resp.RedirectTo ?? '/500')
 		}
 
-		if (resp.status !== 200 && resp.status !== 201) {
-			console.error(resp)
+		const expected_status = tag ? 200 : 201
+		if (resp.Response.status !== expected_status) {
+			console.error('WHOOPS: ', resp)
+
+			const tag_data = await resp.Response.json()
+			if (is_error_response(tag_data)) {
+				return set_error(tag_data.error)
+			}
 		}
 
-		const edit_tag_data = await resp.json()
-
-		if (is_error_response(edit_tag_data)) {
-			set_error(edit_tag_data.error)
-			return
-		}
-
-		// reload if successful
-		window.location.reload()
+		// success: reload
+		return window.location.reload()
 	}
 
 	async function handle_delete() {
@@ -94,7 +79,7 @@ export default function EditTag(props: Props) {
 			return (window.location.href = '/login')
 		}
 
-		const delete_resp = await fetch(TAGS_ENDPOINT, {
+		const delete_resp = await fetch_with_handle_redirect(TAGS_ENDPOINT, {
 			method: 'DELETE',
 			headers: {
 				'Content-Type': 'application/json',
@@ -102,15 +87,22 @@ export default function EditTag(props: Props) {
 			},
 			body: JSON.stringify({ tag_id: tag.ID }),
 		})
-		if (is_error_response(delete_resp) || delete_resp.status !== 204) {
-			console.error(delete_resp)
-			const err_msg = await delete_resp.json()
-			set_error(err_msg.error)
-			return
+		if (!delete_resp.Response || delete_resp.RedirectTo) {
+			return (window.location.href = delete_resp.RedirectTo ?? '/500')
 		}
 
-		// reload if successful
-		window.location.reload()
+		const expected_status = 204
+		if (delete_resp.Response.status !== expected_status) {
+			console.error('WHOOPS: ', delete_resp)
+
+			const delete_tag_data = await delete_resp.Response.json()
+			if (is_error_response(delete_tag_data)) {
+				return set_error(delete_tag_data.error)
+			}
+		}
+
+		// success: reload
+		return window.location.reload()
 	}
 
 	return (

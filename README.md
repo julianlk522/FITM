@@ -3,15 +3,15 @@
 ## Todos
 
 In order of importance:
-    1. anti-spam/naughty stuff
-    2. refactors
+    0. submission limit rule on /new
+    1. refactors
+        - replace message = liked, message = deleted, etc. with status code 204
+    2. anti-spam/naughty stuff
+        - way to report links as NSFW
+        - probably some way to detect porn/gore and add NSFW tag
+            - (and prevent it from being removed)
 
 nice to do:
-- check if any remaining fetches should be wrapped in redirect util
-- some preventative actions in place to prevent spamming
-    - probably some way to detect porn/gore and add NSFW tag
-        - (and prevent it from being removed)
-    - way to report links as NSFW
 - update marvel char name tags to be uppercase
 
 ### Features
@@ -62,7 +62,6 @@ nice to do:
 
 ### Code Quality
 
--find way to cache github.com/lestrrat-go/httpcc in GHA workflow
 -Look into broken auto og:image
     -e.g., coolers.co image should not have been added with invalid link
     -https://rss.com/blog/how-do-rss-feeds-work/
@@ -71,7 +70,6 @@ nice to do:
 -Ensure accurate / helpful http response codes
     -start by making sure all ErrInvalidRequests are actually that
     -e.g., tag page for invalid link id returns 500 (should be 404)
-    -replace "message":"deleted" with just 204
     -205 for successful logins/forms that require reload
     -500 for server fuckups
 -Other lesser refactors and removal of duplicate code

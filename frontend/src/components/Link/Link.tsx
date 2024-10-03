@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks'
 import { LINKS_ENDPOINT } from '../../constants'
 import * as types from '../../types'
+import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
 import { format_long_date } from '../../util/format_date'
 import './Link.css'
 import SameUserLikeCount from './SameUserLikeCount'
@@ -111,38 +112,50 @@ export default function Link(props: Props) {
 
 		// like
 		if (!is_liked) {
-			const like_resp = await fetch(LINKS_ENDPOINT + `/${id}/like`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`,
-				},
-			})
-			const like_data = await like_resp.json()
+			const like_resp = await fetch_with_handle_redirect(
+				LINKS_ENDPOINT + `/${id}/like`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+				}
+			)
+			if (!like_resp.Response || like_resp.RedirectTo) {
+				return (window.location.href = like_resp.RedirectTo ?? '/500')
+			}
+			const like_data = await like_resp.Response.json()
 			if (like_data.ID) {
 				set_is_liked(true)
 				set_like_count(like_count + 1)
 				return
 			} else {
-				console.error('WTF is this: ', like_data)
+				console.error('Whoops: ', like_data)
 			}
 
 			// unlike
 		} else {
-			const unlike_resp = await fetch(LINKS_ENDPOINT + `/${id}/like`, {
-				method: 'DELETE',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`,
-				},
-			})
-			const unlike_data = await unlike_resp.json()
+			const unlike_resp = await fetch_with_handle_redirect(
+				LINKS_ENDPOINT + `/${id}/like`,
+				{
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+				}
+			)
+			if (!unlike_resp.Response || unlike_resp.RedirectTo) {
+				return (window.location.href = unlike_resp.RedirectTo ?? '/500')
+			}
+			const unlike_data = await unlike_resp.Response.json()
 			if (unlike_data.message === 'deleted') {
 				set_is_liked(false)
 				set_like_count(like_count - 1)
 				return
 			} else {
-				console.error('WTF is this: ', unlike_data)
+				console.error('Whoops: ', unlike_data)
 			}
 		}
 	}
@@ -159,36 +172,48 @@ export default function Link(props: Props) {
 
 		// copy
 		if (!is_copied) {
-			const copy_resp = await fetch(LINKS_ENDPOINT + `/${id}/copy`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`,
-				},
-			})
-			const copy_data = await copy_resp.json()
+			const copy_resp = await fetch_with_handle_redirect(
+				LINKS_ENDPOINT + `/${id}/copy`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+				}
+			)
+			if (!copy_resp.Response || copy_resp.RedirectTo) {
+				return (window.location.href = copy_resp.RedirectTo ?? '/500')
+			}
+			const copy_data = await copy_resp.Response.json()
 			if (copy_data.ID) {
 				set_is_copied(true)
 				return
 			} else {
-				console.error('WTF is this: ', copy_data)
+				console.error('Whoops: ', copy_data)
 			}
 
 			// uncopy
 		} else {
-			const uncopy_resp = await fetch(LINKS_ENDPOINT + `/${id}/copy`, {
-				method: 'DELETE',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`,
-				},
-			})
-			const uncopy_data = await uncopy_resp.json()
+			const uncopy_resp = await fetch_with_handle_redirect(
+				LINKS_ENDPOINT + `/${id}/copy`,
+				{
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+				}
+			)
+			if (!uncopy_resp.Response || uncopy_resp.RedirectTo) {
+				return (window.location.href = uncopy_resp.RedirectTo ?? '/500')
+			}
+			const uncopy_data = await uncopy_resp.Response.json()
 			if (uncopy_data.message === 'deleted') {
 				set_is_copied(false)
 				return
 			} else {
-				console.error('WTF is this: ', uncopy_data)
+				console.error('Whoops: ', uncopy_data)
 			}
 		}
 	}
@@ -206,7 +231,7 @@ export default function Link(props: Props) {
 			return
 		}
 
-		const delete_resp = await fetch(LINKS_ENDPOINT, {
+		const delete_resp = await fetch_with_handle_redirect(LINKS_ENDPOINT, {
 			method: 'DELETE',
 			headers: {
 				'Content-Type': 'application/json',
@@ -214,8 +239,13 @@ export default function Link(props: Props) {
 			},
 			body: JSON.stringify({ link_id: id }),
 		})
-		if (delete_resp.status !== 204) {
-			console.error('WTF is this: ', delete_resp)
+		if (!delete_resp.Response || delete_resp.RedirectTo) {
+			return (window.location.href = delete_resp.RedirectTo ?? '/500')
+		}
+
+		const expected_status = 204
+		if (delete_resp.Response.status !== expected_status) {
+			console.error('WHOOPS: ', delete_resp)
 			return
 		}
 

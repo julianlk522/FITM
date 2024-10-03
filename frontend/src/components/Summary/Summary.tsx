@@ -1,5 +1,7 @@
 import { useState } from 'preact/hooks'
 import { SUMMARIES_ENDPOINT } from '../../constants'
+import { is_error_response } from '../../types'
+import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
 import { format_long_date } from '../../util/format_date'
 import SameUserLikeCount from '../Link/SameUserLikeCount'
 import './Summary.css'
@@ -41,39 +43,51 @@ export default function Summary(props: Props) {
 
 		// like
 		if (!is_liked) {
-			const like_resp = await fetch(like_api_url, {
+			const like_resp = await fetch_with_handle_redirect(like_api_url, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${token}`,
 				},
 			})
-			const like_data = await like_resp.json()
-			if (like_data.message === 'liked') {
+			if (!like_resp.Response || like_resp.RedirectTo) {
+				return (window.location.href = like_resp.RedirectTo ?? '/500')
+			}
+			const like_data = await like_resp.Response.json()
+			if (is_error_response(like_data)) {
+				return set_error(like_data.error)
+			} else if (like_data.message === 'liked') {
 				set_is_liked(true)
 				set_like_count(like_count + 1)
 				return
 			} else {
-				console.error('WTF is this: ', like_data)
+				return console.error('Whoops: ', like_data)
 			}
 
 			// unlike
 		} else {
-			const unlike_resp = await fetch(like_api_url, {
+			const unlike_resp = await fetch_with_handle_redirect(like_api_url, {
 				method: 'DELETE',
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${token}`,
 				},
 			})
-			const unlike_data = await unlike_resp.json()
-			if (unlike_data.message === 'deleted') {
+			if (!unlike_resp.Response || unlike_resp.RedirectTo) {
+				return (window.location.href = unlike_resp.RedirectTo ?? '/500')
+			}
+
+			const unlike_data = await unlike_resp.Response.json()
+			if (is_error_response(unlike_data)) {
+				return set_error(unlike_data.error)
+			} else if (unlike_data.message === 'deleted') {
 				set_is_liked(false)
 				set_like_count(like_count - 1)
-				return
 			} else {
-				console.error('WTF is this: ', unlike_data)
+				return console.error('Whoops: ', unlike_data)
 			}
+
+			return
 		}
 	}
 
@@ -81,19 +95,28 @@ export default function Summary(props: Props) {
 		if (!token) {
 			return (window.location.href = '/login')
 		}
-		const delete_resp = await fetch(SUMMARIES_ENDPOINT, {
-			method: 'DELETE',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`,
-			},
-			body: JSON.stringify({ summary_id: ID }),
-		})
-		const delete_data = await delete_resp.json()
-		if (delete_data.message === 'deleted') {
+		const delete_resp = await fetch_with_handle_redirect(
+			SUMMARIES_ENDPOINT,
+			{
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify({ summary_id: ID }),
+			}
+		)
+		if (!delete_resp.Response || delete_resp.RedirectTo) {
+			return (window.location.href = delete_resp.RedirectTo ?? '/500')
+		}
+
+		const delete_data = await delete_resp.Response.json()
+		if (is_error_response(delete_data)) {
+			return set_error(delete_data.error)
+		} else if (delete_data.message === 'deleted') {
 			return window.location.reload()
 		} else {
-			set_error(delete_data.error)
+			return console.error('Whoops: ', delete_data)
 		}
 	}
 	return (
