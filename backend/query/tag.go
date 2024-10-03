@@ -204,7 +204,7 @@ func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
 
 	// escape periods
 	// (not required for MATCH clause but required for NOT IN)
-	cats = GetCatsWithEscapedPeriods(cats)
+	cats = GetCatsWithEscapedChars(cats)
 
 	match_clause := fmt.Sprintf(`WHERE global_cats MATCH '%s`, match_cats[0])
 	for i := 1; i < len(match_cats); i++ {

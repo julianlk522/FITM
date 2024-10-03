@@ -302,7 +302,7 @@ func NewContributors() *Contributors {
 const CONTRIBUTORS_CATS_FROM = `INNER JOIN CatsFilter f ON l.id = f.link_id`
 
 func (c *Contributors) FromCats(cats []string) *Contributors {
-	cats = GetCatsWithEscapedPeriods(cats)
+	cats = GetCatsWithEscapedChars(cats)
 
 	clause := fmt.Sprintf("WHERE global_cats MATCH '%s", cats[0])
 	for i := 1; i < len(cats); i++ {
