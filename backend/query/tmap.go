@@ -324,7 +324,7 @@ AND l.id NOT IN
 	(SELECT link_id FROM UserCopies)`
 
 func (q *TmapTagged) FromCats(cats []string) *TmapTagged {
-	escaped := GetCatsWithEscapedPeriods(cats)
+	escaped := GetCatsWithEscapedChars(cats)
 	var cat_clause string
 	for _, cat := range escaped {
 		cat_clause += fmt.Sprintf(
@@ -378,7 +378,7 @@ func (q *TmapTagged) NSFW() *TmapTagged {
 }
 
 func FromUserOrGlobalCats(q string, cats []string) string {
-	escaped := GetCatsWithEscapedPeriods(cats)
+	escaped := GetCatsWithEscapedChars(cats)
 	var cat_match string
 	cat_match += fmt.Sprintf("'%s", escaped[0])
 	for i := 1; i < len(escaped); i++ {

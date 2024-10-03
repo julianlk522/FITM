@@ -31,9 +31,11 @@ func GetPeriodClause(period string) (clause string, err error) {
 }
 
 func GetCatsWithEscapedChars(cats []string) []string {
-	pers := GetCatsWithEscapedPeriods(cats)
-	pers_fslshs := GetCatsWithEscapedForwardSlashes(pers)
-	return pers_fslshs
+	no_pers := GetCatsWithEscapedPeriods(cats)
+	no_forward_slashes := GetCatsWithEscapedForwardSlashes(no_pers)
+	no_hyphens := GetCatsWithEscapedHyphens(no_forward_slashes)
+
+	return no_hyphens
 }
 
 func GetCatsWithEscapedPeriods(cats []string) []string {
@@ -54,6 +56,19 @@ func GetCatsWithEscapedForwardSlashes(cats []string) []string {
 	for i := 0; i < len(cats); i++ {
 		if strings.Contains(cats[i], "/") {
 			escaped = append(escaped, strings.ReplaceAll(cats[i], `/`, `"/"`))
+		} else {
+			escaped = append(escaped, cats[i])
+		}
+	}
+
+	return escaped
+}
+
+func GetCatsWithEscapedHyphens(cats []string) []string {
+	var escaped []string
+	for i := 0; i < len(cats); i++ {
+		if strings.Contains(cats[i], "-") {
+			escaped = append(escaped, strings.ReplaceAll(cats[i], `-`, `"-"`))
 		} else {
 			escaped = append(escaped, cats[i])
 		}

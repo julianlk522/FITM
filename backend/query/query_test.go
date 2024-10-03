@@ -25,8 +25,8 @@ func TestGetCatsWithEscapedChars(t *testing.T) {
 		Cats            []string
 		ExpectedResults []string
 	}{
-		Cats:            []string{"slash/slash/slash", "c. vi.per"},
-		ExpectedResults: []string{`slash"/"slash"/"slash`, `c"." vi"."per`},
+		Cats:            []string{"slash/slash/slash", "c. vi.per", "hsien-ko"},
+		ExpectedResults: []string{`slash"/"slash"/"slash`, `c"." vi"."per`, `hsien"-"ko`},
 	}
 
 	got := GetCatsWithEscapedChars(test_cats.Cats)
@@ -64,6 +64,23 @@ func TestGetCatsWithEscapedForwardSlashes(t *testing.T) {
 	}
 
 	got := GetCatsWithEscapedForwardSlashes(test_cats.Cats)
+	for i, res := range got {
+		if res != test_cats.ExpectedResults[i] {
+			t.Fatalf("got %s, want %s", got, test_cats.ExpectedResults)
+		}
+	}
+}
+
+func TestGetCatsWithEscapedHyphens(t *testing.T) {
+	var test_cats = struct {
+		Cats            []string
+		ExpectedResults []string
+	}{
+		Cats:            []string{"cat-with-hyphens", "hsien-ko"},
+		ExpectedResults: []string{`cat"-"with"-"hyphens`, `hsien"-"ko`},
+	}
+
+	got := GetCatsWithEscapedHyphens(test_cats.Cats)
 	for i, res := range got {
 		if res != test_cats.ExpectedResults[i] {
 			t.Fatalf("got %s, want %s", got, test_cats.ExpectedResults)
