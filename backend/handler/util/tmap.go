@@ -111,10 +111,10 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	}
 
 	sections := &model.TmapSections[T]{
+		Cats:      cat_counts,
 		Submitted: submitted,
 		Copied:    copied,
 		Tagged:    tagged,
-		Cats:      cat_counts,
 	}
 
 	if has_cat_filter {

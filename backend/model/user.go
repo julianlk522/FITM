@@ -86,10 +86,10 @@ type EditProfilePicRequest struct {
 
 // TREASURE MAP
 type TmapSections[T TmapLink | TmapLinkSignedIn] struct {
+	Cats      *[]CatCount
 	Submitted *[]T
 	Tagged    *[]T
 	Copied    *[]T
-	Cats      *[]CatCount
 }
 
 type Tmap[T TmapLink | TmapLinkSignedIn] struct {

@@ -33,7 +33,6 @@ In order of importance:
 
 -Purge duplication
 -Simplicity / accuracy
-    -move tmap cats json above links
 -Readability
     -ErrServerFail => Err500 etc.
 -Security
