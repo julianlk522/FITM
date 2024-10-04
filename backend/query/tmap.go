@@ -18,7 +18,7 @@ WHERE login_name = '%s';`, login_name)
 }
 
 // LINKS
-const BASE_CTES = `SummaryCount AS (
+const TMAP_BASE_CTES = `SummaryCount AS (
     SELECT link_id, COUNT(*) AS summary_count
     FROM Summaries
     GROUP BY link_id
@@ -65,20 +65,7 @@ const USER_COPIES_CTE = `UserCopies AS (
     WHERE u.login_name = 'LOGIN_NAME'
 )`
 
-const AUTH_CTES = `IsLiked AS (
-	SELECT link_id, COUNT(*) AS is_liked
-	FROM "Link Likes"
-	WHERE user_id = 'REQ_USER_ID'
-	GROUP BY id
-),
-IsCopied AS (
-	SELECT link_id, COUNT(*) AS is_copied
-	FROM "Link Copies"
-	WHERE user_id = 'REQ_USER_ID'
-	GROUP BY id
-)`
-
-const BASE_FIELDS = `
+const TMAP_BASE_FIELDS = `
 SELECT 
 	l.id AS link_id,
     l.url,
@@ -92,34 +79,41 @@ SELECT
     COALESCE(tc.tag_count, 0) AS tag_count,
     COALESCE(l.img_url, '') AS img_url`
 
-const AUTH_FIELDS = `, 
-	COALESCE(is_liked,0) as is_liked, 
-	COALESCE(is_copied,0) as is_copied`
+const TMAP_FROM = LINKS_FROM
 
-const FROM = `FROM Links l`
-
-const BASE_JOINS = `
+const TMAP_BASE_JOINS = `
 LEFT JOIN PossibleUserCats puc ON l.id = puc.link_id
 LEFT JOIN PossibleUserSummary pus ON l.id = pus.link_id
 LEFT JOIN TagCount tc ON l.id = tc.link_id
 LEFT JOIN LikeCount lc ON l.id = lc.link_id
 LEFT JOIN SummaryCount sc ON l.id = sc.link_id`
 
-const GLOBAL_CATS_JOIN = "LEFT JOIN GlobalCatsFTS gc ON l.id = gc.link_id"
+const TMAP_NO_NSFW_CATS_WHERE = LINKS_NO_NSFW_CATS_WHERE
 
-const COPIED_JOIN = "INNER JOIN UserCopies uc ON l.id = uc.link_id"
+const TMAP_ORDER_BY = `
+ORDER BY lc.like_count DESC, sc.summary_count DESC, l.id DESC;`
 
-const AUTH_JOINS = `
-LEFT JOIN IsLiked il ON l.id = il.link_id
-LEFT JOIN IsCopied ic ON l.id = ic.link_id`
-
-const NO_NSFW_CATS_WHERE = `
-WHERE l.id NOT IN (
-	SELECT link_id FROM global_cats_fts WHERE global_cats MATCH 'NSFW'
+// Authenticated
+const TMAP_AUTH_CTES = `IsLiked AS (
+	SELECT link_id, COUNT(*) AS is_liked
+	FROM "Link Likes"
+	WHERE user_id = 'REQ_USER_ID'
+	GROUP BY id
+),
+IsCopied AS (
+	SELECT link_id, COUNT(*) AS is_copied
+	FROM "Link Copies"
+	WHERE user_id = 'REQ_USER_ID'
+	GROUP BY id
 )`
 
-const ORDER = `
-ORDER BY lc.like_count DESC, sc.summary_count DESC, l.id DESC;`
+const TMAP_AUTH_FIELDS = `, 
+	COALESCE(is_liked,0) as is_liked, 
+	COALESCE(is_copied,0) as is_copied`
+
+const TMAP_AUTH_JOINS = `
+	LEFT JOIN IsLiked il ON l.id = il.link_id
+	LEFT JOIN IsCopied ic ON l.id = ic.link_id`
 
 // Submitted links (global cats replaced with user-assigned)
 type TmapSubmitted struct {
@@ -129,15 +123,16 @@ type TmapSubmitted struct {
 func NewTmapSubmitted(login_name string) *TmapSubmitted {
 	q := &TmapSubmitted{
 		Query: Query{
-			Text: "WITH " + BASE_CTES + ",\n" +
+			Text: 
+				"WITH " + TMAP_BASE_CTES + ",\n" +
 				POSSIBLE_USER_CATS_CTE + ",\n" +
 				POSSIBLE_USER_SUMMARY_CTE +
-				BASE_FIELDS + "\n" +
-				FROM +
-				BASE_JOINS +
-				NO_NSFW_CATS_WHERE +
+				TMAP_BASE_FIELDS +
+				TMAP_FROM +
+				TMAP_BASE_JOINS +
+				TMAP_NO_NSFW_CATS_WHERE +
 				SUBMITTED_WHERE +
-				ORDER,
+				TMAP_ORDER_BY,
 		},
 	}
 	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
@@ -157,9 +152,9 @@ func (q *TmapSubmitted) AsSignedInUser(req_user_id string, req_login_name string
 
 	// 2 replacers required: cannot be achieved with 1 since REQ_USER_ID/REQ_LOGIN_NAME replacements must be applied to auth fields/from _after_ they are inserted
 	fields_replacer := strings.NewReplacer(
-		BASE_CTES, BASE_CTES+",\n"+AUTH_CTES,
-		BASE_FIELDS, BASE_FIELDS+AUTH_FIELDS,
-		BASE_JOINS, BASE_JOINS+AUTH_JOINS,
+		TMAP_BASE_CTES, TMAP_BASE_CTES+",\n"+TMAP_AUTH_CTES,
+		TMAP_BASE_FIELDS, TMAP_BASE_FIELDS+TMAP_AUTH_FIELDS,
+		TMAP_BASE_JOINS, TMAP_BASE_JOINS+TMAP_AUTH_JOINS,
 	)
 	auth_replacer := strings.NewReplacer(
 		"REQ_USER_ID", req_user_id,
@@ -177,7 +172,7 @@ func (q *TmapSubmitted) NSFW() *TmapSubmitted {
 	// remove NSFW clause
 	q.Text = strings.Replace(
 		q.Text,
-		NO_NSFW_CATS_WHERE,
+		TMAP_NO_NSFW_CATS_WHERE,
 		"",
 		1,
 	)
@@ -201,22 +196,24 @@ func NewTmapCopied(login_name string) *TmapCopied {
 	q := &TmapCopied{
 		Query: Query{
 			Text: "WITH " + USER_COPIES_CTE + ",\n" +
-				BASE_CTES + ",\n" +
+				TMAP_BASE_CTES + ",\n" +
 				POSSIBLE_USER_CATS_CTE + ",\n" +
 				POSSIBLE_USER_SUMMARY_CTE +
-				BASE_FIELDS + "\n" +
-				FROM + "\n" +
+				TMAP_BASE_FIELDS +
+				TMAP_FROM + "\n" +
 				COPIED_JOIN +
-				BASE_JOINS +
-				NO_NSFW_CATS_WHERE +
+				TMAP_BASE_JOINS +
+				TMAP_NO_NSFW_CATS_WHERE +
 				COPIED_WHERE +
-				ORDER,
+				TMAP_ORDER_BY,
 		},
 	}
 	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
 
 	return q
 }
+
+const COPIED_JOIN = "INNER JOIN UserCopies uc ON l.id = uc.link_id"
 
 const COPIED_WHERE = ` 
 AND submitted_by != 'LOGIN_NAME'`
@@ -228,9 +225,9 @@ func (q *TmapCopied) FromCats(cats []string) *TmapCopied {
 
 func (q *TmapCopied) AsSignedInUser(req_user_id string, req_login_name string) *TmapCopied {
 	fields_replacer := strings.NewReplacer(
-		BASE_CTES, BASE_CTES+",\n"+AUTH_CTES,
-		BASE_FIELDS, BASE_FIELDS+AUTH_FIELDS,
-		COPIED_JOIN, COPIED_JOIN+AUTH_JOINS,
+		TMAP_BASE_CTES, TMAP_BASE_CTES+",\n"+TMAP_AUTH_CTES,
+		TMAP_BASE_FIELDS, TMAP_BASE_FIELDS+TMAP_AUTH_FIELDS,
+		COPIED_JOIN, COPIED_JOIN+TMAP_AUTH_JOINS,
 	)
 	auth_replacer := strings.NewReplacer(
 		"REQ_USER_ID", req_user_id,
@@ -248,7 +245,7 @@ func (q *TmapCopied) NSFW() *TmapCopied {
 	// remove NSFW clause
 	q.Text = strings.Replace(
 		q.Text,
-		NO_NSFW_CATS_WHERE,
+		TMAP_NO_NSFW_CATS_WHERE,
 		"",
 		1,
 	)
@@ -271,16 +268,16 @@ type TmapTagged struct {
 func NewTmapTagged(login_name string) *TmapTagged {
 	q := &TmapTagged{
 		Query: Query{
-			Text: "WITH " + BASE_CTES + ",\n" +
+			Text: "WITH " + TMAP_BASE_CTES + ",\n" +
 				USER_CATS_CTE + ",\n" +
 				POSSIBLE_USER_SUMMARY_CTE + ",\n" +
 				USER_COPIES_CTE +
-				TAGGED_FIELDS + "\n" +
-				FROM +
+				TAGGED_FIELDS +
+				TMAP_FROM +
 				TAGGED_JOINS +
-				NO_NSFW_CATS_WHERE +
+				TMAP_NO_NSFW_CATS_WHERE +
 				TAGGED_WHERE +
-				ORDER,
+				TMAP_ORDER_BY,
 		},
 	}
 
@@ -296,7 +293,7 @@ const USER_CATS_CTE = `UserCats AS (
 
 var TAGGED_FIELDS = strings.Replace(
 	strings.Replace(
-		BASE_FIELDS,
+		TMAP_BASE_FIELDS,
 		"COALESCE(puc.user_cats, l.global_cats) AS cats",
 		"uct.user_cats",
 		1,
@@ -307,7 +304,7 @@ var TAGGED_FIELDS = strings.Replace(
 )
 
 var TAGGED_JOINS = strings.Replace(
-	BASE_JOINS,
+	TMAP_BASE_JOINS,
 	"LEFT JOIN PossibleUserCats puc ON l.id = puc.link_id",
 	"INNER JOIN UserCats uct ON l.id = uct.link_id",
 	1,
@@ -333,8 +330,8 @@ func (q *TmapTagged) FromCats(cats []string) *TmapTagged {
 
 	q.Text = strings.Replace(
 		q.Text,
-		ORDER,
-		cat_clause+ORDER,
+		TMAP_ORDER_BY,
+		cat_clause+TMAP_ORDER_BY,
 		1,
 	)
 	return q
@@ -342,9 +339,9 @@ func (q *TmapTagged) FromCats(cats []string) *TmapTagged {
 
 func (q *TmapTagged) AsSignedInUser(req_user_id string, req_login_name string) *TmapTagged {
 	fields_replacer := strings.NewReplacer(
-		BASE_CTES, BASE_CTES+",\n"+AUTH_CTES,
-		TAGGED_FIELDS, TAGGED_FIELDS+AUTH_FIELDS,
-		TAGGED_JOINS, TAGGED_JOINS+AUTH_JOINS,
+		TMAP_BASE_CTES, TMAP_BASE_CTES+",\n"+TMAP_AUTH_CTES,
+		TAGGED_FIELDS, TAGGED_FIELDS+TMAP_AUTH_FIELDS,
+		TAGGED_JOINS, TAGGED_JOINS+TMAP_AUTH_JOINS,
 	)
 	auth_replacer := strings.NewReplacer(
 		"REQ_USER_ID", req_user_id,
@@ -362,7 +359,7 @@ func (q *TmapTagged) NSFW() *TmapTagged {
 	// remove NSFW clause
 	q.Text = strings.Replace(
 		q.Text,
-		NO_NSFW_CATS_WHERE,
+		TMAP_NO_NSFW_CATS_WHERE,
 		"",
 		1,
 	)
@@ -402,15 +399,15 @@ func FromUserOrGlobalCats(q string, cats []string) string {
 	)
 	q = strings.Replace(
 		q,
-		BASE_FIELDS,
-		",\n"+gc_CTE+BASE_FIELDS,
+		TMAP_BASE_FIELDS,
+		",\n"+gc_CTE+TMAP_BASE_FIELDS,
 		1,
 	)
 
 	q = strings.Replace(
 		q,
-		BASE_JOINS,
-		BASE_JOINS+"\n"+GLOBAL_CATS_JOIN,
+		TMAP_BASE_JOINS,
+		TMAP_BASE_JOINS+"\n"+GLOBAL_CATS_JOIN,
 		1,
 	)
 
@@ -422,10 +419,12 @@ func FromUserOrGlobalCats(q string, cats []string) string {
 )`
 	q = strings.Replace(
 		q,
-		ORDER,
-		and_clause+ORDER,
+		TMAP_ORDER_BY,
+		and_clause+TMAP_ORDER_BY,
 		1,
 	)
 
 	return q
 }
+
+const GLOBAL_CATS_JOIN = "LEFT JOIN GlobalCatsFTS gc ON l.id = gc.link_id"

@@ -11,7 +11,6 @@ import (
 	"github.com/julianlk522/fitm/model"
 )
 
-// Links
 func Test_PaginateLimitClause(t *testing.T) {
 	var test_cases = []struct {
 		Page int
@@ -299,33 +298,6 @@ func TestAsSignedInUser(t *testing.T) {
 	}
 }
 
-func TestPage(t *testing.T) {
-	var links_sql = NewTopLinks()
-
-	want1 := strings.Replace(links_sql.Text, LINKS_UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT+1), 1)
-	want2 := strings.Replace(links_sql.Text, LINKS_UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, LINKS_PAGE_LIMIT), 1)
-	want3 := strings.Replace(links_sql.Text, LINKS_UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, 2*LINKS_PAGE_LIMIT), 1)
-
-	var test_cases = []struct {
-		Page int
-		Want string
-	}{
-		{0, links_sql.Text},
-		{1, want1},
-		{2, want2},
-		{3, want3},
-	}
-
-	for _, tc := range test_cases {
-		got := links_sql.Page(tc.Page).Text
-		if got != tc.Want {
-			t.Fatalf("input page %d, got %s, want %s", tc.Page, got, tc.Want)
-		}
-
-		links_sql = NewTopLinks()
-	}
-}
-
 func TestNSFW(t *testing.T) {
 	links_sql := NewTopLinks().NSFW()
 	// no opportunity for links_sql.Error to have been set
@@ -408,125 +380,29 @@ func TestNSFW(t *testing.T) {
 	}
 }
 
-// Contributors
-func TestNewContributors(t *testing.T) {
-	contributors_sql := NewContributors()
-	if contributors_sql.Error != nil {
-		t.Fatal(contributors_sql.Error)
-	}
+func TestPage(t *testing.T) {
+	var links_sql = NewTopLinks()
 
-	rows, err := TestClient.Query(contributors_sql.Text)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer rows.Close()
+	want1 := strings.Replace(links_sql.Text, LINKS_UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT+1), 1)
+	want2 := strings.Replace(links_sql.Text, LINKS_UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, LINKS_PAGE_LIMIT), 1)
+	want3 := strings.Replace(links_sql.Text, LINKS_UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, 2*LINKS_PAGE_LIMIT), 1)
 
-	cols, err := rows.ColumnTypes()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(cols) == 0 {
-		t.Fatal("no columns")
-	} else if len(cols) != 2 {
-		t.Fatalf("wrong columns (got %d, want 2)", len(cols))
-	}
-
-	var test_cols = []struct {
+	var test_cases = []struct {
+		Page int
 		Want string
 	}{
-		{"count"},
-		{"submitted_by"},
+		{0, links_sql.Text},
+		{1, want1},
+		{2, want2},
+		{3, want3},
 	}
 
-	for i, col := range cols {
-		if col.Name() != test_cols[i].Want {
-			t.Fatalf("column %d: got %s, want %s", i, col.Name(), test_cols[i].Want)
-		}
-	}
-}
-
-func TestContributorsFromCats(t *testing.T) {
-	contributors_sql := NewContributors().FromCats(
-		[]string{
-			"umvc3",
-			"c. viper",
-		},
-	)
-
-	// ensure "." properly escaped
-	if strings.Contains(contributors_sql.Text, ".") && !strings.Contains(contributors_sql.Text, `"."`) {
-		t.Fatal("failed to escape period in cat 'c. viper'")
-	}
-
-	contributors_sql.Text = strings.Replace(
-		contributors_sql.Text,
-		`SELECT
-count(l.id) as count, l.submitted_by
-FROM Links l`,
-		`SELECT
-count(l.id) as count, l.global_cats
-FROM Links l`,
-		1)
-
-	rows, err := TestClient.Query(contributors_sql.Text)
-	if err != nil && err != sql.ErrNoRows {
-		t.Fatal(err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var cat, count string
-		if err := rows.Scan(&count, &cat); err != nil {
-			t.Fatal(err)
-		} else if !strings.Contains(strings.ToLower(cat), "umvc3") {
-			t.Fatalf("got %s, should contain %s", cat, "umvc3")
-		}
-	}
-}
-
-func TestContributorsDuringPeriod(t *testing.T) {
-	var test_periods = [7]struct {
-		Period string
-		Valid  bool
-	}{
-		{"day", true},
-		{"week", true},
-		{"month", true},
-		{"year", true},
-		{"all", false},
-		{"shouldfail", false},
-	}
-
-	// Period only
-	for _, period := range test_periods {
-		contributors_sql := NewContributors().DuringPeriod(period.Period)
-		if period.Valid && contributors_sql.Error != nil {
-			t.Fatal(contributors_sql.Error)
-		} else if !period.Valid && contributors_sql.Error == nil {
-			t.Fatalf("expected error for period %s", period.Period)
+	for _, tc := range test_cases {
+		got := links_sql.Page(tc.Page).Text
+		if got != tc.Want {
+			t.Fatalf("input page %d, got %s, want %s", tc.Page, got, tc.Want)
 		}
 
-		rows, err := TestClient.Query(contributors_sql.Text)
-		if err != nil && err != sql.ErrNoRows {
-			t.Fatal(err)
-		}
-		defer rows.Close()
-	}
-
-	// Period and Cats
-	for _, period := range test_periods {
-		contributors_sql := NewContributors().DuringPeriod(period.Period).FromCats([]string{"umvc3"})
-		if period.Valid && contributors_sql.Error != nil {
-			t.Fatal(contributors_sql.Error)
-		} else if !period.Valid && contributors_sql.Error == nil {
-			t.Fatalf("expected error for period %s", period.Period)
-		}
-
-		rows, err := TestClient.Query(contributors_sql.Text)
-		if err != nil && err != sql.ErrNoRows {
-			t.Fatal(err)
-		}
-		defer rows.Close()
+		links_sql = NewTopLinks()
 	}
 }

@@ -5,27 +5,25 @@ import (
 	"strings"
 )
 
-const (
-	LINKS_PAGE_LIMIT        = 20
-	CONTRIBUTORS_PAGE_LIMIT = 10
-)
-
-// Links
-var LINKS_UNPAGINATED_LIMIT_CLAUSE = fmt.Sprintf(
-	` 
-	LIMIT %d;`,
-	LINKS_PAGE_LIMIT,
-)
-
-func _PaginateLimitClause(page int) string {
-	if page == 1 {
-		return fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT+1)
-	}
-	return fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, (page-1)*LINKS_PAGE_LIMIT)
-}
+const LINKS_PAGE_LIMIT = 20
 
 type TopLinks struct {
 	Query
+}
+
+func NewTopLinks() *TopLinks {
+	return (&TopLinks{
+		Query: Query{
+			Text: 
+				LINKS_BASE_CTES +
+				LINKS_BASE_FIELDS +
+				LINKS_FROM +
+				LINKS_BASE_JOINS +
+				LINKS_NO_NSFW_CATS_WHERE +
+				LINKS_ORDER_BY +
+				LINKS_UNPAGINATED_LIMIT_CLAUSE,
+		},
+	})
 }
 
 const LINKS_BASE_CTES = `WITH LikeCount AS (
@@ -98,20 +96,6 @@ ORDER BY
     like_count DESC, 
     summary_count DESC, 
     l.id DESC`
-
-func NewTopLinks() *TopLinks {
-	return (&TopLinks{
-		Query: Query{
-			Text: LINKS_BASE_CTES +
-				LINKS_BASE_FIELDS +
-				LINKS_FROM +
-				LINKS_BASE_JOINS +
-				LINKS_NO_NSFW_CATS_WHERE +
-				LINKS_ORDER_BY +
-				LINKS_UNPAGINATED_LIMIT_CLAUSE,
-		},
-	})
-}
 
 func (l *TopLinks) FromCats(cats []string) *TopLinks {
 	if len(cats) == 0 || cats[0] == "" {
@@ -275,88 +259,15 @@ func (l *TopLinks) Page(page int) *TopLinks {
 	return l
 }
 
-// Cats contributors (single or multiple cats)
-type Contributors struct {
-	Query
-}
-
-const CONTRIBUTORS_FIELDS = `SELECT
-count(l.id) as count, l.submitted_by
-FROM Links l`
-
-var CONTRIBUTORS_GBOBL = fmt.Sprintf(
+var LINKS_UNPAGINATED_LIMIT_CLAUSE = fmt.Sprintf(
 	` 
-	GROUP BY l.submitted_by
-	ORDER BY count DESC, l.submitted_by ASC
-	LIMIT %d;`, CONTRIBUTORS_PAGE_LIMIT,
+	LIMIT %d;`,
+	LINKS_PAGE_LIMIT,
 )
 
-func NewContributors() *Contributors {
-	return (&Contributors{
-		Query: Query{
-			Text: CONTRIBUTORS_FIELDS + CONTRIBUTORS_GBOBL,
-		},
-	})
-}
-
-const CONTRIBUTORS_CATS_FROM = `INNER JOIN CatsFilter f ON l.id = f.link_id`
-
-func (c *Contributors) FromCats(cats []string) *Contributors {
-	cats = GetCatsWithEscapedChars(cats)
-
-	clause := fmt.Sprintf("WHERE global_cats MATCH '%s", cats[0])
-	for i := 1; i < len(cats); i++ {
-		clause += fmt.Sprintf(" AND %s", cats[i])
+func _PaginateLimitClause(page int) string {
+	if page == 1 {
+		return fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT+1)
 	}
-	clause += "'"
-
-	// build CTE
-	cats_cte := fmt.Sprintf(
-		`WITH CatsFilter AS (
-	SELECT link_id
-	FROM global_cats_fts
-	%s
-		)`, clause,
-	)
-
-	// prepend CTE
-	c.Text = strings.Replace(
-		c.Text,
-		CONTRIBUTORS_FIELDS,
-		cats_cte+"\n"+CONTRIBUTORS_FIELDS,
-		1)
-
-	// append join
-	c.Text = strings.Replace(
-		c.Text,
-		CONTRIBUTORS_FIELDS,
-		CONTRIBUTORS_FIELDS+"\n"+CONTRIBUTORS_CATS_FROM,
-		1,
-	)
-
-	return c
-}
-
-func (c *Contributors) DuringPeriod(period string) *Contributors {
-	clause, err := GetPeriodClause(period)
-	if err != nil {
-		c.Error = err
-		return c
-	}
-
-	clause = strings.Replace(
-		clause,
-		"submit_date",
-		"l.submit_date",
-		1,
-	)
-
-	// Prepend new clause
-	c.Text = strings.Replace(
-		c.Text,
-		CONTRIBUTORS_GBOBL,
-		"\n"+"WHERE "+clause+CONTRIBUTORS_GBOBL,
-		1)
-
-	return c
+	return fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, (page-1)*LINKS_PAGE_LIMIT)
 }
