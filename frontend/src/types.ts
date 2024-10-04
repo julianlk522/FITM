@@ -26,14 +26,13 @@ type Profile = {
 }
 
 // LINK
-// TODO: evaluate if null needed or just use optional properties
 type Link = {
 	ID: string
 	URL: string
 	SubmittedBy: string
 	SubmitDate: string
-	Cats: string | null
-	Summary: string | null
+	Cats: string
+	Summary?: string
 	SummaryCount: number
 	TagCount: number
 	ImgURL?: string

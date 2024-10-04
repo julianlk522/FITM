@@ -43,56 +43,31 @@ export default function Summary(props: Props) {
 			})
 		}
 
-		// like
-		if (!is_liked) {
-			const like_resp = await fetch_with_handle_redirect(like_api_url, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`,
-				},
-			})
-			if (!like_resp.Response || like_resp.RedirectTo) {
-				return (window.location.href = like_resp.RedirectTo ?? '/500')
-			} else if (
-				like_resp.Response.status !== expected_like_action_status
-			) {
-				const like_data = await like_resp.Response.json()
-				if (is_error_response(like_data)) {
-					return set_error(like_data.error)
-				}
-				return console.error('Whoops: ', like_data)
+		const resp = await fetch_with_handle_redirect(like_api_url, {
+			method: is_liked ? 'DELETE' : 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+		})
+		if (!resp.Response || resp.RedirectTo) {
+			return (window.location.href = resp.RedirectTo ?? '/500')
+		} else if (resp.Response.status !== expected_like_action_status) {
+			const data = await resp.Response.json()
+			if (is_error_response(data)) {
+				return set_error(data.error)
 			}
+			return console.error('Whoops: ', data)
+		}
 
-			set_is_liked(true)
-			set_like_count((prev) => prev + 1)
-			return
-
-			// unlike
-		} else {
-			const unlike_resp = await fetch_with_handle_redirect(like_api_url, {
-				method: 'DELETE',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`,
-				},
-			})
-			if (!unlike_resp.Response || unlike_resp.RedirectTo) {
-				return (window.location.href = unlike_resp.RedirectTo ?? '/500')
-			} else if (
-				unlike_resp.Response.status !== expected_like_action_status
-			) {
-				const unlike_data = await unlike_resp.Response.json()
-				if (is_error_response(unlike_data)) {
-					return set_error(unlike_data.error)
-				}
-				return console.error('Whoops: ', unlike_data)
-			}
-
+		if (is_liked) {
 			set_is_liked(false)
 			set_like_count((prev) => prev - 1)
-			return
+		} else {
+			set_is_liked(true)
+			set_like_count((prev) => prev + 1)
 		}
+		return
 	}
 
 	const expected_delete_action_status = 205

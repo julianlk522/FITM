@@ -43,6 +43,8 @@ export default function Link(props: Props) {
 		ImgURL: saved_img_url,
 	} = props.Link
 
+	const is_your_link = user && submitted_by === user
+
 	const [is_copied, set_is_copied] = useState(props.Link.IsCopied)
 	const [is_liked, set_is_liked] = useState(props.Link.IsLiked)
 	const [like_count, set_like_count] = useState(props.Link.LikeCount)
@@ -62,52 +64,6 @@ export default function Link(props: Props) {
 		}
 	}, [saved_img_url])
 
-	const is_your_link = user && submitted_by === user
-
-	const split_cats = cats?.split(',')
-	let tag_attribution =
-		cats && user && cats_from_user === user
-			? 'your tag'
-			: cats_from_user
-				? `${cats_from_user}'s tag`
-				: tag_count === 1
-					? `${submitted_by}'s tag`
-					: 'global tag'
-	tag_attribution += ` (${tag_count})`
-
-	// TODO: refactor
-	const cats_html =
-		is_tmap_page && cats_from_user
-			? split_cats?.map((cat, i) => {
-					if (i === split_cats.length - 1) {
-						return (
-							<a href={`/map/${cats_from_user}?cats=${cat}`}>
-								{cat}
-							</a>
-						)
-					} else {
-						return (
-							<span>
-								<a href={`/map/${cats_from_user}?cats=${cat}`}>
-									{cat}
-								</a>
-								,{' '}
-							</span>
-						)
-					}
-				})
-			: split_cats?.map((cat, i) => {
-					if (i === split_cats.length - 1) {
-						return <a href={`/top?cats=${cat}`}>{cat}</a>
-					} else {
-						return (
-							<span>
-								<a href={`/top?cats=${cat}`}>{cat}</a>,{' '}
-							</span>
-						)
-					}
-				})
-
 	const expected_like_or_copy_action_status = 204
 	async function handle_like() {
 		if (!token) {
@@ -117,65 +73,37 @@ export default function Link(props: Props) {
 			})
 		}
 
-		// like
-		// TODO: refactor
-		if (!is_liked) {
-			const like_resp = await fetch_with_handle_redirect(
-				LINKS_ENDPOINT + `/${id}/like`,
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`,
-					},
-				}
-			)
-			if (!like_resp.Response || like_resp.RedirectTo) {
-				return (window.location.href = like_resp.RedirectTo ?? '/500')
-			} else if (
-				like_resp.Response.status !==
-				expected_like_or_copy_action_status
-			) {
-				const like_data = await like_resp.Response.json()
-				if (is_error_response(like_data)) {
-					return console.error('Whoops: ', like_data.error)
-				}
-				return console.error('Whoops: ', like_data)
+		const resp = await fetch_with_handle_redirect(
+			LINKS_ENDPOINT + `/${id}/like`,
+			{
+				method: is_liked ? 'DELETE' : 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`,
+				},
 			}
-
-			set_is_liked(true)
-			set_like_count((prev) => prev + 1)
-			return
-
-			// unlike
-		} else {
-			const unlike_resp = await fetch_with_handle_redirect(
-				LINKS_ENDPOINT + `/${id}/like`,
-				{
-					method: 'DELETE',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`,
-					},
-				}
-			)
-			if (!unlike_resp.Response || unlike_resp.RedirectTo) {
-				return (window.location.href = unlike_resp.RedirectTo ?? '/500')
-			} else if (
-				unlike_resp.Response.status !==
-				expected_like_or_copy_action_status
-			) {
-				const unlike_data = await unlike_resp.Response.json()
-				if (is_error_response(unlike_data)) {
-					return console.error('Whoops: ', unlike_data.error)
-				}
-				return console.error('Whoops: ', unlike_data)
+		)
+		if (!resp.Response || resp.RedirectTo) {
+			return (window.location.href = resp.RedirectTo ?? '/500')
+		} else if (
+			resp.Response.status !== expected_like_or_copy_action_status
+		) {
+			const like_data = await resp.Response.json()
+			if (is_error_response(like_data)) {
+				return console.error('Whoops: ', like_data.error)
 			}
+			return console.error('Whoops: ', like_data)
+		}
 
+		if (is_liked) {
 			set_is_liked(false)
 			set_like_count((prev) => prev - 1)
-			return
+		} else {
+			set_is_liked(true)
+			set_like_count((prev) => prev + 1)
 		}
+
+		return
 	}
 
 	async function handle_copy() {
@@ -186,63 +114,30 @@ export default function Link(props: Props) {
 			})
 		}
 
-		// copy
-		// TODO: refactor
-		if (!is_copied) {
-			const copy_resp = await fetch_with_handle_redirect(
-				LINKS_ENDPOINT + `/${id}/copy`,
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`,
-					},
-				}
-			)
-			if (!copy_resp.Response || copy_resp.RedirectTo) {
-				return (window.location.href = copy_resp.RedirectTo ?? '/500')
-			} else if (
-				copy_resp.Response.status !==
-				expected_like_or_copy_action_status
-			) {
-				const copy_data = await copy_resp.Response.json()
-				if (is_error_response(copy_data)) {
-					return console.error('Whoops: ', copy_data.error)
-				}
-				return console.error('Whoops: ', copy_data)
+		const resp = await fetch_with_handle_redirect(
+			LINKS_ENDPOINT + `/${id}/copy`,
+			{
+				method: is_copied ? 'DELETE' : 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`,
+				},
 			}
-
-			set_is_copied(true)
-			return
-
-			// uncopy
-		} else {
-			const uncopy_resp = await fetch_with_handle_redirect(
-				LINKS_ENDPOINT + `/${id}/copy`,
-				{
-					method: 'DELETE',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`,
-					},
-				}
-			)
-			if (!uncopy_resp.Response || uncopy_resp.RedirectTo) {
-				return (window.location.href = uncopy_resp.RedirectTo ?? '/500')
-			} else if (
-				uncopy_resp.Response.status !==
-				expected_like_or_copy_action_status
-			) {
-				const uncopy_data = await uncopy_resp.Response.json()
-				if (is_error_response(uncopy_data)) {
-					return console.error('Whoops: ', uncopy_data.error)
-				}
-				return console.error('Whoops: ', uncopy_data)
+		)
+		if (!resp.Response || resp.RedirectTo) {
+			return (window.location.href = resp.RedirectTo ?? '/500')
+		} else if (
+			resp.Response.status !== expected_like_or_copy_action_status
+		) {
+			const copy_data = await resp.Response.json()
+			if (is_error_response(copy_data)) {
+				return console.error('Whoops: ', copy_data.error)
 			}
-
-			set_is_copied(false)
-			return
+			return console.error('Whoops: ', copy_data)
 		}
+
+		set_is_copied(is_copied ? false : true)
+		return
 	}
 
 	const expected_delete_action_status = 205
@@ -276,6 +171,19 @@ export default function Link(props: Props) {
 
 		return window.location.reload()
 	}
+
+	let tag_attribution =
+		cats && user && cats_from_user === user
+			? 'your tag'
+			: cats_from_user
+				? `${cats_from_user}'s tag`
+				: tag_count === 1
+					? `${submitted_by}'s tag`
+					: 'global tag'
+	tag_attribution += ` (${tag_count})`
+	const split_cats = cats.split(',')
+	const cats_endpoint =
+		is_tmap_page && cats_from_user ? `/map/${cats_from_user}` : '/top'
 
 	return (
 		<li class={`link${is_summary_page || is_tag_page ? ' single' : ''}`}>
@@ -317,7 +225,18 @@ export default function Link(props: Props) {
 						{tag_attribution}
 					</a>
 					{': '}
-					{cats_html}
+					{split_cats.map((cat, i) =>
+						i === split_cats.length - 1 ? (
+							<a href={cats_endpoint + `?cats=${cat}`}>{cat}</a>
+						) : (
+							<span>
+								<a href={cats_endpoint + `?cats=${cat}`}>
+									{cat}
+								</a>
+								,{' '}
+							</span>
+						)
+					)}
 				</p>
 			)}
 
