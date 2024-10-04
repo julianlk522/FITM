@@ -145,7 +145,7 @@ func GetSpellfixMatchesForSnippet(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	rows, err := db.Client.Query(spfx_sql.Text)
+	rows, err := db.Client.Query(spfx_sql.Text, spfx_sql.Args...)
 	if err != nil {
 		render.Render(w, r, e.Err500(err))
 		return

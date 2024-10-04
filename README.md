@@ -27,7 +27,6 @@ In order of importance:
         -GLOBAL CAT COUNTS
         -Tag Page
         -Summary page
-        -SpellfixMatches
         -etc.
 
 ### Features

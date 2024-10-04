@@ -270,7 +270,7 @@ func (t *GlobalCatCounts) More() *GlobalCatCounts {
 
 // Global Cats Spellfix Matches For Snippet
 type SpellfixMatches struct {
-	Query
+	*Query
 }
 
 func NewSpellfixMatchesForSnippet(snippet string) *SpellfixMatches {
@@ -278,16 +278,15 @@ func NewSpellfixMatchesForSnippet(snippet string) *SpellfixMatches {
 	// oddly, "WHERE word MATCH "%s OR %s*" doesn't work very well here
 	// hence the UNION
 	return (&SpellfixMatches{
-		Query: Query{
-			Text: fmt.Sprintf(
-				`WITH combined_results AS (
+		Query: &Query{
+			Text: `WITH combined_results AS (
 					SELECT word, rank, distance
 					FROM global_cats_spellfix
-					WHERE word MATCH '%[1]s'
+					WHERE word MATCH ?
 					UNION ALL
 					SELECT word, rank, distance
 					FROM global_cats_spellfix
-					WHERE word MATCH '%[1]s' || '*'
+					WHERE word MATCH ? || '*'
 				),
 				ranked_results AS (
 					SELECT 
@@ -300,13 +299,15 @@ func NewSpellfixMatchesForSnippet(snippet string) *SpellfixMatches {
 				SELECT word, rank
 				FROM ranked_results
 				WHERE row_num = 1
-				AND distance <= %[2]d
+				AND distance <= ?
 				ORDER BY distance, rank DESC
-				LIMIT %[3]d;`,
+				LIMIT ?;`,
+			Args: []interface{}{
+				snippet,
 				snippet,
 				SPELLFIX_DISTANCE_LIMIT,
 				SPELLFIX_MATCHES_LIMIT,
-			),
+			},
 		},
 	})
 }
@@ -316,31 +317,29 @@ func (s *SpellfixMatches) OmitCats(cats []string) error {
 		return e.ErrNoOmittedCats
 	}
 
-	var not_in_clause string
-	for i, cat := range cats {
-		if i == 0 {
-			not_in_clause += "'" + cat + "'"
-		} else {
-			not_in_clause += ", '" + cat + "'"
-		}
+	// pop SPELLFIX_MATCHES_LIMIT arg
+	s.Args = s.Args[0 : len(s.Args)-1]
+
+	not_in_clause := `
+	AND word NOT IN (?`
+	s.Args = append(s.Args, cats[0])
+
+	for i := 1; i < len(cats); i++ {
+		not_in_clause += ", ?"
+		s.Args = append(s.Args, cats[i])
 	}
+	not_in_clause += ")"
 
-	distance_clause := fmt.Sprintf(
-		"AND distance <= %d",
-		SPELLFIX_DISTANCE_LIMIT,
-	)
-
+	distance_clause := `AND distance <= ?`
 	s.Text = strings.Replace(
 		s.Text,
 		distance_clause,
-		fmt.Sprintf(
-			`%s
-			AND word NOT IN (%s)`,
-			distance_clause,
-			not_in_clause,
-		),
+		distance_clause+not_in_clause,
 		1,
 	)
+
+	// push SPELLFIX_MATCHES_LIMIT arg back to end
+	s.Args = append(s.Args, SPELLFIX_MATCHES_LIMIT)
 
 	return nil
 }

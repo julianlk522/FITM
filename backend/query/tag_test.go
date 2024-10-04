@@ -270,7 +270,7 @@ func TestNewSpellfixMatchesForSnippet(t *testing.T) {
 	matches_sql := NewSpellfixMatchesForSnippet(TEST_SNIPPET)
 	// no chance for sql.Error to have been set so no need to check
 
-	rows, err := TestClient.Query(matches_sql.Text)
+	rows, err := TestClient.Query(matches_sql.Text, matches_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -299,7 +299,7 @@ func TestOmitCats(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rows, err := TestClient.Query(matches_sql.Text)
+	rows, err := TestClient.Query(matches_sql.Text, matches_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
