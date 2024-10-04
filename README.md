@@ -24,7 +24,6 @@ In order of importance:
     -incrementally implement parameterized query inputs / prepared statements wherever possible
         -TMAP
         -TOP
-        -GLOBAL CAT COUNTS
         -etc.
 
 ### Features

@@ -155,7 +155,17 @@ const TOP_OVERLAP_SCORES_PUBLIC_FIELDS = `,
 
 // Global Cat Counts
 type GlobalCatCounts struct {
-	Query
+	*Query
+}
+
+func NewTopGlobalCatCounts() *GlobalCatCounts {
+	return (&GlobalCatCounts{
+		Query: &Query{
+			Text: 
+				GLOBAL_CATS_BASE,
+			Args: []interface{}{GLOBAL_CATS_PAGE_LIMIT},
+		},
+	})
 }
 
 const GLOBAL_CATS_BASE = `WITH RECURSIVE split(id, global_cats, str) AS 
@@ -173,67 +183,45 @@ SELECT global_cats, count(global_cats) as count
 FROM split
 WHERE global_cats != ''
 GROUP BY global_cats
-ORDER BY count DESC, LOWER(global_cats) ASC 
-`
-
-var GLOBAL_CATS_BASE_LIMIT = fmt.Sprintf(
-	"LIMIT %d;",
-	GLOBAL_CATS_PAGE_LIMIT,
-)
-
-var GLOBAL_CATS_MORE_LIMIT = fmt.Sprintf(
-	"LIMIT %d;",
-	MORE_GLOBAL_CATS_PAGE_LIMIT,
-)
-
-func NewTopGlobalCatCounts() *GlobalCatCounts {
-	return (&GlobalCatCounts{
-		Query: Query{
-			Text: 
-				GLOBAL_CATS_BASE + "\n" + 
-				GLOBAL_CATS_BASE_LIMIT,
-		},
-	})
-}
+ORDER BY count DESC, LOWER(global_cats) ASC
+LIMIT ?;`
 
 func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
 	cats := strings.Split(cats_params, ",")
 
-	// build match clause
-	match_cats := make([]string, len(cats))
-	copy(match_cats, cats)
-
-	// escape periods
-	// (not required for MATCH clause but required for NOT IN)
-	cats = GetCatsWithEscapedChars(cats)
-
-	match_clause := fmt.Sprintf(`WHERE global_cats MATCH '%s`, match_cats[0])
-	for i := 1; i < len(match_cats); i++ {
-		match_clause += fmt.Sprintf(" AND %s", match_cats[i])
-	}
-	match_clause += `'`
-
 	// build NOT IN clause
-	for i := range cats {
-		cats[i] = "'" + cats[i] + "'"
+	not_in_clause := `
+	AND global_cats NOT IN (?`
+	t.Args = append(t.Args, cats[0])
+	for i := 1; i < len(cats); i++ {
+		not_in_clause += ", ?"
+		t.Args = append(t.Args, cats[i])
 	}
-	not_in_clause := strings.Join(cats, ", ")
+	not_in_clause += ")"
+
+	// build match clause
+	match_clause := `
+	AND id IN (
+		SELECT link_id
+		FROM global_cats_fts
+		WHERE global_cats MATCH ?
+	)`
+	match_arg := cats[0]
+	for i := 1; i < len(cats); i++ {
+		match_arg += " AND " + cats[i]
+	}
+	t.Args = append(t.Args, match_arg)
 
 	t.Text = strings.Replace(
 		t.Text,
 		"WHERE global_cats != ''",
-		fmt.Sprintf(
-			`WHERE global_cats != ''
-	AND global_cats NOT IN (%s)
-	AND id IN (
-		SELECT link_id 
-		FROM global_cats_fts
-		%s
-			)`,
-			not_in_clause,
-			match_clause,
-		),
+		"WHERE global_cats != ''" + 
+		not_in_clause + 
+		match_clause,
 		1)
+
+	// move LIMIT arg to end
+	t.Args = append(t.Args[1:], GLOBAL_CATS_PAGE_LIMIT)
 
 	return t
 }
@@ -261,8 +249,8 @@ func (t *GlobalCatCounts) DuringPeriod(period string) *GlobalCatCounts {
 func (t *GlobalCatCounts) More() *GlobalCatCounts {
 	t.Text = strings.Replace(
 		t.Text,
-		GLOBAL_CATS_BASE_LIMIT,
-		GLOBAL_CATS_MORE_LIMIT,
+		fmt.Sprintf("%d", GLOBAL_CATS_PAGE_LIMIT),
+		fmt.Sprintf("%d", MORE_GLOBAL_CATS_PAGE_LIMIT),
 		1,
 	)
 

@@ -119,7 +119,7 @@ func ScanGlobalCatCounts(global_cats_sql *query.GlobalCatCounts) (*[]model.CatCo
 		return nil, global_cats_sql.Error
 	}
 
-	rows, err := db.Client.Query(global_cats_sql.Text)
+	rows, err := db.Client.Query(global_cats_sql.Text, global_cats_sql.Args...)
 	if err != nil {
 		return nil, err
 	}

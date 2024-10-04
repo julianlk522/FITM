@@ -156,7 +156,7 @@ func TestNewTopGlobalCatCounts(t *testing.T) {
 	counts_sql := NewTopGlobalCatCounts()
 	// no opportunity for counts_sql.Error to have been set so no need to check
 
-	_, err := TestClient.Query(counts_sql.Text)
+	_, err := TestClient.Query(counts_sql.Text, counts_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +168,7 @@ func TestNewTopGlobalCatCountsSubcatsOfCats(t *testing.T) {
 		t.Fatal(counts_sql.Error)
 	}
 
-	rows, err := TestClient.Query(counts_sql.Text)
+	rows, err := TestClient.Query(counts_sql.Text, counts_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,7 +239,7 @@ func TestNewTopGlobalCatCountsDuringPeriod(t *testing.T) {
 			t.Fatalf("expected error for period %s", tp.Period)
 		}
 
-		_, err := TestClient.Query(tags_sql.Text)
+		_, err := TestClient.Query(tags_sql.Text, tags_sql.Args...)
 		if err != nil && err != sql.ErrNoRows {
 			t.Fatal(err)
 		}
