@@ -2,8 +2,9 @@ package handler
 
 import (
 	"fmt"
-	"github.com/julianlk522/fitm/query"
 	"testing"
+
+	"github.com/julianlk522/fitm/query"
 )
 
 func TestScanContributors(t *testing.T) {
@@ -59,7 +60,7 @@ func TestScanContributors(t *testing.T) {
 	if contributors_sql.Error != nil {
 		t.Fatal(contributors_sql.Error)
 	}
-
+	
 	contributors = ScanContributors(contributors_sql)
 
 	if len(*contributors) == 0 {

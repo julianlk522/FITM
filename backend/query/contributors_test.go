@@ -104,7 +104,7 @@ func TestContributorsDuringPeriod(t *testing.T) {
 			t.Fatalf("expected error for period %s", period.Period)
 		}
 
-		rows, err := TestClient.Query(contributors_sql.Text)
+		rows, err := TestClient.Query(contributors_sql.Text, contributors_sql.Args...)
 		if err != nil && err != sql.ErrNoRows {
 			t.Fatal(err)
 		}
@@ -120,7 +120,7 @@ func TestContributorsDuringPeriod(t *testing.T) {
 			t.Fatalf("expected error for period %s", period.Period)
 		}
 
-		rows, err := TestClient.Query(contributors_sql.Text)
+		rows, err := TestClient.Query(contributors_sql.Text, contributors_sql.Args...)
 		if err != nil && err != sql.ErrNoRows {
 			t.Fatal(err)
 		}

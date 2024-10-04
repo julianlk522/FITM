@@ -1,74 +1,71 @@
 package query
 
 import (
-	"fmt"
 	"strings"
 )
 
 const CONTRIBUTORS_PAGE_LIMIT = 10
 
 type Contributors struct {
-	Query
+	*Query
 }
+
+const CONTRIBUTORS_BASE = `SELECT
+count(l.id) as count, l.submitted_by
+FROM Links l
+GROUP BY l.submitted_by
+ORDER BY count DESC, l.submitted_by ASC
+LIMIT ?;`
 
 func NewContributors() *Contributors {
 	return (&Contributors{
-		Query: Query{
+		Query: &Query{
 			Text: 
-				CONTRIBUTORS_FIELDS + 
-				CONTRIBUTORS_GBOBL,
+				CONTRIBUTORS_BASE,
+			Args: 
+				[]interface{}{CONTRIBUTORS_PAGE_LIMIT},
 		},
 	})
 }
 
-const CONTRIBUTORS_FIELDS = `SELECT
-count(l.id) as count, l.submitted_by
-FROM Links l`
-
-var CONTRIBUTORS_GBOBL = fmt.Sprintf(
-	` 
-	GROUP BY l.submitted_by
-	ORDER BY count DESC, l.submitted_by ASC
-	LIMIT %d;`, CONTRIBUTORS_PAGE_LIMIT,
-)
-
 func (c *Contributors) FromCats(cats []string) *Contributors {
-	cats = GetCatsWithEscapedChars(cats)
+	if len(cats) == 0 {
+        return c
+    }
 
-	clause := fmt.Sprintf("WHERE global_cats MATCH '%s", cats[0])
+	clause := " WHERE global_cats MATCH ?"
+	match_arg := cats[0]
 	for i := 1; i < len(cats); i++ {
-		clause += fmt.Sprintf(" AND %s", cats[i])
+		match_arg += " AND " + cats[i]
 	}
-	clause += "'"
+	c.Args = append(c.Args, match_arg)
 
 	// build CTE
-	cats_cte := fmt.Sprintf(
-		`WITH CatsFilter AS (
+	cats_cte := `WITH CatsFilter AS (
 	SELECT link_id
-	FROM global_cats_fts
-	%s
-		)`, clause,
+	FROM global_cats_fts` + clause + `
 	)
+	`
 
 	// prepend CTE
-	c.Text = strings.Replace(
-		c.Text,
-		CONTRIBUTORS_FIELDS,
-		cats_cte+"\n"+CONTRIBUTORS_FIELDS,
-		1)
+	c.Text = cats_cte + c.Text
 
 	// append join
 	c.Text = strings.Replace(
 		c.Text,
-		CONTRIBUTORS_FIELDS,
-		CONTRIBUTORS_FIELDS+"\n"+CONTRIBUTORS_CATS_FROM,
+		"FROM Links l",
+		"FROM Links l" + CONTRIBUTORS_CATS_FROM,
 		1,
 	)
+
+	// move page limit arg from first to last
+	c.Args = append(c.Args[1:], c.Args[0])
 
 	return c
 }
 
-const CONTRIBUTORS_CATS_FROM = `INNER JOIN CatsFilter f ON l.id = f.link_id`
+const CONTRIBUTORS_CATS_FROM = `
+INNER JOIN CatsFilter f ON l.id = f.link_id`
 
 func (c *Contributors) DuringPeriod(period string) *Contributors {
 	clause, err := GetPeriodClause(period)
@@ -87,8 +84,8 @@ func (c *Contributors) DuringPeriod(period string) *Contributors {
 	// Prepend new clause
 	c.Text = strings.Replace(
 		c.Text,
-		CONTRIBUTORS_GBOBL,
-		"\n"+"WHERE "+clause+CONTRIBUTORS_GBOBL,
+		"GROUP BY l.submitted_by",
+		"WHERE "+clause+"\n"+"GROUP BY l.submitted_by",
 		1)
 
 	return c

@@ -19,6 +19,17 @@ In order of importance:
 -maybe
     - move SameUserLikeCount.tsx / AboutText.tsx to .astro since never interactive
 
+-before release:
+    -increase backup frequency
+    -incrementally implement parameterized query inputs / prepared statements wherever possible
+        -TMAP
+        -TOP
+        -GLOBAL CAT COUNTS
+        -Tag Page
+        -Summary page
+        -SpellfixMatches
+        -etc.
+
 ### Features
 
 -Pagination
@@ -194,3 +205,5 @@ In order of importance:
     - add Netlify edge func to identify and block bot user agents
 - Design challenges
     - global cats calc system
+- Parameterizing input values to SQL
+    - store args with each query, call .Query / .Exec / etc. with sql.Args...

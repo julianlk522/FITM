@@ -9,6 +9,7 @@ import (
 
 type Query struct {
 	Text  string
+	Args  []interface{}
 	Error error
 }
 
