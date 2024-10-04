@@ -20,7 +20,7 @@ func TestNewTagPageLink(t *testing.T) {
 	}
 
 	var l model.Link
-	if err := TestClient.QueryRow(tag_sql.Text).Scan(
+	if err := TestClient.QueryRow(tag_sql.Text, tag_sql.Args...).Scan(
 		&l.ID,
 		&l.URL,
 		&l.SubmittedBy,
@@ -45,7 +45,7 @@ func TestNewTagPageLink(t *testing.T) {
 	}
 
 	var lsi model.LinkSignedIn
-	if err := TestClient.QueryRow(tag_sql.Text).Scan(
+	if err := TestClient.QueryRow(tag_sql.Text, tag_sql.Args...).Scan(
 		&lsi.ID,
 		&lsi.URL,
 		&lsi.SubmittedBy,
@@ -71,7 +71,7 @@ func TestNewTagRankings(t *testing.T) {
 		t.Fatal(tags_sql.Error)
 	}
 
-	rows, err := TestClient.Query(tags_sql.Text)
+	rows, err := TestClient.Query(tags_sql.Text, tags_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestNewTagRankings(t *testing.T) {
 		"",
 		1)
 
-	rows, err = TestClient.Query(tags_sql.Text)
+	rows, err = TestClient.Query(tags_sql.Text, tags_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +128,7 @@ func TestNewTagRankings(t *testing.T) {
 		t.Fatal(tags_sql.Error)
 	}
 
-	rows, err = TestClient.Query(tags_sql.Text)
+	rows, err = TestClient.Query(tags_sql.Text, tags_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}

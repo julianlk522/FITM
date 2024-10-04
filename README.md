@@ -25,7 +25,6 @@ In order of importance:
         -TMAP
         -TOP
         -GLOBAL CAT COUNTS
-        -Tag Page
         -etc.
 
 ### Features

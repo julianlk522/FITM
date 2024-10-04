@@ -23,7 +23,7 @@ func ScanTagPageLink[T model.Link | model.LinkSignedIn](link_sql *query.TagPageL
 	case *model.Link:
 		var l = &model.Link{}
 		if err := db.Client.
-			QueryRow(link_sql.Text).
+			QueryRow(link_sql.Text, link_sql.Args...).
 			Scan(
 				&l.ID,
 				&l.URL,
@@ -42,7 +42,7 @@ func ScanTagPageLink[T model.Link | model.LinkSignedIn](link_sql *query.TagPageL
 	case *model.LinkSignedIn:
 		var l = &model.LinkSignedIn{}
 		if err := db.Client.
-			QueryRow(link_sql.Text).
+			QueryRow(link_sql.Text, link_sql.Args...).
 			Scan(
 				&l.ID,
 				&l.URL,
@@ -88,7 +88,7 @@ func GetUserTagForLink(login_name string, link_id string) (*model.Tag, error) {
 }
 
 func ScanPublicTagRankings(tag_rankings_sql *query.TagRankings) (*[]model.TagRankingPublic, error) {
-	rows, err := db.Client.Query(tag_rankings_sql.Text)
+	rows, err := db.Client.Query(tag_rankings_sql.Text, tag_rankings_sql.Args...)
 	if err != nil {
 		return nil, err
 	}
