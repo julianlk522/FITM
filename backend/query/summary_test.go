@@ -15,7 +15,7 @@ func TestNewSummaryPageLink(t *testing.T) {
 		t.Fatal(link_sql.Error)
 	}
 
-	rows, err := TestClient.Query(link_sql.Text)
+	rows, err := TestClient.Query(link_sql.Text, link_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +62,7 @@ func Test_SummaryPageLinkFromID(t *testing.T) {
 	}
 
 	var l model.Link
-	err := TestClient.QueryRow(link_sql.Text).Scan(
+	err := TestClient.QueryRow(link_sql.Text, link_sql.Args...).Scan(
 		&l.ID,
 		&l.URL,
 		&l.SubmittedBy,
@@ -91,7 +91,7 @@ func TestSummaryPageLinkAsSignedInUser(t *testing.T) {
 	}
 
 	var l model.LinkSignedIn
-	err := TestClient.QueryRow(link_sql.Text).Scan(
+	err := TestClient.QueryRow(link_sql.Text, link_sql.Args...).Scan(
 		&l.ID,
 		&l.URL,
 		&l.SubmittedBy,
@@ -117,7 +117,7 @@ func TestNewSummariesForLink(t *testing.T) {
 		t.Fatal(summaries_sql.Error)
 	}
 
-	rows, err := TestClient.Query(summaries_sql.Text)
+	rows, err := TestClient.Query(summaries_sql.Text, summaries_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,15 +158,11 @@ func TestNewSummariesForLink(t *testing.T) {
 	if count > SUMMARIES_PAGE_LIMIT {
 		t.Fatalf("got %d, want <= %d", count, SUMMARIES_PAGE_LIMIT)
 	}
-}
 
-func Test_NewSummariesForLinkFromID(t *testing.T) {
-	var test_link_id = "1"
-	summaries_sql := NewSummariesForLink(test_link_id)
-
+	// Verify link_ids
 	summaries_sql.Text = strings.Replace(summaries_sql.Text, SUMMARIES_BASE_FIELDS, "SELECT sumid", 1)
 
-	rows, err := TestClient.Query(summaries_sql.Text)
+	rows, err = TestClient.Query(summaries_sql.Text, summaries_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -202,7 +198,7 @@ func TestNewSummariesAsSignedInUser(t *testing.T) {
 		t.Fatal(summaries_sql.Error)
 	}
 
-	rows, err := TestClient.Query(summaries_sql.Text)
+	rows, err := TestClient.Query(summaries_sql.Text, summaries_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}

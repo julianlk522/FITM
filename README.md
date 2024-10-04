@@ -26,7 +26,6 @@ In order of importance:
         -TOP
         -GLOBAL CAT COUNTS
         -Tag Page
-        -Summary page
         -etc.
 
 ### Features

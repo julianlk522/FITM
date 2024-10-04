@@ -33,7 +33,7 @@ func BuildSummaryPageForLink(link_id string, r *http.Request) (interface{}, erro
 	if req_user_id != "" {
 		var l model.LinkSignedIn
 
-		err := db.Client.QueryRow(get_link_sql.Text).Scan(
+		err := db.Client.QueryRow(get_link_sql.Text, get_link_sql.Args...).Scan(
 			&l.ID,
 			&l.URL,
 			&l.SubmittedBy,
@@ -43,8 +43,6 @@ func BuildSummaryPageForLink(link_id string, r *http.Request) (interface{}, erro
 			&l.LikeCount,
 			&l.TagCount,
 			&l.ImgURL,
-
-			// added auth fields
 			&l.IsLiked,
 			&l.IsCopied,
 		)
@@ -56,7 +54,7 @@ func BuildSummaryPageForLink(link_id string, r *http.Request) (interface{}, erro
 			}
 		}
 
-		rows, err := db.Client.Query(get_summaries_sql.Text)
+		rows, err := db.Client.Query(get_summaries_sql.Text, get_summaries_sql.Args...)
 		if err != nil {
 			return nil, err
 		}
@@ -71,8 +69,6 @@ func BuildSummaryPageForLink(link_id string, r *http.Request) (interface{}, erro
 				&s.SubmittedBy,
 				&s.LastUpdated,
 				&s.LikeCount,
-
-				// added auth field
 				&s.IsLiked,
 			)
 			if err != nil {
@@ -81,6 +77,8 @@ func BuildSummaryPageForLink(link_id string, r *http.Request) (interface{}, erro
 			summaries = append(summaries, s)
 		}
 
+		l.SummaryCount = len(summaries)
+
 		return model.SummaryPage[model.SummarySignedIn, model.LinkSignedIn]{
 			Link:      l,
 			Summaries: summaries,
@@ -88,7 +86,7 @@ func BuildSummaryPageForLink(link_id string, r *http.Request) (interface{}, erro
 
 	} else {
 		var l model.Link
-		err := db.Client.QueryRow(get_link_sql.Text).Scan(
+		err := db.Client.QueryRow(get_link_sql.Text, get_link_sql.Args...).Scan(
 			&l.ID,
 			&l.URL,
 			&l.SubmittedBy,
@@ -107,7 +105,7 @@ func BuildSummaryPageForLink(link_id string, r *http.Request) (interface{}, erro
 			}
 		}
 
-		rows, err := db.Client.Query(get_summaries_sql.Text)
+		rows, err := db.Client.Query(get_summaries_sql.Text, get_summaries_sql.Args...)
 		if err != nil {
 			return nil, err
 		}
@@ -128,6 +126,8 @@ func BuildSummaryPageForLink(link_id string, r *http.Request) (interface{}, erro
 			}
 			summaries = append(summaries, s)
 		}
+
+		l.SummaryCount = len(summaries)
 
 		return model.SummaryPage[model.Summary, model.Link]{
 			Link:      l,

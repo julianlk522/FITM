@@ -77,6 +77,19 @@ func TestBuildSummaryPageForLink(t *testing.T) {
 		} else if tc != summary_page.Link.TagCount {
 			t.Fatalf("got link tag count %d, want %d", tc, summary_page.Link.TagCount)
 		}
+
+		// Verify summary count
+		var sc int
+		err = TestClient.QueryRow(`
+			SELECT count(*)
+			FROM Summaries
+			WHERE link_id = ?`,
+			test_link_id).Scan(&sc)
+		if err != nil {
+			t.Fatalf("failed to get link summary count: %s", err)
+		} else if sc != summary_page.Link.SummaryCount {
+			t.Fatalf("got link summary count %d, want %d", sc, summary_page.Link.SummaryCount)
+		}
 	} else {
 		t.Fatalf("unexpected summary page shape")
 	}
