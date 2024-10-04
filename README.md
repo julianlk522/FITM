@@ -34,7 +34,6 @@ In order of importance:
 -Purge duplication
 -Simplicity / accuracy
 -Readability
-    -ErrServerFail => Err500 etc.
 -Security
     -Look into input sequences that might produce problematic results
     -prevent whacky chars from usernames/passwords

@@ -114,13 +114,13 @@ func GetTopGlobalCats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if global_cats_sql.Error != nil {
-		render.Render(w, r, e.ErrServerFail(global_cats_sql.Error))
+		render.Render(w, r, e.Err500(global_cats_sql.Error))
 		return
 	}
 
 	counts, err := util.ScanGlobalCatCounts(global_cats_sql)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 	util.RenderCatCounts(counts, w, r)
@@ -140,14 +140,14 @@ func GetSpellfixMatchesForSnippet(w http.ResponseWriter, r *http.Request) {
 		omitted_words := strings.Split(omitted_params, ",")
 		err := spfx_sql.OmitCats(omitted_words)
 		if err != nil {
-			render.Render(w, r, e.ErrServerFail(err))
+			render.Render(w, r, e.Err500(err))
 			return
 		}
 	}
 
 	rows, err := db.Client.Query(spfx_sql.Text)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 	defer rows.Close()
@@ -157,7 +157,7 @@ func GetSpellfixMatchesForSnippet(w http.ResponseWriter, r *http.Request) {
 		var word string
 		var rank int32
 		if err := rows.Scan(&word, &rank); err != nil {
-			render.Render(w, r, e.ErrServerFail(err))
+			render.Render(w, r, e.Err500(err))
 			return
 		}
 		matches = append(matches, model.CatCount{
@@ -274,16 +274,16 @@ func EditTag(w http.ResponseWriter, r *http.Request) {
 		edit_tag_data.ID,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 
 	link_id, err := util.GetLinkIDFromTagID(edit_tag_data.ID)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	} else if err = util.CalculateAndSetGlobalCats(link_id); err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 
@@ -300,7 +300,7 @@ func DeleteTag(w http.ResponseWriter, r *http.Request) {
 
 	tag_exists, err := util.TagExists(delete_tag_data.ID)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	} else if !tag_exists {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrNoTagWithID))
@@ -309,7 +309,7 @@ func DeleteTag(w http.ResponseWriter, r *http.Request) {
 
 	is_only_tag, err := util.IsOnlyTag(delete_tag_data.ID)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	} else if is_only_tag {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrCantDeleteOnlyTag))
@@ -329,7 +329,7 @@ func DeleteTag(w http.ResponseWriter, r *http.Request) {
 	// get link ID before deleting
 	link_id, err := util.GetLinkIDFromTagID(delete_tag_data.ID)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 
@@ -339,13 +339,13 @@ func DeleteTag(w http.ResponseWriter, r *http.Request) {
 		delete_tag_data.ID,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 
 	// set global cats
 	if err = util.CalculateAndSetGlobalCats(link_id); err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 

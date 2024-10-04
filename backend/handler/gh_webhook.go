@@ -17,7 +17,7 @@ import (
 func HandleGitHubWebhook(w http.ResponseWriter, r *http.Request) {
 	signkey_secret := os.Getenv("FITM_WEBHOOK_SECRET")
 	if signkey_secret == "" {
-		render.Render(w, r, e.ErrServerFail(e.ErrNoWebhookSecret))
+		render.Render(w, r, e.Err500(e.ErrNoWebhookSecret))
 	}
 
 	signature_header := r.Header.Get("X-Hub-Signature-256")
@@ -44,7 +44,7 @@ func HandleGitHubWebhook(w http.ResponseWriter, r *http.Request) {
 	// update hash object with payload
 	if _, err := server_hash.Write(payload_bytes); err != nil {
 		log.Print("Cannot compute HMAC for GH webhook request body")
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 	}
 
 	// generate expected signature
@@ -63,7 +63,7 @@ func HandleGitHubWebhook(w http.ResponseWriter, r *http.Request) {
 	err = cmd.Run()
 	if err != nil {
 		log.Println(err)
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 	}
 
 	render.Status(r, http.StatusOK)

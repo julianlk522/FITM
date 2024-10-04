@@ -69,7 +69,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	token, err := util.GetJWTFromLoginName(signup_data.Auth.LoginName)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 
@@ -87,7 +87,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 
 	is_authenticated, err := util.AuthenticateUser(login_data.LoginName, login_data.Password)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	} else if !is_authenticated {
 		render.Render(w, r, e.ErrUnauthenticated(e.ErrInvalidLogin))
@@ -96,7 +96,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 
 	token, err := util.GetJWTFromLoginName(login_data.Auth.LoginName)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 
@@ -178,7 +178,7 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 		// Note: if, for some reason, the directory at pic_dir's path
 		// doesn't exist, this will fail
 		// shouldn't matter but just for posterity
-		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotCreateProfilePic))
+		render.Render(w, r, e.Err500(e.ErrCouldNotCreateProfilePic))
 		return
 	}
 	defer dst.Close()
@@ -188,14 +188,14 @@ func UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 
 	// Save to new file
 	if _, err := io.Copy(dst, file); err != nil {
-		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotCopyProfilePic))
+		render.Render(w, r, e.Err500(e.ErrCouldNotCopyProfilePic))
 		return
 	}
 
 	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
 	_, err = db.Client.Exec(`UPDATE Users SET pfp = ? WHERE id = ?`, unique_name, req_user_id)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotSaveProfilePic))
+		render.Render(w, r, e.Err500(e.ErrCouldNotSaveProfilePic))
 		return
 	}
 
@@ -215,7 +215,7 @@ func DeleteProfilePic(w http.ResponseWriter, r *http.Request) {
 	var pfp string
 	err := db.Client.QueryRow(`SELECT pfp FROM Users WHERE id = ?`, req_user_id).Scan(&pfp)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 	pfp_path := pic_dir + "/" + pfp
@@ -226,7 +226,7 @@ func DeleteProfilePic(w http.ResponseWriter, r *http.Request) {
 		req_user_id,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(e.ErrCouldNotRemoveProfilePic))
+		render.Render(w, r, e.Err500(e.ErrCouldNotRemoveProfilePic))
 		return
 	}
 
@@ -236,7 +236,7 @@ func DeleteProfilePic(w http.ResponseWriter, r *http.Request) {
 		// Delete from filesystem
 		err = os.Remove(pfp_path)
 		if err != nil {
-			render.Render(w, r, e.ErrServerFail(e.ErrCouldNotRemoveProfilePic))
+			render.Render(w, r, e.Err500(e.ErrCouldNotRemoveProfilePic))
 			return
 		}
 	} else {

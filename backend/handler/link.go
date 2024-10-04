@@ -74,13 +74,13 @@ func GetLinks(w http.ResponseWriter, r *http.Request) {
 	if req_user_id != "" {
 		links, err := util.ScanLinks[model.LinkSignedIn](links_sql)
 		if err != nil {
-			render.Render(w, r, e.ErrServerFail(err))
+			render.Render(w, r, e.Err500(err))
 		}
 		render.JSON(w, r, util.PaginateLinks(links, page))
 	} else {
 		links, err := util.ScanLinks[model.Link](links_sql)
 		if err != nil {
-			render.Render(w, r, e.ErrServerFail(err))
+			render.Render(w, r, e.Err500(err))
 		}
 		render.JSON(w, r, util.PaginateLinks(links, page))
 	}
@@ -97,7 +97,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	
 	// verify user has not already submitted too many links today
 	if user_submitted_max_daily_links, err := util.UserHasSubmittedMaxDailyLinks(req_login_name); err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	} else if user_submitted_max_daily_links {
 		render.Render(w, r, e.ErrInvalidRequest(e.ErrMaxDailyLinkSubmissionsReached(util.MAX_DAILY_LINKS)))
@@ -140,7 +140,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 	// Start Transaction
 	tx, err := db.Client.Begin()
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 	defer tx.Rollback()
@@ -178,7 +178,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 			request.SubmitDate,
 		)
 		if err != nil {
-			render.Render(w, r, e.ErrServerFail(err))
+			render.Render(w, r, e.Err500(err))
 			return
 		} else {
 			request.SummaryCount += 1
@@ -195,7 +195,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		request.SubmitDate,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 
@@ -219,7 +219,7 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		request.ImgURL,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 
@@ -229,13 +229,13 @@ func AddLink(w http.ResponseWriter, r *http.Request) {
 		strings.Split(request.Cats, ","),
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 
 	// Commit
 	if err = tx.Commit(); err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 
@@ -282,14 +282,14 @@ func DeleteLink(w http.ResponseWriter, r *http.Request) {
 	var gc string
 	err = db.Client.QueryRow("SELECT global_cats FROM Links WHERE id = ?;", request.LinkID).Scan(&gc)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 
 	// start transaction
 	tx, err := db.Client.Begin()
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 	defer tx.Rollback()
@@ -300,7 +300,7 @@ func DeleteLink(w http.ResponseWriter, r *http.Request) {
 		request.LinkID,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 
@@ -310,13 +310,13 @@ func DeleteLink(w http.ResponseWriter, r *http.Request) {
 		strings.Split(gc, ","),
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 
 	// commit
 	if err = tx.Commit(); err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 		return
 	}
 
@@ -350,7 +350,7 @@ func LikeLink(w http.ResponseWriter, r *http.Request) {
 		req_user_id,
 	)
 	if err != nil {
-		render.Render(w, r, e.ErrServerFail(err))
+		render.Render(w, r, e.Err500(err))
 	}
 
 	w.WriteHeader(http.StatusNoContent)

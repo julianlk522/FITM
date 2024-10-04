@@ -9,12 +9,10 @@ import (
 var ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not found."}
 
 type ErrResponse struct {
-	Err            error `json:"-"` // low-level runtime error
-	HTTPStatusCode int   `json:"-"` // http response status code
-
-	StatusText string `json:"status"`          // user-level status message
-	AppCode    int64  `json:"code,omitempty"`  // application-specific error code
-	ErrorText  string `json:"error,omitempty"` // application-level error message, for debugging
+	Err            error `json:"-"`
+	HTTPStatusCode int   `json:"-"`
+	StatusText string `json:"status"`
+	ErrorText  string `json:"error,omitempty"`
 }
 
 func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
@@ -22,6 +20,7 @@ func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// malformed JSON
 func ErrInvalidRequest(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
@@ -58,7 +57,9 @@ func Err404(err error) render.Renderer {
 	}
 }
 
-func ErrRender(err error) render.Renderer {
+// "syntactically valid but semantically invalid"
+// e.g., nonexistent ID provided
+func Err422(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
 		HTTPStatusCode: 422,
@@ -67,7 +68,7 @@ func ErrRender(err error) render.Renderer {
 	}
 }
 
-func ErrServerFail(err error) render.Renderer {
+func Err500(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
 		HTTPStatusCode: 500,
