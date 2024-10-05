@@ -75,7 +75,6 @@ In order of importance:
     -500 for server fuckups
     -make sure not just using log.Fatal where there should be status
 -Other lesser refactors and removal of duplicate code
-    -Fix SQL identifiers to use "" and string literals to use ''
     -BuildTagPage helper to declutter GetTagPage handler
     -os.LookupEnv?
         -not sure if makes any practical difference

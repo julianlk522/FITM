@@ -55,7 +55,7 @@ func TestBuildSummaryPageForLink(t *testing.T) {
 
 		err = TestClient.QueryRow(`
 			SELECT count(*)
-			FROM 'Link Likes'
+			FROM "Link Likes"
 			WHERE link_id = ?`,
 			test_link_id).Scan(&lc)
 

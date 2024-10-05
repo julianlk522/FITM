@@ -342,7 +342,7 @@ func UserSubmittedLink(login_name string, link_id string) bool {
 
 func UserHasLikedLink(user_id string, link_id string) bool {
 	var l sql.NullString
-	err := db.Client.QueryRow("SELECT id FROM 'Link Likes' WHERE user_id = ? AND link_id = ?;", user_id, link_id).Scan(&l)
+	err := db.Client.QueryRow(`SELECT id FROM "Link Likes" WHERE user_id = ? AND link_id = ?;`, user_id, link_id).Scan(&l)
 
 	return err == nil && l.Valid
 }
