@@ -237,7 +237,7 @@ func CalculateAndSetGlobalCats(link_id string) error {
 		return overlap_scores_sql.Error
 	}
 
-	rows, err := db.Client.Query(overlap_scores_sql.Text)
+	rows, err := db.Client.Query(overlap_scores_sql.Text, overlap_scores_sql.Args...)
 	if err != nil {
 		return err
 	}
