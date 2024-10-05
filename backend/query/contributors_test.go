@@ -12,7 +12,7 @@ func TestNewContributors(t *testing.T) {
 		t.Fatal(contributors_sql.Error)
 	}
 
-	rows, err := TestClient.Query(contributors_sql.Text)
+	rows, err := TestClient.Query(contributors_sql.Text, contributors_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,11 +51,6 @@ func TestContributorsFromCats(t *testing.T) {
 		},
 	)
 
-	// ensure "." properly escaped
-	if strings.Contains(contributors_sql.Text, ".") && !strings.Contains(contributors_sql.Text, `"."`) {
-		t.Fatal("failed to escape period in cat 'c. viper'")
-	}
-
 	contributors_sql.Text = strings.Replace(
 		contributors_sql.Text,
 		`SELECT
@@ -66,7 +61,7 @@ count(l.id) as count, l.global_cats
 FROM Links l`,
 		1)
 
-	rows, err := TestClient.Query(contributors_sql.Text)
+	rows, err := TestClient.Query(contributors_sql.Text, contributors_sql.Args...)
 	if err != nil && err != sql.ErrNoRows {
 		t.Fatal(err)
 	}
