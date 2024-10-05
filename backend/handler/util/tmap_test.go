@@ -38,17 +38,16 @@ func TestUserExists(t *testing.T) {
 func TestGetTmapForUser(t *testing.T) {
 	var test_requests = []struct {
 		LoginName               string
-		RequestingUserLoginName string
 		RequestingUserID        string
 		CatsParams              string
 	}{
-		{test_login_name, test_login_name, test_user_id, ""},
-		{test_login_name, test_req_login_name, test_req_user_id, ""},
-		{test_login_name, "", "", ""},
-		{test_login_name, test_login_name, test_user_id, "umvc3"},
-		{test_login_name, test_req_login_name, test_req_user_id, "umvc3"},
-		{test_login_name, "", "", "umvc3"},
-		{test_login_name, test_login_name, test_user_id, "umvc3,flowers"},
+		{test_login_name, test_user_id, ""},
+		{test_login_name, test_req_user_id, ""},
+		{test_login_name, "", ""},
+		{test_login_name, test_user_id, "umvc3"},
+		{test_login_name, test_req_user_id, "umvc3"},
+		{test_login_name, "", "umvc3"},
+		{test_login_name, test_user_id, "umvc3,flowers"},
 	}
 
 	for _, r := range test_requests {
@@ -63,7 +62,6 @@ func TestGetTmapForUser(t *testing.T) {
 		ctx := context.Background()
 		jwt_claims := map[string]interface{}{
 			"user_id":    r.RequestingUserID,
-			"login_name": r.RequestingUserLoginName,
 		}
 		ctx = context.WithValue(ctx, m.JWTClaimsKey, jwt_claims)
 		req = req.WithContext(ctx)
@@ -71,7 +69,7 @@ func TestGetTmapForUser(t *testing.T) {
 		var tmap interface{}
 		var err error
 
-		if r.RequestingUserLoginName != "" && r.RequestingUserID != "" {
+		if r.RequestingUserID != "" {
 			tmap, err = GetTmapForUser[model.TmapLinkSignedIn](r.LoginName, req)
 		} else {
 			tmap, err = GetTmapForUser[model.TmapLink](r.LoginName, req)
@@ -132,12 +130,11 @@ func TestScanTmapProfile(t *testing.T) {
 func TestScanTmapLinks(t *testing.T) {
 	var test_requests = []struct {
 		LoginName               string
-		RequestingUserLoginName string
 		RequestingUserID        string
 	}{
-		{test_login_name, test_login_name, test_user_id},
-		{test_login_name, test_req_login_name, test_req_user_id},
-		{test_login_name, "", ""},
+		{test_login_name, test_user_id},
+		{test_login_name, test_req_user_id},
+		{test_login_name, ""},
 	}
 
 	for _, r := range test_requests {
@@ -145,10 +142,10 @@ func TestScanTmapLinks(t *testing.T) {
 		copied_sql := query.NewTmapCopied(r.LoginName)
 		tagged_sql := query.NewTmapTagged(r.LoginName)
 
-		if r.RequestingUserLoginName != "" && r.RequestingUserID != "" {
-			submitted_sql = submitted_sql.AsSignedInUser(r.RequestingUserID, r.RequestingUserLoginName)
-			copied_sql = copied_sql.AsSignedInUser(r.RequestingUserID, r.RequestingUserLoginName)
-			tagged_sql = tagged_sql.AsSignedInUser(r.RequestingUserID, r.RequestingUserLoginName)
+		if r.RequestingUserID != "" {
+			submitted_sql = submitted_sql.AsSignedInUser(r.RequestingUserID)
+			copied_sql = copied_sql.AsSignedInUser(r.RequestingUserID)
+			tagged_sql = tagged_sql.AsSignedInUser(r.RequestingUserID)
 
 			_, err := ScanTmapLinks[model.TmapLinkSignedIn](submitted_sql.Query)
 			if err != nil {

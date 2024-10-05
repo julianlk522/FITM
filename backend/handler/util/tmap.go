@@ -60,12 +60,11 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 
 	// auth (add IsLiked, IsCopied)
 	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
-	req_login_name := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["login_name"].(string)
 
 	if req_user_id != "" {
-		submitted_sql = submitted_sql.AsSignedInUser(req_user_id, req_login_name)
-		copied_sql = copied_sql.AsSignedInUser(req_user_id, req_login_name)
-		tagged_sql = tagged_sql.AsSignedInUser(req_user_id, req_login_name)
+		submitted_sql = submitted_sql.AsSignedInUser(req_user_id)
+		copied_sql = copied_sql.AsSignedInUser(req_user_id)
+		tagged_sql = tagged_sql.AsSignedInUser(req_user_id)
 	}
 
 	// nsfw
@@ -130,10 +129,10 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	}
 }
 
-func ScanTmapProfile(sql string) (*model.Profile, error) {
+func ScanTmapProfile(sql *query.TmapProfile) (*model.Profile, error) {
 	var u model.Profile
 	err := db.Client.
-		QueryRow(sql).
+		QueryRow(sql.Text, sql.Args...).
 		Scan(
 			&u.LoginName,
 			&u.About,
@@ -147,8 +146,8 @@ func ScanTmapProfile(sql string) (*model.Profile, error) {
 	return &u, nil
 }
 
-func ScanTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](sql query.Query) (*[]T, error) {
-	rows, err := db.Client.Query(sql.Text)
+func ScanTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](sql *query.Query) (*[]T, error) {
+	rows, err := db.Client.Query(sql.Text, sql.Args...)
 	if err != nil {
 		return nil, err
 	}
@@ -216,9 +215,9 @@ func ScanTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](sql query.Query) (
 }
 
 // Get counts of each category found in links
-// Omit any cats passed via omitted_cats
+// Omit any cats passed via opts.OmittedCats
 // (omit used to retrieve subcats by passing directly searched cats)
-// TODO: refactor to make this clearer
+// TODO: refactor to make this clearer?
 func GetCatCountsFromTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](links *[]T, opts *model.TmapCatCountsOpts) *[]model.CatCount {
 	counts := []model.CatCount{}
 	found_cats := []string{}

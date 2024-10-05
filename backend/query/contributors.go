@@ -10,13 +10,6 @@ type Contributors struct {
 	*Query
 }
 
-const CONTRIBUTORS_BASE = `SELECT
-count(l.id) as count, l.submitted_by
-FROM Links l
-GROUP BY l.submitted_by
-ORDER BY count DESC, l.submitted_by ASC
-LIMIT ?;`
-
 func NewContributors() *Contributors {
 	return (&Contributors{
 		Query: &Query{
@@ -27,6 +20,13 @@ func NewContributors() *Contributors {
 		},
 	})
 }
+
+const CONTRIBUTORS_BASE = `SELECT
+count(l.id) as count, l.submitted_by
+FROM Links l
+GROUP BY l.submitted_by
+ORDER BY count DESC, l.submitted_by ASC
+LIMIT ?;`
 
 func (c *Contributors) FromCats(cats []string) *Contributors {
 	if len(cats) == 0 {

@@ -1,23 +1,380 @@
 package query
 
 import (
-	"fmt"
-	"regexp"
 	"strings"
 )
 
 // PROFILE
-func NewTmapProfile(login_name string) string {
-	return fmt.Sprintf(`SELECT 
+type TmapProfile struct {
+	*Query
+}
+func NewTmapProfile(login_name string) *TmapProfile {
+	return (&TmapProfile{
+		&Query{
+			Text: TMAP_PROFILE,
+			Args: []interface{}{login_name},
+		},
+	})
+}
+
+const TMAP_PROFILE = `SELECT 
 	login_name, 
 	COALESCE(about,'') as about, 
 	COALESCE(pfp,'') as pfp, 
 	created
 FROM Users 
-WHERE login_name = '%s';`, login_name)
-}
+WHERE login_name = ?;`
 
 // LINKS
+// Submitted links (global cats replaced with user-assigned)
+type TmapSubmitted struct {
+	*Query
+}
+
+func NewTmapSubmitted(login_name string) *TmapSubmitted {
+	q := &TmapSubmitted{
+		Query: &Query{
+			Text: 
+				"WITH " + TMAP_BASE_CTES + "," +
+				POSSIBLE_USER_CATS_CTE + "," +
+				POSSIBLE_USER_SUMMARY_CTE +
+				TMAP_BASE_FIELDS +
+				TMAP_FROM +
+				TMAP_BASE_JOINS +
+				TMAP_NO_NSFW_CATS_WHERE +
+				SUBMITTED_WHERE +
+				TMAP_ORDER_BY,
+			// login_name used in PossibleUserCats, PossibleUserSummary, where
+			Args: []interface{}{login_name, login_name, login_name},
+		},
+	}
+
+	return q
+}
+
+const SUBMITTED_WHERE = `
+AND l.submitted_by = ?`
+
+func (q *TmapSubmitted) FromCats(cats []string) *TmapSubmitted {
+	q.Query = FromUserOrGlobalCats(q.Query, cats)
+	return q
+}
+
+func (q *TmapSubmitted) AsSignedInUser(req_user_id string) *TmapSubmitted {
+	fields_replacer := strings.NewReplacer(
+		TMAP_BASE_CTES, TMAP_BASE_CTES+","+TMAP_AUTH_CTES,
+		TMAP_BASE_FIELDS, TMAP_BASE_FIELDS+TMAP_AUTH_FIELDS,
+		TMAP_BASE_JOINS, TMAP_BASE_JOINS+TMAP_AUTH_JOINS,
+	)
+	q.Text = fields_replacer.Replace(q.Text)
+
+	// prepend req_user_id arg * 2
+	q.Args = append([]interface{}{req_user_id, req_user_id}, q.Args...)
+
+	return q
+}
+
+func (q *TmapSubmitted) NSFW() *TmapSubmitted {
+
+	// remove NSFW clause
+	q.Text = strings.Replace(
+		q.Text,
+		TMAP_NO_NSFW_CATS_WHERE,
+		"",
+		1,
+	)
+
+	// swap AND to WHERE in WHERE clause
+	q.Text = strings.Replace(
+		q.Text,
+		"AND l.submitted_by",
+		"WHERE l.submitted_by",
+		1,
+	)
+	return q
+}
+
+// Copied links submitted by other users (global cats replaced with user-assigned if user has tagged)
+type TmapCopied struct {
+	*Query
+}
+
+func NewTmapCopied(login_name string) *TmapCopied {
+	q := &TmapCopied{
+		Query: &Query{
+			Text: "WITH " + USER_COPIES_CTE + ",\n" +
+				TMAP_BASE_CTES + "," +
+				POSSIBLE_USER_CATS_CTE + "," +
+				POSSIBLE_USER_SUMMARY_CTE +
+				TMAP_BASE_FIELDS +
+				TMAP_FROM +
+				COPIED_JOIN +
+				TMAP_BASE_JOINS +
+				TMAP_NO_NSFW_CATS_WHERE +
+				COPIED_WHERE +
+				TMAP_ORDER_BY,
+			// login_name used in UserCopies, PossibleUserCats, 
+			// PossibleUserSummary, where
+			Args: []interface{}{login_name, login_name, login_name, login_name},
+		},
+	}
+
+	return q
+}
+
+const COPIED_JOIN = `
+INNER JOIN UserCopies uc ON l.id = uc.link_id`
+
+const COPIED_WHERE = ` 
+AND submitted_by != ?`
+
+func (q *TmapCopied) FromCats(cats []string) *TmapCopied {
+	q.Query = FromUserOrGlobalCats(q.Query, cats)
+	return q
+}
+
+func (q *TmapCopied) AsSignedInUser(req_user_id string) *TmapCopied {
+	fields_replacer := strings.NewReplacer(
+		TMAP_BASE_CTES, TMAP_BASE_CTES+","+TMAP_AUTH_CTES,
+		TMAP_BASE_FIELDS, TMAP_BASE_FIELDS+TMAP_AUTH_FIELDS,
+		COPIED_JOIN, COPIED_JOIN+TMAP_AUTH_JOINS,
+	)
+	q.Text = fields_replacer.Replace(q.Text)
+
+	// prepend req_user_id arg * 2
+	q.Args = append([]interface{}{req_user_id, req_user_id}, q.Args...)
+
+	return q
+}
+
+func (q *TmapCopied) NSFW() *TmapCopied {
+
+	// remove NSFW clause
+	q.Text = strings.Replace(
+		q.Text,
+		TMAP_NO_NSFW_CATS_WHERE,
+		"",
+		1,
+	)
+
+	// swap AND to WHERE in WHERE clause
+	q.Text = strings.Replace(
+		q.Text,
+		"AND submitted_by !=",
+		"WHERE submitted_by !=",
+		1,
+	)
+	return q
+}
+
+// Tagged links submitted by other users (global cats replaced with user-assigned)
+type TmapTagged struct {
+	*Query
+}
+
+func NewTmapTagged(login_name string) *TmapTagged {
+	q := &TmapTagged{
+		Query: &Query{
+			Text: "WITH " + TMAP_BASE_CTES + ",\n" +
+				USER_CATS_CTE + "," +
+				POSSIBLE_USER_SUMMARY_CTE + ",\n" +
+				USER_COPIES_CTE +
+				TAGGED_FIELDS +
+				TMAP_FROM +
+				TAGGED_JOINS +
+				TMAP_NO_NSFW_CATS_WHERE +
+				TAGGED_WHERE +
+				TMAP_ORDER_BY,
+			// login_name used in UserCats, PossibleUserSummary, UserCopies, where
+			Args: []interface{}{login_name, login_name, login_name, login_name},
+		},
+	}
+
+	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
+	return q
+}
+
+var TAGGED_FIELDS = strings.Replace(
+	strings.Replace(
+		TMAP_BASE_FIELDS,
+		"COALESCE(puc.user_cats, l.global_cats) AS cats",
+		"uct.user_cats",
+		1,
+	),
+	`COALESCE(puc.cats_from_user,0) AS cats_from_user`,
+	"1 AS cats_from_user",
+	1,
+)
+
+var TAGGED_JOINS = strings.Replace(
+	TMAP_BASE_JOINS,
+	"LEFT JOIN PossibleUserCats puc ON l.id = puc.link_id",
+	"INNER JOIN UserCats uct ON l.id = uct.link_id",
+	1,
+) + strings.Replace(
+	COPIED_JOIN,
+	"INNER",
+	"LEFT",
+	1,
+)
+
+const TAGGED_WHERE = `
+AND submitted_by != ?
+AND l.id NOT IN
+	(SELECT link_id FROM UserCopies)`
+
+func (q *TmapTagged) FromCats(cats []string) *TmapTagged {
+	if len(cats) == 0 || cats[0] == "" {
+		return q
+	}
+
+	// append clause
+	cat_clause := `
+	AND uct.user_cats MATCH ?`
+
+	q.Text = strings.Replace(
+		q.Text,
+		TMAP_ORDER_BY,
+		cat_clause+TMAP_ORDER_BY,
+		1,
+	)
+
+	// append arg
+	cat_match := cats[0]
+	for i := 1; i < len(cats); i++ {
+		cat_match += " AND " + cats[i]
+	}
+	q.Args = append(q.Args, cat_match)
+
+	return q
+}
+
+func (q *TmapTagged) AsSignedInUser(req_user_id string) *TmapTagged {
+	fields_replacer := strings.NewReplacer(
+		TMAP_BASE_CTES, TMAP_BASE_CTES+","+TMAP_AUTH_CTES,
+		TAGGED_FIELDS, TAGGED_FIELDS+TMAP_AUTH_FIELDS,
+		TAGGED_JOINS, TAGGED_JOINS+TMAP_AUTH_JOINS,
+	)
+	q.Text = fields_replacer.Replace(q.Text)
+
+	// prepend req_user_id arg * 2
+	q.Args = append([]interface{}{req_user_id, req_user_id}, q.Args...)
+
+	return q
+}
+
+func (q *TmapTagged) NSFW() *TmapTagged {
+
+	// remove NSFW clause
+	q.Text = strings.Replace(
+		q.Text,
+		TMAP_NO_NSFW_CATS_WHERE,
+		"",
+		1,
+	)
+
+	// swap AND to WHERE in WHERE clause
+	q.Text = strings.Replace(
+		q.Text,
+		"AND submitted_by !=",
+		"WHERE submitted_by !=",
+		1,
+	)
+	return q
+}
+
+func FromUserOrGlobalCats(q *Query, cats []string) *Query {
+	if len(cats) == 0 || cats[0] == "" {
+		return q
+	}
+
+	cat_match := cats[0]
+	for i := 1; i < len(cats); i++ {
+		cat_match += " AND " + cats[i]
+	}
+
+	// append MATCH clause to PossibleUserCats CTE
+	PUC_WHERE := "WHERE submitted_by = ?"
+	q.Text = strings.Replace(
+		q.Text,
+		PUC_WHERE,
+		PUC_WHERE+`
+		AND cats MATCH ?`,
+		1,
+	)
+
+	// insert GlobalCatsFTS CTE
+	q.Text = strings.Replace(
+		q.Text,
+		TMAP_BASE_FIELDS,
+		GLOBAL_CATS_CTE+TMAP_BASE_FIELDS,
+		1,
+	)
+
+	// insert MATCH clause arg * 2 (once for PossibleUserCats CTE, once
+	// for GlobalCatsFTS CTE) 
+	// if TmapCopied insert at index 2, if TmapSubmitted insert at index 1
+	// (only TmapCopied and TmapTagged contain USER_CATS_CTE, and TmapTagged
+	// does not call this method, so can check for presence of USER_CATS_CTE)
+	var insert_index int
+	if strings.Contains(q.Text, USER_CATS_CTE) {
+		insert_index = 2
+	} else {
+		insert_index = 1
+	}
+
+	// copy trailing args to re-append after insert
+	trailing_args := make([]interface{}, len(q.Args[insert_index:]))
+	copy(trailing_args, q.Args[insert_index:])
+
+	// insert args
+	q.Args = append(q.Args[:insert_index], cat_match, cat_match)
+	q.Args = append(q.Args, trailing_args...)
+
+	// insert GLOBAL_CATS_JOIN
+	q.Text = strings.Replace(
+		q.Text,
+		TMAP_BASE_JOINS,
+		TMAP_BASE_JOINS+GLOBAL_CATS_JOIN,
+		1,
+	)
+
+	// insert final AND clause
+	and_clause := `
+	AND (
+	gc.global_cats IS NOT NULL
+	OR
+	puc.user_cats IS NOT NULL
+)`
+	q.Text = strings.Replace(
+		q.Text,
+		TMAP_ORDER_BY,
+		and_clause+TMAP_ORDER_BY,
+		1,
+	)
+
+	return q
+}
+
+const GLOBAL_CATS_CTE = `,
+	GlobalCatsFTS AS (
+		SELECT
+			link_id,
+			global_cats
+		FROM global_cats_fts
+		WHERE global_cats MATCH ?
+	)`
+
+const GLOBAL_CATS_JOIN = `
+LEFT JOIN GlobalCatsFTS gc ON l.id = gc.link_id`
+
+const USER_CATS_CTE = `UserCats AS (
+    SELECT link_id, cats as user_cats
+    FROM user_cats_fts
+    WHERE submitted_by = ?
+)`
+
+// Base
 const TMAP_BASE_CTES = `SummaryCount AS (
     SELECT link_id, COUNT(*) AS summary_count
     FROM Summaries
@@ -34,35 +391,31 @@ TagCount AS (
     GROUP BY link_id
 )`
 
-const POSSIBLE_USER_CATS_CTE = `PossibleUserCats AS (
+const POSSIBLE_USER_CATS_CTE = `
+PossibleUserCats AS (
     SELECT 
 		link_id, 
 		cats AS user_cats,
 		(cats IS NOT NULL) AS cats_from_user
     FROM user_cats_fts
-    WHERE submitted_by = 'LOGIN_NAME'
+    WHERE submitted_by = ?
 )`
 
-const POSSIBLE_USER_SUMMARY_CTE = `PossibleUserSummary AS (
+const POSSIBLE_USER_SUMMARY_CTE = `
+PossibleUserSummary AS (
     SELECT
-        link_id, text as user_summary
+        link_id, 
+		text as user_summary
     FROM Summaries
     INNER JOIN Users u ON u.id = submitted_by
-	WHERE u.login_name = 'LOGIN_NAME'
-)`
-
-const GLOBAL_CATS_CTE = `GlobalCatsFTS AS (
-    SELECT
-        link_id,
-        global_cats
-    FROM global_cats_fts
+	WHERE u.login_name = ?
 )`
 
 const USER_COPIES_CTE = `UserCopies AS (
     SELECT lc.link_id
     FROM "Link Copies" lc
     INNER JOIN Users u ON u.id = lc.user_id
-    WHERE u.login_name = 'LOGIN_NAME'
+    WHERE u.login_name = ?
 )`
 
 const TMAP_BASE_FIELDS = `
@@ -94,16 +447,17 @@ const TMAP_ORDER_BY = `
 ORDER BY lc.like_count DESC, sc.summary_count DESC, l.id DESC;`
 
 // Authenticated
-const TMAP_AUTH_CTES = `IsLiked AS (
+const TMAP_AUTH_CTES = `
+IsLiked AS (
 	SELECT link_id, COUNT(*) AS is_liked
 	FROM "Link Likes"
-	WHERE user_id = 'REQ_USER_ID'
+	WHERE user_id = ?
 	GROUP BY id
 ),
 IsCopied AS (
 	SELECT link_id, COUNT(*) AS is_copied
 	FROM "Link Copies"
-	WHERE user_id = 'REQ_USER_ID'
+	WHERE user_id = ?
 	GROUP BY id
 )`
 
@@ -114,317 +468,3 @@ const TMAP_AUTH_FIELDS = `,
 const TMAP_AUTH_JOINS = `
 	LEFT JOIN IsLiked il ON l.id = il.link_id
 	LEFT JOIN IsCopied ic ON l.id = ic.link_id`
-
-// Submitted links (global cats replaced with user-assigned)
-type TmapSubmitted struct {
-	Query
-}
-
-func NewTmapSubmitted(login_name string) *TmapSubmitted {
-	q := &TmapSubmitted{
-		Query: Query{
-			Text: 
-				"WITH " + TMAP_BASE_CTES + ",\n" +
-				POSSIBLE_USER_CATS_CTE + ",\n" +
-				POSSIBLE_USER_SUMMARY_CTE +
-				TMAP_BASE_FIELDS +
-				TMAP_FROM +
-				TMAP_BASE_JOINS +
-				TMAP_NO_NSFW_CATS_WHERE +
-				SUBMITTED_WHERE +
-				TMAP_ORDER_BY,
-		},
-	}
-	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
-
-	return q
-}
-
-const SUBMITTED_WHERE = `
-AND l.submitted_by = 'LOGIN_NAME'`
-
-func (q *TmapSubmitted) FromCats(cats []string) *TmapSubmitted {
-	q.Text = FromUserOrGlobalCats(q.Text, cats)
-	return q
-}
-
-func (q *TmapSubmitted) AsSignedInUser(req_user_id string, req_login_name string) *TmapSubmitted {
-
-	// 2 replacers required: cannot be achieved with 1 since REQ_USER_ID/REQ_LOGIN_NAME replacements must be applied to auth fields/from _after_ they are inserted
-	fields_replacer := strings.NewReplacer(
-		TMAP_BASE_CTES, TMAP_BASE_CTES+",\n"+TMAP_AUTH_CTES,
-		TMAP_BASE_FIELDS, TMAP_BASE_FIELDS+TMAP_AUTH_FIELDS,
-		TMAP_BASE_JOINS, TMAP_BASE_JOINS+TMAP_AUTH_JOINS,
-	)
-	auth_replacer := strings.NewReplacer(
-		"REQ_USER_ID", req_user_id,
-		"REQ_LOGIN_NAME", req_login_name,
-	)
-
-	q.Text = fields_replacer.Replace(q.Text)
-	q.Text = auth_replacer.Replace(q.Text)
-
-	return q
-}
-
-func (q *TmapSubmitted) NSFW() *TmapSubmitted {
-
-	// remove NSFW clause
-	q.Text = strings.Replace(
-		q.Text,
-		TMAP_NO_NSFW_CATS_WHERE,
-		"",
-		1,
-	)
-
-	// swap AND to WHERE in WHERE clause
-	q.Text = strings.Replace(
-		q.Text,
-		"AND l.submitted_by",
-		"WHERE l.submitted_by",
-		1,
-	)
-	return q
-}
-
-// Copied links submitted by other users (global cats replaced with user-assigned if user has tagged)
-type TmapCopied struct {
-	Query
-}
-
-func NewTmapCopied(login_name string) *TmapCopied {
-	q := &TmapCopied{
-		Query: Query{
-			Text: "WITH " + USER_COPIES_CTE + ",\n" +
-				TMAP_BASE_CTES + ",\n" +
-				POSSIBLE_USER_CATS_CTE + ",\n" +
-				POSSIBLE_USER_SUMMARY_CTE +
-				TMAP_BASE_FIELDS +
-				TMAP_FROM + "\n" +
-				COPIED_JOIN +
-				TMAP_BASE_JOINS +
-				TMAP_NO_NSFW_CATS_WHERE +
-				COPIED_WHERE +
-				TMAP_ORDER_BY,
-		},
-	}
-	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
-
-	return q
-}
-
-const COPIED_JOIN = "INNER JOIN UserCopies uc ON l.id = uc.link_id"
-
-const COPIED_WHERE = ` 
-AND submitted_by != 'LOGIN_NAME'`
-
-func (q *TmapCopied) FromCats(cats []string) *TmapCopied {
-	q.Text = FromUserOrGlobalCats(q.Text, cats)
-	return q
-}
-
-func (q *TmapCopied) AsSignedInUser(req_user_id string, req_login_name string) *TmapCopied {
-	fields_replacer := strings.NewReplacer(
-		TMAP_BASE_CTES, TMAP_BASE_CTES+",\n"+TMAP_AUTH_CTES,
-		TMAP_BASE_FIELDS, TMAP_BASE_FIELDS+TMAP_AUTH_FIELDS,
-		COPIED_JOIN, COPIED_JOIN+TMAP_AUTH_JOINS,
-	)
-	auth_replacer := strings.NewReplacer(
-		"REQ_USER_ID", req_user_id,
-		"REQ_LOGIN_NAME", req_login_name,
-	)
-
-	q.Text = fields_replacer.Replace(q.Text)
-	q.Text = auth_replacer.Replace(q.Text)
-
-	return q
-}
-
-func (q *TmapCopied) NSFW() *TmapCopied {
-
-	// remove NSFW clause
-	q.Text = strings.Replace(
-		q.Text,
-		TMAP_NO_NSFW_CATS_WHERE,
-		"",
-		1,
-	)
-
-	// swap AND to WHERE in WHERE clause
-	q.Text = strings.Replace(
-		q.Text,
-		"AND submitted_by !=",
-		"WHERE submitted_by !=",
-		1,
-	)
-	return q
-}
-
-// Tagged links submitted by other users (global cats replaced with user-assigned)
-type TmapTagged struct {
-	Query
-}
-
-func NewTmapTagged(login_name string) *TmapTagged {
-	q := &TmapTagged{
-		Query: Query{
-			Text: "WITH " + TMAP_BASE_CTES + ",\n" +
-				USER_CATS_CTE + ",\n" +
-				POSSIBLE_USER_SUMMARY_CTE + ",\n" +
-				USER_COPIES_CTE +
-				TAGGED_FIELDS +
-				TMAP_FROM +
-				TAGGED_JOINS +
-				TMAP_NO_NSFW_CATS_WHERE +
-				TAGGED_WHERE +
-				TMAP_ORDER_BY,
-		},
-	}
-
-	q.Text = strings.ReplaceAll(q.Text, "LOGIN_NAME", login_name)
-	return q
-}
-
-const USER_CATS_CTE = `UserCats AS (
-    SELECT link_id, cats as user_cats
-    FROM user_cats_fts
-    WHERE submitted_by = 'LOGIN_NAME'
-)`
-
-var TAGGED_FIELDS = strings.Replace(
-	strings.Replace(
-		TMAP_BASE_FIELDS,
-		"COALESCE(puc.user_cats, l.global_cats) AS cats",
-		"uct.user_cats",
-		1,
-	),
-	`COALESCE(puc.cats_from_user,0) AS cats_from_user`,
-	"1 AS cats_from_user",
-	1,
-)
-
-var TAGGED_JOINS = strings.Replace(
-	TMAP_BASE_JOINS,
-	"LEFT JOIN PossibleUserCats puc ON l.id = puc.link_id",
-	"INNER JOIN UserCats uct ON l.id = uct.link_id",
-	1,
-) + "\n" + strings.Replace(
-	COPIED_JOIN,
-	"INNER",
-	"LEFT",
-	1,
-)
-
-const TAGGED_WHERE = `
-AND submitted_by != 'LOGIN_NAME'
-AND l.id NOT IN
-	(SELECT link_id FROM UserCopies)`
-
-func (q *TmapTagged) FromCats(cats []string) *TmapTagged {
-	escaped := GetCatsWithEscapedChars(cats)
-	var cat_clause string
-	for _, cat := range escaped {
-		cat_clause += fmt.Sprintf(
-			"\nAND uct.user_cats MATCH '%s'", cat)
-	}
-
-	q.Text = strings.Replace(
-		q.Text,
-		TMAP_ORDER_BY,
-		cat_clause+TMAP_ORDER_BY,
-		1,
-	)
-	return q
-}
-
-func (q *TmapTagged) AsSignedInUser(req_user_id string, req_login_name string) *TmapTagged {
-	fields_replacer := strings.NewReplacer(
-		TMAP_BASE_CTES, TMAP_BASE_CTES+",\n"+TMAP_AUTH_CTES,
-		TAGGED_FIELDS, TAGGED_FIELDS+TMAP_AUTH_FIELDS,
-		TAGGED_JOINS, TAGGED_JOINS+TMAP_AUTH_JOINS,
-	)
-	auth_replacer := strings.NewReplacer(
-		"REQ_USER_ID", req_user_id,
-		"REQ_LOGIN_NAME", req_login_name,
-	)
-
-	q.Text = fields_replacer.Replace(q.Text)
-	q.Text = auth_replacer.Replace(q.Text)
-
-	return q
-}
-
-func (q *TmapTagged) NSFW() *TmapTagged {
-
-	// remove NSFW clause
-	q.Text = strings.Replace(
-		q.Text,
-		TMAP_NO_NSFW_CATS_WHERE,
-		"",
-		1,
-	)
-
-	// swap AND to WHERE in WHERE clause
-	q.Text = strings.Replace(
-		q.Text,
-		"AND submitted_by !=",
-		"WHERE submitted_by !=",
-		1,
-	)
-	return q
-}
-
-func FromUserOrGlobalCats(q string, cats []string) string {
-	escaped := GetCatsWithEscapedChars(cats)
-	var cat_match string
-	cat_match += fmt.Sprintf("'%s", escaped[0])
-	for i := 1; i < len(escaped); i++ {
-		cat_match += fmt.Sprintf(" AND %s", escaped[i])
-	}
-	cat_match += "'"
-
-	puc_WHERE := regexp.MustCompile(`WHERE submitted_by = '.+'`).FindString(q)
-	q = strings.Replace(
-		q,
-		puc_WHERE,
-		puc_WHERE+"\nAND cats MATCH "+cat_match,
-		1,
-	)
-
-	gc_CTE := strings.Replace(
-		GLOBAL_CATS_CTE,
-		"FROM global_cats_fts",
-		"FROM global_cats_fts"+"\nWHERE global_cats MATCH "+cat_match,
-		1,
-	)
-	q = strings.Replace(
-		q,
-		TMAP_BASE_FIELDS,
-		",\n"+gc_CTE+TMAP_BASE_FIELDS,
-		1,
-	)
-
-	q = strings.Replace(
-		q,
-		TMAP_BASE_JOINS,
-		TMAP_BASE_JOINS+"\n"+GLOBAL_CATS_JOIN,
-		1,
-	)
-
-	and_clause := `
-	AND (
-	gc.global_cats IS NOT NULL
-	OR
-	puc.user_cats IS NOT NULL
-)`
-	q = strings.Replace(
-		q,
-		TMAP_ORDER_BY,
-		and_clause+TMAP_ORDER_BY,
-		1,
-	)
-
-	return q
-}
-
-const GLOBAL_CATS_JOIN = "LEFT JOIN GlobalCatsFTS gc ON l.id = gc.link_id"

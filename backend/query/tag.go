@@ -116,6 +116,16 @@ type TagRankings struct {
 	*Query
 }
 
+func NewTagRankings(link_id string) *TagRankings {
+	return (&TagRankings{Query: 
+		&Query{
+			Text: 
+				TOP_OVERLAP_SCORES_BASE,
+			Args: []interface{}{link_id, TAG_RANKINGS_PAGE_LIMIT},
+		},
+	})
+}
+
 const TOP_OVERLAP_SCORES_BASE_FIELDS = `SELECT
 	(julianday('now') - julianday(last_updated)) / (julianday('now') - julianday(submit_date)) * 100 AS lifespan_overlap, 
 	cats`
@@ -127,16 +137,6 @@ ON Links.id = Tags.link_id
 WHERE link_id = ?
 ORDER BY lifespan_overlap DESC
 LIMIT ?`
-
-func NewTagRankings(link_id string) *TagRankings {
-	return (&TagRankings{Query: 
-		&Query{
-			Text: 
-				TOP_OVERLAP_SCORES_BASE,
-			Args: []interface{}{link_id, TAG_RANKINGS_PAGE_LIMIT},
-		},
-	})
-}
 
 func (o *TagRankings) Public() *TagRankings {
 	o.Text = strings.Replace(

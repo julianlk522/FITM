@@ -11,6 +11,18 @@ type SummaryPageLink struct {
 	*Query
 }
 
+func NewSummaryPageLink(ID string) *SummaryPageLink {
+	return (&SummaryPageLink{
+		Query: &Query{
+			Text: 
+				SUMMARY_PAGE_LINK_BASE_FIELDS +
+				SUMMARY_PAGE_LINK_BASE_FROM + 
+				SUMMARY_PAGE_LINK_BASE_JOINS,
+			Args: []interface{}{ID},
+		},
+	})
+}
+
 const SUMMARY_PAGE_LINK_BASE_FIELDS = `SELECT 
 links_id as link_id, 
 url, 
@@ -52,18 +64,6 @@ LEFT JOIN
 	GROUP BY tlink_id
 	)
 ON tlink_id = links_id;`
-
-func NewSummaryPageLink(ID string) *SummaryPageLink {
-	return (&SummaryPageLink{
-		Query: &Query{
-			Text: 
-				SUMMARY_PAGE_LINK_BASE_FIELDS +
-				SUMMARY_PAGE_LINK_BASE_FROM + 
-				SUMMARY_PAGE_LINK_BASE_JOINS,
-			Args: []interface{}{ID},
-		},
-	})
-}
 
 func (l *SummaryPageLink) AsSignedInUser(user_id string) *SummaryPageLink {
 	l.Text = strings.Replace(
@@ -109,6 +109,19 @@ type Summaries struct {
 	*Query
 }
 
+func NewSummariesForLink(link_id string) *Summaries {
+	return (&Summaries{
+		Query: &Query{
+			Text: 
+				SUMMARIES_BASE_FIELDS +
+				SUMMARIES_FROM +
+				SUMMARIES_JOIN +
+				SUMMARIES_GBL,
+			Args: []interface{}{link_id, SUMMARIES_PAGE_LIMIT},
+		},
+	})
+}
+
 const SUMMARIES_BASE_FIELDS = `SELECT 
 	sumid, 
 	text, 
@@ -137,19 +150,6 @@ ON sl.summary_id = sumid`
 const SUMMARIES_GBL = `
 GROUP BY sumid
 LIMIT ?;`
-
-func NewSummariesForLink(link_id string) *Summaries {
-	return (&Summaries{
-		Query: &Query{
-			Text: 
-				SUMMARIES_BASE_FIELDS +
-				SUMMARIES_FROM +
-				SUMMARIES_JOIN +
-				SUMMARIES_GBL,
-			Args: []interface{}{link_id, SUMMARIES_PAGE_LIMIT},
-		},
-	})
-}
 
 func (s *Summaries) AsSignedInUser(user_id string) *Summaries {
 	s.Text = strings.Replace(

@@ -16,7 +16,6 @@ var (
 	test_login_name = "jlk"
 	test_user_id    = "3"
 
-	test_req_login_name = "bradley"
 	test_req_user_id    = "13"
 
 	test_single_cat    = []string{"umvc3"}

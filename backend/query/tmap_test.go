@@ -23,7 +23,7 @@ func TestNewTmapProfile(t *testing.T) {
 	profile_sql := NewTmapProfile(test_login_name)
 
 	var profile model.Profile
-	if err := TestClient.QueryRow(profile_sql).Scan(
+	if err := TestClient.QueryRow(profile_sql.Text, profile_sql.Args...).Scan(
 		&profile.LoginName,
 		&profile.About,
 		&profile.PFP,
@@ -65,7 +65,7 @@ func TestNewTmapSubmitted(t *testing.T) {
 		t.Fatal(submitted_sql.Error)
 	}
 
-	rows, err = TestClient.Query(submitted_sql.Text)
+	rows, err = TestClient.Query(submitted_sql.Text, submitted_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +117,7 @@ func TestNewTmapSubmittedFromCats(t *testing.T) {
 		t.Fatal(submitted_sql.Error)
 	}
 
-	rows, err := TestClient.Query(submitted_sql.Text)
+	rows, err := TestClient.Query(submitted_sql.Text, submitted_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,23 +145,15 @@ func TestNewTmapSubmittedFromCats(t *testing.T) {
 			t.Fatal("TagCount == 0")
 		}
 	}
-
-	// test "." properly escaped
-	submitted_sql = NewTmapSubmitted(test_login_name).FromCats([]string{"YouTube", "c. viper"})
-	if submitted_sql.Error != nil {
-		t.Fatal(submitted_sql.Error)
-	} else if strings.Contains(submitted_sql.Text, ".") && !strings.Contains(submitted_sql.Text, `"."`) {
-		t.Fatal("failed to ecape period in cat 'c. viper'")
-	}
 }
 
 func TestNewTmapSubmittedAsSignedInUser(t *testing.T) {
-	submitted_sql := NewTmapSubmitted(test_login_name).AsSignedInUser(test_req_user_id, test_req_login_name)
+	submitted_sql := NewTmapSubmitted(test_login_name).AsSignedInUser(test_req_user_id)
 	if submitted_sql.Error != nil {
 		t.Fatal(submitted_sql.Error)
 	}
 
-	rows, err := TestClient.Query(submitted_sql.Text)
+	rows, err := TestClient.Query(submitted_sql.Text, submitted_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -192,7 +184,7 @@ func TestNewTmapSubmittedAsSignedInUser(t *testing.T) {
 
 func TestNewTmapSubmittedNSFW(t *testing.T) {
 	submitted_sql := NewTmapSubmitted("bradley").NSFW()
-	rows, err := TestClient.Query(submitted_sql.Text)
+	rows, err := TestClient.Query(submitted_sql.Text, submitted_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -232,7 +224,7 @@ func TestNewTmapCopied(t *testing.T) {
 		t.Fatal(copied_sql.Error)
 	}
 
-	rows, err := TestClient.Query(copied_sql.Text)
+	rows, err := TestClient.Query(copied_sql.Text, copied_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -283,7 +275,7 @@ func TestNewTmapCopiedFromCats(t *testing.T) {
 		t.Fatal(copied_sql.Error)
 	}
 
-	rows, err := TestClient.Query(copied_sql.Text)
+	rows, err := TestClient.Query(copied_sql.Text, copied_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -326,23 +318,15 @@ func TestNewTmapCopiedFromCats(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-
-	// test "." properly escaped
-	copied_sql = NewTmapCopied(test_login_name).FromCats([]string{"YouTube", "c. viper"})
-	if copied_sql.Error != nil {
-		t.Fatal(copied_sql.Error)
-	} else if strings.Contains(copied_sql.Text, ".") && !strings.Contains(copied_sql.Text, `"."`) {
-		t.Fatal("failed to ecape period in cat 'c. viper'")
-	}
 }
 
 func TestNewTmapCopiedAsSignedInUser(t *testing.T) {
-	copied_sql := NewTmapCopied(test_login_name).AsSignedInUser(test_req_user_id, test_req_login_name)
+	copied_sql := NewTmapCopied(test_login_name).AsSignedInUser(test_req_user_id)
 	if copied_sql.Error != nil {
 		t.Fatal(copied_sql.Error)
 	}
 
-	rows, err := TestClient.Query(copied_sql.Text)
+	rows, err := TestClient.Query(copied_sql.Text, copied_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -375,7 +359,7 @@ func TestNewTmapCopiedNSFW(t *testing.T) {
 	// test_login_name (jlk) should have copied 1 link with NSFW tag
 
 	copied_sql := NewTmapCopied(test_login_name).NSFW()
-	rows, err := TestClient.Query(copied_sql.Text)
+	rows, err := TestClient.Query(copied_sql.Text, copied_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -415,7 +399,7 @@ func TestNewTmapTagged(t *testing.T) {
 		t.Fatal(tagged_sql.Error)
 	}
 
-	rows, err := TestClient.Query(tagged_sql.Text)
+	rows, err := TestClient.Query(tagged_sql.Text, tagged_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -464,7 +448,7 @@ func TestNewTmapTaggedFromCats(t *testing.T) {
 		t.Fatal(tagged_sql.Error)
 	}
 
-	rows, err := TestClient.Query(tagged_sql.Text)
+	rows, err := TestClient.Query(tagged_sql.Text, tagged_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -507,23 +491,15 @@ func TestNewTmapTaggedFromCats(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-
-	// test "." properly escaped
-	tagged_sql = NewTmapTagged(test_login_name).FromCats([]string{"YouTube", "c. viper"})
-	if tagged_sql.Error != nil {
-		t.Fatal(tagged_sql.Error)
-	} else if strings.Contains(tagged_sql.Text, ".") && !strings.Contains(tagged_sql.Text, `"."`) {
-		t.Fatal("failed to ecape period in cat 'c. viper'")
-	}
 }
 
 func TestNewTmapTaggedAsSignedInUser(t *testing.T) {
-	tagged_sql := NewTmapTagged(test_login_name).AsSignedInUser(test_req_user_id, test_req_login_name)
+	tagged_sql := NewTmapTagged(test_login_name).AsSignedInUser(test_req_user_id)
 	if tagged_sql.Error != nil {
 		t.Fatal(tagged_sql.Error)
 	}
 
-	rows, err := TestClient.Query(tagged_sql.Text)
+	rows, err := TestClient.Query(tagged_sql.Text, tagged_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -556,7 +532,7 @@ func TestNewTmapTaggedNSFW(t *testing.T) {
 	// test_login_name (jlk) should have tagged 1 link with NSFW tag
 
 	copied_sql := NewTmapTagged(test_login_name).NSFW()
-	rows, err := TestClient.Query(copied_sql.Text)
+	rows, err := TestClient.Query(copied_sql.Text, copied_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -593,13 +569,13 @@ func TestFromUserOrGlobalCats(t *testing.T) {
 
 	// submitted
 	tmap_submitted := NewTmapSubmitted(test_login_name)
-	_, err := TestClient.Query(tmap_submitted.Text)
+	_, err := TestClient.Query(tmap_submitted.Text, tmap_submitted.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	tmap_submitted.Text = FromUserOrGlobalCats(tmap_submitted.Text, test_cats)
-	rows, err := TestClient.Query(tmap_submitted.Text)
+	tmap_submitted.Query = FromUserOrGlobalCats(tmap_submitted.Query, test_cats)
+	rows, err := TestClient.Query(tmap_submitted.Text, tmap_submitted.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -629,13 +605,13 @@ func TestFromUserOrGlobalCats(t *testing.T) {
 
 	// copied
 	tmap_copied := NewTmapCopied(test_login_name)
-	_, err = TestClient.Query(tmap_copied.Text)
+	_, err = TestClient.Query(tmap_copied.Text, tmap_copied.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	tmap_copied.Text = FromUserOrGlobalCats(tmap_copied.Text, test_cats)
-	rows, err = TestClient.Query(tmap_copied.Text)
+	tmap_copied.Query = FromUserOrGlobalCats(tmap_copied.Query, test_cats)
+	rows, err = TestClient.Query(tmap_copied.Text, tmap_copied.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
