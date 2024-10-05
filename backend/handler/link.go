@@ -405,7 +405,7 @@ func CopyLink(w http.ResponseWriter, r *http.Request) {
 	new_copy_id := uuid.New().String()
 
 	_, err := db.Client.Exec(
-		"INSERT INTO 'Link Copies' VALUES(?,?,?);",
+		`INSERT INTO "Link Copies" VALUES(?,?,?);`,
 		new_copy_id,
 		link_id,
 		req_user_id,
@@ -433,7 +433,7 @@ func UncopyLink(w http.ResponseWriter, r *http.Request) {
 
 	// Delete
 	_, err := db.Client.Exec(
-		"DELETE FROM 'Link Copies' WHERE link_id = ? AND user_id = ?;",
+		`DELETE FROM "Link Copies" WHERE link_id = ? AND user_id = ?;`,
 		link_id,
 		req_user_id,
 	)

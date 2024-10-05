@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 
 	"net/http"
@@ -161,8 +160,7 @@ func GetIDOfUserSummaryForLink(user_id string, link_id string) (string, error) {
 // Delete summary
 func GetLinkIDFromSummaryID(summary_id string) (string, error) {
 	var lid sql.NullString
-	get_lid_sql := fmt.Sprintf(`SELECT link_id FROM Summaries WHERE id = '%s'`, summary_id)
-	err := db.Client.QueryRow(get_lid_sql).Scan(&lid)
+	err := db.Client.QueryRow(`SELECT link_id FROM Summaries WHERE id = ?`, summary_id).Scan(&lid)
 	if err != nil {
 		return "", err
 	}
@@ -195,8 +193,11 @@ func SummarySubmittedByUser(summary_id string, user_id string) (bool, error) {
 func UserHasLikedSummary(user_id string, summary_id string) (bool, error) {
 	var summary_like_id sql.NullString
 
-	err := db.Client.QueryRow(
-		"SELECT id FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?", user_id,
+	err := db.Client.QueryRow(`SELECT id 
+		FROM "Summary Likes" 
+		WHERE user_id = ? 
+		AND summary_id = ?`, 
+		user_id,
 		summary_id,
 	).Scan(&summary_like_id)
 	if err != nil {
@@ -247,14 +248,11 @@ func CalculateAndSetGlobalSummary(link_id string) error {
 	}
 
 	// Set global summary if not already set to top result
-	check_global_summary_sql := fmt.Sprintf(`
-		SELECT global_summary 
-		FROM Links 
-		WHERE id = '%s'`,
-		link_id)
 	var gs string
-
-	err = db.Client.QueryRow(check_global_summary_sql).Scan(&gs)
+	err = db.Client.QueryRow(`SELECT global_summary 
+		FROM Links 
+		WHERE id = ?`,
+		link_id).Scan(&gs)
 	if err != nil {
 		return err
 	} else if gs == "" || gs != top_summary_text {

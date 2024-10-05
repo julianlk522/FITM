@@ -2,7 +2,6 @@ package query
 
 import (
 	"database/sql"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -38,14 +37,11 @@ func TestNewTmapSubmitted(t *testing.T) {
 
 	// first retrieve all IDs of links submitted by user
 	var submitted_ids []string
-
-	submitted_ids_sql := fmt.Sprintf(
-		`SELECT id FROM Links WHERE submitted_by = '%s'
-		AND global_cats NOT LIKE '%%NSFW%%'`, // exclude NSFW in base query
-		test_req_login_name,
-	)
-
-	rows, err := TestClient.Query(submitted_ids_sql)
+	rows, err := TestClient.Query(`SELECT id 
+		FROM Links 
+		WHERE submitted_by = ?
+		AND global_cats NOT LIKE '%' || 'NSFW' || '%';`, // exclude NSFW in base query
+		test_req_login_name)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -254,14 +250,12 @@ func TestNewTmapCopied(t *testing.T) {
 
 		// check that tmap owner has copied
 		var link_id string
-		err := TestClient.QueryRow(
-			fmt.Sprintf(`SELECT id
-				FROM 'Link Copies'
-				WHERE link_id = %s
-				AND user_id = %s`,
+		err := TestClient.QueryRow(`SELECT id
+				FROM "Link Copies"
+				WHERE link_id = ?
+				AND user_id = ?`,
 				l.ID,
-				test_user_id),
-		).Scan(&link_id)
+				test_user_id).Scan(&link_id)
 
 		if err != nil {
 			t.Fatal(err)
@@ -305,14 +299,12 @@ func TestNewTmapCopiedFromCats(t *testing.T) {
 
 		// check that tmap owner has copied
 		var link_id string
-		err := TestClient.QueryRow(
-			fmt.Sprintf(`SELECT id
-				FROM 'Link Copies'
-				WHERE link_id = %s
-				AND user_id = %s`,
+		err := TestClient.QueryRow(`SELECT id
+				FROM "Link Copies"
+				WHERE link_id = ?
+				AND user_id = ?`,
 				l.ID,
-				test_user_id),
-		).Scan(&link_id)
+				test_user_id).Scan(&link_id)
 
 		if err != nil {
 			t.Fatal(err)
@@ -427,14 +419,12 @@ func TestNewTmapTagged(t *testing.T) {
 
 		// check that tmap owner has tagged
 		var link_id string
-		err := TestClient.QueryRow(
-			fmt.Sprintf(`SELECT id
+		err := TestClient.QueryRow(`SELECT id
 				FROM Tags
-				WHERE link_id = '%s'
-				AND submitted_by = '%s'`,
+				WHERE link_id = ?
+				AND submitted_by = ?;`,
 				l.ID,
-				test_login_name),
-		).Scan(&link_id)
+				test_login_name).Scan(&link_id)
 
 		if err != nil {
 			t.Fatal(err)
@@ -478,13 +468,12 @@ func TestNewTmapTaggedFromCats(t *testing.T) {
 
 		// check that tmap owner has tagged
 		var link_id string
-		err := TestClient.QueryRow(
-			fmt.Sprintf(`SELECT id
-				FROM Tags
-				WHERE link_id = %s
-				AND submitted_by = %s`,
-				l.ID,
-				test_login_name),
+		err := TestClient.QueryRow(`SELECT id
+			FROM Tags
+			WHERE link_id = ?
+			AND submitted_by = ?`,
+			l.ID,
+			test_login_name,
 		).Scan(&link_id)
 
 		if err != nil {

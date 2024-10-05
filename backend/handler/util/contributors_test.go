@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/julianlk522/fitm/query"
@@ -35,15 +34,12 @@ func TestScanContributors(t *testing.T) {
 	// verify that each contributor submitted the correct number of links
 	var ls int
 	for _, contributor := range *contributors {
-		err := TestClient.QueryRow(
-			fmt.Sprintf(
-				`SELECT count(*)
+		err := TestClient.QueryRow(`SELECT count(*)
 				FROM Links
-				WHERE submitted_by = '%s'
-				AND ',' || global_cats || ',' LIKE '%%,%s,%%';`,
+				WHERE submitted_by = ?
+				AND ',' || global_cats || ',' LIKE '%,' || ? || ',%'`,
 				contributor.LoginName,
-				test_cats_str),
-		).Scan(&ls)
+				test_cats_str).Scan(&ls)
 		if err != nil {
 			t.Fatal(err)
 		} else if ls != contributor.LinksSubmitted {
@@ -69,17 +65,14 @@ func TestScanContributors(t *testing.T) {
 
 	// verify that each contributor submitted the correct number of links
 	for _, contributor := range *contributors {
-		err := TestClient.QueryRow(
-			fmt.Sprintf(
-				`SELECT count(*)
+		err := TestClient.QueryRow(`SELECT count(*)
 				FROM Links
-				WHERE submitted_by = '%s'
-				AND ',' || global_cats || ',' LIKE '%%,%s,%%'
-				AND ',' || global_cats || ',' LIKE '%%,%s,%%';`,
+				WHERE submitted_by = ?
+				AND ',' || global_cats || ',' LIKE '%,' || ? || ',%'
+				AND ',' || global_cats || ',' LIKE '%,' || ? || ',%';`,
 				contributor.LoginName,
 				test_multiple_cats[0],
-				test_multiple_cats[1]),
-		).Scan(&ls)
+				test_multiple_cats[1]).Scan(&ls)
 		if err != nil {
 			t.Fatal(err)
 		} else if ls != contributor.LinksSubmitted {

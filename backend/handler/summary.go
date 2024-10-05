@@ -106,7 +106,7 @@ func AddSummary(w http.ResponseWriter, r *http.Request) {
 
 		// Reset Summary Likes
 		_, err = db.Client.Exec(
-			`DELETE FROM 'Summary Likes' WHERE summary_id = ?`,
+			`DELETE FROM "Summary Likes" WHERE summary_id = ?`,
 			summary_id,
 		)
 		if err != nil {
@@ -244,7 +244,7 @@ func LikeSummary(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback()
 
 	_, err = db.Client.Exec(
-		`INSERT INTO 'Summary Likes' VALUES (?,?,?)`,
+		`INSERT INTO "Summary Likes" VALUES (?,?,?)`,
 		uuid.New().String(),
 		summary_id,
 		req_user_id,
@@ -308,7 +308,7 @@ func UnlikeSummary(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback()
 
 	_, err = db.Client.Exec(
-		`DELETE FROM 'Summary Likes' WHERE user_id = ? AND summary_id = ?`, req_user_id,
+		`DELETE FROM "Summary Likes" WHERE user_id = ? AND summary_id = ?`, req_user_id,
 		summary_id,
 	)
 	if err != nil {

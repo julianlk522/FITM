@@ -3,21 +3,18 @@
 ## Todos
 
 In order of importance:
-    1. refactors
-    2. anti-spam/naughty stuff
+    1. list number of NSFW links next to tmap toggle, hide if none
+    2. disallow weird username chars
+        -\/:;*?"'<>|
+        -just [a-zA-Z0-9_] or something
+    3. anti-spam/naughty stuff
         - way to report links as NSFW
         - probably some way to detect porn/gore and add NSFW tag
             - (and prevent it from being removed)
 
--little things
-    - list number of NSFW links next to tmap toggle
-    - move inline SVGs to astro components
+-really little things
     - give static assets simple names that make sense
-    - replace index.astro / feedback.astro <img>s with background-image styling\
     - convert cornucopia to .webp
-
--maybe
-    - move SameUserLikeCount.tsx / AboutText.tsx to .astro since never interactive
 
 -before release:
     -increase backup frequency
@@ -27,10 +24,9 @@ In order of importance:
 -Pagination
     -User Treasure Map
         -Submitted / Copied / Tagged links
-        -Cats
-        -Subcats
-    -Global Cats
-    -Global Subcats
+        -Cats / Subcats ? (probably not necessary)
+    -Global Cats / Subcats ?
+        -not really needed since /more
 
 ### Code Quality
 
@@ -38,10 +34,7 @@ In order of importance:
 -Simplicity / accuracy
 -Readability
 -Security
-    -Look into input sequences that might produce problematic results
-    -prevent whacky chars from usernames/passwords
-        -/, ;, ", ', etc.
-    -fuzz test
+    -fuzz tests?
 
 ## To-Maybe-Dos
 
@@ -52,7 +45,7 @@ In order of importance:
 -Improve frontend A11y/semantic markup/looks
     -button titles
     -subtitle probably should not be h2
-    -original favicon.ico
+    -(more) original favicon.ico
     -Tiny bit more space between like/copy buttons on mobile
     -maybe go through BrowserStack and see if anything is horrendous
     -Link preview img srcset?
@@ -75,6 +68,9 @@ In order of importance:
     -500 for server fuckups
     -make sure not just using log.Fatal where there should be status
 -Other lesser refactors and removal of duplicate code
+    -replace index.astro / feedback.astro <img>s with background-image styling
+    -move inline SVGs to astro components
+    -move SameUserLikeCount.tsx / AboutText.tsx to .astro since never interactive
     -BuildTagPage helper to declutter GetTagPage handler
     -os.LookupEnv?
         -not sure if makes any practical difference
@@ -195,4 +191,4 @@ In order of importance:
 - Design challenges
     - global cats calc system
 - Parameterizing input values to SQL
-    - store args with each query, call .Query / .Exec / etc. with sql.Args...
+    - store args with each query, call .Query / .Exec / etc. with sql.Args..., shuffle / slice args around with various method calls

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -209,14 +208,10 @@ func TestScanGlobalCatCounts(t *testing.T) {
 			t.Fatalf("cat %s returned count 0", c.Category)
 		}
 
-		err = TestClient.QueryRow(
-			fmt.Sprintf(
-				`SELECT count(global_cats)
+		err = TestClient.QueryRow(`SELECT count(global_cats)
 				FROM Links
-				WHERE ','||global_cats||',' LIKE '%%,'||'%s'||',%%'`,
-				c.Category,
-			),
-		).Scan(&result_count)
+				WHERE ','||global_cats||',' LIKE '%,' || ? || ',%'`,
+				c.Category).Scan(&result_count)
 
 		if err != nil {
 			t.Fatal(err)
@@ -285,16 +280,12 @@ func TestScanGlobalCatCounts(t *testing.T) {
 				t.Fatalf("unable to get period clause: %s", err)
 			}
 
-			err = TestClient.QueryRow(
-				fmt.Sprintf(
-					`SELECT count(global_cats)
+			err = TestClient.QueryRow(`SELECT count(global_cats)
 					FROM Links
-					WHERE ','||global_cats||',' LIKE '%%,'||'%s'||',%%'
-					AND %s`,
+					WHERE ',' || global_cats || ',' LIKE '%,' || ? || ',%'
+					AND ` + period_clause + ";",
 					c.Category,
-					period_clause,
-				),
-			).Scan(&result_count)
+					period_clause).Scan(&result_count)
 
 			if err != nil {
 				t.Fatal(err)

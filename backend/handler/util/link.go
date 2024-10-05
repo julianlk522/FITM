@@ -20,12 +20,12 @@ const MAX_DAILY_LINKS = 50
 
 func UserHasSubmittedMaxDailyLinks(login_name string) (bool, error) {
 	var count int
-	err := db.Client.QueryRow(fmt.Sprintf(`SELECT count(*)
+	err := db.Client.QueryRow(`SELECT count(*)
 		FROM Links
-		WHERE submitted_by = '%s'
+		WHERE submitted_by = ?
 		AND submit_date >= date('now', '-1 days');`, 
 		login_name,
-	)).Scan(&count)
+	).Scan(&count)
 	if err != nil {
 		return false, err
 	}
@@ -350,7 +350,13 @@ func UserHasLikedLink(user_id string, link_id string) bool {
 // Copy link
 func UserHasCopiedLink(user_id string, link_id string) bool {
 	var l sql.NullString
-	err := db.Client.QueryRow("SELECT id FROM 'Link Copies' WHERE user_id = ? AND link_id = ?;", user_id, link_id).Scan(&l)
+	err := db.Client.QueryRow(`SELECT id 
+		FROM "Link Copies" 
+		WHERE user_id = ? 
+		AND link_id = ?;`, 
+		user_id, 
+		link_id,
+	).Scan(&l)
 
 	return err == nil && l.Valid
 }

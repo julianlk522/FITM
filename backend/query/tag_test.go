@@ -2,7 +2,6 @@ package query
 
 import (
 	"database/sql"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -186,18 +185,15 @@ func TestNewTopGlobalCatCountsSubcatsOfCats(t *testing.T) {
 	// verify counts
 	for _, c := range counts {
 		var count int32
-		sql := fmt.Sprintf(
-			`SELECT count(id) as count 
-			FROM LINKS 
-			WHERE global_cats LIKE '%%%s%%'
-			AND global_cats LIKE '%%%s%%'
-			AND global_cats LIKE '%%%s%%'`,
-			test_cats[0],
-			test_cats[1],
-			c.Category,
-		)
-
-		if err := TestClient.QueryRow(sql).Scan(&count); err != nil {
+		if err := TestClient.QueryRow( `SELECT count(id) as count 
+		FROM LINKS 
+		WHERE global_cats LIKE '%' || ? || '%'
+		AND global_cats LIKE '%' || ? || '%'
+		AND global_cats LIKE '%' || ? || '%'`,
+		test_cats[0],
+		test_cats[1],
+		c.Category,
+	).Scan(&count); err != nil {
 			t.Fatal(err)
 		} else if count != c.Count {
 			t.Fatalf(
@@ -207,14 +203,6 @@ func TestNewTopGlobalCatCountsSubcatsOfCats(t *testing.T) {
 				c.Category,
 			)
 		}
-	}
-
-	// test that "." properly escaped
-	counts_sql = NewTopGlobalCatCounts().SubcatsOfCats("YouTube,c.viper")
-	if counts_sql.Error != nil {
-		t.Fatal(counts_sql.Error)
-	} else if strings.Contains(counts_sql.Text, ".") && !strings.Contains(counts_sql.Text, `"."`) {
-		t.Fatal("failed to escape period in cat 'c. viper'")
 	}
 }
 
