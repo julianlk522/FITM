@@ -331,7 +331,7 @@ func TestDeleteLink(t *testing.T) {
 		{
 			LinkID:             "7",
 			Valid:              true,
-			ExpectedStatusCode: 204,
+			ExpectedStatusCode: 205,
 		},
 	}
 
@@ -362,9 +362,10 @@ func TestDeleteLink(t *testing.T) {
 		res := w.Result()
 		defer res.Body.Close()
 
-		if tr.Valid && res.StatusCode != 204 {
+		if tr.Valid && res.StatusCode != tr.ExpectedStatusCode {
 			t.Fatalf(
-				"expected status code 204, got %d (test request %+v)",
+				"expected status code %d, got %d (test request %+v)",
+				tr.ExpectedStatusCode,
 				res.StatusCode,
 				tr,
 			)

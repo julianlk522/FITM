@@ -68,8 +68,6 @@ In order of importance:
 -Look into broken auto og:image
     -e.g., coolers.co image should not have been added with invalid link
     -https://rss.com/blog/how-do-rss-feeds-work/
--SQL prepared statements
-    -more important if truly does help prevent injection... verify
 -Ensure accurate / helpful http response codes
     -start by making sure all ErrInvalidRequests are actually that
     -e.g., tag page for invalid link id returns 500 (should be 404)
