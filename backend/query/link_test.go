@@ -2,33 +2,12 @@ package query
 
 import (
 	"database/sql"
+	"strings"
 	"testing"
 	"time"
 
-	"fmt"
-	"strings"
-
 	"github.com/julianlk522/fitm/model"
 )
-
-func Test_PaginateLimitClause(t *testing.T) {
-	var test_cases = []struct {
-		Page int
-		Want string
-	}{
-		{1, fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT+1)},
-		{2, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, LINKS_PAGE_LIMIT)},
-		{3, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, 2*LINKS_PAGE_LIMIT)},
-		{4, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, 3*LINKS_PAGE_LIMIT)},
-	}
-
-	for _, tc := range test_cases {
-		got := _PaginateLimitClause(tc.Page)
-		if got != tc.Want {
-			t.Fatalf("got %s, want %s", got, tc.Want)
-		}
-	}
-}
 
 func TestNewTopLinks(t *testing.T) {
 	links_sql := NewTopLinks()
@@ -37,7 +16,7 @@ func TestNewTopLinks(t *testing.T) {
 		t.Fatal(links_sql.Error)
 	}
 
-	rows, err := TestClient.Query(links_sql.Text)
+	rows, err := TestClient.Query(links_sql.Text, links_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,14 +77,7 @@ func TestFromCats(t *testing.T) {
 			t.Fatalf("expected error for cats %s", tc.Cats)
 		}
 
-		// ensure that cats with "." have surrounded it in quotes
-		for _, cat := range tc.Cats {
-			if strings.Contains(cat, ".") && !strings.Contains(links_sql.Text, `"."`) {
-				t.Fatalf("failed to escape period in cat: '%s'", cat)
-			}
-		}
-
-		rows, err := TestClient.Query(links_sql.Text)
+		rows, err := TestClient.Query(links_sql.Text, links_sql.Args...)
 		if err != nil && err != sql.ErrNoRows {
 			t.Fatal(err)
 		}
@@ -119,7 +91,17 @@ func TestFromCats(t *testing.T) {
 			t.Fatalf("expected error for cats %s", tc.Cats)
 		}
 
-		rows, err = TestClient.Query(links_sql.Text)
+		// if any cats provided, args should be cat_match and limit
+		// in that order
+		if len(tc.Cats) == 0 || len(tc.Cats) == 1 && tc.Cats[0] == "" {
+			continue
+		}
+		
+		if len(links_sql.Args) != 2 && links_sql.Args[0] != strings.Join(tc.Cats, " ") && links_sql.Args[1] != LINKS_PAGE_LIMIT {
+			t.Fatalf("got %v, want %v (should be cat_match and limit in that order)", links_sql.Args, tc.Cats)
+		}
+
+		rows, err = TestClient.Query(links_sql.Text, links_sql.Args...)
 		if err != nil && err != sql.ErrNoRows {
 			t.Fatal(err)
 		}
@@ -150,7 +132,7 @@ func TestLinksDuringPeriod(t *testing.T) {
 			t.Fatalf("expected error for period %s", tp.Period)
 		}
 
-		rows, err := TestClient.Query(links_sql.Text)
+		rows, err := TestClient.Query(links_sql.Text, links_sql.Args...)
 		if err != nil && err != sql.ErrNoRows {
 			t.Fatal(err)
 		}
@@ -165,7 +147,7 @@ func TestLinksDuringPeriod(t *testing.T) {
 			t.Fatalf("expected error for period %s", tp.Period)
 		}
 
-		rows, err = TestClient.Query(links_sql.Text)
+		rows, err = TestClient.Query(links_sql.Text, links_sql.Args...)
 		if err != nil && err != sql.ErrNoRows {
 			t.Fatal(err)
 		}
@@ -191,7 +173,7 @@ func TestLinksSortBy(t *testing.T) {
 			t.Fatalf("expected error for sort %s", ts.Sort)
 		}
 
-		rows, err := TestClient.Query(links_sql.Text)
+		rows, err := TestClient.Query(links_sql.Text, links_sql.Args...)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -257,7 +239,7 @@ func TestAsSignedInUser(t *testing.T) {
 		t.Fatal(links_sql.Error)
 	}
 
-	rows, err := TestClient.Query(links_sql.Text)
+	rows, err := TestClient.Query(links_sql.Text, links_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -296,13 +278,35 @@ func TestAsSignedInUser(t *testing.T) {
 			t.Fatalf("column %d: got %s, want %s", i, col.Name(), test_cols[i].Want)
 		}
 	}
+
+	// args should be test_user_id * 2, limit
+	var expected_args = []interface{}{test_user_id, test_user_id, LINKS_PAGE_LIMIT}
+	for i, arg := range links_sql.Args {
+		if arg != expected_args[i] {
+			t.Fatalf("arg %d: got %v, want %v", i, arg, expected_args[i])
+		}
+	}
+
+	// test does not conflict with .FromCats
+	links_sql = NewTopLinks().FromCats(test_cats).AsSignedInUser(test_user_id)
+	if _, err := TestClient.Query(links_sql.Text, links_sql.Args...); err != nil {
+		t.Fatal(err)
+	}
+
+	// args should be test_user_id * 2, "go AND coding", limit
+	expected_args = []interface{}{test_user_id, test_user_id, "go AND coding", LINKS_PAGE_LIMIT}
+	for i, arg := range links_sql.Args {
+		if arg != expected_args[i] {
+			t.Fatalf("arg %d: got %v, want %v", i, arg, expected_args[i])
+		}
+	}
 }
 
 func TestNSFW(t *testing.T) {
 	links_sql := NewTopLinks().NSFW()
 	// no opportunity for links_sql.Error to have been set
 
-	rows, err := TestClient.Query(links_sql.Text)
+	rows, err := TestClient.Query(links_sql.Text, links_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -317,7 +321,7 @@ func TestNSFW(t *testing.T) {
 		Page(1).
 		NSFW()
 
-	rows, err = TestClient.Query(links_sql.Text)
+	rows, err = TestClient.Query(links_sql.Text, links_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -353,7 +357,7 @@ func TestNSFW(t *testing.T) {
 		SortBy("newest").
 		Page(1)
 
-	rows, err = TestClient.Query(links_sql.Text)
+	rows, err = TestClient.Query(links_sql.Text, links_sql.Args...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -383,26 +387,55 @@ func TestNSFW(t *testing.T) {
 func TestPage(t *testing.T) {
 	var links_sql = NewTopLinks()
 
-	want1 := strings.Replace(links_sql.Text, LINKS_UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d;", LINKS_PAGE_LIMIT+1), 1)
-	want2 := strings.Replace(links_sql.Text, LINKS_UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, LINKS_PAGE_LIMIT), 1)
-	want3 := strings.Replace(links_sql.Text, LINKS_UNPAGINATED_LIMIT_CLAUSE, fmt.Sprintf(" LIMIT %d OFFSET %d;", LINKS_PAGE_LIMIT+1, 2*LINKS_PAGE_LIMIT), 1)
-
 	var test_cases = []struct {
 		Page int
-		Want string
+		WantLimitArg int
 	}{
-		{0, links_sql.Text},
-		{1, want1},
-		{2, want2},
-		{3, want3},
+		{0, LINKS_PAGE_LIMIT},
+		{1, LINKS_PAGE_LIMIT + 1},
+		{2, LINKS_PAGE_LIMIT + 1},
+		{3, LINKS_PAGE_LIMIT + 1},
 	}
 
 	for _, tc := range test_cases {
-		got := links_sql.Page(tc.Page).Text
-		if got != tc.Want {
-			t.Fatalf("input page %d, got %s, want %s", tc.Page, got, tc.Want)
+
+		links_sql = links_sql.Page(tc.Page)
+		if links_sql.Error != nil {
+			t.Fatal(links_sql.Error)
 		}
 
-		links_sql = NewTopLinks()
+		if tc.Page > 1 {
+			limit_arg := links_sql.Args[len(links_sql.Args)-2]
+			offset_arg := links_sql.Args[len(links_sql.Args)-1]
+
+			if limit_arg != tc.WantLimitArg {
+				t.Fatalf("got %d, want %d", limit_arg, tc.WantLimitArg)
+			} else if offset_arg != (tc.Page-1)*LINKS_PAGE_LIMIT {
+				t.Fatalf("got %d, want %d", offset_arg, tc.WantLimitArg)
+			}
+
+			continue
+		}
+
+		if links_sql.Args[len(links_sql.Args)-1] != tc.WantLimitArg { 
+			t.Fatalf("got %d, want %d", links_sql.Args[len(links_sql.Args)-1], tc.WantLimitArg)
+		}
+	}
+
+	// ensure does not conflict with other methods
+	links_sql = NewTopLinks().FromCats(test_cats).DuringPeriod("year").SortBy("newest").AsSignedInUser(test_user_id).NSFW().Page(2)
+
+	if _, err := TestClient.Query(links_sql.Text, links_sql.Args...); err != nil {
+		t.Fatal(err)
+	}
+
+	// args should be test_user_id * 2, "go AND coding", limit, offset
+	// in that order
+	var expected_args = []interface{}{test_user_id, test_user_id, "go AND coding", LINKS_PAGE_LIMIT + 1, LINKS_PAGE_LIMIT}
+
+	for i, arg := range links_sql.Args {
+		if arg != expected_args[i] {
+			t.Fatalf("got %v, want %v", arg, expected_args[i])
+		}
 	}
 }

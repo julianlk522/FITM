@@ -39,7 +39,7 @@ func RenderZeroLinks(w http.ResponseWriter, r *http.Request) {
 }
 
 func ScanLinks[T model.Link | model.LinkSignedIn](get_links_sql *query.TopLinks) (*[]T, error) {
-	rows, err := db.Client.Query(get_links_sql.Text)
+	rows, err := db.Client.Query(get_links_sql.Text, get_links_sql.Args...)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil

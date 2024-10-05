@@ -23,8 +23,6 @@ In order of importance:
     -increase backup frequency
     -incrementally implement parameterized query inputs / prepared statements wherever possible
         -TMAP
-        -TOP
-        -etc.
 
 ### Features
 
