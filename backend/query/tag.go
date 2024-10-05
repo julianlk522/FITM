@@ -247,12 +247,7 @@ func (t *GlobalCatCounts) DuringPeriod(period string) *GlobalCatCounts {
 }
 
 func (t *GlobalCatCounts) More() *GlobalCatCounts {
-	t.Text = strings.Replace(
-		t.Text,
-		fmt.Sprintf("%d", GLOBAL_CATS_PAGE_LIMIT),
-		fmt.Sprintf("%d", MORE_GLOBAL_CATS_PAGE_LIMIT),
-		1,
-	)
+	t.Args[len(t.Args)-1] = MORE_GLOBAL_CATS_PAGE_LIMIT
 
 	return t
 }
