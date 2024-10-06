@@ -186,7 +186,7 @@ const nsfw_links_count = tmap.NSFWLinksCount
 							IsTmapFromUser={login_name}
 						/>
 					</div>
-					<div>
+					{used_sections.length > 1 ? <div id="skip-to-section-container">
 						<h2>Skip to Section</h2>
 						<ul id='skip-to-link-section'>
 							{
@@ -197,7 +197,7 @@ const nsfw_links_count = tmap.NSFWLinksCount
 								))
 							}
 						</ul>
-					</div>
+					</div> : null}
 				</section>
 
 			{/* Links Sections */}

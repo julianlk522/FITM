@@ -9,7 +9,6 @@ In order of importance:
             - (and prevent it from being removed)
 
 -really little things
-    - omit "Skip to Section" if only 1 section
     - give static assets simple names that make sense
     - convert cornucopia to .webp
 
@@ -22,8 +21,6 @@ In order of importance:
     -User Treasure Map
         -Submitted / Copied / Tagged links
         -Cats / Subcats ? (probably not necessary)
-    -Global Cats / Subcats ?
-        -not really needed since /more
 
 ### Code Quality
 
