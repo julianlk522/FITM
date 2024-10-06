@@ -6,13 +6,14 @@ import Pagination from '../Pagination.astro'
 
 interface Props {
     Links: types.Link[]
+    NSFW?: boolean
     Period?: types.Period
     Token?: string
     User?: string
     Page?: number
     NextPage: number
 }
-const { Links: links, Token: token, User: user, Page: page, NextPage: next_page, Period: period } = Astro.props
+const { Links: links, NSFW: nsfw, Token: token, User: user, Page: page, NextPage: next_page, Period: period } = Astro.props
 const is_only_page = next_page && next_page === -1
 ---
 
@@ -28,6 +29,7 @@ const is_only_page = next_page && next_page === -1
             <Link
                 client:load
                 Link={link}
+                NSFWCatLinks={nsfw}
                 CatsFromUser={link.TagCount === 1 && link.SubmittedBy === user
                     ? user
                     : undefined

@@ -98,10 +98,11 @@ type SummaryPage = {
 type TmapLink = Link & { CatsFromUser?: boolean }
 
 type FilteredTreasureMap = {
+	NSFWLinksCount: number
+	Cats: CatCount[]
 	Submitted: TmapLink[]
 	Copied: TmapLink[]
 	Tagged: TmapLink[]
-	Cats: CatCount[]
 }
 
 type TreasureMap = FilteredTreasureMap & { Profile: Profile }

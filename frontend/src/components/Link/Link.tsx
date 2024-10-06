@@ -18,6 +18,7 @@ interface Props {
 	IsSummaryPage?: boolean
 	IsTagPage?: boolean
 	IsTmapPage?: boolean
+	NSFWCatLinks?: boolean
 	Token?: string
 	User?: string
 }
@@ -28,6 +29,7 @@ export default function Link(props: Props) {
 		IsSummaryPage: is_summary_page,
 		IsTagPage: is_tag_page,
 		IsTmapPage: is_tmap_page,
+		NSFWCatLinks: nsfw_cat_links,
 		Token: token,
 		User: user,
 	} = props
@@ -227,10 +229,22 @@ export default function Link(props: Props) {
 					{': '}
 					{split_cats.map((cat, i) =>
 						i === split_cats.length - 1 ? (
-							<a href={cats_endpoint + `?cats=${cat}`}>{cat}</a>
+							<a
+								href={
+									cats_endpoint +
+									`?cats=${cat}${nsfw_cat_links ? '&nsfw=true' : ''}`
+								}
+							>
+								{cat}
+							</a>
 						) : (
 							<span>
-								<a href={cats_endpoint + `?cats=${cat}`}>
+								<a
+									href={
+										cats_endpoint +
+										`?cats=${cat}${nsfw_cat_links ? '&nsfw=true' : ''}`
+									}
+								>
 									{cat}
 								</a>
 								,{' '}

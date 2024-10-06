@@ -7,11 +7,12 @@ interface Props {
     CatsParams?: string
     Period?: Period
     SortBy?: SortMetric
+    NSFW?: boolean
     More?: boolean
     IsTmapFromUser?: string
 }
 
-const { TopCats: top_cats, CatsParams: cats_params, Period: period, SortBy: sort_by, More: more, IsTmapFromUser: tmap_owner } = Astro.props
+const { TopCats: top_cats, CatsParams: cats_params, Period: period, SortBy: sort_by, NSFW: nsfw, More: more, IsTmapFromUser: tmap_owner } = Astro.props
 const is_subcats = cats_params ? true : false
 const endpoint = tmap_owner ? `/map/${tmap_owner}` : "/top"
 ---
@@ -23,7 +24,7 @@ const endpoint = tmap_owner ? `/map/${tmap_owner}` : "/top"
             top_cats.map((cat) => (
                 <li>
                     <a
-                        href={endpoint + `?cats=${is_subcats ? cats_params + ',' + cat.Category : cat.Category}${period && period !== 'all' ? `&period=${period}` : ''}${sort_by && sort_by !== 'rating' ? `&sort_by=newest` : ''}`}
+                        href={endpoint + `?cats=${is_subcats ? cats_params + ',' + cat.Category : cat.Category}${period && period !== 'all' ? `&period=${period}` : ''}${sort_by && sort_by !== 'rating' ? `&sort_by=newest` : ''}${nsfw ? `&nsfw=true` : ''}`}
                     >
                         {cat.Category}
                     </a>
@@ -35,7 +36,7 @@ const endpoint = tmap_owner ? `/map/${tmap_owner}` : "/top"
             <li class="to-more"><a href={is_subcats ? `/more?cats=${cats_params}` : '/more'}>more</a></li> 
         : null}
     </ol>
-</> : is_subcats ? <p>No further subcats.</p> : <p>No cats.</p>}
+</> : is_subcats ? <p id="no-further-cats">No further subcats.</p> : <p>No cats.</p>}
 
 <style>
     ol#top-cats {
@@ -45,6 +46,10 @@ const endpoint = tmap_owner ? `/map/${tmap_owner}` : "/top"
     }
     ol#top-cats.tmap {
         padding: 0.5rem;
+    }
+
+    p#no-further-cats {
+        margin-top: 0;
     }
 
     @media (min-width: 480px) {

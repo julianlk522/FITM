@@ -92,6 +92,9 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 	abbreviated_about = profile.About.length > 200 ? `${profile.About.slice(0, 200)}...` : undefined
 }
 
+// Display NSFW links count if > 0
+const nsfw_links_count = tmap.NSFWLinksCount
+
 ---
 
 <BaseLayout Title={page_title}>
@@ -136,16 +139,16 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 		)
 		: null}
 			
-		<!-- Filters -->
-		<section id='filters'>
+			{/* Filters */}
+			{cats || nsfw_links_count ? <section id='filters'>
 
-			<!-- NSFW -->
-			<p id="nsfw-filter">NSFW links:</p>
+			{/* NSFW */}
+			{nsfw_links_count ? <p id="nsfw-filter">NSFW links ({nsfw_links_count}):</p>
 			<span>
 				{nsfw ? <a href={`/map/${login_name}${cats ? `?cats=${cats}` : ''}`}>hide</a> : <a href={`/map/${login_name}${cats ? `?cats=${cats}&nsfw=true` : '?nsfw=true'}`}>show</a>}
-			</span>
+			</span> : null}
 
-			<!-- Categories -->
+			{/* Cats */}
 			{cats ? <div id='cat-filter-container' class="flex">
 				<div>
 					<p id="cat-filter">Cats:</p>
@@ -153,7 +156,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 						<a href={`/map/${login_name}`}>reset</a>
 					</span>
 					<p id="transfer-to-global-map">
-						<a href={`/top?cats=${cats}`}>Transfer cats to Global Treasure Map</a>
+						<a href={`/top?cats=${cats}${nsfw ? '&nsfw=true' : ''}`}>Transfer cats to Global Treasure Map</a>
 					</p>
 				</div>
 				<ul id='cat-list'>
@@ -170,7 +173,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 					}
 				</ul>
 			</div> : null}
-		</section>
+		</section> : null}
 
 		{used_sections.length ? 
 			<>
@@ -180,6 +183,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 						<TopCats
 							TopCats={tmap.Cats}
 							CatsParams={cats}
+							NSFW={nsfw}
 							IsTmapFromUser={login_name}
 						/>
 					</div>
@@ -210,6 +214,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 											<Link
 												client:load
 												Link={link}
+												NSFWCatLinks={nsfw}
 												CatsFromUser={login_name}
 												IsTmapPage={true}
 												Token={token}
@@ -221,6 +226,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 											<Link
 												client:load
 												Link={link}
+												NSFWCatLinks={nsfw}
 												CatsFromUser={
 													link.CatsFromUser
 														? login_name
@@ -262,6 +268,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 		#cat-filter-container {
 			display: flex;
 			flex-direction: column;
+			margin-bottom: 0.5rem;
 
 			#transfer-to-global-map,
 			#reset-cat-filter {

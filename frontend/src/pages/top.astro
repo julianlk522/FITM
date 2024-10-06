@@ -187,10 +187,11 @@ const page_title = (cats ? cats : "Top") + (sort_by !== 'rating' ? " (Newest)" :
 				<>
 					<section>
 						<TopCats 
-							TopCats={top_cats.length ? top_cats : top_subcats}
+							TopCats={top_subcats?.length ? top_subcats : top_cats}
 							CatsParams={cats}
 							Period={period}
 							SortBy={sort_by}
+							NSFW={nsfw}
 						/>
 					</section>
 
@@ -201,6 +202,7 @@ const page_title = (cats ? cats : "Top") + (sort_by !== 'rating' ? " (Newest)" :
 
 						<TopLinks 
 							Links={links}
+							NSFW={nsfw}
 							Period={period}
 							Page={page}
 							NextPage={data.NextPage}
@@ -214,9 +216,11 @@ const page_title = (cats ? cats : "Top") + (sort_by !== 'rating' ? " (Newest)" :
 			) : (
 				<section>
 					<p id="no-links">No links found.</p>
+					<p>&macr;&bsol;&lowbar;&lpar;&#x30c4;&rpar;&lowbar;&sol;&macr;</p>
+					<p id="add-link"><a href={`/new`}>Add link</a></p>
 					{user ? (
 						<p>
-							<a href={`/new`}>Add link</a>
+							
 						</p>
 					) : null}
 				</section>
@@ -249,5 +253,8 @@ const page_title = (cats ? cats : "Top") + (sort_by !== 'rating' ? " (Newest)" :
 
 	p#no-links {
 		margin-top: 0;
+	}
+	p#add-link {
+		margin-top: 1rem;
 	}
 </style>

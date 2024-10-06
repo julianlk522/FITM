@@ -3,7 +3,8 @@
 ## Todos
 
 In order of importance:
-    1. list number of NSFW links next to tmap toggle, hide if none
+    0. fix stupid fucking escape chars
+    1. look into why user_cats_fts is not saving tag_ids
     2. disallow weird username chars
         -\/:;*?"'<>|
         -just [a-zA-Z0-9_] or something
@@ -13,6 +14,7 @@ In order of importance:
             - (and prevent it from being removed)
 
 -really little things
+    - omit "Skip to Section" if only 1 section
     - give static assets simple names that make sense
     - convert cornucopia to .webp
 
@@ -67,6 +69,8 @@ In order of importance:
     -205 for successful logins/forms that require reload
     -500 for server fuckups
     -make sure not just using log.Fatal where there should be status
+    -GetTmapForUser currently only returns 400 if err no matter what
+        -maybe return additonal StatusCode val or something
 -Other lesser refactors and removal of duplicate code
     -replace index.astro / feedback.astro <img>s with background-image styling
     -move inline SVGs to astro components
