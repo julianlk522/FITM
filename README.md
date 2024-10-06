@@ -3,7 +3,6 @@
 ## Todos
 
 In order of importance:
-    0. fix stupid fucking escape chars
     1. look into why user_cats_fts is not saving tag_ids
     2. disallow weird username chars
         -\/:;*?"'<>|
@@ -95,8 +94,7 @@ In order of importance:
         -ScanTmapLinks
         -Increment/DecrementSpellfixRanksForCats
     -finish handlers
-    -middleware
-        -test err responses are logged to $FITM_ERR_LOG_FILE?
+        -ensure testing of .FromCats / .SubcatsOfCats methods to ensure problem chars are escaped with no errors
     -model utils
 -VPS SSH key
 -improve cat count lookup speed with fts5vocab table

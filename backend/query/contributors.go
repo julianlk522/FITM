@@ -33,6 +33,8 @@ func (c *Contributors) FromCats(cats []string) *Contributors {
         return c
     }
 
+	cats = GetCatsWithEscapedChars(cats)
+
 	clause := " WHERE global_cats MATCH ?"
 	match_arg := cats[0]
 	for i := 1; i < len(cats); i++ {

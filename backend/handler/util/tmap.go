@@ -48,6 +48,7 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	var profile *model.Profile
 	if has_cat_filter {
 		cats = strings.Split(cats_params, ",")
+		cats = query.GetCatsWithEscapedChars(cats)
 	} else {
 		var err error
 		profile_sql := query.NewTmapProfile(login_name)

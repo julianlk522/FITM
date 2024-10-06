@@ -188,6 +188,7 @@ LIMIT ?;`
 
 func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
 	cats := strings.Split(cats_params, ",")
+	cats = GetCatsWithEscapedChars(cats)
 
 	// build NOT IN clause
 	not_in_clause := `

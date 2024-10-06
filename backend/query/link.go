@@ -84,11 +84,12 @@ func (l *TopLinks) FromCats(cats []string) *TopLinks {
 		l.Error = fmt.Errorf("no cats provided")
 		return l
 	}
-
 	// pop limit arg
 	l.Args = l.Args[:len(l.Args)-1]
 
+	
 	// build and add match arg
+	cats = GetCatsWithEscapedChars(cats)
 	var match_arg = cats[0]
 	for i := 1; i < len(cats); i++ {
 		match_arg += " AND " + cats[i]
