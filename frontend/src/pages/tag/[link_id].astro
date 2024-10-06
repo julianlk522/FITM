@@ -65,7 +65,7 @@ const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 			tags ? (
 				<section>
 					<h2>Top Tags</h2>
-					<ol>
+					<ol id="top-tags">
 						{tags.map((tag) => (
 							<li class='tag'>
 								<ul id='cat-list'>
@@ -96,6 +96,9 @@ const page_title = link.Summary ? `Tags for "${link.Summary}"` : `Link Tags`
 </BaseLayout>
 
 <style>
+	ol#top-tags {
+		padding-inline-start: 0;
+	}
 	#login-redirect-link {
 		margin-top: 0;
 	}
