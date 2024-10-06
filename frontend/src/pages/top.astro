@@ -45,6 +45,9 @@ let cats = ""
 if (Astro.url.searchParams.get('cats')) {
 	cats = Astro.url.searchParams.get('cats') as string
 }
+// Encode cats params for links / subcats / contributors URLs
+const encoded_cats = encodeURIComponent(cats)
+
 // nsfw
 let nsfw: boolean = false
 if (Astro.url.searchParams.get('nsfw') && Astro.url.searchParams.get('nsfw') === 'true') {
@@ -64,7 +67,7 @@ let links_url = LINKS_ENDPOINT
 let has_cats = false
 if (cats) {
 	has_cats = true
-	links_url += `?cats=${cats}`
+	links_url += `?cats=${encoded_cats}`
 }
 // period
 let has_period = false
@@ -105,6 +108,7 @@ if (has_cats || has_period || has_sort_by || has_nsfw) {
 	links_url += `?page=${page}`
 }
 
+// Get links
 const get_links_resp = await (token
 	? fetch_with_handle_redirect(links_url, {
 			headers: { Authorization: `Bearer ${token}` },
@@ -129,8 +133,8 @@ if (links && links.length) {
 	let contributors_url = CONTRIBUTORS_ENDPOINT
 
 	if (cats) {
-		contributors_url += `?cats=${cats}`
-		let subcats_url = CATS_ENDPOINT + `?cats=${cats}`
+		contributors_url += `?cats=${encoded_cats}`
+		let subcats_url = CATS_ENDPOINT + `?cats=${encoded_cats}`
 
 		if (period !== 'all') {
 			contributors_url += `&period=${period}`

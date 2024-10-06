@@ -249,6 +249,13 @@ func GetCatCountsFromTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](links 
 			cats = l.Cats
 		}
 
+		// un-escape chars from opts.OmittedCats (remove ")
+		if opts != nil {
+			opts.OmittedCats = GetCatsWithUnescapedChars(opts.OmittedCats)
+		}
+
+		// split cats string into cats and count each, omitting any passed
+		// in opts.OmittedCats
 		for _, cat := range strings.Split(cats, ",") {
 			if opts != nil &&
 				slices.Contains(opts.OmittedCats, cat) {
@@ -279,6 +286,21 @@ func GetCatCountsFromTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](links 
 	SortAndLimitCatCounts(&counts, TMAP_CATS_PAGE_LIMIT)
 
 	return &counts
+}
+
+func GetCatsWithUnescapedChars(cats []string) []string {
+	chars_replacer := strings.NewReplacer(
+		`"."`, ".",
+		`"/"`, "/",
+		`"-"`, "-",
+		`"'"`, "'",
+		`";"`, ";",
+	)
+	for i := 0; i < len(cats); i++ {
+		cats[i] = chars_replacer.Replace(cats[i])
+	}
+
+	return cats
 }
 
 func SortAndLimitCatCounts(cat_counts *[]model.CatCount, limit int) {

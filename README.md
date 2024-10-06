@@ -59,6 +59,7 @@ In order of importance:
 
 ### Code Quality
 
+-Some way to elegantly keep GetCatsWithEscapedChars / GetCatsWithUnescapedChars in sync
 -Look into broken auto og:image
     -e.g., coolers.co image should not have been added with invalid link
     -https://rss.com/blog/how-do-rss-feeds-work/
@@ -194,3 +195,7 @@ In order of importance:
     - global cats calc system
 - Parameterizing input values to SQL
     - store args with each query, call .Query / .Exec / etc. with sql.Args..., shuffle / slice args around with various method calls
+- Escaping all chars that might be used in cats
+    - cant send ";" in URL query params
+    - ";" must be surrounded in double quotes in SQLite queries, but cant compare 'Steins";"Gate' and 'Steins;Gate'...
+        - have to pull weird REPLACE(global_cats, ';', '";"') workaround

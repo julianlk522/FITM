@@ -192,7 +192,7 @@ func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
 
 	// build NOT IN clause
 	not_in_clause := `
-	AND global_cats NOT IN (?`
+	AND REPLACE(global_cats, ';', '";"') NOT IN (?`
 	t.Args = append(t.Args, cats[0])
 	for i := 1; i < len(cats); i++ {
 		not_in_clause += ", ?"

@@ -36,6 +36,8 @@ func GetCatsWithEscapedChars(cats []string) []string {
 		".", `"."`,
 		"/", `"/"`,
 		"-", `"-"`,
+		"'", `"'"`,
+		";", `";"`,
 	)
 	for i := 0; i < len(cats); i++ {
 		cats[i] = chars_replacer.Replace(cats[i])

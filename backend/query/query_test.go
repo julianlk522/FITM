@@ -29,11 +29,15 @@ func TestGetCatsWithEscapedChars(t *testing.T) {
 			"slash/slash/slash", 
 			"c. vi.per", 
 			"hsien-ko",
+			"Ian's House",
+			"Steins;Gate",
 		},
 		ExpectedResults: []string{
 			`slash"/"slash"/"slash`, 
 			`c"." vi"."per`, 
 			`hsien"-"ko`,
+			`Ian"'"s House`,
+			`Steins";"Gate`,
 		},
 	}
 	got := GetCatsWithEscapedChars(test_cats.Cats)
