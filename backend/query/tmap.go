@@ -288,11 +288,6 @@ func FromUserOrGlobalCats(q *Query, cats []string) *Query {
 		return q
 	}
 
-	cat_match := cats[0]
-	for i := 1; i < len(cats); i++ {
-		cat_match += " AND " + cats[i]
-	}
-
 	// append MATCH clause to PossibleUserCats CTE
 	PUC_WHERE := "WHERE submitted_by = ?"
 	q.Text = strings.Replace(
@@ -311,25 +306,32 @@ func FromUserOrGlobalCats(q *Query, cats []string) *Query {
 		1,
 	)
 
-	// insert MATCH clause arg * 2 (once for PossibleUserCats CTE, once
-	// for GlobalCatsFTS CTE) 
-	// if TmapCopied insert at index 2, if TmapSubmitted insert at index 1
-	// (only TmapCopied and TmapTagged contain USER_CATS_CTE, and TmapTagged
-	// does not call this method, so can check for presence of USER_CATS_CTE)
-	var insert_index int
-	if strings.Contains(q.Text, USER_CATS_CTE) {
-		insert_index = 2
-	} else {
-		insert_index = 1
+	// get login_name from first arg
+	login_name := q.Args[0].(string)
+
+	// build MATCH arg
+	cat_match := cats[0]
+	for i := 1; i < len(cats); i++ {
+		cat_match += " AND " + cats[i]
 	}
 
-	// copy trailing args to re-append after insert
-	trailing_args := make([]interface{}, len(q.Args[insert_index:]))
-	copy(trailing_args, q.Args[insert_index:])
+	// rebuild args with cat_match * 2 (once for PossibleUserCats CTE, once
+	// for GlobalCatsFTS CTE) 
+	// order for TmapSubmitted: login_name, MATCH, login_name, MATCH, login_name 
+	// order for TmapCopied: login_name, login_name, MATCH, login_name, 
+	/// MATCH, login_name
 
-	// insert args
-	q.Args = append(q.Args[:insert_index], cat_match, cat_match)
-	q.Args = append(q.Args, trailing_args...)
+	// (only TmapCopied and TmapTagged contain USER_COPIES_CTE, and TmapTagged
+	// does not call this method, so can check for presence of USER_COPIES_CTE
+	// to determine whether TmapSubmitted or TmapCopied)
+
+	// TmapCopied
+	if strings.Contains(q.Text, USER_COPIES_CTE) {
+		q.Args = []interface{}{login_name, login_name, cat_match, login_name, cat_match, login_name}
+	// TmapSubmitted
+	} else {
+		q.Args = []interface{}{login_name, cat_match, login_name, cat_match, login_name}
+	}
 
 	// insert GLOBAL_CATS_JOIN
 	q.Text = strings.Replace(
