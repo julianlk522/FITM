@@ -3,11 +3,7 @@
 ## Todos
 
 In order of importance:
-    1. look into why user_cats_fts is not saving tag_ids
-    2. disallow weird username chars
-        -\/:;*?"'<>|
-        -just [a-zA-Z0-9_] or something
-    3. anti-spam/naughty stuff
+    1. anti-spam/naughty stuff
         - way to report links as NSFW
         - probably some way to detect porn/gore and add NSFW tag
             - (and prevent it from being removed)

@@ -10,7 +10,8 @@ var (
 	ErrInvalidLogin      error = errors.New("invalid login provided")
 	ErrIncorrectPassword       = errors.New("incorrect password")
 	ErrNoJWTSecretEnv          = errors.New("FITM_JWT_SECRET env var not set")
-	ErrNoLoginName       error = errors.New("no login name provided")
+	ErrNoLoginName       error = errors.New("no name provided")
+	ErrLoginNameContainsInvalidChars error = errors.New("name contains invalid characters ([a-zA-Z0-9_] allowed)")
 	ErrLoginNameTaken    error = errors.New("login name taken")
 	ErrNoPassword        error = errors.New("no password provided")
 	// Tmap profile
@@ -26,11 +27,11 @@ var (
 )
 
 func LoginNameExceedsLowerLimit(limit int) error {
-	return fmt.Errorf("login name too short (min %d chars)", limit)
+	return fmt.Errorf("name too short (min %d chars)", limit)
 }
 
 func LoginNameExceedsUpperLimit(limit int) error {
-	return fmt.Errorf("login name too long (max %d chars)", limit)
+	return fmt.Errorf("name too long (max %d chars)", limit)
 }
 
 func PasswordExceedsLowerLimit(limit int) error {

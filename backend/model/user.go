@@ -29,6 +29,8 @@ func (s *SignUpRequest) Bind(r *http.Request) error {
 		return e.LoginNameExceedsLowerLimit(util.LOGIN_NAME_LOWER_LIMIT)
 	case len(s.Auth.LoginName) > util.LOGIN_NAME_UPPER_LIMIT:
 		return e.LoginNameExceedsUpperLimit(util.LOGIN_NAME_UPPER_LIMIT)
+	case util.ContainsInvalidChars(s.Auth.LoginName):
+		return e.ErrLoginNameContainsInvalidChars
 
 	case s.Auth.Password == "":
 		return e.ErrNoPassword
