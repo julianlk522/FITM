@@ -81,7 +81,7 @@ export default function EditAbout(props: Props) {
 						value='Submit'
 					>
 						<img
-							src='../../../check2-circle.svg'
+							src='../../../confirm.svg'
 							height={24}
 							width={24}
 							alt='Save Changes'
@@ -110,7 +110,7 @@ export default function EditAbout(props: Props) {
 						}}
 					>
 						<img
-							src='../../../edit_about.svg'
+							src='../../../edit.svg'
 							height={20}
 							width={20}
 							alt='Toggle About section edit mode'

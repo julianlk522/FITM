@@ -126,7 +126,7 @@ export default function ProfilePic(props: Props) {
 					<label id='new-pic-upload-label' for='new-pic-upload'>
 						<img
 							title='Upload new profile picture'
-							src='../../../upload-pfp.svg'
+							src='../../../upload-pic.svg'
 							height={24}
 							width={24}
 							alt='Upload New Profile Picture'
@@ -150,7 +150,7 @@ export default function ProfilePic(props: Props) {
 							}}
 						>
 							<img
-								src='../../../x-lg.svg'
+								src='../../../delete.svg'
 								height={22}
 								width={22}
 							/>

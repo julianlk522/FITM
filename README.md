@@ -9,7 +9,6 @@ In order of importance:
             - (and prevent it from being removed)
 
 -really little things
-    - give static assets simple names that make sense
     - convert cornucopia to .webp
 
 -before release:

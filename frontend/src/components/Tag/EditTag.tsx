@@ -131,8 +131,8 @@ export default function EditTag(props: Props) {
 					<img
 						src={
 							editing
-								? '../../../check2-circle.svg'
-								: '../../../bi-feather.svg'
+								? '../../../confirm.svg'
+								: '../../../edit.svg'
 						}
 						height={20}
 						width={20}
@@ -146,7 +146,7 @@ export default function EditTag(props: Props) {
 						class='delete-tag-btn img-btn'
 						onClick={() => set_show_delete_modal(true)}
 					>
-						<img src='../../../x-lg.svg' height={20} width={20} />
+						<img src='../../../delete.svg' height={20} width={20} />
 					</button>
 				) : null}
 			</div>

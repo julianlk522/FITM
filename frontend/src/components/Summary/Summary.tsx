@@ -127,7 +127,7 @@ export default function Summary(props: Props) {
 						class='img-btn'
 						onClick={handle_delete}
 					>
-						<img src='../../../x-lg.svg' height={20} width={20} />
+						<img src='../../../delete.svg' height={20} width={20} />
 					</button>
 					{error ? <p class='error'>{error}</p> : null}
 				</>

@@ -368,7 +368,7 @@ export default function Link(props: Props) {
 						class='delete-link-btn img-btn'
 						onClick={() => set_show_delete_modal(true)}
 					>
-						<img src='../../../x-lg.svg' height={20} width={20} />
+						<img src='../../../delete.svg' height={20} width={20} />
 					</button>
 
 					{show_delete_modal ? (
