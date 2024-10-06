@@ -95,10 +95,12 @@ type TmapSections[T TmapLink | TmapLinkSignedIn] struct {
 type Tmap[T TmapLink | TmapLinkSignedIn] struct {
 	Profile *Profile
 	*TmapSections[T]
+	NSFWLinksCount int
 }
 
 type FilteredTmap[T TmapLink | TmapLinkSignedIn] struct {
 	*TmapSections[T]
+	NSFWLinksCount int
 }
 
 type TmapCatCountsOpts struct {

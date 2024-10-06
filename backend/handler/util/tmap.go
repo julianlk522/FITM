@@ -30,9 +30,14 @@ func UserExists(login_name string) (bool, error) {
 }
 
 func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string, r *http.Request) (interface{}, error) {
+
+	// Queries
+	// links
 	submitted_sql := query.NewTmapSubmitted(login_name)
 	copied_sql := query.NewTmapCopied(login_name)
 	tagged_sql := query.NewTmapTagged(login_name)
+	// NSFW links count
+	nsfw_links_count_sql := query.NewTmapNSFWLinksCount(login_name)
 
 	// Apply params
 	// cats filter
@@ -56,11 +61,11 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 		submitted_sql = submitted_sql.FromCats(cats)
 		copied_sql = copied_sql.FromCats(cats)
 		tagged_sql = tagged_sql.FromCats(cats)
+		nsfw_links_count_sql = nsfw_links_count_sql.FromCats(cats)
 	}
 
 	// auth (add IsLiked, IsCopied)
 	req_user_id := r.Context().Value(m.JWTClaimsKey).(map[string]interface{})["user_id"].(string)
-
 	if req_user_id != "" {
 		submitted_sql = submitted_sql.AsSignedInUser(req_user_id)
 		copied_sql = copied_sql.AsSignedInUser(req_user_id)
@@ -83,6 +88,8 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 		return nil, e.ErrInvalidNSFWParams
 	}
 
+	// Scan
+	// links
 	submitted, err := ScanTmapLinks[T](submitted_sql.Query)
 	if err != nil {
 		return nil, err
@@ -95,7 +102,13 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	if err != nil {
 		return nil, err
 	}
+	// NSFW links count
+	var nsfw_links_count int
+	if err := db.Client.QueryRow(nsfw_links_count_sql.Text, nsfw_links_count_sql.Args...).Scan(&nsfw_links_count); err != nil {
+		return nil, err
+	}
 
+	// Get cat counts from links
 	all_links := slices.Concat(*submitted, *copied, *tagged)
 	var cat_counts *[]model.CatCount
 	if has_cat_filter {
@@ -109,6 +122,7 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 		cat_counts = GetCatCountsFromTmapLinks(&all_links, nil)
 	}
 
+	// Assemble and return tmap
 	sections := &model.TmapSections[T]{
 		Cats:      cat_counts,
 		Submitted: submitted,
@@ -119,12 +133,14 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	if has_cat_filter {
 		return model.FilteredTmap[T]{
 			TmapSections: sections,
+			NSFWLinksCount: nsfw_links_count,
 		}, nil
 
 	} else {
 		return model.Tmap[T]{
 			Profile:      profile,
 			TmapSections: sections,
+			NSFWLinksCount: nsfw_links_count,
 		}, nil
 	}
 }

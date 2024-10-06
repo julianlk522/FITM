@@ -25,6 +25,90 @@ const TMAP_PROFILE = `SELECT
 FROM Users 
 WHERE login_name = ?;`
 
+// NSFW LINKS COUNT
+type TmapNSFWLinksCount struct {
+	*Query
+}
+
+func NewTmapNSFWLinksCount(login_name string) *TmapNSFWLinksCount {
+	return &TmapNSFWLinksCount{
+		&Query{
+			Text: TMAP_NSFW_LINKS_COUNT,
+			Args: []interface{}{login_name, login_name, login_name},
+		},
+	}
+}
+
+const TMAP_NSFW_LINKS_COUNT = `WITH PossibleUserCats AS (
+    SELECT 
+		link_id, 
+		cats AS user_cats,
+		(cats IS NOT NULL) AS cats_from_user
+    FROM user_cats_fts
+    WHERE submitted_by = ?
+	AND cats MATCH 'NSFW'
+),
+GlobalCatsFTS AS (
+	SELECT
+		link_id,
+		global_cats
+	FROM global_cats_fts
+	WHERE global_cats MATCH 'NSFW'
+),
+UserCopies AS (
+    SELECT lc.link_id
+    FROM "Link Copies" lc
+    INNER JOIN Users u ON u.id = lc.user_id
+    WHERE u.login_name = ?
+)
+SELECT count(*) as NSFW_link_count
+FROM Links l
+LEFT JOIN PossibleUserCats puc ON l.id = puc.link_id
+LEFT JOIN GlobalCatsFTS gc ON l.id = gc.link_id
+WHERE 
+	(
+	gc.global_cats IS NOT NULL
+	OR
+	puc.user_cats IS NOT NULL
+	)
+AND (
+	l.submitted_by = ?
+	OR l.id IN UserCopies
+	OR l.id IN 
+		(
+		SELECT link_id
+		FROM PossibleUserCats
+		)
+	);`
+
+func (lc *TmapNSFWLinksCount) FromCats(cats []string) *TmapNSFWLinksCount {
+	if len(cats) == 0 || cats[0] == "" {
+		return lc
+	}
+
+	// build MATCH clause
+	cat_match := "NSFW AND " + cats[0]
+	for i := 1; i < len(cats); i++ {
+		cat_match += " AND " + cats[i]
+	}
+
+	cat_match_replacer := strings.NewReplacer(
+		"'NSFW'", "?",
+	)
+	lc.Text = cat_match_replacer.Replace(lc.Text)
+
+	// insert cat_match arg * 2 after first login_name arg and before last 2
+	// copy trailing args to re-append after insert
+	trailing_args := make([]interface{}, len(lc.Args[1:]))
+	copy(trailing_args, lc.Args[1:])
+
+	// insert
+	lc.Args = append(lc.Args[:1], cat_match, cat_match)
+	lc.Args = append(lc.Args, trailing_args...)
+	
+	return lc
+}
+
 // LINKS
 // Submitted links (global cats replaced with user-assigned)
 type TmapSubmitted struct {

@@ -32,6 +32,49 @@ func TestNewTmapProfile(t *testing.T) {
 	}
 }
 
+func TestNewTmapNSFWLinksCount(t *testing.T) {
+	sql := NewTmapNSFWLinksCount(test_login_name)
+	var count int
+	if err := TestClient.QueryRow(sql.Text, sql.Args...).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+
+	// test copied / tagged
+	// jlk copied link 76 with global tag "engine,search,NSFW", 
+	// jlk tagged link 9122ce5a-b8ae-4059-afb4-b9ad602c13c2 with cat "NSFW"
+	// (count should be 2)
+
+	expected_count := 2
+	if count != expected_count {
+		t.Fatalf("expected %d, got %d", expected_count, count)
+	}
+
+	// test .FromCats
+	sql = sql.FromCats([]string{"engine", "search"})
+	if err := TestClient.QueryRow(sql.Text, sql.Args...).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+
+	// only link 76 has cats "engine" and "search" in addition to "NSFW"
+	// (count should be 1)
+	expected_count = 1
+	if count != expected_count {
+		t.Fatalf("expected %d, got %d", expected_count, count)
+	}
+
+	// test submitted
+	sql = NewTmapNSFWLinksCount(test_req_login_name)
+	if err := TestClient.QueryRow(sql.Text, sql.Args...).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+
+	// only link bradley has submitted with cat "NSFW" is 76
+	// (count should be 1)
+	if count != expected_count {
+		t.Fatalf("expected %d, got %d", expected_count, count)
+	}
+}
+
 // Submitted
 func TestNewTmapSubmitted(t *testing.T) {
 
