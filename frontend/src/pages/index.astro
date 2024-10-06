@@ -52,11 +52,8 @@ const other_periods = Periods.filter((other) => other !== 'month')
 			<h1>FITM.online</h1>
 			<h2 class='subtitle bg'>a map of the web's treasures</h2>
 
-			<img class='chest-backdrop' src='../../chest.webp' alt="treasure chest full of Internet links" />
+			<h3 id="add-link"><a href={`/new`}>Add link</a></h3>
 
-			<h3 id="add-link">
-				<a href={`/new`}>Add link</a>
-			</h3>
 		<section>
 			<TopCats TopCats={top_cats} />
 		</section>
@@ -88,15 +85,17 @@ const other_periods = Periods.filter((other) => other !== 'month')
 </BaseLayout>
 
 <style>
-	.chest-backdrop {
+	html:before {
+		content: '';
+		width: 175px;
+		height: 162px;
 		position: absolute;
-		top: 1em;
+		background-image: url(../../chest.webp);
+		background-size: 175px;
 		left: 50%;
 		transform: translatex(-50%);
-		width: 175px;
-		height: auto;
-		opacity: 0.25;
-		z-index: -1;
+		top: 1em;
+		opacity: 25%;
 	}
 	#add-link {
 		text-align: center;

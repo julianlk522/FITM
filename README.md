@@ -13,6 +13,7 @@ In order of importance:
 
 -before release:
     -increase backup frequency
+    -increase rate limits just in case... people actually like it
 
 ### Features
 
@@ -57,13 +58,11 @@ In order of importance:
 -Ensure accurate / helpful http response codes
     -start by making sure all ErrInvalidRequests are actually that
     -tag page for invalid link id returns 400 (should be 404)
-    -205 for successful logins/forms that require reload
     -500 for server fuckups
     -make sure not just using log.Fatal where there should be status
     -GetTmapForUser currently only returns 400 if err no matter what
         -maybe return additonal StatusCode val or something
 -Other lesser refactors and removal of duplicate code
-    -replace index.astro / feedback.astro <img>s with background-image styling
     -move inline SVGs to astro components
     -move SameUserLikeCount.tsx / AboutText.tsx to .astro since never interactive
     -BuildTagPage helper to declutter GetTagPage handler
@@ -81,12 +80,12 @@ In order of importance:
         -(merge Period / SortBy into same component with unique options set as props)
 -Other tests
     -handler utils
-        -TestExtractMetaDataFromGoogleAPIsResponse()
-        -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew / expiration
         -ScanTmapLinks
         -Increment/DecrementSpellfixRanksForCats
+        -GetJWTFromLoginName: see if possible to verify JWT claims and AcceptableSkew / expiration
+        -TestExtractMetaDataFromGoogleAPIsResponse()
     -finish handlers
-        -ensure testing of .FromCats / .SubcatsOfCats methods to ensure problem chars are escaped with no errors
+        -.FromCats / .SubcatsOfCats methods: ensure problem chars are escaped with no errors
     -model utils
 -VPS SSH key
 -improve cat count lookup speed with fts5vocab table

@@ -73,6 +73,9 @@ async function handle_redirect_action(
 
 	// continue normally if no redirect action cookie found
 	// or if user aborted redirect process from login page
+	// (in the 2nd case, there should be a redirect_action cookie but no token
+	// cookie and the request URL should not be "/login", so token check below
+	// will apply)
 	if (
 		!redirect_action ||
 		context.request.url === 'https://fitm.online/login' ||
