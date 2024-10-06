@@ -36,11 +36,19 @@ export default function TagCat(props: Props) {
 				{props.Count ? ` (${props.Count})` : ''}
 			</p>
 			{removable && props.DeletedSignal ? (
-				<button class='img-btn' onClick={handle_delete}>
+				<button
+					title='Remove cat'
+					class='img-btn'
+					onClick={handle_delete}
+				>
 					<img src='../../../delete.svg' height={20} width={20} />
 				</button>
 			) : addable && props.AddedSignal ? (
-				<button class='img-btn plus-btn' onClick={handle_add}>
+				<button
+					title='Add cat'
+					class='img-btn plus-btn'
+					onClick={handle_add}
+				>
 					<img src='../../../add.svg' height={20} width={20} />
 				</button>
 			) : null}

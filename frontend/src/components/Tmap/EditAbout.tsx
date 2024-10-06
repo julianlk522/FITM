@@ -75,7 +75,7 @@ export default function EditAbout(props: Props) {
 					</textarea>
 					<button
 						id='confirm-changes'
-						title='Save changes to your Treasure Map About section'
+						title='Save changes to your Treasure Map about section'
 						class='img-btn'
 						type='submit'
 						value='Submit'
@@ -102,8 +102,8 @@ export default function EditAbout(props: Props) {
 					)}
 					<button
 						id='edit-about-btn'
-						title='Edit About section'
-						alt='Edit About'
+						title='Edit about section'
+						alt='Edit about'
 						class='img-btn'
 						onClick={() => {
 							set_editing(true)
@@ -113,7 +113,7 @@ export default function EditAbout(props: Props) {
 							src='../../../edit.svg'
 							height={20}
 							width={20}
-							alt='Toggle About section edit mode'
+							alt='Toggle about section edit mode'
 						/>
 					</button>
 				</>

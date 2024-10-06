@@ -141,7 +141,7 @@ export default function ProfilePic(props: Props) {
 					/>
 					{url ? (
 						<button
-							title='Delete profile picture'
+							title='Delete profile pic'
 							id='delete-pfp-btn'
 							class='img-btn'
 							onClick={(e) => {
@@ -153,6 +153,7 @@ export default function ProfilePic(props: Props) {
 								src='../../../delete.svg'
 								height={22}
 								width={22}
+								alt='Delete profile pic'
 							/>
 						</button>
 					) : null}

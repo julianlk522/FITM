@@ -263,9 +263,10 @@ export default function Link(props: Props) {
 			{user !== submitted_by ? (
 				<>
 					<button
+						title='Like link'
+						alt='Like link'
 						onClick={handle_like}
 						class={`like-btn${is_liked ? ' liked' : ''}`}
-						alt='Like this link'
 					>
 						{is_liked ? (
 							<>
@@ -311,9 +312,10 @@ export default function Link(props: Props) {
 					</button>
 
 					<button
+						title='Copy link to treasure map'
+						alt='Copy link to treasure map'
 						onClick={handle_copy}
 						class={`copy-btn${is_copied ? ' copied' : ''}`}
-						alt='Copy to treasure map'
 					>
 						{is_copied ? (
 							<>
@@ -365,6 +367,7 @@ export default function Link(props: Props) {
 					{/* delete button */}
 					<button
 						title='Delete Link'
+						alt='Delete Link'
 						class='delete-link-btn img-btn'
 						onClick={() => set_show_delete_modal(true)}
 					>

@@ -114,6 +114,8 @@ export default function Summary(props: Props) {
 			<p>last updated: {format_long_date(last_updated)}</p>
 			{user !== submitted_by ? (
 				<button
+					title='Like summary'
+					alt='Like summary'
 					onClick={handle_like}
 					class={`like-btn${is_liked ? ' liked' : ''}`}
 				>
@@ -123,6 +125,8 @@ export default function Summary(props: Props) {
 				<>
 					<SameUserLikeCount LikeCount={like_count} />
 					<button
+						title='Delete summary'
+						alt='Delete summary'
 						id='delete-summary-btn'
 						class='img-btn'
 						onClick={handle_delete}
