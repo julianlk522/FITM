@@ -3,13 +3,11 @@
 ## Todos
 
 In order of importance:
-    1. anti-spam/naughty stuff
+    1. audit HTTP status codes
+    2. anti-spam/naughty stuff
         - way to report links as NSFW
         - probably some way to detect porn/gore and add NSFW tag
             - (and prevent it from being removed)
-
--really little things
-    - convert cornucopia to .webp
 
 -before release:
     -increase backup frequency
