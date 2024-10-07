@@ -11,7 +11,6 @@ In order of importance:
 
 -before release:
     -increase backup frequency
-    -increase rate limits just in case... people actually like it
 
 ### Features
 
