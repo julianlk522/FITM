@@ -14,7 +14,7 @@ interface Props {
     NextPage: number
 }
 const { Links: links, NSFW: nsfw, Token: token, User: user, Page: page, NextPage: next_page, Period: period } = Astro.props
-const is_only_page = next_page && next_page === -1
+const is_only_page = page === 1 && next_page === -1
 ---
 
 <>
