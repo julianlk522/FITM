@@ -33,7 +33,7 @@ func (c *Contributors) FromCats(cats []string) *Contributors {
         return c
     }
 
-	cats = GetCatsWithEscapedChars(cats)
+	EscapeCatsReservedChars(cats)
 
 	clause := " WHERE global_cats MATCH ?"
 	match_arg := cats[0]

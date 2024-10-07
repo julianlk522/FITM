@@ -20,30 +20,63 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func TestGetCatsWithEscapedChars(t *testing.T) {
+func TestEscapeCatsReservedChars(t *testing.T) {
 	var test_cats = struct {
 		Cats            []string
 		ExpectedResults []string
 	}{
 		Cats:            []string{
-			"slash/slash/slash", 
 			"c. vi.per", 
 			"hsien-ko",
 			"Ian's House",
+			"#hashtag",
+			"dolla$",
+			"per%cent",
+			"A&W",
+			"back\\slash",
+			"slash/slash/slash", 
+			"func(",
+			"func)",
+			"bra[",
+			"ckets]",
+			"bra{",
+			"ces}",
+			"either|or",
+			"colon:colon",
 			"Steins;Gate",
+			"=3",
+			"question?question",
+			"goober@mail",
 		},
 		ExpectedResults: []string{
-			`slash"/"slash"/"slash`, 
 			`c"." vi"."per`, 
 			`hsien"-"ko`,
 			`Ian"'"s House`,
+			`"#"hashtag`,
+			`dolla"$"`,
+			`per"%"cent`,
+			`A"&"W`,
+			`back"\"slash`,
+			`slash"/"slash"/"slash`, 
+			`func"("`,
+			`func")"`,
+			`bra"["`,
+			`ckets"]"`,
+			`bra"{"`,
+			`ces"}"`,
+			`either"|"or`,
+			`colon":"colon`,
 			`Steins";"Gate`,
+			`"="3`,
+			`question"?"question`,
+			`goober"@"mail`,
+
 		},
 	}
-	got := GetCatsWithEscapedChars(test_cats.Cats)
-	for i, res := range got {
+	EscapeCatsReservedChars(test_cats.Cats)
+	for i, res := range test_cats.Cats {
 		if res != test_cats.ExpectedResults[i] {
-			t.Fatalf("got %s, want %s", got, test_cats.ExpectedResults)
+			t.Fatalf("got %s, want %s", test_cats.Cats[i], test_cats.ExpectedResults[i])
 		}
 	}
 }

@@ -232,7 +232,7 @@ export default function Link(props: Props) {
 							<a
 								href={
 									cats_endpoint +
-									`?cats=${cat}${nsfw_cat_links ? '&nsfw=true' : ''}`
+									`?cats=${encodeURIComponent(cat)}${nsfw_cat_links ? '&nsfw=true' : ''}`
 								}
 							>
 								{cat}
@@ -242,7 +242,7 @@ export default function Link(props: Props) {
 								<a
 									href={
 										cats_endpoint +
-										`?cats=${cat}${nsfw_cat_links ? '&nsfw=true' : ''}`
+										`?cats=${encodeURIComponent(cat)}${nsfw_cat_links ? '&nsfw=true' : ''}`
 									}
 								>
 									{cat}

@@ -21,6 +21,7 @@ In order of importance:
     -User Treasure Map
         -Submitted / Copied / Tagged links
         -Cats / Subcats ? (probably not necessary)
+-Browser extension to add pages directly from them
 
 ### Code Quality
 
@@ -51,7 +52,6 @@ In order of importance:
 
 ### Code Quality
 
--Some way to elegantly keep GetCatsWithEscapedChars / GetCatsWithUnescapedChars in sync
 -Look into broken auto og:image
     -e.g., coolers.co image should not have been added with invalid link
     -https://rss.com/blog/how-do-rss-feeds-work/
@@ -65,6 +65,8 @@ In order of importance:
 -Other lesser refactors and removal of duplicate code
     -move inline SVGs to astro components
     -move SameUserLikeCount.tsx / AboutText.tsx to .astro since never interactive
+    -move tmap handler to new tmap.go for consistent organization
+    -URLSearchParams() for keeping track of those in frontend
     -BuildTagPage helper to declutter GetTagPage handler
     -os.LookupEnv?
         -not sure if makes any practical difference
@@ -79,6 +81,8 @@ In order of importance:
     -merge duplicate SearchParams dropdown components ?
         -(merge Period / SortBy into same component with unique options set as props)
 -Other tests
+    -query
+        -GlobalCatCounts.SubcatsOfCats: test with escape chars
     -handler utils
         -ScanTmapLinks
         -Increment/DecrementSpellfixRanksForCats
@@ -114,7 +118,7 @@ In order of importance:
 
 -Shaarli: self-hosted / personal but also shareable links? what? also ugly and not easily accessible (web-based)
 
--Del.icio.us: doesn't exist anymore, non-hierarchical. note: really like that they have a preview img for front page links
+-Del.icio.us: doesn't exist anymore, non-hierarchical
 
 -StumbleUpon: doesn't exist anymore, hard to browse many things at once
 
@@ -187,5 +191,5 @@ In order of importance:
     - store args with each query, call .Query / .Exec / etc. with sql.Args..., shuffle / slice args around with various method calls
 - Escaping all chars that might be used in cats
     - cant send ";" in URL query params
-    - ";" must be surrounded in double quotes in SQLite queries, but cant compare 'Steins";"Gate' and 'Steins;Gate'...
-        - have to pull weird REPLACE(global_cats, ';', '";"') workaround
+    - ";" / "#" must be surrounded in double quotes in SQLite queries, but cant compare, e.g., 'Steins";"Gate' and 'Steins;Gate'...
+        - have to pull weird nested REPLACE(...) workaround

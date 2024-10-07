@@ -390,9 +390,6 @@ func FromUserOrGlobalCats(q *Query, cats []string) *Query {
 		1,
 	)
 
-	// get login_name from first arg
-	login_name := q.Args[0].(string)
-
 	// build MATCH arg
 	cat_match := cats[0]
 	for i := 1; i < len(cats); i++ {
@@ -408,6 +405,9 @@ func FromUserOrGlobalCats(q *Query, cats []string) *Query {
 	// (only TmapCopied and TmapTagged contain USER_COPIES_CTE, and TmapTagged
 	// does not call this method, so can check for presence of USER_COPIES_CTE
 	// to determine whether TmapSubmitted or TmapCopied)
+
+	// get login_name from first arg
+	login_name := q.Args[0].(string)
 
 	// TmapCopied
 	if strings.Contains(q.Text, USER_COPIES_CTE) {

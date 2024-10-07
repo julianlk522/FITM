@@ -31,16 +31,39 @@ func GetPeriodClause(period string) (clause string, err error) {
 	return fmt.Sprintf("submit_date >= date('now', '-%d days')", days), nil
 }
 
-func GetCatsWithEscapedChars(cats []string) []string {
-	chars_replacer := strings.NewReplacer(
-		".", `"."`,
-		"/", `"/"`,
-		"-", `"-"`,
-		"'", `"'"`,
-		";", `";"`,
-	)
+func EscapeCatsReservedChars(cats []string) {
 	for i := 0; i < len(cats); i++ {
-		cats[i] = chars_replacer.Replace(cats[i])
+		cats[i] = SurroundReservedCharsWithDoubleQuotes(cats[i])
 	}
-	return cats
 }
+
+func SurroundReservedCharsWithDoubleQuotes(cat string) string {
+	return reserved_chars_double_quotes_replacer.Replace(cat)
+}
+
+var reserved_chars_double_quotes_replacer = strings.NewReplacer(
+	// ! seems to work already with no modifications
+	".", `"."`,
+	"-", `"-"`,
+	// + seems to work
+	"'", `"'"`,
+	// double quotes seems to work
+	"#", `"#"`,
+	"$", `"$"`,
+	"%", `"%"`,
+	"&", `"&"`,
+	"\\", `"\"`,
+	"/", `"/"`,
+	"(", `"("`,
+	")", `")"`,
+	"[", `"["`,
+	"]", `"]"`,
+	"{", `"{"`,
+	"}", `"}"`,
+	"|", `"|"`,
+	":", `":"`,
+	";", `";"`,
+	"=", `"="`,
+	"?", `"?"`,
+	"@", `"@"`,
+)

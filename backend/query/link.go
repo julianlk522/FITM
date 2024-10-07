@@ -89,7 +89,7 @@ func (l *TopLinks) FromCats(cats []string) *TopLinks {
 
 	
 	// build and add match arg
-	cats = GetCatsWithEscapedChars(cats)
+	EscapeCatsReservedChars(cats)
 	var match_arg = cats[0]
 	for i := 1; i < len(cats); i++ {
 		match_arg += " AND " + cats[i]

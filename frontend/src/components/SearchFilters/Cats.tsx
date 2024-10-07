@@ -44,9 +44,16 @@ export default function SearchCats(props: Props) {
 			return
 		}
 
-		let spellfix_matches_url = CATS_ENDPOINT + `/${snippet}`
+		// encode reserved chars
+		const encoded_snippet = encodeURIComponent(snippet)
+		let spellfix_matches_url = CATS_ENDPOINT + `/${encoded_snippet}`
 		if (selected_cats.length) {
-			spellfix_matches_url += `?omitted=${selected_cats.join(',')}`
+			const encoded_selected_cats = selected_cats
+				.map((cat) => {
+					return encodeURIComponent(cat)
+				})
+				.join(',')
+			spellfix_matches_url += `?omitted=${encoded_selected_cats}`
 		}
 
 		try {
@@ -61,6 +68,7 @@ export default function SearchCats(props: Props) {
 			const spellfix_matches: CatCount[] =
 				await spellfix_matches_resp.json()
 			set_recommended_cats(spellfix_matches)
+			set_error(undefined)
 		} catch (error) {
 			set_recommended_cats([])
 			set_error(error instanceof Error ? error.message : String(error))

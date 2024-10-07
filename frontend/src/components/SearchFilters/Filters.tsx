@@ -31,7 +31,11 @@ export default function SearchFilters(props: Props) {
 	let search_URL = base_URL
 
 	if (cats.length) {
-		search_URL += `?cats=${cats.join(',')}`
+		// encode reserved chars
+		const encoded_cats = cats
+			.map((cat) => encodeURIComponent(cat))
+			.join(',')
+		search_URL += `?cats=${encoded_cats}`
 	}
 	if (period !== 'all') {
 		if (cats.length) {

@@ -44,12 +44,8 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 	cats_params := r.URL.Query().Get("cats")
 	has_cat_filter := cats_params != ""
 
-	var cats []string
 	var profile *model.Profile
-	if has_cat_filter {
-		cats = strings.Split(cats_params, ",")
-		cats = query.GetCatsWithEscapedChars(cats)
-	} else {
+	if !has_cat_filter {
 		var err error
 		profile_sql := query.NewTmapProfile(login_name)
 		profile, err = ScanTmapProfile(profile_sql)
@@ -58,7 +54,19 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 		}
 	}
 
+	// tmap queries use escaped reserved chars for MATCH clauses
+	// but GetCatCountsFromTmapLinks later requires unescaped
+	var cats, cats_with_unescaped_reserved_chars []string
 	if has_cat_filter {
+		cats = strings.Split(cats_params, ",")
+
+		// copy before escaping reserved chars
+		// need to call make() so dst is not empty and has length
+		cats_with_unescaped_reserved_chars = make([]string, len(cats))
+		copy(cats_with_unescaped_reserved_chars, cats)
+
+		query.EscapeCatsReservedChars(cats)
+
 		submitted_sql = submitted_sql.FromCats(cats)
 		copied_sql = copied_sql.FromCats(cats)
 		tagged_sql = tagged_sql.FromCats(cats)
@@ -116,7 +124,7 @@ func GetTmapForUser[T model.TmapLink | model.TmapLinkSignedIn](login_name string
 		cat_counts = GetCatCountsFromTmapLinks(
 			&all_links,
 			&model.TmapCatCountsOpts{
-				OmittedCats: cats,
+				OmittedCats: cats_with_unescaped_reserved_chars,
 			},
 		)
 	} else {
@@ -249,13 +257,6 @@ func GetCatCountsFromTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](links 
 			cats = l.Cats
 		}
 
-		// un-escape chars from opts.OmittedCats (remove ")
-		if opts != nil {
-			opts.OmittedCats = GetCatsWithUnescapedChars(opts.OmittedCats)
-		}
-
-		// split cats string into cats and count each, omitting any passed
-		// in opts.OmittedCats
 		for _, cat := range strings.Split(cats, ",") {
 			if opts != nil &&
 				slices.Contains(opts.OmittedCats, cat) {
@@ -286,21 +287,6 @@ func GetCatCountsFromTmapLinks[T model.TmapLink | model.TmapLinkSignedIn](links 
 	SortAndLimitCatCounts(&counts, TMAP_CATS_PAGE_LIMIT)
 
 	return &counts
-}
-
-func GetCatsWithUnescapedChars(cats []string) []string {
-	chars_replacer := strings.NewReplacer(
-		`"."`, ".",
-		`"/"`, "/",
-		`"-"`, "-",
-		`"'"`, "'",
-		`";"`, ";",
-	)
-	for i := 0; i < len(cats); i++ {
-		cats[i] = chars_replacer.Replace(cats[i])
-	}
-
-	return cats
 }
 
 func SortAndLimitCatCounts(cat_counts *[]model.CatCount, limit int) {

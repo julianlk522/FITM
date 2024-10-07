@@ -45,7 +45,7 @@ let cats = ""
 if (Astro.url.searchParams.get('cats')) {
 	cats = Astro.url.searchParams.get('cats') as string
 }
-// Encode cats params for links / subcats / contributors URLs
+// Encode cats params reserved chars
 const encoded_cats = encodeURIComponent(cats)
 
 // nsfw
@@ -192,7 +192,7 @@ const page_title = (cats ? cats : "Top") + (sort_by !== 'rating' ? " (Newest)" :
 					<section>
 						<TopCats 
 							TopCats={top_subcats?.length ? top_subcats : top_cats}
-							CatsParams={cats}
+							CatsParams={encoded_cats}
 							Period={period}
 							SortBy={sort_by}
 							NSFW={nsfw}

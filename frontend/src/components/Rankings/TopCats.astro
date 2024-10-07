@@ -24,7 +24,7 @@ const endpoint = tmap_owner ? `/map/${tmap_owner}` : "/top"
             top_cats.map((cat) => (
                 <li>
                     <a
-                        href={endpoint + `?cats=${is_subcats ? cats_params + ',' + cat.Category : cat.Category}${period && period !== 'all' ? `&period=${period}` : ''}${sort_by && sort_by !== 'rating' ? `&sort_by=newest` : ''}${nsfw ? `&nsfw=true` : ''}`}
+                        href={endpoint + `?cats=${is_subcats ? cats_params + ',' + encodeURIComponent(cat.Category) : encodeURIComponent(cat.Category)}${period && period !== 'all' ? `&period=${period}` : ''}${sort_by && sort_by !== 'rating' ? `&sort_by=newest` : ''}${nsfw ? `&nsfw=true` : ''}`}
                     >
                         {cat.Category}
                     </a>

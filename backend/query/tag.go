@@ -188,11 +188,11 @@ LIMIT ?;`
 
 func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
 	cats := strings.Split(cats_params, ",")
-	cats = GetCatsWithEscapedChars(cats)
 
 	// build NOT IN clause
 	not_in_clause := `
-	AND REPLACE(global_cats, ';', '";"') NOT IN (?`
+	AND global_cats NOT IN (?`
+
 	t.Args = append(t.Args, cats[0])
 	for i := 1; i < len(cats); i++ {
 		not_in_clause += ", ?"
@@ -206,10 +206,11 @@ func (t *GlobalCatCounts) SubcatsOfCats(cats_params string) *GlobalCatCounts {
 		SELECT link_id
 		FROM global_cats_fts
 		WHERE global_cats MATCH ?
-	)`
-	match_arg := cats[0]
+		)`
+	// here (only with MATCH) reserved chars MUST be surrounded with ""
+	match_arg := SurroundReservedCharsWithDoubleQuotes(cats[0])
 	for i := 1; i < len(cats); i++ {
-		match_arg += " AND " + cats[i]
+		match_arg += " AND " + SurroundReservedCharsWithDoubleQuotes(cats[i])
 	}
 	t.Args = append(t.Args, match_arg)
 

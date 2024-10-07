@@ -37,6 +37,8 @@ if (Astro.url.searchParams.get('cats')) {
 		page_title += ' (Filtered)'
 	}
 }
+// Encode cats reserved chars
+const encoded_cats = encodeURIComponent(cats)
 
 // nsfw
 let nsfw = false
@@ -48,8 +50,6 @@ if (Astro.url.searchParams.get('nsfw') && Astro.url.searchParams.get('nsfw') ===
 let tmap: TreasureMap | FilteredTreasureMap
 let tmap_url = TMAP_ENDPOINT + `/${login_name}`
 if (cats) {
-	// Encode cats params 
-	const encoded_cats = encodeURIComponent(cats)
 	tmap_url += `?cats=${encoded_cats}`
 }
 
@@ -72,7 +72,7 @@ if (!tmap_resp.Response || tmap_resp.RedirectTo) {
 	return Astro.redirect(tmap_resp.RedirectTo)
 }
 tmap = await tmap_resp.Response.json()
-const used_sections = tmap_sections.filter((s) => tmap[s].length)
+const used_sections = tmap_sections.filter((s) => tmap[s]?.length)
 
 // Display about if used (unfiltered only)
 let profile: Profile | undefined
@@ -88,7 +88,7 @@ if (!cats && tmap.hasOwnProperty('Profile')) {
 	const has_about = profile.About?.length > 0
 	display_about = has_about || is_signed_in_user
 
-	abbreviated_about = profile.About.length > 200 ? `${profile.About.slice(0, 200)}...` : undefined
+	abbreviated_about = profile.About?.length > 200 ? `${profile.About.slice(0, 200)}...` : undefined
 }
 
 // Display NSFW links count if > 0
@@ -129,7 +129,7 @@ const nsfw_links_count = tmap.NSFWLinksCount
 								</summary>
 								<AboutText About={profile.About} />
 							</details> 
-							: profile.About.length > 0 ?
+							: profile.About?.length > 0 ?
 								<AboutText About={profile.About} />
 							: null
 					: null
@@ -181,7 +181,7 @@ const nsfw_links_count = tmap.NSFWLinksCount
 					<div>
 						<TopCats
 							TopCats={tmap.Cats}
-							CatsParams={cats}
+							CatsParams={encoded_cats}
 							NSFW={nsfw}
 							IsTmapFromUser={login_name}
 						/>
