@@ -10,6 +10,7 @@ In order of importance:
             - (and prevent it from being removed)
 
 -before release:
+    -PRAGMA OPTIMIZE;
     -increase backup frequency
 
 ### Features
@@ -27,6 +28,8 @@ In order of importance:
 -Readability
 -Security
     -fuzz tests?
+-Perf optimization:
+    -configure separate read/write DB connections, add "?_txlock=immediate" only to write connection, update queries accordingly
 
 ## To-Maybe-Dos
 
