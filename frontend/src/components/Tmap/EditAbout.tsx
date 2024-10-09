@@ -102,7 +102,7 @@ export default function EditAbout(props: Props) {
 					)}
 					<button
 						id='edit-about-btn'
-						title='Edit about section'
+						title='Edit about'
 						alt='Edit about'
 						class='img-btn'
 						onClick={() => {
@@ -113,7 +113,7 @@ export default function EditAbout(props: Props) {
 							src='../../../edit.svg'
 							height={20}
 							width={20}
-							alt='Toggle about section edit mode'
+							alt='Toggle about section editing'
 						/>
 					</button>
 				</>

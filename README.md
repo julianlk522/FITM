@@ -9,10 +9,6 @@ In order of importance:
         - probably some way to detect porn/gore and add NSFW tag
             - (and prevent it from being removed)
 
--before release:
-    -PRAGMA OPTIMIZE;
-    -increase backup frequency
-
 ### Features
 
 -Pagination
@@ -20,6 +16,9 @@ In order of importance:
         -Submitted / Copied / Tagged links
         -Cats / Subcats ? (probably not necessary)
 -Browser extension to add pages directly from them
+
+-Little things
+    -maybe link delete button right on submission page incase you regret your choice?
 
 ### Code Quality
 

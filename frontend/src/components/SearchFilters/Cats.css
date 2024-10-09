@@ -4,6 +4,7 @@ input#add-cat-filter {
 
 ul#recommendations-list {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 5px;
 	padding: 0;
 }
