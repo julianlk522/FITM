@@ -56,7 +56,7 @@ func main() {
 	// per minute (overall)
 	// absolute max before all traffic stopped
 	r.Use(httprate.LimitAll(
-		10000,
+		4000,
 		time.Minute,
 	))
 	// per minute (IP)
@@ -64,14 +64,14 @@ func main() {
 	// this needs to cover all concurrent traffic coming from the frontend
 	// shared across all users (hence it being really high)
 	r.Use(httprate.Limit(
-		7200,
+		2400,
 		1*time.Minute,
 		httprate.WithKeyFuncs(httprate.KeyByIP),
 	))
 	// per second (IP)
 	// (stop short bursts quickly)
 	r.Use(httprate.Limit(
-		300,
+		100,
 		1*time.Second,
 		httprate.WithKeyFuncs(httprate.KeyByIP),
 	))
