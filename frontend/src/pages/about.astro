@@ -14,10 +14,10 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 		<section>
 			<p>
 				The <strong>Flexible Internet Treasure Map (FITM)</strong>
-				is a system for sharing valuable Internet content. You can use it to efficiently find key resources hidden throughout the sprawling web, or share ones you think other people should know about.
+				is a system for pooling and organizing valuable Internet content. You can use it to share links that you think are worth knowing about, or to easily sort through other links that the community has shared.
 			</p>
 
-			<p>It is <em>flexible</em> because links can be organized and queried using a variety of properties that help users locate what they want.</p>
+			<p>It is <em>flexible</em> because links can be grouped and queried using a variety of properties to help you locate what you want.</p>
 			<p>
 				<em>Treasure</em> is intentionally vague. This site is about sharing or
 				discovering anything on the Internet that's worth sharing or
@@ -37,7 +37,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 
 			<p>Links submitted to FITM are tagged with 1+ cats. You can stack desired cats in
 			searches to quickly and reliably find pages that match some
-			theme(s). You can also specify some other filters, like a time period (last day, week, month, or year) during which the returned links must have been posted, or whether you want to see anything tagged "<abbr title="Not Safe For Work">NSFW</abbr>". (NSFW is always opt-in.)</p>
+			theme(s). You can also specify other filters, like a time period (last day, week, month, or year) during which the returned links must have been posted, or whether you want to see anything tagged "<abbr title="Not Safe For Work">NSFW</abbr>". (NSFW is always opt-in.)</p>
 
 			<p>The top (most used) cats will be listed along with returned links matching your desired parameters. Searches with cat filters return top <em>subcats</em>. In other words, the most used cats found across the subsection of links returned in your search, not including the ones you specified.</p>
 
@@ -76,14 +76,14 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 			</p>
 			<p>
 				Liking allows great content to filter to the top of searches,
-				so that all users&mdash;even those who don't know to check your
+				so that everyone&mdash;even those who don't know to check your
 				Treasure Map&mdash;can find it easily.
 			</p>
 
 			<h3 id="tags" class="subsection">Tag</h3>
 			<p>
 				<strong>Tagging</strong> a link is about improving discoverability
-				via filtration. A tag is a list of categories, chosen by a user, that a certain link is thought to embody. It represents that user's interpretation of the link's content. Tag cats can be applied in searches to narrow results.
+				via filtration. A tag is a list of categories, chosen by a user, that a certain link is thought to embody. It represents that user's interpretation of the link's content. Tag cats can be specified in searches to narrow results.
 			</p>
 			<p>
 				Obviously not everyone agrees on preferred categorizations of
@@ -103,20 +103,20 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 				which filters the results of searches made outside of a single
 				user's map (i.e., on the <a
 				href='/top'>Top</a
-			> page).
+			> and <a href='/more'>More</a> pages).
 			</p>
 			<p><em>Global tags</em> are calculated automatically by the age of every
 			<em>user-submitted tag</em> and the frequency of each cat across
 			them. They are shown with each link. (Unless the link is viewed from a user's Treasure Map. Then it will show <em>that</em> user's tag.) You can also view any link's top user-submitted tags on demand.</p>
 
-			<p>Each user-submitted tag shows its <em>lifespan overlap percentage</em> (see <a href="#global-tag-calculation">Global Tag Calculation</a>), author, date of submission, and cats, of course. Tags that have kept the same combination of cats for the greatest portion of the link's lifespan are ranked highest. Editing a tag's cats will reset it's lifespan overlap percentage.</p>
+			<p>Each user-submitted tag shows its <em>lifespan overlap percentage</em> (see <a href="#global-tag-calculation">Global Tag Calculation</a>), author, date of submission, and cats. Tags that have kept the same combination of cats for the greatest portion of the link's lifespan are ranked highest. Editing a tag's cats will reset it's lifespan overlap percentage.</p>
 
 			<p>To clarify, not only the cats contained in the top tag rankings may be assigned globally. If many recent tags contain the same cats which are not already present in the global tag, it's likely that those too will be assigned.</p>
 
 			<p>This system is based on the assumption that cat interpretations that remain unedited
 			for a long time or that reappear across tags are most likely to be the best fits.</p>
 
-			<p>A long-unchanged tag could be bad (poorly representing its link), but if enough users disagree and submit alternative tags, their collective input will rule it out; the old tag's cats will be stripped from the link's global tag.</p>
+			<p>A long-unchanged tag could be bad (poorly representing its link), but if enough people disagree and submit alternative tags, their collective input will rule it out; the old tag's cats will be stripped from the link's global tag.</p>
 		</section>
 
 		<section>
@@ -129,7 +129,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 			</p>
 			<p>
 				Depending on your definition of quality, <abbr title="Search Engine Optimization">SEO</abbr> <a href="https://backlinko.com/google-ranking-factors#top-8">as we know it</a> may or may not be relevant.
-				Great things on the web may be absent in search results because they're not aggressively stuffed with <a href="https://en.wikipedia.org/wiki/Keyword_research">keywords</a>, or they're not linked from many other pages, or they're not associated with an advertised company <a href="https://digitalbrandinginstitute.com/improve-brand-signals-better-seo#:~:text=What%20Are,Signals?">brand</a>. Or, maybe a site ranks highly given specific search terms but is otherwise hard to discover. How could you even know to search for something <a href="https://presidentialham.com/">like this</a>? (safe for work.) Users who care most
+				Great things on the web may be absent in search results because they're not aggressively stuffed with <a href="https://en.wikipedia.org/wiki/Keyword_research">keywords</a>, or they're not linked from many other pages, or they're not associated with an advertised company <a href="https://digitalbrandinginstitute.com/improve-brand-signals-better-seo#:~:text=What%20Are,Signals?">brand</a>. Or, maybe a site ranks highly given specific search terms but is otherwise hard to discover. How could you even know to search for something <a href="https://presidentialham.com/">like this</a>? (safe for work.) Internet users who care most
 				about result <em>novelty</em> don't necessarily benefit from these ranking metrics.
 			</p>
 			<p>
@@ -142,7 +142,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 				<em>people</em> who decide, for one reason or another, to upvote it. It's then trivial to find good content by sorting on like count.
 			</p>
 			<p>
-				But, of course, like count alone is not enough. That's why you can parameterize FITM searches with <em><a href="#cats">cat-stacking</a></em> and filters for submission date and inclusion of NSFW material. You can also order results by which are newest if you prefer that to the most-liked ones.
+				But, of course, like count alone is not enough. That's why you can parameterize FITM searches with <em><a href="#cats">cat-stacking</a></em> and other filters. You can also order results by which are newest if you prefer that to the most-liked ones.
 			</p>
 
 			<h3 class="subsection">Reddit</h3>
@@ -153,18 +153,17 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 				Reddit is an invaluable resource
 				and a blessing to the Internet. It is an inspiration to FITM. But they are
 				different in that Reddit is
-				primarily a <em>communication</em> hub while FITM is primarily a <em>data</em> hub. FITM is not meant for thematic
-				discussion, only web resource sharing and
+				primarily a <em>communication</em> hub while FITM is primarily a <em>resource</em> hub. FITM is not meant for thematic
+				discussion, only link sharing and
 				discovery (with a few text submission actions in support of that goal: see <a href="#core-actions">Core Actions</a>).
 			</p>
 			<p>
-				FITM also aims to use cat-stacking to serve users
+				FITM also aims, through cat-stacking, to serve anyone
 				interested in <em>intersecting</em> themes while Reddit is home
-				to communities defined by a <em>single</em> theme. Traditional WWW
-				searches make it hard to find sites that appeal to multiple
-				interests at once, especially if they aren't common or obviously
-				related.
+				to communities defined by a <em>single</em> theme.
 			</p>
+			<p>Traditional World Wide Web
+				searches tend to implicitly treat search terms as if they are separated with an "OR" when perhaps what you what is for them to be separated with "AND." History AND comedy AND music AND videos. That search could very quickly escort you to <a href="https://www.youtube.com/watch?v=qv6OOuPI5c0">this masterpiece</a>. (probably not safe for work.) You can be very specific this way and skip past any potential recommendations that are not exactly what you want.</p>
 		</section>
 
 		<section>
@@ -180,7 +179,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 			<GlobalTagCalcDiagram />
 
 			<h3 id="avoiding-marooned-links" class="subsection">Avoiding "Marooned" Links</h3>
-			<p>A <em>marooned</em> link is one having a tag cat that is intended to mean the same thing as another cat but differs in a way that prevents proper grouping.</p>
+			<p>A <em>marooned</em> link is one having a tag cat that is intended to mean the same thing as another cat but differs subtly and prevents ideal grouping.</p>
 			<p>For example, say that "videos" is a common cat. Tagging a link with cat "video" may make it hard to find because people looking for videos are likely to filter their searches using the more common "videos" cat.</p>
 			<p>Some tips to avoid this unfortunate outcome:</p>
 			<ul>
