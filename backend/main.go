@@ -60,8 +60,7 @@ func main() {
 		time.Minute,
 	))
 	// per minute (IP)
-	// because Netlify is lame and won't let me rate limit on their end,
-	// this needs to cover all concurrent traffic coming from the frontend
+	// needs to cover all concurrent traffic coming from the frontend
 	// shared across all users (hence it being really high)
 	r.Use(httprate.Limit(
 		2400,

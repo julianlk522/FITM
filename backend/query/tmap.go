@@ -86,16 +86,13 @@ func (lc *TmapNSFWLinksCount) FromCats(cats []string) *TmapNSFWLinksCount {
 		return lc
 	}
 
+	lc.Text = strings.ReplaceAll(lc.Text, "'NSFW'", "?")
+
 	// build MATCH clause
 	cat_match := "NSFW AND " + cats[0]
 	for i := 1; i < len(cats); i++ {
 		cat_match += " AND " + cats[i]
 	}
-
-	cat_match_replacer := strings.NewReplacer(
-		"'NSFW'", "?",
-	)
-	lc.Text = cat_match_replacer.Replace(lc.Text)
 
 	// insert cat_match arg * 2 after first login_name arg and before last 2
 	// copy trailing args to re-append after insert
@@ -110,7 +107,7 @@ func (lc *TmapNSFWLinksCount) FromCats(cats []string) *TmapNSFWLinksCount {
 }
 
 // LINKS
-// Submitted links (global cats replaced with user-assigned)
+// Submitted links (global cats replaced with user-assigned if user's tag remains)
 type TmapSubmitted struct {
 	*Query
 }
@@ -400,7 +397,7 @@ func FromUserOrGlobalCats(q *Query, cats []string) *Query {
 	// for GlobalCatsFTS CTE) 
 	// order for TmapSubmitted: login_name, MATCH, login_name, MATCH, login_name 
 	// order for TmapCopied: login_name, login_name, MATCH, login_name, 
-	/// MATCH, login_name
+	// MATCH, login_name
 
 	// (only TmapCopied and TmapTagged contain USER_COPIES_CTE, and TmapTagged
 	// does not call this method, so can check for presence of USER_COPIES_CTE

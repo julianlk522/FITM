@@ -207,37 +207,22 @@ const nsfw_links_count = tmap.NSFWLinksCount
 						<section id={s} class='link-section'>
 							<h2>{s}</h2>
 							<ol>
-								{tmap[s].map((link) => {
-									if (s === 'Submitted' || s === 'Tagged') {
-										return (
-											<Link
-												client:load
-												Link={link}
-												NSFWCatLinks={nsfw}
-												CatsFromUser={login_name}
-												IsTmapPage={true}
-												Token={token}
-												User={user}
-											/>
-										)
-									} else {
-										return (
-											<Link
-												client:load
-												Link={link}
-												NSFWCatLinks={nsfw}
-												CatsFromUser={
-													link.CatsFromUser
-														? login_name
-														: undefined
-												}
-												IsTmapPage={true}
-												Token={token}
-												User={user}
-											/>
-										)
-									}
-								})}
+								{tmap[s].map((link) => (
+										<Link
+											client:load
+											Link={link}
+											NSFWCatLinks={nsfw}
+											CatsFromUser={
+												link.CatsFromUser
+													? login_name
+													: undefined
+											}
+											IsTmapPage={true}
+											Token={token}
+											User={user}
+										/>
+									)
+								)}
 							</ol>
 						</section>
 					)
