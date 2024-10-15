@@ -63,7 +63,7 @@ export default function NewSummary(props: Props) {
 			{error ? <p class='error'>{`Error: ${error}`}</p> : null}
 
 			<label for='summary'>Add New Summary</label>
-			<input type='text' id='summary' name='summary' />
+			<textarea id='summary' name='summary' rows={3} cols={50} />
 			<button id='submit-new-summary' type='submit'>
 				Submit
 			</button>
