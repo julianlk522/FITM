@@ -31,11 +31,15 @@ export default function SearchCats(props: Props) {
 	} = props
 	const addable = props.Addable ?? true
 
+	const [error, set_error] = useState<string | undefined>(undefined)
 	const [snippet, set_snippet] = useState<string>('')
 	const [recommended_cats, set_recommended_cats] = useState<
 		CatCount[] | undefined
 	>(undefined)
-	const [error, set_error] = useState<string | undefined>(undefined)
+
+	// for when add_cat call interrupts existing recommendations timeout_ref
+	// (prevent stale closure and improperly omitted cats)
+	const [recommendations_paused, set_recommendations_paused] = useState(false)
 
 	// only render recommendations-list if there are non-selected recommendations
 	const non_selected_recommendations = recommended_cats?.filter(
@@ -73,8 +77,9 @@ export default function SearchCats(props: Props) {
 			set_recommended_cats([])
 			set_error(error instanceof Error ? error.message : String(error))
 		}
-	}, [snippet])
+	}, [snippet, recommendations_paused])
 
+	// search for recommendations in response to snippet changes
 	const timeout_ref = useRef<number | null>(null)
 	const DEBOUNCE_INTERVAL = 500
 	useEffect(() => {
@@ -95,7 +100,29 @@ export default function SearchCats(props: Props) {
 				window.clearTimeout(timeout_ref.current)
 			}
 		}
-	}, [search_snippet_recommendations])
+	}, [snippet])
+
+	// check for add_cat() recommendation interruption
+	// re-render to get latest selected_cats before fetching recommendations
+	useEffect(() => {
+		if (!recommendations_paused) return
+
+		// reset any existing timeout before search
+		if (timeout_ref.current) {
+			window.clearTimeout(timeout_ref.current)
+			timeout_ref.current = window.setTimeout(() => {
+				search_snippet_recommendations()
+				set_recommendations_paused(false)
+			}, DEBOUNCE_INTERVAL)
+		}
+
+		// cleanup leftover timeout if any
+		return () => {
+			if (timeout_ref.current) {
+				window.clearTimeout(timeout_ref.current)
+			}
+		}
+	}, [recommendations_paused])
 
 	const handle_enter = (event: KeyboardEvent) => {
 		if (event.key === 'Enter') {
@@ -130,6 +157,8 @@ export default function SearchCats(props: Props) {
 		set_recommended_cats((prev) =>
 			prev?.filter((cat) => cat.Category !== new_cat)
 		)
+
+		set_recommendations_paused(true)
 	}
 
 	// Pass added_cat / deleted_cat signals to children TagCat.tsx
@@ -155,13 +184,8 @@ export default function SearchCats(props: Props) {
 		} else if (deleted_cat.value) {
 			const to_delete = deleted_cat.value
 			set_selected_cats((c) => c.filter((cat) => cat !== to_delete))
+
 			deleted_cat.value = undefined
-
-			// prevent weird case where deleting a hidden recommended cat causes it to suddenly appear
-			set_recommended_cats((c) =>
-				c?.filter((cat) => cat.Category !== to_delete)
-			)
-
 			set_error(undefined)
 		}
 	})
