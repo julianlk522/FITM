@@ -37,13 +37,13 @@ export default function SearchCats(props: Props) {
 	>(undefined)
 	const [error, set_error] = useState<string | undefined>(undefined)
 
+	// only render recommendations-list if there are non-selected recommendations
+	const non_selected_recommendations = recommended_cats?.filter(
+		(rc) => !selected_cats.includes(rc.Category)
+	)
+
 	const MIN_SNIPPET_CHARS = 2
 	const search_snippet_recommendations = useCallback(async () => {
-		if (!snippet || snippet.length < MIN_SNIPPET_CHARS) {
-			set_recommended_cats(undefined)
-			return
-		}
-
 		// encode reserved chars
 		const encoded_snippet = encodeURIComponent(snippet)
 		let spellfix_matches_url = CATS_ENDPOINT + `/${encoded_snippet}`
@@ -214,19 +214,17 @@ export default function SearchCats(props: Props) {
 				</ol>
 			) : null}
 
-			{recommended_cats?.length ? (
+			{non_selected_recommendations?.length ? (
 				<ul id='recommendations-list'>
-					{recommended_cats
-						.filter((rc) => !selected_cats.includes(rc.Category))
-						.map((cat) => (
-							<TagCat
-								key={cat}
-								Cat={cat.Category}
-								Count={cat.Count}
-								Addable={true}
-								AddedSignal={added_cat}
-							/>
-						))}
+					{non_selected_recommendations.map((cat) => (
+						<TagCat
+							key={cat}
+							Cat={cat.Category}
+							Count={cat.Count}
+							Addable={true}
+							AddedSignal={added_cat}
+						/>
+					))}
 				</ul>
 			) : null}
 
