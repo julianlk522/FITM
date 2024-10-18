@@ -32,22 +32,18 @@ export default function SearchCats(props: Props) {
 	const addable = props.Addable ?? true
 
 	const [error, set_error] = useState<string | undefined>(undefined)
+
 	const [snippet, set_snippet] = useState<string>('')
 	const [recommended_cats, set_recommended_cats] = useState<
 		CatCount[] | undefined
 	>(undefined)
-
-	// for when add_cat call interrupts existing recommendations timeout_ref
-	// (prevent stale closure and improperly omitted cats)
-	const [recommendations_paused, set_recommendations_paused] = useState(false)
 
 	// only render recommendations-list if there are non-selected recommendations
 	const non_selected_recommendations = recommended_cats?.filter(
 		(rc) => !selected_cats.includes(rc.Category)
 	)
 
-	const MIN_SNIPPET_CHARS = 2
-	const search_snippet_recommendations = useCallback(async () => {
+	const fetch_snippet_recommendations = useCallback(async () => {
 		// encode reserved chars
 		const encoded_snippet = encodeURIComponent(snippet)
 		let spellfix_matches_url = CATS_ENDPOINT + `/${encoded_snippet}`
@@ -77,57 +73,90 @@ export default function SearchCats(props: Props) {
 			set_recommended_cats([])
 			set_error(error instanceof Error ? error.message : String(error))
 		}
-	}, [snippet, recommendations_paused])
+	}, [snippet, selected_cats])
 
-	// search for recommendations in response to snippet changes
+	// prev_selected_cats_ref prevents re-searching for recommended cats
+	// when user deletes 1+
+	// gets updated after adding cats or changing snippet, but not after deleting
+	// (so deletion can be identified and ignored)
+	const prev_selected_cats_ref = useRef(selected_cats)
+
+	// timeout_ref keeps track of pending debounced recommendation fetches
 	const timeout_ref = useRef<number | null>(null)
-	const DEBOUNCE_INTERVAL = 500
-	useEffect(() => {
-		// refresh debounce interval if searching
-		if (snippet?.length >= MIN_SNIPPET_CHARS) {
-			timeout_ref.current = window.setTimeout(() => {
-				search_snippet_recommendations()
-			}, DEBOUNCE_INTERVAL)
 
-			// or clear recommendations if empty input
+	// fetch new recommendations in response to snippet changes or added cats
+	const MIN_SNIPPET_CHARS = 2
+	useEffect(() => {
+		// skip if snippet is too short or user deleted selected cat(s)
+		if (prev_selected_cats_ref.current.length > selected_cats.length) {
+			return
+		}
+		if (snippet?.length >= MIN_SNIPPET_CHARS) {
+			reset_timeout_and_fetch_new_recommendations()
 		} else {
 			set_recommended_cats(undefined)
 		}
 
-		// cleanup: clear any old debounce interval
+		// cleanup: clear any ongoing debounce timeout
 		return () => {
 			if (timeout_ref.current) {
 				window.clearTimeout(timeout_ref.current)
 			}
 		}
-	}, [snippet])
+	}, [snippet, selected_cats])
 
-	// check for add_cat() recommendation interruption
-	// re-render to get latest selected_cats before fetching recommendations
+	// Pass added_cat / deleted_cat signals to children TagCat.tsx
+	// to allow adding recommended cats / removing selected cats here
+	const added_cat = useSignal<string | undefined>(undefined)
+	const deleted_cat = useSignal<string | undefined>(undefined)
+
+	// Listen for add / delete cat signals from TagCat
+	effect(() => {
+		if (added_cat.value?.length) {
+			const new_cat = added_cat.value
+			set_selected_cats((prev) => {
+				const next = [...prev, new_cat].sort((a, b) =>
+					a.localeCompare(b)
+				)
+				prev_selected_cats_ref.current = next
+				return next
+			})
+
+			added_cat.value = undefined
+			set_error(undefined)
+
+			reset_timeout_and_fetch_new_recommendations()
+		} else if (deleted_cat.value) {
+			const to_delete = deleted_cat.value
+			set_selected_cats((c) => c.filter((cat) => cat !== to_delete))
+
+			deleted_cat.value = undefined
+			set_error(undefined)
+		}
+	})
+
 	useEffect(() => {
-		if (!recommendations_paused) return
+		if (props.SubmittedLinks && props.SubmittedLinks.length) {
+			set_snippet('')
+		}
+	}, [props.SubmittedLinks])
 
-		// reset any existing timeout before search
+	// debounced fetch timeout
+	const DEBOUNCE_INTERVAL = 500
+	function reset_timeout_and_fetch_new_recommendations() {
 		if (timeout_ref.current) {
 			window.clearTimeout(timeout_ref.current)
-			timeout_ref.current = window.setTimeout(() => {
-				search_snippet_recommendations()
-				set_recommendations_paused(false)
-			}, DEBOUNCE_INTERVAL)
 		}
+		timeout_ref.current = window.setTimeout(() => {
+			fetch_snippet_recommendations()
+		}, DEBOUNCE_INTERVAL)
+	}
 
-		// cleanup leftover timeout if any
-		return () => {
-			if (timeout_ref.current) {
-				window.clearTimeout(timeout_ref.current)
-			}
-		}
-	}, [recommendations_paused])
-
-	const handle_enter = (event: KeyboardEvent) => {
+	function handle_enter(event: KeyboardEvent) {
 		if (event.key === 'Enter') {
 			event.preventDefault()
 			add_cat(event)
+			set_snippet('')
 		}
 	}
 
@@ -149,52 +178,15 @@ export default function SearchCats(props: Props) {
 			return
 		}
 
-		set_selected_cats((prev) =>
-			[...prev, new_cat].sort((a, b) => a.localeCompare(b))
-		)
-
+		set_selected_cats((prev) => {
+			const next = [...prev, new_cat].sort((a, b) => a.localeCompare(b))
+			prev_selected_cats_ref.current = next
+			return next
+		})
 		set_error(undefined)
-		set_recommended_cats((prev) =>
-			prev?.filter((cat) => cat.Category !== new_cat)
-		)
 
-		set_recommendations_paused(true)
+		reset_timeout_and_fetch_new_recommendations()
 	}
-
-	// Pass added_cat / deleted_cat signals to children TagCat.tsx
-	// to allow adding recommended cats / removing selected cats here
-	const added_cat = useSignal<string | undefined>(undefined)
-	const deleted_cat = useSignal<string | undefined>(undefined)
-
-	// Listen for add / delete cat signals from TagCat
-	effect(() => {
-		if (added_cat.value?.length) {
-			const new_cat = added_cat.value
-			set_selected_cats((c) =>
-				[...c, new_cat].sort((a, b) => {
-					return a.localeCompare(b)
-				})
-			)
-			set_recommended_cats((c) =>
-				c?.filter((cat) => cat.Category !== new_cat)
-			)
-			added_cat.value = undefined
-
-			set_error(undefined)
-		} else if (deleted_cat.value) {
-			const to_delete = deleted_cat.value
-			set_selected_cats((c) => c.filter((cat) => cat !== to_delete))
-
-			deleted_cat.value = undefined
-			set_error(undefined)
-		}
-	})
-
-	useEffect(() => {
-		if (props.SubmittedLinks && props.SubmittedLinks.length) {
-			set_snippet('')
-		}
-	}, [props.SubmittedLinks])
 
 	return (
 		<div id='search-cats-container'>
@@ -207,11 +199,15 @@ export default function SearchCats(props: Props) {
 						type='text'
 						name='cats'
 						id='cats'
-						onInput={(event) =>
+						onInput={(event) => {
+							// update selected cats ref so does not remain
+							// unsynced after deleting any from selected_cats,
+							// preventing new recommendations
+							prev_selected_cats_ref.current = selected_cats
 							set_snippet(
 								(event.target as HTMLInputElement).value
 							)
-						}
+						}}
 						onKeyPress={handle_enter}
 						value={snippet}
 					/>
@@ -220,7 +216,10 @@ export default function SearchCats(props: Props) {
 						title='Add cat'
 						type='submit'
 						value='Add'
-						onClick={add_cat}
+						onClick={(e) => {
+							add_cat(e)
+							set_snippet('')
+						}}
 					/>
 				</>
 			) : null}
