@@ -1,6 +1,12 @@
-dialog.delete-modal {
+dialog.modal {
 	z-index: 1;
+	max-width: 800px;
 	background-color: var(--treasurey);
+
+	button.ok-btn {
+		display: block;
+		margin: 0 auto;
+	}
 
 	button:not(:first-of-type) {
 		margin-left: 5px;

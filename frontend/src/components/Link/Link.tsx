@@ -13,7 +13,7 @@ import {
 	save_action_and_path_then_redirect_to_login,
 	save_path_then_redirect_to_login,
 } from '../../util/login_redirect'
-import DeleteModal from '../DeleteModal'
+import Modal from '../Modal/Modal'
 import './Link.css'
 import SameUserLikeCount from './SameUserLikeCount'
 
@@ -428,11 +428,12 @@ export default function Link(props: Props) {
 					</button>
 
 					{show_delete_modal ? (
-						<DeleteModal
+						<Modal
 							Prompt={'Are you sure you want to delete'}
+							IsDeleteConfirmation
 							DeleteURL={url}
 							HandleDelete={handle_delete}
-							SetShowDeleteModal={set_show_delete_modal}
+							SetShowModal={set_show_delete_modal}
 						/>
 					) : null}
 				</>

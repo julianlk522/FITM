@@ -178,16 +178,6 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 
 			<GlobalTagCalcDiagram />
 
-			<h3 id="avoiding-marooned-links" class="subsection">Avoiding "Marooned" Links</h3>
-			<p>A <em>marooned</em> link is one having a tag cat that is intended to mean the same thing as another cat but differs subtly and prevents ideal grouping.</p>
-			<p>For example, say that "videos" is a common cat. Tagging a link with cat "video" may make it hard to find because people looking for videos are likely to filter their searches using the more common "videos" cat.</p>
-			<p>Some tips to avoid this unfortunate outcome:</p>
-			<ul>
-				<li>If part of a group, prefer to describe the group (e.g., video<strong>s</strong>) over the individual (video)</li>
-				<li>Prefer "and" over "&" unless part of a proper noun</li>
-				<li>Prefer lowercase unless part of an acronym or proper noun</li>
-			</ul>
-
 			<h3 id="retrieving-metadata" class="subsection">Retrieving Metadata</h3>
 			<p>FITM employs <em>very limited</em> use of automated website scraping in order to fetch metadata for submitted links. This includes a description (AKA "Auto Summary") and a preview image, which come from <a href="https://ogp.me/">Open Graph</a> properties and other meta tags in a page's HTML head. FITM metadata collection can be identified by requests coming from the <strong>FITM-Bot</strong> user agent.</p>
 

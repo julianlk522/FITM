@@ -1,0 +1,7 @@
+button.tip {
+	cursor: pointer;
+	background: none;
+	border: none;
+	color: var(--treasurey);
+	width: fit-content;
+}
