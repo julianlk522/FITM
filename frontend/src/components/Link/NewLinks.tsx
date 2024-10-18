@@ -4,7 +4,7 @@ import * as types from '../../types'
 import { is_error_response } from '../../types'
 import fetch_with_handle_redirect from '../../util/fetch_with_handle_redirect'
 import SearchCats from '../SearchFilters/Cats'
-import NewLink from './NewLink'
+import Link from './Link'
 import './NewLinks.css'
 interface Props {
 	Token: string
@@ -12,8 +12,6 @@ interface Props {
 }
 
 export default function NewLinks(props: Props) {
-	const { Token: token } = props
-
 	const [error, set_error] = useState<string | undefined>(undefined)
 	const [dupe_url, set_dupe_url] = useState<string | undefined>(undefined)
 	const [cats, set_cats] = useState<string[]>([])
@@ -90,7 +88,7 @@ export default function NewLinks(props: Props) {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`,
+				Authorization: `Bearer ${props.Token}`,
 			},
 			body: resp_body,
 		})
@@ -162,7 +160,12 @@ export default function NewLinks(props: Props) {
 					<h2>Submitted</h2>
 					<ol>
 						{submitted_links.map((link) => (
-							<NewLink key={link.ID} Link={link} />
+							<Link
+								key={link.ID}
+								Link={link}
+								IsNewPage
+								User={props.User}
+							/>
 						))}
 					</ol>
 				</section>

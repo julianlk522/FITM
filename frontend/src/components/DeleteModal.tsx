@@ -4,9 +4,7 @@ import './DeleteModal.css'
 interface Props {
 	Prompt: string
 	DeleteURL?: string
-	HandleDelete: (
-		e: MouseEvent
-	) => void | Promise<void | '/login' | '/404' | '/500' | '/rate-limit'>
+	HandleDelete: (e: MouseEvent) => void | Promise<void | string>
 	SetShowDeleteModal: Dispatch<StateUpdater<boolean>>
 }
 

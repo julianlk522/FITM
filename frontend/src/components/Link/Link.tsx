@@ -18,6 +18,7 @@ interface Props {
 	IsSummaryPage?: boolean
 	IsTagPage?: boolean
 	IsTmapPage?: boolean
+	IsNewPage?: boolean
 	NSFWCatLinks?: boolean
 	Token?: string
 	User?: string
@@ -29,6 +30,7 @@ export default function Link(props: Props) {
 		IsSummaryPage: is_summary_page,
 		IsTagPage: is_tag_page,
 		IsTmapPage: is_tmap_page,
+		IsNewPage: is_new_page,
 		NSFWCatLinks: nsfw_cat_links,
 		Token: token,
 		User: user,
@@ -46,6 +48,7 @@ export default function Link(props: Props) {
 	} = props.Link
 
 	const is_your_link = user && submitted_by === user
+	const has_only_your_tag = is_tag_page && tag_count === 1 && is_your_link
 
 	const [is_copied, set_is_copied] = useState(props.Link.IsCopied)
 	const [is_liked, set_is_liked] = useState(props.Link.IsLiked)
@@ -53,18 +56,39 @@ export default function Link(props: Props) {
 	const [show_delete_modal, set_show_delete_modal] = useState(false)
 	const [img_url, set_img_url] = useState(saved_img_url)
 
-	// unset img_url if fails to resolve
+	// hide preview image if URL fails to resolve
 	useEffect(() => {
 		if (saved_img_url) {
 			// use Image constructor so no CORS issues, even locally
 			const img = new Image()
 			img.onload = () => set_img_url(saved_img_url)
 			img.onerror = () => set_img_url(undefined)
-
-			// test
 			img.src = saved_img_url
 		}
 	}, [saved_img_url])
+
+	// correct submitted_by to local time if newly created link
+	let submit_date_in_local_time = ''
+	if (is_new_page) {
+		const sd_utc = new Date(submit_date)
+		const tz_offset_millis = sd_utc.getTimezoneOffset() * 60000
+		submit_date_in_local_time = new Date(
+			sd_utc.getTime() - tz_offset_millis
+		).toISOString()
+	}
+
+	let tag_attribution =
+		cats && user && cats_from_user === user
+			? 'your tag'
+			: cats_from_user
+				? `${cats_from_user}'s tag`
+				: tag_count === 1
+					? `${submitted_by}'s tag`
+					: 'global tag'
+	tag_attribution += ` (${tag_count})`
+	const split_cats = cats.split(',')
+	const cats_endpoint =
+		is_tmap_page && cats_from_user ? `/map/${cats_from_user}` : '/top'
 
 	const expected_like_or_copy_action_status = 204
 	async function handle_like() {
@@ -171,21 +195,15 @@ export default function Link(props: Props) {
 			return console.error('Whoops: ', delete_resp.Response)
 		}
 
+		// redirect to tmap if tag or summary page
+		// since those pages no longer exist for the deleted link
+		if (is_tag_page || is_summary_page) {
+			return (window.location.href = `/map/${user}`)
+		}
+
+		// else reload
 		return window.location.reload()
 	}
-
-	let tag_attribution =
-		cats && user && cats_from_user === user
-			? 'your tag'
-			: cats_from_user
-				? `${cats_from_user}'s tag`
-				: tag_count === 1
-					? `${submitted_by}'s tag`
-					: 'global tag'
-	tag_attribution += ` (${tag_count})`
-	const split_cats = cats.split(',')
-	const cats_endpoint =
-		is_tmap_page && cats_from_user ? `/map/${cats_from_user}` : '/top'
 
 	return (
 		<li class={`link${is_summary_page || is_tag_page ? ' single' : ''}`}>
@@ -218,10 +236,15 @@ export default function Link(props: Props) {
 				<a href={`/map/${submitted_by}`} class='submitted-by'>
 					{submitted_by}
 				</a>{' '}
-				on {format_long_date(submit_date)}
+				on{' '}
+				{format_long_date(
+					submit_date_in_local_time
+						? submit_date_in_local_time
+						: submit_date
+				)}
 			</p>
 
-			{is_tag_page && tag_count === 1 && is_your_link ? null : (
+			{has_only_your_tag ? null : (
 				<p class='tags'>
 					<a class='tags-page-link' href={`/tag/${id}`}>
 						{tag_attribution}
@@ -362,7 +385,7 @@ export default function Link(props: Props) {
 				<SameUserLikeCount LikeCount={like_count} />
 			)}
 
-			{is_tmap_page && is_your_link ? (
+			{is_your_link ? (
 				<>
 					{/* delete button */}
 					<button
