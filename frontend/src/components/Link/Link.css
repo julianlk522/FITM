@@ -49,6 +49,11 @@ p.url {
 		margin-left: 3px;
 	}
 }
+.copy-cats-btn {
+	vertical-align: middle;
+	margin-left: 5px;
+	color: var(--text);
+}
 .like-btn,
 .copy-btn {
 	border-radius: 2px;

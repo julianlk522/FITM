@@ -164,6 +164,7 @@ export default function NewLinks(props: Props) {
 								key={link.ID}
 								Link={link}
 								IsNewPage
+								SetNewLinkCats={set_cats}
 								User={props.User}
 							/>
 						))}
