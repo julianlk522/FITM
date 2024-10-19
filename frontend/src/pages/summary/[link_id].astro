@@ -49,6 +49,14 @@ summaries.sort((a, b) => {
 	return a.Text.localeCompare(b.Text);
 })
 
+let summary_from_user_exists = false
+for (const summary of summaries) {
+	if (summary.SubmittedBy === user) {
+		summary_from_user_exists = true
+		break
+	}
+}
+
 const page_title = link.Summary ? `Summaries for "${link.Summary}"` : 'Link Summaries'
 ---
 
@@ -71,7 +79,12 @@ const page_title = link.Summary ? `Summaries for "${link.Summary}"` : 'Link Summ
 
 		<section>
 			{is_signed_in ? 
-				<NewSummary client:load Token={token} LinkID={link_id} /> 
+				<NewSummary 
+					client:load 
+					LinkID={link_id} 
+					SummaryFromUserExists={summary_from_user_exists}
+					Token={token} 
+				/> 
 			: <p id='login-redirect-link'>
 				<a href='/login'>
 					Login

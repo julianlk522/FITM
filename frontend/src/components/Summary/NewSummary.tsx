@@ -6,12 +6,17 @@ import { save_path_then_redirect_to_login } from '../../util/login_redirect'
 import './NewSummary.css'
 
 interface Props {
-	Token: string
 	LinkID: string
+	SummaryFromUserExists: boolean
+	Token: string
 }
 
 export default function NewSummary(props: Props) {
-	const { Token: token, LinkID: link_id } = props
+	const {
+		LinkID: link_id,
+		SummaryFromUserExists: summary_exists,
+		Token: token,
+	} = props
 
 	const [error, set_error] = useState<string | undefined>(undefined)
 
@@ -62,7 +67,9 @@ export default function NewSummary(props: Props) {
 		<form onSubmit={async (e) => await handle_submit(e, token)}>
 			{error ? <p class='error'>{`Error: ${error}`}</p> : null}
 
-			<label for='summary'>Add New Summary</label>
+			<label for='summary'>
+				{summary_exists ? 'Update Summary' : 'Add Summary'}
+			</label>
 			<textarea id='summary' name='summary' rows={3} cols={50} />
 			<button id='submit-new-summary' type='submit'>
 				Submit
