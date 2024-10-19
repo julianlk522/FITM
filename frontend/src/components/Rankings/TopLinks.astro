@@ -8,18 +8,20 @@ interface Props {
     Links: types.Link[]
     NSFW?: boolean
     Period?: types.Period
+    SortBy?: types.SortMetric
     Token?: string
     User?: string
     Page?: number
     NextPage: number
 }
-const { Links: links, NSFW: nsfw, Token: token, User: user, Page: page, NextPage: next_page, Period: period } = Astro.props
+const { Links: links, NSFW: nsfw, Token: token, User: user, Page: page, NextPage: next_page, Period: period, SortBy: sort_by } = Astro.props
 const is_only_page = page === 1 && next_page === -1
 ---
 
 <>
     {is_only_page ? null : <Pagination
         Period={period ?? 'month'}
+        SortBy={sort_by}
         Page={page ?? 1}
         NextPage={next_page}
     />}
@@ -42,6 +44,7 @@ const is_only_page = page === 1 && next_page === -1
 
     {is_only_page ? null : <Pagination
         Period={period ?? 'month'}
+        SortBy={sort_by}
         Page={page ?? 1}
         NextPage={next_page}
     />}

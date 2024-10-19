@@ -1,28 +1,30 @@
 ---
-import type { Period } from '../types'
+import type { Period, SortMetric } from '../types'
 
 interface Props {
 	Period: Period
+	SortBy?: SortMetric
 	Page: number
 	NextPage: number
 }
 
-const { Period: period, Page: page, NextPage: next_page } = Astro.props
+const { Period: period, SortBy: sort_by, Page: page, NextPage: next_page } = Astro.props
 const is_only_page = 
 	page === 1
 	&& next_page === -1
+const href_without_page = `/top?period=${period}${sort_by ? `&sort_by=${sort_by}` : ''}`
 ---
 
 <nav class="pagination" style=`display: ${is_only_page ? 'none' : 'block'}`>
 	Page:
-	{page > 1 ? <a href={`/top?period=${period}`}>1</a> : null}
+	{page > 1 ? <a href={href_without_page + '&page=1'}>1</a> : null}
 
 	{ page > 3 ? <span>...</span> : null}
 
 	{
 		page > 2 ? (
 			<span>
-				<a href={`/top?period=${period}&page=${page - 1}`}>{page - 1}</a>
+				<a href={href_without_page + `&page=${page - 1}`}>{page - 1}</a>
 			</span>
 		) : null
 	}
@@ -33,7 +35,7 @@ const is_only_page =
 
 	{
 		next_page > 0 ? (
-			<a href={`/top?period=${period}&page=${next_page}`}>{next_page}</a>
+			<a href={href_without_page + `&page=${next_page}`}>{next_page}</a>
 		) : null
 	}
 </nav>
