@@ -4,4 +4,5 @@ button.tip {
 	border: none;
 	color: var(--treasurey);
 	width: fit-content;
+	padding: 0;
 }
